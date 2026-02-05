@@ -1,0 +1,53 @@
+name: Pack Native (RID)
+
+on:
+  workflow_dispatch:
+    inputs:
+      rid:
+        description: 'Runtime Identifier (e.g. win-x64, linux-x64)'
+        required: true
+        default: 'linux-x64'
+      configuration:
+        description: 'Build configuration'
+        required: true
+        default: 'Release'
+      libwebrtc_build_dir:
+        description: 'Path to libwebrtc build output (optional, default: LIBWEBRTC_BUILD_DIR in env)'
+        required: false
+        default: ''
+      lumenrtc_native_dir:
+        description: 'Path to lumenrtc native output (optional, default: native/build/Release)'
+        required: false
+        default: ''
+
+jobs:
+  pack:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Pack
+        run: |
+          args=("-Configuration" "${{ inputs.configuration }}" "-Rid" "${{ inputs.rid }}" "-Output" "artifacts/nuget/${{ inputs.rid }}")
+          if [[ -n "${{ inputs.libwebrtc_build_dir }}" ]]; then
+            args+=("-LibWebRtcBuildDir" "${{ inputs.libwebrtc_build_dir }}")
+          fi
+          if [[ -n "${{ inputs.lumenrtc_native_dir }}" ]]; then
+            args+=("-LumenRtcNativeDir" "${{ inputs.lumenrtc_native_dir }}")
+          fi
+          pwsh scripts/pack.ps1 @args
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: nupkg-${{ inputs.rid }}
+          path: |
+            artifacts/nuget/${{ inputs.rid }}/**/*.nupkg
+            artifacts/nuget/${{ inputs.rid }}/**/*.snupkg
