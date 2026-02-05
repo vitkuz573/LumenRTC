@@ -103,6 +103,30 @@ Screen share loopback (offer/answer in-process, codec preferences applied):
 dotnet run --project samples/LumenRTC.Sample.ScreenShareLoopback/LumenRTC.Sample.ScreenShareLoopback.csproj
 ```
 
+Signaling server (simple WebSocket relay):
+
+```bash
+dotnet run --project samples/LumenRTC.Sample.SignalingServer/LumenRTC.Sample.SignalingServer.csproj -- --url http://localhost:8080/ws/
+```
+
+Remote control demo (run in two terminals):
+
+```bash
+# Sender (captures screen)
+dotnet run --project samples/LumenRTC.Sample.RemoteControl/LumenRTC.Sample.RemoteControl.csproj -- \\
+  --role sender --server ws://localhost:8080/ws/ --room demo --capture screen --source 0 --fps 30
+
+# Viewer (renders remote track + opens data channel)
+dotnet run --project samples/LumenRTC.Sample.RemoteControl/LumenRTC.Sample.RemoteControl.csproj -- \\
+  --role viewer --server ws://localhost:8080/ws/ --room demo
+```
+
+Optional STUN:
+
+```bash
+--stun stun:stun.l.google.com:19302
+```
+
 ## ABI notes
 
 - Callbacks run on WebRTC worker/signaling threads.
