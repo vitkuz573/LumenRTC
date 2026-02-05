@@ -101,6 +101,17 @@ RID=linux-x64 LIBWEBRTC_BUILD_DIR=/path/to/webrtc/out/Release scripts/pack.sh
 
 To pack without native libraries, use `-NoNative` (PowerShell) or `NO_NATIVE=true`.
 
+To build multiple RID-specific packages in one go (each written to its own
+output subfolder):
+
+```powershell
+scripts\\pack-all.ps1 -Rids win-x64,linux-x64 -LibWebRtcBuildDir C:\\path\\to\\webrtc\\out\\Release
+```
+
+```bash
+RIDS=win-x64,linux-x64 LIBWEBRTC_BUILD_DIR=/path/to/webrtc/out/Release scripts/pack-all.sh
+```
+
 SDL renderer runtime (optional):
 
 - Windows: `SDL2.dll` must be on `PATH` or next to the app.
