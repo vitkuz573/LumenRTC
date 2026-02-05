@@ -553,7 +553,13 @@ class PeerConnectionObserverImpl : public RTCPeerConnectionObserver {
   }
 
   void OnRemoveTrack(scoped_refptr<libwebrtc::RTCRtpReceiver> receiver) override {
-    (void)receiver;
+    auto cb = GetCallbacks();
+    if (!cb.callbacks.on_remove_track || !receiver.get()) {
+      return;
+    }
+    auto receiver_handle = new lrtc_rtp_receiver_t();
+    receiver_handle->ref = receiver;
+    cb.callbacks.on_remove_track(cb.user_data, nullptr, receiver_handle);
   }
 
  private:
@@ -2558,6 +2564,15 @@ lrtc_video_track_t* LUMENRTC_CALL lrtc_rtp_receiver_get_video_track(
   auto handle = new lrtc_video_track_t();
   handle->ref = static_cast<RTCVideoTrack*>(track.get());
   return handle;
+}
+
+int LUMENRTC_CALL lrtc_rtp_receiver_set_jitter_buffer_min_delay(
+    lrtc_rtp_receiver_t* receiver, double delay_seconds) {
+  if (!receiver || !receiver->ref.get()) {
+    return 0;
+  }
+  receiver->ref->SetJitterBufferMinimumDelay(delay_seconds);
+  return 1;
 }
 
 void LUMENRTC_CALL lrtc_rtp_receiver_release(lrtc_rtp_receiver_t* receiver) {

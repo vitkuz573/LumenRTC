@@ -1263,6 +1263,24 @@ public sealed class RtpReceiver : SafeHandle
         }
     }
 
+    public void SetJitterBufferMinimumDelay(double seconds)
+    {
+        if (seconds < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(seconds));
+        }
+        var result = NativeMethods.lrtc_rtp_receiver_set_jitter_buffer_min_delay(handle, seconds);
+        if (result == 0)
+        {
+            throw new InvalidOperationException("Failed to set jitter buffer minimum delay.");
+        }
+    }
+
+    public void SetJitterBufferMinimumDelay(TimeSpan delay)
+    {
+        SetJitterBufferMinimumDelay(delay.TotalSeconds);
+    }
+
     public override bool IsInvalid => handle == IntPtr.Zero;
 
     protected override bool ReleaseHandle()
@@ -2175,6 +2193,7 @@ public sealed class PeerConnectionCallbacks
     public Action<VideoTrack>? OnVideoTrack;
     public Action<AudioTrack>? OnAudioTrack;
     public Action<RtpTransceiver, RtpReceiver>? OnTrack;
+    public Action<RtpReceiver>? OnRemoveTrack;
     public Action? OnRenegotiationNeeded;
 
     private LrtcPeerConnectionStateCb? _signalingStateCb;
@@ -2186,6 +2205,7 @@ public sealed class PeerConnectionCallbacks
     private LrtcVideoTrackCb? _videoTrackCb;
     private LrtcAudioTrackCb? _audioTrackCb;
     private LrtcTrackCb? _trackCb;
+    private LrtcTrackCb? _removeTrackCb;
     private LrtcVoidCb? _renegotiationCb;
 
     internal LrtcPeerConnectionCallbacks BuildNative()
@@ -2201,6 +2221,13 @@ public sealed class PeerConnectionCallbacks
         _audioTrackCb = (ud, trackPtr) => OnAudioTrack?.Invoke(new AudioTrack(trackPtr));
         _trackCb = (ud, transceiverPtr, receiverPtr) =>
             OnTrack?.Invoke(new RtpTransceiver(transceiverPtr), new RtpReceiver(receiverPtr));
+        _removeTrackCb = (ud, transceiverPtr, receiverPtr) =>
+        {
+            if (receiverPtr != IntPtr.Zero)
+            {
+                OnRemoveTrack?.Invoke(new RtpReceiver(receiverPtr));
+            }
+        };
         _renegotiationCb = ud => OnRenegotiationNeeded?.Invoke();
 
         return new LrtcPeerConnectionCallbacks
@@ -2214,6 +2241,7 @@ public sealed class PeerConnectionCallbacks
             on_video_track = _videoTrackCb,
             on_audio_track = _audioTrackCb,
             on_track = _trackCb,
+            on_remove_track = _removeTrackCb,
             on_renegotiation_needed = _renegotiationCb,
         };
     }

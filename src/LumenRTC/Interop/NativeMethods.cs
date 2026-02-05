@@ -227,6 +227,7 @@ internal struct LrtcPeerConnectionCallbacks
     public LrtcVideoTrackCb? on_video_track;
     public LrtcAudioTrackCb? on_audio_track;
     public LrtcTrackCb? on_track;
+    public LrtcTrackCb? on_remove_track;
     public LrtcVoidCb? on_renegotiation_needed;
 }
 
@@ -928,6 +929,11 @@ internal static class NativeMethods
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     internal static extern IntPtr lrtc_rtp_receiver_get_video_track(IntPtr receiver);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern int lrtc_rtp_receiver_set_jitter_buffer_min_delay(
+        IntPtr receiver,
+        double delaySeconds);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     internal static extern void lrtc_rtp_receiver_release(IntPtr receiver);

@@ -291,6 +291,7 @@ typedef struct lrtc_peer_connection_callbacks_t {
   void (LUMENRTC_CALL *on_audio_track)(void* user_data,
                                       lrtc_audio_track_t* track);
   lrtc_track_cb on_track;
+  lrtc_track_cb on_remove_track;
   void (LUMENRTC_CALL *on_renegotiation_needed)(void* user_data);
 } lrtc_peer_connection_callbacks_t;
 
@@ -699,6 +700,8 @@ LUMENRTC_API lrtc_audio_track_t* LUMENRTC_CALL
 lrtc_rtp_receiver_get_audio_track(lrtc_rtp_receiver_t* receiver);
 LUMENRTC_API lrtc_video_track_t* LUMENRTC_CALL
 lrtc_rtp_receiver_get_video_track(lrtc_rtp_receiver_t* receiver);
+LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_receiver_set_jitter_buffer_min_delay(
+    lrtc_rtp_receiver_t* receiver, double delay_seconds);
 LUMENRTC_API void LUMENRTC_CALL lrtc_rtp_receiver_release(
     lrtc_rtp_receiver_t* receiver);
 
