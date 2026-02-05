@@ -152,6 +152,14 @@ public enum DegradationPreference
     Balanced = 3,
 }
 
+public enum RtpPriority
+{
+    VeryLow = 0,
+    Low = 1,
+    Medium = 2,
+    High = 3,
+}
+
 public enum RtpTransceiverDirection
 {
     SendRecv = 0,
@@ -224,9 +232,22 @@ public sealed class RtpEncodingSettings
     public double? ScaleResolutionDownBy { get; set; }
     public bool? Active { get; set; }
     public DegradationPreference? DegradationPreference { get; set; }
+    public double? BitratePriority { get; set; }
+    public RtpPriority? NetworkPriority { get; set; }
+    public int? NumTemporalLayers { get; set; }
+    public string? ScalabilityMode { get; set; }
+    public string? Rid { get; set; }
+    public bool? AdaptivePtime { get; set; }
 
-    internal LrtcRtpEncodingSettings ToNative()
+    internal LrtcRtpEncodingSettings ToNative(
+        out Utf8String? rid,
+        out Utf8String? scalabilityMode)
     {
+        rid = string.IsNullOrWhiteSpace(Rid) ? null : new Utf8String(Rid);
+        scalabilityMode = string.IsNullOrWhiteSpace(ScalabilityMode)
+            ? null
+            : new Utf8String(ScalabilityMode);
+
         return new LrtcRtpEncodingSettings
         {
             max_bitrate_bps = MaxBitrateBps ?? -1,
@@ -235,6 +256,12 @@ public sealed class RtpEncodingSettings
             scale_resolution_down_by = ScaleResolutionDownBy ?? -1,
             active = Active.HasValue ? (Active.Value ? 1 : 0) : -1,
             degradation_preference = DegradationPreference.HasValue ? (int)DegradationPreference.Value : -1,
+            bitrate_priority = BitratePriority ?? -1,
+            network_priority = NetworkPriority.HasValue ? (int)NetworkPriority.Value : -1,
+            num_temporal_layers = NumTemporalLayers ?? -1,
+            scalability_mode = scalabilityMode?.Pointer ?? IntPtr.Zero,
+            rid = rid?.Pointer ?? IntPtr.Zero,
+            adaptive_ptime = AdaptivePtime.HasValue ? (AdaptivePtime.Value ? 1 : 0) : -1,
         };
     }
 }
@@ -477,6 +504,7 @@ internal sealed class RtpTransceiverInitMarshaler : IDisposable
     private readonly Utf8StringArray _streamIds;
     private readonly IntPtr _encodingsPtr;
     private readonly uint _encodingCount;
+    private readonly List<Utf8String> _encodingStrings = new();
 
     public LrtcRtpTransceiverInit Native { get; }
 
@@ -492,15 +520,35 @@ internal sealed class RtpTransceiverInitMarshaler : IDisposable
             _encodingsPtr = Marshal.AllocHGlobal(size * init.SendEncodings.Count);
             for (var i = 0; i < init.SendEncodings.Count; i++)
             {
-                var native = init.SendEncodings[i]?.ToNative() ?? new LrtcRtpEncodingSettings
+                if (init.SendEncodings[i] == null)
                 {
-                    max_bitrate_bps = -1,
-                    min_bitrate_bps = -1,
-                    max_framerate = -1,
-                    scale_resolution_down_by = -1,
-                    active = -1,
-                    degradation_preference = -1,
-                };
+                    var empty = new LrtcRtpEncodingSettings
+                    {
+                        max_bitrate_bps = -1,
+                        min_bitrate_bps = -1,
+                        max_framerate = -1,
+                        scale_resolution_down_by = -1,
+                        active = -1,
+                        degradation_preference = -1,
+                        bitrate_priority = -1,
+                        network_priority = -1,
+                        num_temporal_layers = -1,
+                        scalability_mode = IntPtr.Zero,
+                        rid = IntPtr.Zero,
+                        adaptive_ptime = -1,
+                    };
+                    Marshal.StructureToPtr(empty, IntPtr.Add(_encodingsPtr, i * size), false);
+                    continue;
+                }
+                var native = init.SendEncodings[i].ToNative(out var rid, out var scalabilityMode);
+                if (rid != null)
+                {
+                    _encodingStrings.Add(rid);
+                }
+                if (scalabilityMode != null)
+                {
+                    _encodingStrings.Add(scalabilityMode);
+                }
                 Marshal.StructureToPtr(native, IntPtr.Add(_encodingsPtr, i * size), false);
             }
         }
@@ -523,6 +571,10 @@ internal sealed class RtpTransceiverInitMarshaler : IDisposable
     public void Dispose()
     {
         _streamIds.Dispose();
+        foreach (var str in _encodingStrings)
+        {
+            str.Dispose();
+        }
         if (_encodingsPtr != IntPtr.Zero)
         {
             Marshal.FreeHGlobal(_encodingsPtr);
@@ -1177,9 +1229,37 @@ public sealed class RtpSender : SafeHandle
     public bool SetEncodingParameters(RtpEncodingSettings settings)
     {
         if (settings == null) throw new ArgumentNullException(nameof(settings));
-        var native = settings.ToNative();
-        var result = NativeMethods.lrtc_rtp_sender_set_encoding_parameters(handle, ref native);
-        return result != 0;
+        var native = settings.ToNative(out var rid, out var scalabilityMode);
+        try
+        {
+            var result = NativeMethods.lrtc_rtp_sender_set_encoding_parameters(handle, ref native);
+            return result != 0;
+        }
+        finally
+        {
+            rid?.Dispose();
+            scalabilityMode?.Dispose();
+        }
+    }
+
+    public bool SetEncodingParameters(int encodingIndex, RtpEncodingSettings settings)
+    {
+        if (settings == null) throw new ArgumentNullException(nameof(settings));
+        if (encodingIndex < 0) throw new ArgumentOutOfRangeException(nameof(encodingIndex));
+        var native = settings.ToNative(out var rid, out var scalabilityMode);
+        try
+        {
+            var result = NativeMethods.lrtc_rtp_sender_set_encoding_parameters_at(
+                handle,
+                (uint)encodingIndex,
+                ref native);
+            return result != 0;
+        }
+        finally
+        {
+            rid?.Dispose();
+            scalabilityMode?.Dispose();
+        }
     }
 
     public bool SetStreamIds(IReadOnlyList<string> streamIds)
@@ -1956,6 +2036,19 @@ public sealed class PeerConnection : SafeHandle
         var result = NativeMethods.lrtc_peer_connection_set_codec_preferences(
             handle,
             (LrtcMediaType)mediaType,
+            mimes.Pointer,
+            (uint)mimes.Count);
+        return result != 0;
+    }
+
+    public bool SetTransceiverCodecPreferences(RtpTransceiver transceiver, IReadOnlyList<string> mimeTypes)
+    {
+        if (transceiver == null) throw new ArgumentNullException(nameof(transceiver));
+        if (mimeTypes == null) throw new ArgumentNullException(nameof(mimeTypes));
+        using var mimes = new Utf8StringArray(mimeTypes);
+        var result = NativeMethods.lrtc_peer_connection_set_transceiver_codec_preferences(
+            handle,
+            transceiver.DangerousGetHandle(),
             mimes.Pointer,
             (uint)mimes.Count);
         return result != 0;

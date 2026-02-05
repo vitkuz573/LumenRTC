@@ -203,6 +203,26 @@ BuildEncodingParameters(const lrtc_rtp_encoding_settings_t* settings) {
   if (settings->active >= 0) {
     encoding->set_active(settings->active != 0);
   }
+  if (settings->bitrate_priority >= 0.0) {
+    encoding->set_bitrate_priority(settings->bitrate_priority);
+  }
+  if (settings->network_priority >= 0 &&
+      settings->network_priority <= 3) {
+    encoding->set_network_priority(
+        static_cast<libwebrtc::RTCPriority>(settings->network_priority));
+  }
+  if (settings->num_temporal_layers >= 0) {
+    encoding->set_num_temporal_layers(settings->num_temporal_layers);
+  }
+  if (settings->scalability_mode && settings->scalability_mode[0] != '\0') {
+    encoding->set_scalability_mode(string(settings->scalability_mode));
+  }
+  if (settings->rid && settings->rid[0] != '\0') {
+    encoding->set_rid(string(settings->rid));
+  }
+  if (settings->adaptive_ptime >= 0) {
+    encoding->set_adaptive_ptime(settings->adaptive_ptime != 0);
+  }
   return encoding;
 }
 
@@ -1760,6 +1780,28 @@ int LUMENRTC_CALL lrtc_peer_connection_set_codec_preferences(
   return applied ? 1 : 0;
 }
 
+int LUMENRTC_CALL lrtc_peer_connection_set_transceiver_codec_preferences(
+    lrtc_peer_connection_t* pc, lrtc_rtp_transceiver_t* transceiver,
+    const char** mime_types, uint32_t mime_type_count) {
+  if (!pc || !pc->ref.get() || !pc->factory.get() || !transceiver ||
+      !transceiver->ref.get()) {
+    return 0;
+  }
+  scoped_refptr<RTCRtpCapabilities> caps =
+      pc->factory->GetRtpSenderCapabilities(
+          transceiver->ref->media_type());
+  if (!caps.get()) {
+    return 0;
+  }
+  vector<scoped_refptr<RTCRtpCodecCapability>> selected =
+      BuildCodecPreferences(caps->codecs(), mime_types, mime_type_count);
+  if (selected.size() == 0) {
+    return 0;
+  }
+  transceiver->ref->SetCodecPreferences(selected);
+  return 1;
+}
+
 void LUMENRTC_CALL lrtc_peer_connection_add_ice_candidate(
     lrtc_peer_connection_t* pc, const char* sdp_mid, int sdp_mline_index,
     const char* candidate) {
@@ -2322,6 +2364,114 @@ int LUMENRTC_CALL lrtc_rtp_sender_set_encoding_parameters(
     }
     if (settings->active >= 0) {
       encoding->set_active(settings->active != 0);
+    }
+    if (settings->bitrate_priority >= 0.0) {
+      encoding->set_bitrate_priority(settings->bitrate_priority);
+    }
+    if (settings->network_priority >= 0 &&
+        settings->network_priority <= 3) {
+      encoding->set_network_priority(
+          static_cast<libwebrtc::RTCPriority>(settings->network_priority));
+    }
+    if (settings->num_temporal_layers >= 0) {
+      encoding->set_num_temporal_layers(settings->num_temporal_layers);
+    }
+    if (settings->scalability_mode && settings->scalability_mode[0] != '\0') {
+      encoding->set_scalability_mode(string(settings->scalability_mode));
+    }
+    if (settings->rid && settings->rid[0] != '\0') {
+      encoding->set_rid(string(settings->rid));
+    }
+    if (settings->adaptive_ptime >= 0) {
+      encoding->set_adaptive_ptime(settings->adaptive_ptime != 0);
+    }
+  }
+
+  parameters->set_encodings(
+      vector<scoped_refptr<libwebrtc::RTCRtpEncodingParameters>>(list));
+
+  if (settings->degradation_preference >= 0) {
+    parameters->SetDegradationPreference(
+        static_cast<libwebrtc::RTCDegradationPreference>(
+            settings->degradation_preference));
+  }
+
+  return sender->ref->set_parameters(parameters) ? 1 : 0;
+}
+
+int LUMENRTC_CALL lrtc_rtp_sender_set_encoding_parameters_at(
+    lrtc_rtp_sender_t* sender, uint32_t index,
+    const lrtc_rtp_encoding_settings_t* settings) {
+  if (!sender || !sender->ref.get() || !settings) {
+    return 0;
+  }
+  scoped_refptr<libwebrtc::RTCRtpParameters> parameters =
+      sender->ref->parameters();
+  if (!parameters.get()) {
+    return 0;
+  }
+
+  vector<scoped_refptr<libwebrtc::RTCRtpEncodingParameters>> encodings =
+      parameters->encodings();
+
+  std::vector<scoped_refptr<libwebrtc::RTCRtpEncodingParameters>> list;
+  list.reserve(encodings.size());
+  for (size_t i = 0; i < encodings.size(); ++i) {
+    list.push_back(encodings[i]);
+  }
+
+  if (list.empty()) {
+    if (index != 0) {
+      return 0;
+    }
+    scoped_refptr<libwebrtc::RTCRtpEncodingParameters> created =
+        libwebrtc::RTCRtpEncodingParameters::Create();
+    if (created.get()) {
+      list.push_back(created);
+    }
+  }
+
+  if (index >= list.size()) {
+    return 0;
+  }
+
+  scoped_refptr<libwebrtc::RTCRtpEncodingParameters> encoding = list[index];
+  if (encoding.get()) {
+    if (settings->max_bitrate_bps >= 0) {
+      encoding->set_max_bitrate_bps(settings->max_bitrate_bps);
+    }
+    if (settings->min_bitrate_bps >= 0) {
+      encoding->set_min_bitrate_bps(settings->min_bitrate_bps);
+    }
+    if (settings->max_framerate > 0.0) {
+      encoding->set_max_framerate(settings->max_framerate);
+    }
+    if (settings->scale_resolution_down_by > 0.0) {
+      encoding->set_scale_resolution_down_by(
+          settings->scale_resolution_down_by);
+    }
+    if (settings->active >= 0) {
+      encoding->set_active(settings->active != 0);
+    }
+    if (settings->bitrate_priority >= 0.0) {
+      encoding->set_bitrate_priority(settings->bitrate_priority);
+    }
+    if (settings->network_priority >= 0 &&
+        settings->network_priority <= 3) {
+      encoding->set_network_priority(
+          static_cast<libwebrtc::RTCPriority>(settings->network_priority));
+    }
+    if (settings->num_temporal_layers >= 0) {
+      encoding->set_num_temporal_layers(settings->num_temporal_layers);
+    }
+    if (settings->scalability_mode && settings->scalability_mode[0] != '\0') {
+      encoding->set_scalability_mode(string(settings->scalability_mode));
+    }
+    if (settings->rid && settings->rid[0] != '\0') {
+      encoding->set_rid(string(settings->rid));
+    }
+    if (settings->adaptive_ptime >= 0) {
+      encoding->set_adaptive_ptime(settings->adaptive_ptime != 0);
     }
   }
 

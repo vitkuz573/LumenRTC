@@ -222,6 +222,12 @@ typedef struct lrtc_rtp_encoding_settings_t {
   double scale_resolution_down_by;  // <= 0 keeps current
   int active;                     // -1 keeps current, 0/1 sets
   int degradation_preference;     // -1 keeps current, else lrtc_degradation_preference
+  double bitrate_priority;        // < 0 keeps current
+  int network_priority;           // < 0 keeps current, else RTCPriority enum
+  int num_temporal_layers;        // < 0 keeps current
+  const char* scalability_mode;   // null/empty keeps current
+  const char* rid;                // null/empty keeps current
+  int adaptive_ptime;             // -1 keeps current, 0/1 sets
 } lrtc_rtp_encoding_settings_t;
 
 typedef struct lrtc_rtp_transceiver_init_t {
@@ -537,6 +543,10 @@ LUMENRTC_API void LUMENRTC_CALL lrtc_peer_connection_get_receiver_stats(
 LUMENRTC_API int LUMENRTC_CALL lrtc_peer_connection_set_codec_preferences(
     lrtc_peer_connection_t* pc, lrtc_media_type media_type,
     const char** mime_types, uint32_t mime_type_count);
+LUMENRTC_API int LUMENRTC_CALL
+lrtc_peer_connection_set_transceiver_codec_preferences(
+    lrtc_peer_connection_t* pc, lrtc_rtp_transceiver_t* transceiver,
+    const char** mime_types, uint32_t mime_type_count);
 LUMENRTC_API void LUMENRTC_CALL lrtc_peer_connection_add_ice_candidate(
     lrtc_peer_connection_t* pc, const char* sdp_mid, int sdp_mline_index,
     const char* candidate);
@@ -658,6 +668,9 @@ LUMENRTC_API void LUMENRTC_CALL lrtc_video_frame_release(
 
 LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_sender_set_encoding_parameters(
     lrtc_rtp_sender_t* sender, const lrtc_rtp_encoding_settings_t* settings);
+LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_sender_set_encoding_parameters_at(
+    lrtc_rtp_sender_t* sender, uint32_t index,
+    const lrtc_rtp_encoding_settings_t* settings);
 LUMENRTC_API uint32_t LUMENRTC_CALL lrtc_rtp_sender_get_ssrc(
     lrtc_rtp_sender_t* sender);
 LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_sender_replace_audio_track(

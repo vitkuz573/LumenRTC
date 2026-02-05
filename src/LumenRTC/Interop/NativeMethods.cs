@@ -158,6 +158,12 @@ internal struct LrtcRtpEncodingSettings
     public double scale_resolution_down_by;
     public int active;
     public int degradation_preference;
+    public double bitrate_priority;
+    public int network_priority;
+    public int num_temporal_layers;
+    public IntPtr scalability_mode;
+    public IntPtr rid;
+    public int adaptive_ptime;
 }
 
 [StructLayout(LayoutKind.Sequential)]
@@ -646,6 +652,13 @@ internal static class NativeMethods
         uint mimeTypeCount);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern int lrtc_peer_connection_set_transceiver_codec_preferences(
+        IntPtr pc,
+        IntPtr transceiver,
+        IntPtr mimeTypes,
+        uint mimeTypeCount);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     internal static extern void lrtc_peer_connection_add_ice_candidate(
         IntPtr pc,
         IntPtr sdpMid,
@@ -848,6 +861,12 @@ internal static class NativeMethods
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     internal static extern int lrtc_rtp_sender_set_encoding_parameters(
         IntPtr sender,
+        ref LrtcRtpEncodingSettings settings);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern int lrtc_rtp_sender_set_encoding_parameters_at(
+        IntPtr sender,
+        uint index,
         ref LrtcRtpEncodingSettings settings);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
