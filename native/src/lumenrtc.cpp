@@ -54,6 +54,7 @@ using libwebrtc::RTCPeerConnectionFactory;
 using libwebrtc::RTCPeerConnectionObserver;
 using libwebrtc::RTCRtpCapabilities;
 using libwebrtc::RTCRtpCodecCapability;
+using libwebrtc::RTCRtpHeaderExtensionCapability;
 using libwebrtc::RTCRtpReceiver;
 using libwebrtc::RTCRtpTransceiver;
 using libwebrtc::RTCVideoFrame;
@@ -281,6 +282,59 @@ static std::string BuildStatsJson(
   return json;
 }
 
+static void AppendJsonString(std::string& out, const char* value);
+
+static std::string BuildRtpCapabilitiesJson(
+    scoped_refptr<RTCRtpCapabilities> caps) {
+  if (!caps.get()) {
+    return "{}";
+  }
+
+  std::string json;
+  json.append("{\"codecs\":[");
+  vector<scoped_refptr<RTCRtpCodecCapability>> codecs = caps->codecs();
+  for (size_t i = 0; i < codecs.size(); ++i) {
+    if (i > 0) {
+      json.push_back(',');
+    }
+    scoped_refptr<RTCRtpCodecCapability> codec = codecs[i];
+    json.push_back('{');
+    json.append("\"mimeType\":");
+    string mime = codec->mime_type();
+    AppendJsonString(json, mime.c_string());
+    json.append(",\"clockRate\":");
+    json.append(std::to_string(codec->clock_rate()));
+    json.append(",\"channels\":");
+    json.append(std::to_string(codec->channels()));
+    json.append(",\"sdpFmtpLine\":");
+    string fmtp = codec->sdp_fmtp_line();
+    AppendJsonString(json, fmtp.c_string());
+    json.push_back('}');
+  }
+  json.append("],\"headerExtensions\":[");
+
+  vector<scoped_refptr<RTCRtpHeaderExtensionCapability>> extensions =
+      caps->header_extensions();
+  for (size_t i = 0; i < extensions.size(); ++i) {
+    if (i > 0) {
+      json.push_back(',');
+    }
+    scoped_refptr<RTCRtpHeaderExtensionCapability> ext = extensions[i];
+    json.push_back('{');
+    json.append("\"uri\":");
+    string uri = ext->uri();
+    AppendJsonString(json, uri.c_string());
+    json.append(",\"preferredId\":");
+    json.append(std::to_string(ext->preferred_id()));
+    json.append(",\"preferredEncrypt\":");
+    json.append(ext->preferred_encrypt() ? "true" : "false");
+    json.push_back('}');
+  }
+
+  json.append("]}");
+  return json;
+}
+
 static int32_t CopyPortableString(const string& value, char* buffer,
                                   uint32_t buffer_len) {
   string tmp = value;
@@ -331,6 +385,14 @@ static void AppendJsonEscaped(std::string& out, const char* value) {
         break;
     }
   }
+}
+
+static void AppendJsonString(std::string& out, const char* value) {
+  out.push_back('\"');
+  if (value) {
+    AppendJsonEscaped(out, value);
+  }
+  out.push_back('\"');
 }
 
 static std::string BuildCodecMimeJson(
@@ -3127,6 +3189,56 @@ void LUMENRTC_CALL lrtc_factory_get_rtp_sender_codec_mime_types(
   }
   if (success) {
     std::string json = BuildCodecMimeJson(caps->codecs());
+    success(user_data, json.c_str());
+  }
+}
+
+void LUMENRTC_CALL lrtc_factory_get_rtp_sender_capabilities(
+    lrtc_factory_t* factory, lrtc_media_type media_type,
+    lrtc_stats_success_cb success, lrtc_stats_failure_cb failure,
+    void* user_data) {
+  if (!factory || !factory->ref.get()) {
+    if (failure) {
+      failure(user_data, "invalid arguments");
+    }
+    return;
+  }
+  scoped_refptr<RTCRtpCapabilities> caps =
+      factory->ref->GetRtpSenderCapabilities(
+          static_cast<libwebrtc::RTCMediaType>(media_type));
+  if (!caps.get()) {
+    if (failure) {
+      failure(user_data, "capabilities not available");
+    }
+    return;
+  }
+  if (success) {
+    std::string json = BuildRtpCapabilitiesJson(caps);
+    success(user_data, json.c_str());
+  }
+}
+
+void LUMENRTC_CALL lrtc_factory_get_rtp_receiver_capabilities(
+    lrtc_factory_t* factory, lrtc_media_type media_type,
+    lrtc_stats_success_cb success, lrtc_stats_failure_cb failure,
+    void* user_data) {
+  if (!factory || !factory->ref.get()) {
+    if (failure) {
+      failure(user_data, "invalid arguments");
+    }
+    return;
+  }
+  scoped_refptr<RTCRtpCapabilities> caps =
+      factory->ref->GetRtpReceiverCapabilities(
+          static_cast<libwebrtc::RTCMediaType>(media_type));
+  if (!caps.get()) {
+    if (failure) {
+      failure(user_data, "capabilities not available");
+    }
+    return;
+  }
+  if (success) {
+    std::string json = BuildRtpCapabilitiesJson(caps);
     success(user_data, json.c_str());
   }
 }

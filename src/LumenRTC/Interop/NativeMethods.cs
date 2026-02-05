@@ -1095,4 +1095,20 @@ internal static class NativeMethods
         LrtcStatsSuccessCb success,
         LrtcStatsErrorCb failure,
         IntPtr userData);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern void lrtc_factory_get_rtp_sender_capabilities(
+        IntPtr factory,
+        LrtcMediaType mediaType,
+        LrtcStatsSuccessCb success,
+        LrtcStatsErrorCb failure,
+        IntPtr userData);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern void lrtc_factory_get_rtp_receiver_capabilities(
+        IntPtr factory,
+        LrtcMediaType mediaType,
+        LrtcStatsSuccessCb success,
+        LrtcStatsErrorCb failure,
+        IntPtr userData);
 }

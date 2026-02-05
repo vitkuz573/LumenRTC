@@ -796,6 +796,16 @@ lrtc_factory_get_rtp_sender_codec_mime_types(
     lrtc_factory_t* factory, lrtc_media_type media_type,
     lrtc_stats_success_cb success, lrtc_stats_failure_cb failure,
     void* user_data);
+LUMENRTC_API void LUMENRTC_CALL
+lrtc_factory_get_rtp_sender_capabilities(
+    lrtc_factory_t* factory, lrtc_media_type media_type,
+    lrtc_stats_success_cb success, lrtc_stats_failure_cb failure,
+    void* user_data);
+LUMENRTC_API void LUMENRTC_CALL
+lrtc_factory_get_rtp_receiver_capabilities(
+    lrtc_factory_t* factory, lrtc_media_type media_type,
+    lrtc_stats_success_cb success, lrtc_stats_failure_cb failure,
+    void* user_data);
 
 #ifdef __cplusplus
 }  // extern "C"

@@ -280,11 +280,75 @@ public readonly record struct RtpEncodingInfo(
     string Rid,
     string ScalabilityMode);
 
+public readonly record struct RtpCodecCapability(
+    string MimeType,
+    int ClockRate,
+    int Channels,
+    string SdpFmtpLine);
+
+public readonly record struct RtpHeaderExtensionCapability(
+    string Uri,
+    int PreferredId,
+    bool PreferredEncrypt);
+
+public sealed record RtpCapabilities(
+    IReadOnlyList<RtpCodecCapability> Codecs,
+    IReadOnlyList<RtpHeaderExtensionCapability> HeaderExtensions)
+{
+    public static RtpCapabilities Empty { get; } =
+        new(Array.Empty<RtpCodecCapability>(), Array.Empty<RtpHeaderExtensionCapability>());
+}
+
 public sealed class RtpTransceiverInit
 {
     public RtpTransceiverDirection Direction { get; set; } = RtpTransceiverDirection.SendRecv;
     public List<string> StreamIds { get; } = new();
     public List<RtpEncodingSettings> SendEncodings { get; } = new();
+}
+
+public readonly record struct SimulcastLayer(
+    string Rid,
+    double ScaleResolutionDownBy,
+    int? MaxBitrateBps = null,
+    double? MaxFramerate = null,
+    int? NumTemporalLayers = null,
+    string? ScalabilityMode = null);
+
+public static class Simulcast
+{
+    public static RtpTransceiverInit CreateVideoSimulcast(
+        string streamId,
+        IReadOnlyList<SimulcastLayer> layers,
+        RtpTransceiverDirection direction = RtpTransceiverDirection.SendRecv)
+    {
+        if (layers == null) throw new ArgumentNullException(nameof(layers));
+
+        var init = new RtpTransceiverInit { Direction = direction };
+        if (!string.IsNullOrWhiteSpace(streamId))
+        {
+            init.StreamIds.Add(streamId);
+        }
+
+        foreach (var layer in layers)
+        {
+            if (string.IsNullOrWhiteSpace(layer.Rid))
+            {
+                continue;
+            }
+            init.SendEncodings.Add(new RtpEncodingSettings
+            {
+                Rid = layer.Rid,
+                ScaleResolutionDownBy = layer.ScaleResolutionDownBy,
+                MaxBitrateBps = layer.MaxBitrateBps,
+                MaxFramerate = layer.MaxFramerate,
+                NumTemporalLayers = layer.NumTemporalLayers,
+                ScalabilityMode = layer.ScalabilityMode,
+                Active = true,
+            });
+        }
+
+        return init;
+    }
 }
 
 public readonly struct AudioFrame
@@ -596,8 +660,34 @@ internal sealed class RtpTransceiverInitMarshaler : IDisposable
     }
 }
 
+internal sealed class RtpCodecCapabilityDto
+{
+    public string? MimeType { get; set; }
+    public int ClockRate { get; set; }
+    public int Channels { get; set; }
+    public string? SdpFmtpLine { get; set; }
+}
+
+internal sealed class RtpHeaderExtensionCapabilityDto
+{
+    public string? Uri { get; set; }
+    public int PreferredId { get; set; }
+    public bool PreferredEncrypt { get; set; }
+}
+
+internal sealed class RtpCapabilitiesDto
+{
+    public List<RtpCodecCapabilityDto>? Codecs { get; set; }
+    public List<RtpHeaderExtensionCapabilityDto>? HeaderExtensions { get; set; }
+}
+
 public sealed class PeerConnectionFactory : SafeHandle
 {
+    private static readonly JsonSerializerOptions s_rtpCapabilitiesJsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true,
+    };
+
     private PeerConnectionFactory() : base(IntPtr.Zero, true) { }
 
     public static PeerConnectionFactory Create()
@@ -772,6 +862,99 @@ public sealed class PeerConnectionFactory : SafeHandle
         }
 
         return JsonSerializer.Deserialize<string[]>(json) ?? Array.Empty<string>();
+    }
+
+    public RtpCapabilities GetRtpSenderCapabilities(MediaType mediaType)
+    {
+        string? json = null;
+        string? error = null;
+        LrtcStatsSuccessCb success = (_, jsonPtr) => json = Utf8String.Read(jsonPtr);
+        LrtcStatsErrorCb failure = (_, errPtr) => error = Utf8String.Read(errPtr);
+
+        NativeMethods.lrtc_factory_get_rtp_sender_capabilities(
+            handle,
+            (LrtcMediaType)mediaType,
+            success,
+            failure,
+            IntPtr.Zero);
+
+        if (!string.IsNullOrEmpty(error))
+        {
+            throw new InvalidOperationException(error);
+        }
+
+        return ParseRtpCapabilities(json);
+    }
+
+    public RtpCapabilities GetRtpReceiverCapabilities(MediaType mediaType)
+    {
+        string? json = null;
+        string? error = null;
+        LrtcStatsSuccessCb success = (_, jsonPtr) => json = Utf8String.Read(jsonPtr);
+        LrtcStatsErrorCb failure = (_, errPtr) => error = Utf8String.Read(errPtr);
+
+        NativeMethods.lrtc_factory_get_rtp_receiver_capabilities(
+            handle,
+            (LrtcMediaType)mediaType,
+            success,
+            failure,
+            IntPtr.Zero);
+
+        if (!string.IsNullOrEmpty(error))
+        {
+            throw new InvalidOperationException(error);
+        }
+
+        return ParseRtpCapabilities(json);
+    }
+
+    private static RtpCapabilities ParseRtpCapabilities(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return RtpCapabilities.Empty;
+        }
+
+        var dto = JsonSerializer.Deserialize<RtpCapabilitiesDto>(json, s_rtpCapabilitiesJsonOptions);
+        if (dto == null)
+        {
+            return RtpCapabilities.Empty;
+        }
+
+        var codecs = new List<RtpCodecCapability>();
+        if (dto.Codecs != null)
+        {
+            foreach (var codec in dto.Codecs)
+            {
+                if (codec == null)
+                {
+                    continue;
+                }
+                codecs.Add(new RtpCodecCapability(
+                    codec.MimeType ?? string.Empty,
+                    codec.ClockRate,
+                    codec.Channels,
+                    codec.SdpFmtpLine ?? string.Empty));
+            }
+        }
+
+        var extensions = new List<RtpHeaderExtensionCapability>();
+        if (dto.HeaderExtensions != null)
+        {
+            foreach (var ext in dto.HeaderExtensions)
+            {
+                if (ext == null)
+                {
+                    continue;
+                }
+                extensions.Add(new RtpHeaderExtensionCapability(
+                    ext.Uri ?? string.Empty,
+                    ext.PreferredId,
+                    ext.PreferredEncrypt));
+            }
+        }
+
+        return new RtpCapabilities(codecs, extensions);
     }
 
     public override bool IsInvalid => handle == IntPtr.Zero;
