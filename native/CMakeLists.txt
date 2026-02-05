@@ -8,7 +8,23 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 option(LUMENRTC_ENABLE_DESKTOP_CAPTURE "Enable desktop capture support" ON)
 
 if(NOT LIBWEBRTC_ROOT)
+  if(DEFINED ENV{LIBWEBRTC_ROOT})
+    set(LIBWEBRTC_ROOT $ENV{LIBWEBRTC_ROOT})
+  elseif(EXISTS "${CMAKE_SOURCE_DIR}/../external/libwebrtc/include")
+    set(LIBWEBRTC_ROOT "${CMAKE_SOURCE_DIR}/../external/libwebrtc")
+  elseif(EXISTS "${CMAKE_SOURCE_DIR}/../../libwebrtc/include")
+    set(LIBWEBRTC_ROOT "${CMAKE_SOURCE_DIR}/../../libwebrtc")
+  endif()
+endif()
+
+if(NOT LIBWEBRTC_ROOT)
   message(FATAL_ERROR "Set LIBWEBRTC_ROOT to the libwebrtc repo path")
+endif()
+
+if(NOT LIBWEBRTC_BUILD_DIR)
+  if(DEFINED ENV{LIBWEBRTC_BUILD_DIR})
+    set(LIBWEBRTC_BUILD_DIR $ENV{LIBWEBRTC_BUILD_DIR})
+  endif()
 endif()
 
 if(NOT LIBWEBRTC_BUILD_DIR)

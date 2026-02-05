@@ -1,0 +1,3 @@
+[submodule "external/libwebrtc"]
+	path = external/libwebrtc
+	url = https://github.com/webrtc-sdk/libwebrtc

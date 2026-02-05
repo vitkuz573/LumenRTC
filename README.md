@@ -13,20 +13,32 @@ The goal is a stable native ABI for .NET while keeping the heavy lifting in
 
 ## Build prerequisites
 
-1. Build `libwebrtc` as described in `libwebrtc/README.md` (in your WebRTC
+1. Fetch the upstream wrapper (submodule):
+
+```bash
+git submodule update --init --recursive
+```
+
+This populates `external/libwebrtc` and is used by default if
+`LIBWEBRTC_ROOT` is not set.
+
+2. Build `libwebrtc` as described in `external/libwebrtc/README.md` (in your WebRTC
    checkout). You need a `libwebrtc` shared library (`.dll` or `.so`).
-2. Note the `libwebrtc` repo path and the build output directory.
+3. Note the build output directory (webrtc `out` folder).
 
 ## Build native (C ABI)
 
 ```bash
 cmake -S native -B native/build \
-  -DLIBWEBRTC_ROOT=/home/vitaly/libwebrtc \
+  -DLIBWEBRTC_ROOT=/path/to/libwebrtc \
   -DLIBWEBRTC_BUILD_DIR=/path/to/webrtc/out-debug/Linux-x64 \
   -DLUMENRTC_ENABLE_DESKTOP_CAPTURE=ON
 
 cmake --build native/build -j
 ```
+
+If you use the submodule at `external/libwebrtc`, you can omit
+`LIBWEBRTC_ROOT` and only pass `LIBWEBRTC_BUILD_DIR`.
 
 If your `libwebrtc` was built without desktop capture, set
 `LUMENRTC_ENABLE_DESKTOP_CAPTURE=OFF` to avoid ABI mismatches.
