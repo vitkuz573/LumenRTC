@@ -5,6 +5,7 @@
 #include "rtc_audio_source.h"
 #include "rtc_audio_track.h"
 #include "rtc_data_channel.h"
+#include "rtc_dtls_transport.h"
 #include "rtc_desktop_capturer.h"
 #include "rtc_desktop_device.h"
 #include "rtc_desktop_media_list.h"
@@ -57,6 +58,8 @@ using libwebrtc::RTCRtpCodecCapability;
 using libwebrtc::RTCRtpHeaderExtensionCapability;
 using libwebrtc::RTCRtpReceiver;
 using libwebrtc::RTCRtpTransceiver;
+using libwebrtc::RTCDtlsTransport;
+using libwebrtc::RTCDtlsTransportInformation;
 using libwebrtc::RTCVideoFrame;
 using libwebrtc::RTCVideoRenderer;
 using libwebrtc::RTCVideoSource;
@@ -333,6 +336,28 @@ static std::string BuildRtpCapabilitiesJson(
 
   json.append("]}");
   return json;
+}
+
+static bool FillDtlsInfo(scoped_refptr<RTCDtlsTransport> transport,
+                         lrtc_dtls_transport_info_t* info) {
+  if (!info) {
+    return false;
+  }
+  info->state = static_cast<int>(LRTC_DTLS_NEW);
+  info->ssl_cipher_suite = 0;
+  info->srtp_cipher_suite = 0;
+  if (!transport.get()) {
+    return false;
+  }
+  scoped_refptr<RTCDtlsTransportInformation> dtls_info =
+      transport->GetInformation();
+  if (!dtls_info.get()) {
+    return false;
+  }
+  info->state = static_cast<int>(dtls_info->state());
+  info->ssl_cipher_suite = dtls_info->ssl_cipher_suite();
+  info->srtp_cipher_suite = dtls_info->srtp_cipher_suite();
+  return true;
 }
 
 static int32_t CopyPortableString(const string& value, char* buffer,
@@ -2671,6 +2696,14 @@ int32_t LUMENRTC_CALL lrtc_rtp_sender_get_parameters_mid(
   return CopyPortableString(parameters->mid(), buffer, buffer_len);
 }
 
+int LUMENRTC_CALL lrtc_rtp_sender_get_dtls_info(
+    lrtc_rtp_sender_t* sender, lrtc_dtls_transport_info_t* info) {
+  if (!sender || !sender->ref.get()) {
+    return 0;
+  }
+  return FillDtlsInfo(sender->ref->dtls_transport(), info) ? 1 : 0;
+}
+
 uint32_t LUMENRTC_CALL lrtc_rtp_sender_get_ssrc(lrtc_rtp_sender_t* sender) {
   if (!sender || !sender->ref.get()) {
     return 0;
@@ -2937,6 +2970,14 @@ int32_t LUMENRTC_CALL lrtc_rtp_receiver_get_parameters_mid(
     return -1;
   }
   return CopyPortableString(parameters->mid(), buffer, buffer_len);
+}
+
+int LUMENRTC_CALL lrtc_rtp_receiver_get_dtls_info(
+    lrtc_rtp_receiver_t* receiver, lrtc_dtls_transport_info_t* info) {
+  if (!receiver || !receiver->ref.get()) {
+    return 0;
+  }
+  return FillDtlsInfo(receiver->ref->dtls_transport(), info) ? 1 : 0;
 }
 
 uint32_t LUMENRTC_CALL lrtc_rtp_receiver_stream_id_count(

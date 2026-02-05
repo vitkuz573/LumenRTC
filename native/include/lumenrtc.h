@@ -86,6 +86,14 @@ typedef enum lrtc_rtp_transceiver_direction {
   LRTC_RTP_TRANSCEIVER_STOPPED = 4,
 } lrtc_rtp_transceiver_direction;
 
+typedef enum lrtc_dtls_transport_state {
+  LRTC_DTLS_NEW = 0,
+  LRTC_DTLS_CONNECTING = 1,
+  LRTC_DTLS_CONNECTED = 2,
+  LRTC_DTLS_CLOSED = 3,
+  LRTC_DTLS_FAILED = 4,
+} lrtc_dtls_transport_state;
+
 typedef enum lrtc_audio_source_type {
   LRTC_AUDIO_SOURCE_MICROPHONE = 0,
   LRTC_AUDIO_SOURCE_CUSTOM = 1,
@@ -242,6 +250,12 @@ typedef struct lrtc_rtp_encoding_info_t {
   int num_temporal_layers;
   int adaptive_ptime;
 } lrtc_rtp_encoding_info_t;
+
+typedef struct lrtc_dtls_transport_info_t {
+  int state;  // lrtc_dtls_transport_state
+  int ssl_cipher_suite;
+  int srtp_cipher_suite;
+} lrtc_dtls_transport_info_t;
 
 typedef struct lrtc_rtp_transceiver_init_t {
   int direction;  // lrtc_rtp_transceiver_direction
@@ -700,6 +714,8 @@ LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_sender_get_degradation_preference(
     lrtc_rtp_sender_t* sender);
 LUMENRTC_API int32_t LUMENRTC_CALL lrtc_rtp_sender_get_parameters_mid(
     lrtc_rtp_sender_t* sender, char* buffer, uint32_t buffer_len);
+LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_sender_get_dtls_info(
+    lrtc_rtp_sender_t* sender, lrtc_dtls_transport_info_t* info);
 LUMENRTC_API uint32_t LUMENRTC_CALL lrtc_rtp_sender_get_ssrc(
     lrtc_rtp_sender_t* sender);
 LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_sender_replace_audio_track(
@@ -745,6 +761,8 @@ LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_receiver_get_degradation_preference(
     lrtc_rtp_receiver_t* receiver);
 LUMENRTC_API int32_t LUMENRTC_CALL lrtc_rtp_receiver_get_parameters_mid(
     lrtc_rtp_receiver_t* receiver, char* buffer, uint32_t buffer_len);
+LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_receiver_get_dtls_info(
+    lrtc_rtp_receiver_t* receiver, lrtc_dtls_transport_info_t* info);
 LUMENRTC_API uint32_t LUMENRTC_CALL lrtc_rtp_receiver_stream_id_count(
     lrtc_rtp_receiver_t* receiver);
 LUMENRTC_API int32_t LUMENRTC_CALL lrtc_rtp_receiver_get_stream_id(

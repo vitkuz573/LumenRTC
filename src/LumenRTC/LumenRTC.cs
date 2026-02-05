@@ -169,6 +169,15 @@ public enum RtpTransceiverDirection
     Stopped = 4,
 }
 
+public enum DtlsTransportState
+{
+    New = 0,
+    Connecting = 1,
+    Connected = 2,
+    Closed = 3,
+    Failed = 4,
+}
+
 public enum VideoFrameFormat
 {
     Argb = 0,
@@ -298,6 +307,11 @@ public sealed record RtpCapabilities(
     public static RtpCapabilities Empty { get; } =
         new(Array.Empty<RtpCodecCapability>(), Array.Empty<RtpHeaderExtensionCapability>());
 }
+
+public readonly record struct DtlsTransportInfo(
+    DtlsTransportState State,
+    int SslCipherSuite,
+    int SrtpCipherSuite);
 
 public sealed class RtpTransceiverInit
 {
@@ -1502,6 +1516,18 @@ public sealed class RtpSender : SafeHandle
 
     public string ParametersMid => NativeString.GetString(handle, NativeMethods.lrtc_rtp_sender_get_parameters_mid);
 
+    public DtlsTransportInfo? GetDtlsInfo()
+    {
+        if (NativeMethods.lrtc_rtp_sender_get_dtls_info(handle, out var info) == 0)
+        {
+            return null;
+        }
+        return new DtlsTransportInfo(
+            (DtlsTransportState)info.state,
+            info.ssl_cipher_suite,
+            info.srtp_cipher_suite);
+    }
+
     public bool SetStreamIds(IReadOnlyList<string> streamIds)
     {
         if (streamIds == null) throw new ArgumentNullException(nameof(streamIds));
@@ -1643,6 +1669,18 @@ public sealed class RtpReceiver : SafeHandle
     }
 
     public string ParametersMid => NativeString.GetString(handle, NativeMethods.lrtc_rtp_receiver_get_parameters_mid);
+
+    public DtlsTransportInfo? GetDtlsInfo()
+    {
+        if (NativeMethods.lrtc_rtp_receiver_get_dtls_info(handle, out var info) == 0)
+        {
+            return null;
+        }
+        return new DtlsTransportInfo(
+            (DtlsTransportState)info.state,
+            info.ssl_cipher_suite,
+            info.srtp_cipher_suite);
+    }
 
     public override bool IsInvalid => handle == IntPtr.Zero;
 

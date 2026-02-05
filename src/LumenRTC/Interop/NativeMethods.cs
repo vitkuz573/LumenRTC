@@ -74,6 +74,15 @@ internal enum LrtcRtpTransceiverDirection : int
     Stopped = 4,
 }
 
+internal enum LrtcDtlsTransportState : int
+{
+    New = 0,
+    Connecting = 1,
+    Connected = 2,
+    Closed = 3,
+    Failed = 4,
+}
+
 internal enum LrtcAudioSourceType : int
 {
     Microphone = 0,
@@ -179,6 +188,14 @@ internal struct LrtcRtpEncodingInfo
     public int network_priority;
     public int num_temporal_layers;
     public int adaptive_ptime;
+}
+
+[StructLayout(LayoutKind.Sequential)]
+internal struct LrtcDtlsTransportInfo
+{
+    public int state;
+    public int ssl_cipher_suite;
+    public int srtp_cipher_suite;
 }
 
 [StructLayout(LayoutKind.Sequential)]
@@ -917,6 +934,11 @@ internal static class NativeMethods
         uint bufferLen);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern int lrtc_rtp_sender_get_dtls_info(
+        IntPtr sender,
+        out LrtcDtlsTransportInfo info);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     internal static extern uint lrtc_rtp_sender_get_ssrc(IntPtr sender);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
@@ -1003,6 +1025,11 @@ internal static class NativeMethods
         IntPtr receiver,
         IntPtr buffer,
         uint bufferLen);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern int lrtc_rtp_receiver_get_dtls_info(
+        IntPtr receiver,
+        out LrtcDtlsTransportInfo info);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     internal static extern uint lrtc_rtp_receiver_stream_id_count(IntPtr receiver);
