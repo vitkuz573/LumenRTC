@@ -457,19 +457,29 @@ class PeerConnectionObserverImpl : public RTCPeerConnectionObserver {
     if (!track.get()) {
       return;
     }
+    if (cb.callbacks.on_track) {
+      auto transceiver_handle = new lrtc_rtp_transceiver_t();
+      transceiver_handle->ref = transceiver;
+      auto receiver_handle = new lrtc_rtp_receiver_t();
+      receiver_handle->ref = receiver;
+      cb.callbacks.on_track(cb.user_data, transceiver_handle, receiver_handle);
+    }
     string kind = track->kind();
-    if (cb.callbacks.on_video_track &&
-        std::strcmp(kind.c_string(), "video") == 0) {
-      auto handle = new lrtc_video_track_t();
-      handle->ref = static_cast<RTCVideoTrack*>(track.get());
-      cb.callbacks.on_video_track(cb.user_data, handle);
+    if (std::strcmp(kind.c_string(), "video") == 0) {
+      if (cb.callbacks.on_video_track) {
+        auto handle = new lrtc_video_track_t();
+        handle->ref = static_cast<RTCVideoTrack*>(track.get());
+        cb.callbacks.on_video_track(cb.user_data, handle);
+      }
       return;
     }
-    if (cb.callbacks.on_audio_track &&
-        std::strcmp(kind.c_string(), "audio") == 0) {
-      auto handle = new lrtc_audio_track_t();
-      handle->ref = static_cast<RTCAudioTrack*>(track.get());
-      cb.callbacks.on_audio_track(cb.user_data, handle);
+    if (std::strcmp(kind.c_string(), "audio") == 0) {
+      if (cb.callbacks.on_audio_track) {
+        auto handle = new lrtc_audio_track_t();
+        handle->ref = static_cast<RTCAudioTrack*>(track.get());
+        cb.callbacks.on_audio_track(cb.user_data, handle);
+      }
+      return;
     }
   }
 
@@ -1344,6 +1354,24 @@ bool LUMENRTC_CALL lrtc_media_stream_remove_video_track(
   return stream->ref->RemoveTrack(track->ref);
 }
 
+int32_t LUMENRTC_CALL lrtc_media_stream_get_id(lrtc_media_stream_t* stream,
+                                               char* buffer,
+                                               uint32_t buffer_len) {
+  if (!stream || !stream->ref.get()) {
+    return -1;
+  }
+  return CopyPortableString(stream->ref->id(), buffer, buffer_len);
+}
+
+int32_t LUMENRTC_CALL lrtc_media_stream_get_label(lrtc_media_stream_t* stream,
+                                                  char* buffer,
+                                                  uint32_t buffer_len) {
+  if (!stream || !stream->ref.get()) {
+    return -1;
+  }
+  return CopyPortableString(stream->ref->label(), buffer, buffer_len);
+}
+
 void LUMENRTC_CALL lrtc_media_stream_release(lrtc_media_stream_t* stream) {
   delete stream;
 }
@@ -1577,6 +1605,58 @@ void LUMENRTC_CALL lrtc_peer_connection_get_stats(
       });
 }
 
+void LUMENRTC_CALL lrtc_peer_connection_get_sender_stats(
+    lrtc_peer_connection_t* pc, lrtc_rtp_sender_t* sender,
+    lrtc_stats_success_cb success, lrtc_stats_failure_cb failure,
+    void* user_data) {
+  if (!pc || !pc->ref.get() || !sender || !sender->ref.get()) {
+    if (failure) {
+      failure(user_data, "invalid arguments");
+    }
+    return;
+  }
+  pc->ref->GetStats(
+      sender->ref,
+      [success, user_data](vector<scoped_refptr<MediaRTCStats>> reports) {
+        if (!success) {
+          return;
+        }
+        std::string json = BuildStatsJson(reports);
+        success(user_data, json.c_str());
+      },
+      [failure, user_data](const char* error) {
+        if (failure) {
+          failure(user_data, error);
+        }
+      });
+}
+
+void LUMENRTC_CALL lrtc_peer_connection_get_receiver_stats(
+    lrtc_peer_connection_t* pc, lrtc_rtp_receiver_t* receiver,
+    lrtc_stats_success_cb success, lrtc_stats_failure_cb failure,
+    void* user_data) {
+  if (!pc || !pc->ref.get() || !receiver || !receiver->ref.get()) {
+    if (failure) {
+      failure(user_data, "invalid arguments");
+    }
+    return;
+  }
+  pc->ref->GetStats(
+      receiver->ref,
+      [success, user_data](vector<scoped_refptr<MediaRTCStats>> reports) {
+        if (!success) {
+          return;
+        }
+        std::string json = BuildStatsJson(reports);
+        success(user_data, json.c_str());
+      },
+      [failure, user_data](const char* error) {
+        if (failure) {
+          failure(user_data, error);
+        }
+      });
+}
+
 int LUMENRTC_CALL lrtc_peer_connection_set_codec_preferences(
     lrtc_peer_connection_t* pc, lrtc_media_type media_type,
     const char** mime_types, uint32_t mime_type_count) {
@@ -1691,6 +1771,54 @@ lrtc_rtp_sender_t* LUMENRTC_CALL lrtc_peer_connection_add_video_track_sender(
   }
   auto handle = new lrtc_rtp_sender_t();
   handle->ref = sender;
+  return handle;
+}
+
+lrtc_rtp_transceiver_t* LUMENRTC_CALL lrtc_peer_connection_add_transceiver(
+    lrtc_peer_connection_t* pc, lrtc_media_type media_type) {
+  if (!pc || !pc->ref.get()) {
+    return nullptr;
+  }
+  scoped_refptr<libwebrtc::RTCRtpTransceiver> transceiver =
+      pc->ref->AddTransceiver(
+          static_cast<libwebrtc::RTCMediaType>(media_type));
+  if (!transceiver.get()) {
+    return nullptr;
+  }
+  auto handle = new lrtc_rtp_transceiver_t();
+  handle->ref = transceiver;
+  return handle;
+}
+
+lrtc_rtp_transceiver_t* LUMENRTC_CALL
+lrtc_peer_connection_add_audio_track_transceiver(
+    lrtc_peer_connection_t* pc, lrtc_audio_track_t* track) {
+  if (!pc || !pc->ref.get() || !track || !track->ref.get()) {
+    return nullptr;
+  }
+  scoped_refptr<libwebrtc::RTCRtpTransceiver> transceiver =
+      pc->ref->AddTransceiver(track->ref);
+  if (!transceiver.get()) {
+    return nullptr;
+  }
+  auto handle = new lrtc_rtp_transceiver_t();
+  handle->ref = transceiver;
+  return handle;
+}
+
+lrtc_rtp_transceiver_t* LUMENRTC_CALL
+lrtc_peer_connection_add_video_track_transceiver(
+    lrtc_peer_connection_t* pc, lrtc_video_track_t* track) {
+  if (!pc || !pc->ref.get() || !track || !track->ref.get()) {
+    return nullptr;
+  }
+  scoped_refptr<libwebrtc::RTCRtpTransceiver> transceiver =
+      pc->ref->AddTransceiver(track->ref);
+  if (!transceiver.get()) {
+    return nullptr;
+  }
+  auto handle = new lrtc_rtp_transceiver_t();
+  handle->ref = transceiver;
   return handle;
 }
 
@@ -2073,6 +2201,42 @@ int LUMENRTC_CALL lrtc_rtp_sender_set_encoding_parameters(
   return sender->ref->set_parameters(parameters) ? 1 : 0;
 }
 
+int LUMENRTC_CALL lrtc_rtp_sender_replace_audio_track(
+    lrtc_rtp_sender_t* sender, lrtc_audio_track_t* track) {
+  if (!sender || !sender->ref.get()) {
+    return 0;
+  }
+  if (sender->ref->media_type() != libwebrtc::RTCMediaType::AUDIO) {
+    return 0;
+  }
+  scoped_refptr<RTCMediaTrack> media_track;
+  if (track) {
+    if (!track->ref.get()) {
+      return 0;
+    }
+    media_track = static_cast<RTCMediaTrack*>(track->ref.get());
+  }
+  return sender->ref->set_track(media_track) ? 1 : 0;
+}
+
+int LUMENRTC_CALL lrtc_rtp_sender_replace_video_track(
+    lrtc_rtp_sender_t* sender, lrtc_video_track_t* track) {
+  if (!sender || !sender->ref.get()) {
+    return 0;
+  }
+  if (sender->ref->media_type() != libwebrtc::RTCMediaType::VIDEO) {
+    return 0;
+  }
+  scoped_refptr<RTCMediaTrack> media_track;
+  if (track) {
+    if (!track->ref.get()) {
+      return 0;
+    }
+    media_track = static_cast<RTCMediaTrack*>(track->ref.get());
+  }
+  return sender->ref->set_track(media_track) ? 1 : 0;
+}
+
 int LUMENRTC_CALL lrtc_rtp_sender_get_media_type(lrtc_rtp_sender_t* sender) {
   if (!sender || !sender->ref.get()) {
     return -1;
@@ -2086,6 +2250,38 @@ int32_t LUMENRTC_CALL lrtc_rtp_sender_get_id(
     return -1;
   }
   return CopyPortableString(sender->ref->id(), buffer, buffer_len);
+}
+
+uint32_t LUMENRTC_CALL lrtc_rtp_sender_stream_id_count(
+    lrtc_rtp_sender_t* sender) {
+  if (!sender || !sender->ref.get()) {
+    return 0;
+  }
+  return static_cast<uint32_t>(sender->ref->stream_ids().size());
+}
+
+int32_t LUMENRTC_CALL lrtc_rtp_sender_get_stream_id(
+    lrtc_rtp_sender_t* sender, uint32_t index, char* buffer,
+    uint32_t buffer_len) {
+  if (!sender || !sender->ref.get()) {
+    return -1;
+  }
+  vector<string> ids = sender->ref->stream_ids();
+  if (index >= ids.size()) {
+    return -1;
+  }
+  return CopyPortableString(ids[index], buffer, buffer_len);
+}
+
+int LUMENRTC_CALL lrtc_rtp_sender_set_stream_ids(
+    lrtc_rtp_sender_t* sender, const char** stream_ids,
+    uint32_t stream_id_count) {
+  if (!sender || !sender->ref.get()) {
+    return 0;
+  }
+  vector<string> ids = BuildStringVector(stream_ids, stream_id_count);
+  sender->ref->set_stream_ids(ids);
+  return 1;
 }
 
 lrtc_audio_track_t* LUMENRTC_CALL lrtc_rtp_sender_get_audio_track(
@@ -2142,6 +2338,53 @@ int32_t LUMENRTC_CALL lrtc_rtp_receiver_get_id(
     return -1;
   }
   return CopyPortableString(receiver->ref->id(), buffer, buffer_len);
+}
+
+uint32_t LUMENRTC_CALL lrtc_rtp_receiver_stream_id_count(
+    lrtc_rtp_receiver_t* receiver) {
+  if (!receiver || !receiver->ref.get()) {
+    return 0;
+  }
+  return static_cast<uint32_t>(receiver->ref->stream_ids().size());
+}
+
+int32_t LUMENRTC_CALL lrtc_rtp_receiver_get_stream_id(
+    lrtc_rtp_receiver_t* receiver, uint32_t index, char* buffer,
+    uint32_t buffer_len) {
+  if (!receiver || !receiver->ref.get()) {
+    return -1;
+  }
+  vector<string> ids = receiver->ref->stream_ids();
+  if (index >= ids.size()) {
+    return -1;
+  }
+  return CopyPortableString(ids[index], buffer, buffer_len);
+}
+
+uint32_t LUMENRTC_CALL lrtc_rtp_receiver_stream_count(
+    lrtc_rtp_receiver_t* receiver) {
+  if (!receiver || !receiver->ref.get()) {
+    return 0;
+  }
+  return static_cast<uint32_t>(receiver->ref->streams().size());
+}
+
+lrtc_media_stream_t* LUMENRTC_CALL lrtc_rtp_receiver_get_stream(
+    lrtc_rtp_receiver_t* receiver, uint32_t index) {
+  if (!receiver || !receiver->ref.get()) {
+    return nullptr;
+  }
+  vector<scoped_refptr<RTCMediaStream>> streams = receiver->ref->streams();
+  if (index >= streams.size()) {
+    return nullptr;
+  }
+  scoped_refptr<RTCMediaStream> stream = streams[index];
+  if (!stream.get()) {
+    return nullptr;
+  }
+  auto handle = new lrtc_media_stream_t();
+  handle->ref = stream;
+  return handle;
 }
 
 lrtc_audio_track_t* LUMENRTC_CALL lrtc_rtp_receiver_get_audio_track(

@@ -436,6 +436,33 @@ internal static class NativeString
             Marshal.FreeHGlobal(buffer);
         }
     }
+
+    public static string GetIndexedString(
+        IntPtr handle,
+        uint index,
+        Func<IntPtr, uint, IntPtr, uint, int> getter)
+    {
+        var required = getter(handle, index, IntPtr.Zero, 0);
+        if (required <= 0)
+        {
+            return string.Empty;
+        }
+
+        var buffer = Marshal.AllocHGlobal(required);
+        try
+        {
+            var result = getter(handle, index, buffer, (uint)required);
+            if (result < 0)
+            {
+                return string.Empty;
+            }
+            return Utf8String.Read(buffer);
+        }
+        finally
+        {
+            Marshal.FreeHGlobal(buffer);
+        }
+    }
 }
 
 public sealed class PeerConnectionFactory : SafeHandle
@@ -591,7 +618,7 @@ public sealed class PeerConnectionFactory : SafeHandle
         {
             throw new InvalidOperationException("Failed to create media stream.");
         }
-        return new MediaStream(stream, streamId);
+        return new MediaStream(stream);
     }
 
     public IReadOnlyList<string> GetRtpSenderCodecMimeTypes(MediaType mediaType)
@@ -973,11 +1000,13 @@ public sealed class VideoSource : SafeHandle
 public sealed class MediaStream : SafeHandle
 {
     public string Id { get; }
+    public string Label { get; }
 
-    internal MediaStream(IntPtr handle, string id) : base(IntPtr.Zero, true)
+    internal MediaStream(IntPtr handle) : base(IntPtr.Zero, true)
     {
-        Id = id;
         SetHandle(handle);
+        Id = NativeString.GetString(handle, NativeMethods.lrtc_media_stream_get_id);
+        Label = NativeString.GetString(handle, NativeMethods.lrtc_media_stream_get_label);
     }
 
     public bool AddAudioTrack(AudioTrack track)
@@ -1035,6 +1064,8 @@ public sealed class RtpSender : SafeHandle
 
     public string Id => NativeString.GetString(handle, NativeMethods.lrtc_rtp_sender_get_id);
 
+    public IReadOnlyList<string> StreamIds => GetStreamIds();
+
     public AudioTrack? AudioTrack
     {
         get
@@ -1053,11 +1084,42 @@ public sealed class RtpSender : SafeHandle
         }
     }
 
+    public bool ReplaceTrack(AudioTrack? track)
+    {
+        var result = NativeMethods.lrtc_rtp_sender_replace_audio_track(
+            handle,
+            track?.DangerousGetHandle() ?? IntPtr.Zero);
+        return result != 0;
+    }
+
+    public bool ReplaceTrack(VideoTrack? track)
+    {
+        var result = NativeMethods.lrtc_rtp_sender_replace_video_track(
+            handle,
+            track?.DangerousGetHandle() ?? IntPtr.Zero);
+        return result != 0;
+    }
+
+    public bool ClearTrack()
+    {
+        return MediaType == MediaType.Audio
+            ? ReplaceTrack((AudioTrack?)null)
+            : ReplaceTrack((VideoTrack?)null);
+    }
+
     public bool SetEncodingParameters(RtpEncodingSettings settings)
     {
         if (settings == null) throw new ArgumentNullException(nameof(settings));
         var native = settings.ToNative();
         var result = NativeMethods.lrtc_rtp_sender_set_encoding_parameters(handle, ref native);
+        return result != 0;
+    }
+
+    public bool SetStreamIds(IReadOnlyList<string> streamIds)
+    {
+        if (streamIds == null) throw new ArgumentNullException(nameof(streamIds));
+        using var ids = new Utf8StringArray(streamIds);
+        var result = NativeMethods.lrtc_rtp_sender_set_stream_ids(handle, ids.Pointer, (uint)ids.Count);
         return result != 0;
     }
 
@@ -1067,6 +1129,26 @@ public sealed class RtpSender : SafeHandle
     {
         NativeMethods.lrtc_rtp_sender_release(handle);
         return true;
+    }
+
+    private IReadOnlyList<string> GetStreamIds()
+    {
+        var count = NativeMethods.lrtc_rtp_sender_stream_id_count(handle);
+        if (count == 0)
+        {
+            return Array.Empty<string>();
+        }
+
+        var list = new List<string>((int)count);
+        for (uint i = 0; i < count; i++)
+        {
+            var value = NativeString.GetIndexedString(handle, i, NativeMethods.lrtc_rtp_sender_get_stream_id);
+            if (!string.IsNullOrEmpty(value))
+            {
+                list.Add(value);
+            }
+        }
+        return list;
     }
 }
 
@@ -1092,6 +1174,10 @@ public sealed class RtpReceiver : SafeHandle
 
     public string Id => NativeString.GetString(handle, NativeMethods.lrtc_rtp_receiver_get_id);
 
+    public IReadOnlyList<string> StreamIds => GetStreamIds();
+
+    public IReadOnlyList<MediaStream> Streams => GetStreams();
+
     public AudioTrack? AudioTrack
     {
         get
@@ -1116,6 +1202,46 @@ public sealed class RtpReceiver : SafeHandle
     {
         NativeMethods.lrtc_rtp_receiver_release(handle);
         return true;
+    }
+
+    private IReadOnlyList<string> GetStreamIds()
+    {
+        var count = NativeMethods.lrtc_rtp_receiver_stream_id_count(handle);
+        if (count == 0)
+        {
+            return Array.Empty<string>();
+        }
+
+        var list = new List<string>((int)count);
+        for (uint i = 0; i < count; i++)
+        {
+            var value = NativeString.GetIndexedString(handle, i, NativeMethods.lrtc_rtp_receiver_get_stream_id);
+            if (!string.IsNullOrEmpty(value))
+            {
+                list.Add(value);
+            }
+        }
+        return list;
+    }
+
+    private IReadOnlyList<MediaStream> GetStreams()
+    {
+        var count = NativeMethods.lrtc_rtp_receiver_stream_count(handle);
+        if (count == 0)
+        {
+            return Array.Empty<MediaStream>();
+        }
+
+        var list = new List<MediaStream>((int)count);
+        for (uint i = 0; i < count; i++)
+        {
+            var stream = NativeMethods.lrtc_rtp_receiver_get_stream(handle, i);
+            if (stream != IntPtr.Zero)
+            {
+                list.Add(new MediaStream(stream));
+            }
+        }
+        return list;
     }
 }
 
@@ -1439,6 +1565,96 @@ public sealed class PeerConnection : SafeHandle
         return tcs.Task;
     }
 
+    public void GetSenderStats(RtpSender sender, Action<string> onSuccess, Action<string> onFailure)
+    {
+        if (sender == null) throw new ArgumentNullException(nameof(sender));
+        if (onSuccess == null) throw new ArgumentNullException(nameof(onSuccess));
+        if (onFailure == null) throw new ArgumentNullException(nameof(onFailure));
+
+        LrtcStatsSuccessCb successCb = (_, jsonPtr) => onSuccess(Utf8String.Read(jsonPtr));
+        LrtcStatsErrorCb errorCb = (_, errPtr) => onFailure(Utf8String.Read(errPtr));
+
+        _keepAlive.Add(successCb);
+        _keepAlive.Add(errorCb);
+
+        NativeMethods.lrtc_peer_connection_get_sender_stats(
+            handle,
+            sender.DangerousGetHandle(),
+            successCb,
+            errorCb,
+            IntPtr.Zero);
+    }
+
+    public Task<string> GetSenderStatsAsync(RtpSender sender, CancellationToken cancellationToken = default)
+    {
+        var tcs = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+        CancellationTokenRegistration registration = default;
+        if (cancellationToken.CanBeCanceled)
+        {
+            registration = cancellationToken.Register(() => tcs.TrySetCanceled(cancellationToken));
+        }
+
+        GetSenderStats(
+            sender,
+            json =>
+            {
+                registration.Dispose();
+                tcs.TrySetResult(json);
+            },
+            error =>
+            {
+                registration.Dispose();
+                tcs.TrySetException(new InvalidOperationException(error));
+            });
+
+        return tcs.Task;
+    }
+
+    public void GetReceiverStats(RtpReceiver receiver, Action<string> onSuccess, Action<string> onFailure)
+    {
+        if (receiver == null) throw new ArgumentNullException(nameof(receiver));
+        if (onSuccess == null) throw new ArgumentNullException(nameof(onSuccess));
+        if (onFailure == null) throw new ArgumentNullException(nameof(onFailure));
+
+        LrtcStatsSuccessCb successCb = (_, jsonPtr) => onSuccess(Utf8String.Read(jsonPtr));
+        LrtcStatsErrorCb errorCb = (_, errPtr) => onFailure(Utf8String.Read(errPtr));
+
+        _keepAlive.Add(successCb);
+        _keepAlive.Add(errorCb);
+
+        NativeMethods.lrtc_peer_connection_get_receiver_stats(
+            handle,
+            receiver.DangerousGetHandle(),
+            successCb,
+            errorCb,
+            IntPtr.Zero);
+    }
+
+    public Task<string> GetReceiverStatsAsync(RtpReceiver receiver, CancellationToken cancellationToken = default)
+    {
+        var tcs = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+        CancellationTokenRegistration registration = default;
+        if (cancellationToken.CanBeCanceled)
+        {
+            registration = cancellationToken.Register(() => tcs.TrySetCanceled(cancellationToken));
+        }
+
+        GetReceiverStats(
+            receiver,
+            json =>
+            {
+                registration.Dispose();
+                tcs.TrySetResult(json);
+            },
+            error =>
+            {
+                registration.Dispose();
+                tcs.TrySetException(new InvalidOperationException(error));
+            });
+
+        return tcs.Task;
+    }
+
     public bool AddStream(MediaStream stream)
     {
         if (stream == null) throw new ArgumentNullException(nameof(stream));
@@ -1489,6 +1705,38 @@ public sealed class PeerConnection : SafeHandle
             throw new InvalidOperationException("Failed to add video track sender.");
         }
         return new RtpSender(sender);
+    }
+
+    public RtpTransceiver AddTransceiver(MediaType mediaType)
+    {
+        var transceiver = NativeMethods.lrtc_peer_connection_add_transceiver(handle, (LrtcMediaType)mediaType);
+        if (transceiver == IntPtr.Zero)
+        {
+            throw new InvalidOperationException("Failed to add transceiver.");
+        }
+        return new RtpTransceiver(transceiver);
+    }
+
+    public RtpTransceiver AddTransceiver(AudioTrack track)
+    {
+        if (track == null) throw new ArgumentNullException(nameof(track));
+        var transceiver = NativeMethods.lrtc_peer_connection_add_audio_track_transceiver(handle, track.DangerousGetHandle());
+        if (transceiver == IntPtr.Zero)
+        {
+            throw new InvalidOperationException("Failed to add audio transceiver.");
+        }
+        return new RtpTransceiver(transceiver);
+    }
+
+    public RtpTransceiver AddTransceiver(VideoTrack track)
+    {
+        if (track == null) throw new ArgumentNullException(nameof(track));
+        var transceiver = NativeMethods.lrtc_peer_connection_add_video_track_transceiver(handle, track.DangerousGetHandle());
+        if (transceiver == IntPtr.Zero)
+        {
+            throw new InvalidOperationException("Failed to add video transceiver.");
+        }
+        return new RtpTransceiver(transceiver);
     }
 
     public bool RemoveTrack(RtpSender sender)
@@ -1801,6 +2049,7 @@ public sealed class PeerConnectionCallbacks
     public Action<DataChannel>? OnDataChannel;
     public Action<VideoTrack>? OnVideoTrack;
     public Action<AudioTrack>? OnAudioTrack;
+    public Action<RtpTransceiver, RtpReceiver>? OnTrack;
     public Action? OnRenegotiationNeeded;
 
     private LrtcPeerConnectionStateCb? _signalingStateCb;
@@ -1811,6 +2060,7 @@ public sealed class PeerConnectionCallbacks
     private LrtcDataChannelCreatedCb? _dataChannelCb;
     private LrtcVideoTrackCb? _videoTrackCb;
     private LrtcAudioTrackCb? _audioTrackCb;
+    private LrtcTrackCb? _trackCb;
     private LrtcVoidCb? _renegotiationCb;
 
     internal LrtcPeerConnectionCallbacks BuildNative()
@@ -1824,6 +2074,8 @@ public sealed class PeerConnectionCallbacks
         _dataChannelCb = (ud, channelPtr) => OnDataChannel?.Invoke(new DataChannel(channelPtr));
         _videoTrackCb = (ud, trackPtr) => OnVideoTrack?.Invoke(new VideoTrack(trackPtr));
         _audioTrackCb = (ud, trackPtr) => OnAudioTrack?.Invoke(new AudioTrack(trackPtr));
+        _trackCb = (ud, transceiverPtr, receiverPtr) =>
+            OnTrack?.Invoke(new RtpTransceiver(transceiverPtr), new RtpReceiver(receiverPtr));
         _renegotiationCb = ud => OnRenegotiationNeeded?.Invoke();
 
         return new LrtcPeerConnectionCallbacks
@@ -1836,6 +2088,7 @@ public sealed class PeerConnectionCallbacks
             on_data_channel = _dataChannelCb,
             on_video_track = _videoTrackCb,
             on_audio_track = _audioTrackCb,
+            on_track = _trackCb,
             on_renegotiation_needed = _renegotiationCb,
         };
     }

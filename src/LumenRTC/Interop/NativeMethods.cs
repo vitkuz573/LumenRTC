@@ -197,6 +197,9 @@ internal delegate void LrtcVideoTrackCb(IntPtr userData, IntPtr track);
 internal delegate void LrtcAudioTrackCb(IntPtr userData, IntPtr track);
 
 [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+internal delegate void LrtcTrackCb(IntPtr userData, IntPtr transceiver, IntPtr receiver);
+
+[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 internal delegate void LrtcStatsSuccessCb(IntPtr userData, IntPtr json);
 
 [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
@@ -213,6 +216,7 @@ internal struct LrtcPeerConnectionCallbacks
     public LrtcDataChannelCreatedCb? on_data_channel;
     public LrtcVideoTrackCb? on_video_track;
     public LrtcAudioTrackCb? on_audio_track;
+    public LrtcTrackCb? on_track;
     public LrtcVoidCb? on_renegotiation_needed;
 }
 
@@ -521,6 +525,12 @@ internal static class NativeMethods
     internal static extern bool lrtc_media_stream_remove_video_track(IntPtr stream, IntPtr track);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern int lrtc_media_stream_get_id(IntPtr stream, IntPtr buffer, uint bufferLen);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern int lrtc_media_stream_get_label(IntPtr stream, IntPtr buffer, uint bufferLen);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     internal static extern void lrtc_media_stream_release(IntPtr stream);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
@@ -602,6 +612,22 @@ internal static class NativeMethods
         IntPtr userData);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern void lrtc_peer_connection_get_sender_stats(
+        IntPtr pc,
+        IntPtr sender,
+        LrtcStatsSuccessCb success,
+        LrtcStatsErrorCb failure,
+        IntPtr userData);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern void lrtc_peer_connection_get_receiver_stats(
+        IntPtr pc,
+        IntPtr receiver,
+        LrtcStatsSuccessCb success,
+        LrtcStatsErrorCb failure,
+        IntPtr userData);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     internal static extern int lrtc_peer_connection_set_codec_preferences(
         IntPtr pc,
         LrtcMediaType mediaType,
@@ -648,6 +674,21 @@ internal static class NativeMethods
         IntPtr track,
         IntPtr streamIds,
         uint streamIdCount);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern IntPtr lrtc_peer_connection_add_transceiver(
+        IntPtr pc,
+        LrtcMediaType mediaType);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern IntPtr lrtc_peer_connection_add_audio_track_transceiver(
+        IntPtr pc,
+        IntPtr track);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern IntPtr lrtc_peer_connection_add_video_track_transceiver(
+        IntPtr pc,
+        IntPtr track);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     internal static extern int lrtc_peer_connection_remove_track(
@@ -781,6 +822,16 @@ internal static class NativeMethods
         ref LrtcRtpEncodingSettings settings);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern int lrtc_rtp_sender_replace_audio_track(
+        IntPtr sender,
+        IntPtr track);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern int lrtc_rtp_sender_replace_video_track(
+        IntPtr sender,
+        IntPtr track);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     internal static extern int lrtc_rtp_sender_get_media_type(IntPtr sender);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
@@ -788,6 +839,22 @@ internal static class NativeMethods
         IntPtr sender,
         IntPtr buffer,
         uint bufferLen);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern uint lrtc_rtp_sender_stream_id_count(IntPtr sender);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern int lrtc_rtp_sender_get_stream_id(
+        IntPtr sender,
+        uint index,
+        IntPtr buffer,
+        uint bufferLen);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern int lrtc_rtp_sender_set_stream_ids(
+        IntPtr sender,
+        IntPtr streamIds,
+        uint streamIdCount);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     internal static extern IntPtr lrtc_rtp_sender_get_audio_track(IntPtr sender);
@@ -806,6 +873,24 @@ internal static class NativeMethods
         IntPtr receiver,
         IntPtr buffer,
         uint bufferLen);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern uint lrtc_rtp_receiver_stream_id_count(IntPtr receiver);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern int lrtc_rtp_receiver_get_stream_id(
+        IntPtr receiver,
+        uint index,
+        IntPtr buffer,
+        uint bufferLen);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern uint lrtc_rtp_receiver_stream_count(IntPtr receiver);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern IntPtr lrtc_rtp_receiver_get_stream(
+        IntPtr receiver,
+        uint index);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     internal static extern IntPtr lrtc_rtp_receiver_get_audio_track(IntPtr receiver);
