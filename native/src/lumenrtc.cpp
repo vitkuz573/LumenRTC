@@ -1,17 +1,23 @@
 #include "lumenrtc.h"
 
 #include "libwebrtc.h"
+#include "rtc_audio_device.h"
+#include "rtc_audio_source.h"
 #include "rtc_audio_track.h"
 #include "rtc_data_channel.h"
 #include "rtc_ice_candidate.h"
+#include "rtc_media_stream.h"
 #include "rtc_media_track.h"
 #include "rtc_mediaconstraints.h"
 #include "rtc_peerconnection.h"
 #include "rtc_peerconnection_factory.h"
+#include "rtc_rtp_sender.h"
 #include "rtc_rtp_receiver.h"
 #include "rtc_rtp_transceiver.h"
 #include "rtc_session_description.h"
+#include "rtc_video_device.h"
 #include "rtc_video_frame.h"
+#include "rtc_video_source.h"
 #include "rtc_video_track.h"
 #include "rtc_video_renderer.h"
 
@@ -19,14 +25,19 @@
 #include <cstring>
 #include <mutex>
 #include <utility>
+#include <vector>
 
 using libwebrtc::RTCAudioTrack;
+using libwebrtc::RTCAudioDevice;
+using libwebrtc::RTCAudioOptions;
+using libwebrtc::RTCAudioSource;
 using libwebrtc::RTCConfiguration;
 using libwebrtc::RTCDataChannel;
 using libwebrtc::RTCDataChannelInit;
 using libwebrtc::RTCDataChannelObserver;
 using libwebrtc::RTCIceCandidate;
 using libwebrtc::RTCMediaConstraints;
+using libwebrtc::RTCMediaStream;
 using libwebrtc::RTCMediaTrack;
 using libwebrtc::RTCPeerConnection;
 using libwebrtc::RTCPeerConnectionFactory;
@@ -35,7 +46,10 @@ using libwebrtc::RTCRtpReceiver;
 using libwebrtc::RTCRtpTransceiver;
 using libwebrtc::RTCVideoFrame;
 using libwebrtc::RTCVideoRenderer;
+using libwebrtc::RTCVideoSource;
 using libwebrtc::RTCVideoTrack;
+using libwebrtc::RTCVideoDevice;
+using libwebrtc::RTCVideoCapturer;
 using libwebrtc::scoped_refptr;
 using libwebrtc::string;
 using libwebrtc::vector;
@@ -46,6 +60,30 @@ struct lrtc_factory_t {
 
 struct lrtc_media_constraints_t {
   scoped_refptr<RTCMediaConstraints> ref;
+};
+
+struct lrtc_audio_device_t {
+  scoped_refptr<RTCAudioDevice> ref;
+};
+
+struct lrtc_video_device_t {
+  scoped_refptr<RTCVideoDevice> ref;
+};
+
+struct lrtc_video_capturer_t {
+  scoped_refptr<RTCVideoCapturer> ref;
+};
+
+struct lrtc_video_source_t {
+  scoped_refptr<RTCVideoSource> ref;
+};
+
+struct lrtc_audio_source_t {
+  scoped_refptr<RTCAudioSource> ref;
+};
+
+struct lrtc_media_stream_t {
+  scoped_refptr<RTCMediaStream> ref;
 };
 
 struct lrtc_peer_connection_t {
@@ -66,6 +104,10 @@ struct lrtc_audio_track_t {
   scoped_refptr<RTCAudioTrack> ref;
 };
 
+struct lrtc_audio_sink_t {
+  class AudioSinkImpl* sink = nullptr;
+};
+
 struct lrtc_video_sink_t {
   class VideoSinkImpl* renderer = nullptr;
 };
@@ -76,6 +118,21 @@ struct lrtc_video_frame_t {
 
 static lrtc_result_t LrtcFailIfNull(const void* ptr) {
   return ptr ? LRTC_OK : LRTC_INVALID_ARG;
+}
+
+static vector<string> BuildStringVector(const char** items,
+                                        uint32_t count) {
+  if (!items || count == 0) {
+    return vector<string>();
+  }
+  std::vector<string> tmp;
+  tmp.reserve(count);
+  for (uint32_t i = 0; i < count; ++i) {
+    if (items[i]) {
+      tmp.push_back(string(items[i]));
+    }
+  }
+  return vector<string>(tmp);
 }
 
 static void CopyConfig(const lrtc_rtc_config_t* src, RTCConfiguration* dst) {
@@ -307,6 +364,43 @@ class DataChannelObserverImpl : public RTCDataChannelObserver {
   void* user_data_ = nullptr;
 };
 
+class AudioSinkImpl : public libwebrtc::AudioTrackSink {
+ public:
+  AudioSinkImpl() = default;
+
+  void SetCallbacks(const lrtc_audio_sink_callbacks_t* callbacks,
+                    void* user_data) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (callbacks) {
+      callbacks_ = *callbacks;
+    } else {
+      std::memset(&callbacks_, 0, sizeof(callbacks_));
+    }
+    user_data_ = user_data;
+  }
+
+  void OnData(const void* audio_data, int bits_per_sample, int sample_rate,
+              size_t number_of_channels, size_t number_of_frames) override {
+    lrtc_audio_sink_callbacks_t callbacks;
+    void* user_data = nullptr;
+    {
+      std::lock_guard<std::mutex> lock(mutex_);
+      callbacks = callbacks_;
+      user_data = user_data_;
+    }
+    if (!callbacks.on_data) {
+      return;
+    }
+    callbacks.on_data(user_data, audio_data, bits_per_sample, sample_rate,
+                      number_of_channels, number_of_frames);
+  }
+
+ private:
+  std::mutex mutex_;
+  lrtc_audio_sink_callbacks_t callbacks_{};
+  void* user_data_ = nullptr;
+};
+
 class VideoSinkImpl : public RTCVideoRenderer<scoped_refptr<RTCVideoFrame>> {
  public:
   VideoSinkImpl() = default;
@@ -382,6 +476,130 @@ void LUMENRTC_CALL lrtc_factory_release(lrtc_factory_t* factory) {
   delete factory;
 }
 
+lrtc_audio_device_t* LUMENRTC_CALL lrtc_factory_get_audio_device(
+    lrtc_factory_t* factory) {
+  if (!factory || !factory->ref.get()) {
+    return nullptr;
+  }
+  auto handle = new lrtc_audio_device_t();
+  handle->ref = factory->ref->GetAudioDevice();
+  if (!handle->ref.get()) {
+    delete handle;
+    return nullptr;
+  }
+  return handle;
+}
+
+lrtc_video_device_t* LUMENRTC_CALL lrtc_factory_get_video_device(
+    lrtc_factory_t* factory) {
+  if (!factory || !factory->ref.get()) {
+    return nullptr;
+  }
+  auto handle = new lrtc_video_device_t();
+  handle->ref = factory->ref->GetVideoDevice();
+  if (!handle->ref.get()) {
+    delete handle;
+    return nullptr;
+  }
+  return handle;
+}
+
+lrtc_audio_source_t* LUMENRTC_CALL lrtc_factory_create_audio_source(
+    lrtc_factory_t* factory, const char* label,
+    lrtc_audio_source_type source_type, const lrtc_audio_options_t* options) {
+  if (!factory || !factory->ref.get() || !label) {
+    return nullptr;
+  }
+  RTCAudioOptions rtc_options;
+  if (options) {
+    rtc_options.echo_cancellation = options->echo_cancellation;
+    rtc_options.auto_gain_control = options->auto_gain_control;
+    rtc_options.noise_suppression = options->noise_suppression;
+    rtc_options.highpass_filter = options->highpass_filter;
+  }
+  scoped_refptr<RTCAudioSource> source =
+      factory->ref->CreateAudioSource(
+          string(label),
+          static_cast<RTCAudioSource::SourceType>(source_type),
+          rtc_options);
+  if (!source.get()) {
+    return nullptr;
+  }
+  auto handle = new lrtc_audio_source_t();
+  handle->ref = source;
+  return handle;
+}
+
+lrtc_video_source_t* LUMENRTC_CALL lrtc_factory_create_video_source(
+    lrtc_factory_t* factory, lrtc_video_capturer_t* capturer,
+    const char* label, lrtc_media_constraints_t* constraints) {
+  if (!factory || !factory->ref.get() || !capturer || !capturer->ref.get() ||
+      !label) {
+    return nullptr;
+  }
+  scoped_refptr<RTCMediaConstraints> mc;
+  if (constraints) {
+    mc = constraints->ref;
+  }
+  scoped_refptr<RTCVideoSource> source =
+      factory->ref->CreateVideoSource(capturer->ref, string(label), mc);
+  if (!source.get()) {
+    return nullptr;
+  }
+  auto handle = new lrtc_video_source_t();
+  handle->ref = source;
+  return handle;
+}
+
+lrtc_audio_track_t* LUMENRTC_CALL lrtc_factory_create_audio_track(
+    lrtc_factory_t* factory, lrtc_audio_source_t* source,
+    const char* track_id) {
+  if (!factory || !factory->ref.get() || !source || !source->ref.get() ||
+      !track_id) {
+    return nullptr;
+  }
+  scoped_refptr<RTCAudioTrack> track =
+      factory->ref->CreateAudioTrack(source->ref, string(track_id));
+  if (!track.get()) {
+    return nullptr;
+  }
+  auto handle = new lrtc_audio_track_t();
+  handle->ref = track;
+  return handle;
+}
+
+lrtc_video_track_t* LUMENRTC_CALL lrtc_factory_create_video_track(
+    lrtc_factory_t* factory, lrtc_video_source_t* source,
+    const char* track_id) {
+  if (!factory || !factory->ref.get() || !source || !source->ref.get() ||
+      !track_id) {
+    return nullptr;
+  }
+  scoped_refptr<RTCVideoTrack> track =
+      factory->ref->CreateVideoTrack(source->ref, string(track_id));
+  if (!track.get()) {
+    return nullptr;
+  }
+  auto handle = new lrtc_video_track_t();
+  handle->ref = track;
+  return handle;
+}
+
+lrtc_media_stream_t* LUMENRTC_CALL lrtc_factory_create_stream(
+    lrtc_factory_t* factory, const char* stream_id) {
+  if (!factory || !factory->ref.get() || !stream_id) {
+    return nullptr;
+  }
+  scoped_refptr<RTCMediaStream> stream =
+      factory->ref->CreateStream(string(stream_id));
+  if (!stream.get()) {
+    return nullptr;
+  }
+  auto handle = new lrtc_media_stream_t();
+  handle->ref = stream;
+  return handle;
+}
+
 lrtc_media_constraints_t* LUMENRTC_CALL lrtc_media_constraints_create(void) {
   auto handle = new lrtc_media_constraints_t();
   handle->ref = RTCMediaConstraints::Create();
@@ -413,6 +631,279 @@ void LUMENRTC_CALL lrtc_media_constraints_add_optional(
 void LUMENRTC_CALL lrtc_media_constraints_release(
     lrtc_media_constraints_t* constraints) {
   delete constraints;
+}
+
+int16_t LUMENRTC_CALL lrtc_audio_device_playout_devices(
+    lrtc_audio_device_t* device) {
+  if (!device || !device->ref.get()) {
+    return -1;
+  }
+  return device->ref->PlayoutDevices();
+}
+
+int16_t LUMENRTC_CALL lrtc_audio_device_recording_devices(
+    lrtc_audio_device_t* device) {
+  if (!device || !device->ref.get()) {
+    return -1;
+  }
+  return device->ref->RecordingDevices();
+}
+
+int32_t LUMENRTC_CALL lrtc_audio_device_playout_device_name(
+    lrtc_audio_device_t* device, uint16_t index, char* name,
+    uint32_t name_len, char* guid, uint32_t guid_len) {
+  if (!device || !device->ref.get() || !name || !guid) {
+    return -1;
+  }
+  if (name_len < RTCAudioDevice::kAdmMaxDeviceNameSize ||
+      guid_len < RTCAudioDevice::kAdmMaxGuidSize) {
+    return -1;
+  }
+  return device->ref->PlayoutDeviceName(
+      index, name, guid);
+}
+
+int32_t LUMENRTC_CALL lrtc_audio_device_recording_device_name(
+    lrtc_audio_device_t* device, uint16_t index, char* name,
+    uint32_t name_len, char* guid, uint32_t guid_len) {
+  if (!device || !device->ref.get() || !name || !guid) {
+    return -1;
+  }
+  if (name_len < RTCAudioDevice::kAdmMaxDeviceNameSize ||
+      guid_len < RTCAudioDevice::kAdmMaxGuidSize) {
+    return -1;
+  }
+  return device->ref->RecordingDeviceName(
+      index, name, guid);
+}
+
+int32_t LUMENRTC_CALL lrtc_audio_device_set_playout_device(
+    lrtc_audio_device_t* device, uint16_t index) {
+  if (!device || !device->ref.get()) {
+    return -1;
+  }
+  return device->ref->SetPlayoutDevice(index);
+}
+
+int32_t LUMENRTC_CALL lrtc_audio_device_set_recording_device(
+    lrtc_audio_device_t* device, uint16_t index) {
+  if (!device || !device->ref.get()) {
+    return -1;
+  }
+  return device->ref->SetRecordingDevice(index);
+}
+
+int32_t LUMENRTC_CALL lrtc_audio_device_set_microphone_volume(
+    lrtc_audio_device_t* device, uint32_t volume) {
+  if (!device || !device->ref.get()) {
+    return -1;
+  }
+  return device->ref->SetMicrophoneVolume(volume);
+}
+
+int32_t LUMENRTC_CALL lrtc_audio_device_microphone_volume(
+    lrtc_audio_device_t* device, uint32_t* volume) {
+  if (!device || !device->ref.get() || !volume) {
+    return -1;
+  }
+  uint32_t out = 0;
+  int32_t result = device->ref->MicrophoneVolume(out);
+  if (result == 0) {
+    *volume = out;
+  }
+  return result;
+}
+
+int32_t LUMENRTC_CALL lrtc_audio_device_set_speaker_volume(
+    lrtc_audio_device_t* device, uint32_t volume) {
+  if (!device || !device->ref.get()) {
+    return -1;
+  }
+  return device->ref->SetSpeakerVolume(volume);
+}
+
+int32_t LUMENRTC_CALL lrtc_audio_device_speaker_volume(
+    lrtc_audio_device_t* device, uint32_t* volume) {
+  if (!device || !device->ref.get() || !volume) {
+    return -1;
+  }
+  uint32_t out = 0;
+  int32_t result = device->ref->SpeakerVolume(out);
+  if (result == 0) {
+    *volume = out;
+  }
+  return result;
+}
+
+void LUMENRTC_CALL lrtc_audio_device_release(lrtc_audio_device_t* device) {
+  delete device;
+}
+
+uint32_t LUMENRTC_CALL lrtc_video_device_number_of_devices(
+    lrtc_video_device_t* device) {
+  if (!device || !device->ref.get()) {
+    return 0;
+  }
+  return device->ref->NumberOfDevices();
+}
+
+int32_t LUMENRTC_CALL lrtc_video_device_get_device_name(
+    lrtc_video_device_t* device, uint32_t index, char* name,
+    uint32_t name_length, char* unique_id, uint32_t unique_id_length) {
+  if (!device || !device->ref.get() || !name || !unique_id) {
+    return -1;
+  }
+  return device->ref->GetDeviceName(index, name, name_length, unique_id,
+                                    unique_id_length);
+}
+
+lrtc_video_capturer_t* LUMENRTC_CALL lrtc_video_device_create_capturer(
+    lrtc_video_device_t* device, const char* name, uint32_t index, size_t width,
+    size_t height, size_t target_fps) {
+  if (!device || !device->ref.get() || !name) {
+    return nullptr;
+  }
+  scoped_refptr<RTCVideoCapturer> capturer =
+      device->ref->Create(name, index, width, height, target_fps);
+  if (!capturer.get()) {
+    return nullptr;
+  }
+  auto handle = new lrtc_video_capturer_t();
+  handle->ref = capturer;
+  return handle;
+}
+
+void LUMENRTC_CALL lrtc_video_device_release(lrtc_video_device_t* device) {
+  delete device;
+}
+
+bool LUMENRTC_CALL lrtc_video_capturer_start(
+    lrtc_video_capturer_t* capturer) {
+  if (!capturer || !capturer->ref.get()) {
+    return false;
+  }
+  return capturer->ref->StartCapture();
+}
+
+bool LUMENRTC_CALL lrtc_video_capturer_capture_started(
+    lrtc_video_capturer_t* capturer) {
+  if (!capturer || !capturer->ref.get()) {
+    return false;
+  }
+  return capturer->ref->CaptureStarted();
+}
+
+void LUMENRTC_CALL lrtc_video_capturer_stop(
+    lrtc_video_capturer_t* capturer) {
+  if (!capturer || !capturer->ref.get()) {
+    return;
+  }
+  capturer->ref->StopCapture();
+}
+
+void LUMENRTC_CALL lrtc_video_capturer_release(
+    lrtc_video_capturer_t* capturer) {
+  delete capturer;
+}
+
+void LUMENRTC_CALL lrtc_audio_source_capture_frame(
+    lrtc_audio_source_t* source, const void* audio_data, int bits_per_sample,
+    int sample_rate, size_t number_of_channels, size_t number_of_frames) {
+  if (!source || !source->ref.get() || !audio_data) {
+    return;
+  }
+  source->ref->CaptureFrame(audio_data, bits_per_sample, sample_rate,
+                            number_of_channels, number_of_frames);
+}
+
+void LUMENRTC_CALL lrtc_audio_source_release(lrtc_audio_source_t* source) {
+  delete source;
+}
+
+void LUMENRTC_CALL lrtc_video_source_release(lrtc_video_source_t* source) {
+  delete source;
+}
+
+void LUMENRTC_CALL lrtc_audio_track_set_volume(lrtc_audio_track_t* track,
+                                               double volume) {
+  if (!track || !track->ref.get()) {
+    return;
+  }
+  track->ref->SetVolume(volume);
+}
+
+void LUMENRTC_CALL lrtc_audio_track_add_sink(lrtc_audio_track_t* track,
+                                             lrtc_audio_sink_t* sink) {
+  if (!track || !track->ref.get() || !sink || !sink->sink) {
+    return;
+  }
+  track->ref->AddSink(sink->sink);
+}
+
+void LUMENRTC_CALL lrtc_audio_track_remove_sink(lrtc_audio_track_t* track,
+                                                lrtc_audio_sink_t* sink) {
+  if (!track || !track->ref.get() || !sink || !sink->sink) {
+    return;
+  }
+  track->ref->RemoveSink(sink->sink);
+}
+
+void LUMENRTC_CALL lrtc_audio_track_release(lrtc_audio_track_t* track) {
+  delete track;
+}
+
+lrtc_audio_sink_t* LUMENRTC_CALL lrtc_audio_sink_create(
+    const lrtc_audio_sink_callbacks_t* callbacks, void* user_data) {
+  auto handle = new lrtc_audio_sink_t();
+  auto* sink = new AudioSinkImpl();
+  sink->SetCallbacks(callbacks, user_data);
+  handle->sink = sink;
+  return handle;
+}
+
+void LUMENRTC_CALL lrtc_audio_sink_release(lrtc_audio_sink_t* sink) {
+  if (!sink) {
+    return;
+  }
+  delete sink->sink;
+  sink->sink = nullptr;
+  delete sink;
+}
+
+bool LUMENRTC_CALL lrtc_media_stream_add_audio_track(
+    lrtc_media_stream_t* stream, lrtc_audio_track_t* track) {
+  if (!stream || !stream->ref.get() || !track || !track->ref.get()) {
+    return false;
+  }
+  return stream->ref->AddTrack(track->ref);
+}
+
+bool LUMENRTC_CALL lrtc_media_stream_add_video_track(
+    lrtc_media_stream_t* stream, lrtc_video_track_t* track) {
+  if (!stream || !stream->ref.get() || !track || !track->ref.get()) {
+    return false;
+  }
+  return stream->ref->AddTrack(track->ref);
+}
+
+bool LUMENRTC_CALL lrtc_media_stream_remove_audio_track(
+    lrtc_media_stream_t* stream, lrtc_audio_track_t* track) {
+  if (!stream || !stream->ref.get() || !track || !track->ref.get()) {
+    return false;
+  }
+  return stream->ref->RemoveTrack(track->ref);
+}
+
+bool LUMENRTC_CALL lrtc_media_stream_remove_video_track(
+    lrtc_media_stream_t* stream, lrtc_video_track_t* track) {
+  if (!stream || !stream->ref.get() || !track || !track->ref.get()) {
+    return false;
+  }
+  return stream->ref->RemoveTrack(track->ref);
+}
+
+void LUMENRTC_CALL lrtc_media_stream_release(lrtc_media_stream_t* stream) {
+  delete stream;
 }
 
 lrtc_peer_connection_t* LUMENRTC_CALL lrtc_peer_connection_create(
@@ -618,6 +1109,46 @@ void LUMENRTC_CALL lrtc_peer_connection_add_ice_candidate(
     return;
   }
   pc->ref->AddCandidate(string(sdp_mid), sdp_mline_index, string(candidate));
+}
+
+bool LUMENRTC_CALL lrtc_peer_connection_add_stream(
+    lrtc_peer_connection_t* pc, lrtc_media_stream_t* stream) {
+  if (!pc || !pc->ref.get() || !stream || !stream->ref.get()) {
+    return false;
+  }
+  return pc->ref->AddStream(stream->ref) == 0;
+}
+
+bool LUMENRTC_CALL lrtc_peer_connection_remove_stream(
+    lrtc_peer_connection_t* pc, lrtc_media_stream_t* stream) {
+  if (!pc || !pc->ref.get() || !stream || !stream->ref.get()) {
+    return false;
+  }
+  return pc->ref->RemoveStream(stream->ref) == 0;
+}
+
+int LUMENRTC_CALL lrtc_peer_connection_add_audio_track(
+    lrtc_peer_connection_t* pc, lrtc_audio_track_t* track,
+    const char** stream_ids, uint32_t stream_id_count) {
+  if (!pc || !pc->ref.get() || !track || !track->ref.get()) {
+    return 0;
+  }
+  vector<string> streams = BuildStringVector(stream_ids, stream_id_count);
+  scoped_refptr<libwebrtc::RTCRtpSender> sender =
+      pc->ref->AddTrack(track->ref, streams);
+  return sender.get() ? 1 : 0;
+}
+
+int LUMENRTC_CALL lrtc_peer_connection_add_video_track(
+    lrtc_peer_connection_t* pc, lrtc_video_track_t* track,
+    const char** stream_ids, uint32_t stream_id_count) {
+  if (!pc || !pc->ref.get() || !track || !track->ref.get()) {
+    return 0;
+  }
+  vector<string> streams = BuildStringVector(stream_ids, stream_id_count);
+  scoped_refptr<libwebrtc::RTCRtpSender> sender =
+      pc->ref->AddTrack(track->ref, streams);
+  return sender.get() ? 1 : 0;
 }
 
 lrtc_data_channel_t* LUMENRTC_CALL lrtc_peer_connection_create_data_channel(

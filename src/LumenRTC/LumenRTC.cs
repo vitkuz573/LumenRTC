@@ -69,6 +69,277 @@ public enum DataChannelState
     Closed = 3,
 }
 
+public enum IceTransportsType
+{
+    None = 0,
+    Relay = 1,
+    NoHost = 2,
+    All = 3,
+}
+
+public enum BundlePolicy
+{
+    Balanced = 0,
+    MaxBundle = 1,
+    MaxCompat = 2,
+}
+
+public enum RtcpMuxPolicy
+{
+    Negotiate = 0,
+    Require = 1,
+}
+
+public enum CandidateNetworkPolicy
+{
+    All = 0,
+    LowCost = 1,
+}
+
+public enum TcpCandidatePolicy
+{
+    Enabled = 0,
+    Disabled = 1,
+}
+
+public enum MediaSecurityType
+{
+    SrtpNone = 0,
+    SdesSrtp = 1,
+    DtlsSrtp = 2,
+}
+
+public enum SdpSemantics
+{
+    PlanB = 0,
+    UnifiedPlan = 1,
+}
+
+public enum AudioSourceType
+{
+    Microphone = 0,
+    Custom = 1,
+}
+
+public sealed class IceServer
+{
+    public IceServer(string uri, string? username = null, string? password = null)
+    {
+        Uri = uri ?? throw new ArgumentNullException(nameof(uri));
+        Username = username;
+        Password = password;
+    }
+
+    public string Uri { get; }
+    public string? Username { get; }
+    public string? Password { get; }
+}
+
+public sealed class RtcConfiguration
+{
+    public List<IceServer> IceServers { get; } = new();
+
+    public IceTransportsType IceTransportsType { get; set; } = IceTransportsType.All;
+    public BundlePolicy BundlePolicy { get; set; } = BundlePolicy.Balanced;
+    public RtcpMuxPolicy RtcpMuxPolicy { get; set; } = RtcpMuxPolicy.Require;
+    public CandidateNetworkPolicy CandidateNetworkPolicy { get; set; } = CandidateNetworkPolicy.All;
+    public TcpCandidatePolicy TcpCandidatePolicy { get; set; } = TcpCandidatePolicy.Enabled;
+    public int IceCandidatePoolSize { get; set; } = 0;
+    public MediaSecurityType SrtpType { get; set; } = MediaSecurityType.DtlsSrtp;
+    public SdpSemantics SdpSemantics { get; set; } = SdpSemantics.UnifiedPlan;
+    public bool OfferToReceiveAudio { get; set; } = true;
+    public bool OfferToReceiveVideo { get; set; } = true;
+    public bool DisableIpv6 { get; set; } = false;
+    public bool DisableIpv6OnWifi { get; set; } = false;
+    public int MaxIpv6Networks { get; set; } = 5;
+    public bool DisableLinkLocalNetworks { get; set; } = false;
+    public int ScreencastMinBitrate { get; set; } = -1;
+    public bool EnableDscp { get; set; } = false;
+    public bool UseRtpMux { get; set; } = true;
+    public uint LocalAudioBandwidth { get; set; } = 128;
+    public uint LocalVideoBandwidth { get; set; } = 512;
+}
+
+public sealed class AudioOptions
+{
+    public bool EchoCancellation { get; set; } = true;
+    public bool AutoGainControl { get; set; } = true;
+    public bool NoiseSuppression { get; set; } = true;
+    public bool HighpassFilter { get; set; } = false;
+}
+
+public readonly struct AudioFrame
+{
+    public AudioFrame(ReadOnlyMemory<byte> data, int bitsPerSample, int sampleRate, int channels, int frames)
+    {
+        Data = data;
+        BitsPerSample = bitsPerSample;
+        SampleRate = sampleRate;
+        Channels = channels;
+        Frames = frames;
+    }
+
+    public ReadOnlyMemory<byte> Data { get; }
+    public int BitsPerSample { get; }
+    public int SampleRate { get; }
+    public int Channels { get; }
+    public int Frames { get; }
+}
+
+public sealed class MediaConstraints : SafeHandle
+{
+    private MediaConstraints() : base(IntPtr.Zero, true) { }
+
+    public static MediaConstraints Create()
+    {
+        var handle = NativeMethods.lrtc_media_constraints_create();
+        if (handle == IntPtr.Zero)
+        {
+            throw new InvalidOperationException("Failed to create media constraints.");
+        }
+        var constraints = new MediaConstraints();
+        constraints.SetHandle(handle);
+        return constraints;
+    }
+
+    public void AddMandatory(string key, string value)
+    {
+        using var keyUtf8 = new Utf8String(key);
+        using var valueUtf8 = new Utf8String(value);
+        NativeMethods.lrtc_media_constraints_add_mandatory(handle, keyUtf8.Pointer, valueUtf8.Pointer);
+    }
+
+    public void AddOptional(string key, string value)
+    {
+        using var keyUtf8 = new Utf8String(key);
+        using var valueUtf8 = new Utf8String(value);
+        NativeMethods.lrtc_media_constraints_add_optional(handle, keyUtf8.Pointer, valueUtf8.Pointer);
+    }
+
+    public override bool IsInvalid => handle == IntPtr.Zero;
+
+    protected override bool ReleaseHandle()
+    {
+        NativeMethods.lrtc_media_constraints_release(handle);
+        return true;
+    }
+}
+
+internal sealed class RtcConfigurationMarshaler : IDisposable
+{
+    private readonly List<Utf8String> _strings = new();
+    private IntPtr _ptr;
+
+    public IntPtr Pointer => _ptr;
+
+    public RtcConfigurationMarshaler(RtcConfiguration config)
+    {
+        if (config == null) throw new ArgumentNullException(nameof(config));
+
+        var native = new LrtcRtcConfig
+        {
+            ice_servers = new LrtcIceServer[LrtcConstants.MaxIceServers],
+            ice_server_count = 0,
+            ice_transports_type = (int)config.IceTransportsType,
+            bundle_policy = (int)config.BundlePolicy,
+            rtcp_mux_policy = (int)config.RtcpMuxPolicy,
+            candidate_network_policy = (int)config.CandidateNetworkPolicy,
+            tcp_candidate_policy = (int)config.TcpCandidatePolicy,
+            ice_candidate_pool_size = config.IceCandidatePoolSize,
+            srtp_type = (int)config.SrtpType,
+            sdp_semantics = (int)config.SdpSemantics,
+            offer_to_receive_audio = config.OfferToReceiveAudio,
+            offer_to_receive_video = config.OfferToReceiveVideo,
+            disable_ipv6 = config.DisableIpv6,
+            disable_ipv6_on_wifi = config.DisableIpv6OnWifi,
+            max_ipv6_networks = config.MaxIpv6Networks,
+            disable_link_local_networks = config.DisableLinkLocalNetworks,
+            screencast_min_bitrate = config.ScreencastMinBitrate,
+            enable_dscp = config.EnableDscp,
+            use_rtp_mux = config.UseRtpMux,
+            local_audio_bandwidth = config.LocalAudioBandwidth,
+            local_video_bandwidth = config.LocalVideoBandwidth,
+        };
+
+        var max = Math.Min(config.IceServers.Count, LrtcConstants.MaxIceServers);
+        for (var i = 0; i < max; i++)
+        {
+            var server = config.IceServers[i];
+            var uri = new Utf8String(server.Uri);
+            var username = new Utf8String(server.Username);
+            var password = new Utf8String(server.Password);
+            _strings.Add(uri);
+            _strings.Add(username);
+            _strings.Add(password);
+            native.ice_servers[i] = new LrtcIceServer
+            {
+                uri = uri.Pointer,
+                username = username.Pointer,
+                password = password.Pointer,
+            };
+        }
+        native.ice_server_count = (uint)max;
+
+        _ptr = Marshal.AllocHGlobal(Marshal.SizeOf<LrtcRtcConfig>());
+        Marshal.StructureToPtr(native, _ptr, false);
+    }
+
+    public void Dispose()
+    {
+        foreach (var str in _strings)
+        {
+            str.Dispose();
+        }
+        if (_ptr != IntPtr.Zero)
+        {
+            Marshal.FreeHGlobal(_ptr);
+            _ptr = IntPtr.Zero;
+        }
+    }
+}
+
+internal sealed class Utf8StringArray : IDisposable
+{
+    private readonly Utf8String[] _strings;
+    private IntPtr _buffer;
+
+    public Utf8StringArray(IReadOnlyList<string>? values)
+    {
+        if (values == null || values.Count == 0)
+        {
+            _strings = Array.Empty<Utf8String>();
+            _buffer = IntPtr.Zero;
+            Count = 0;
+            return;
+        }
+
+        _strings = new Utf8String[values.Count];
+        _buffer = Marshal.AllocHGlobal(IntPtr.Size * values.Count);
+        for (var i = 0; i < values.Count; i++)
+        {
+            _strings[i] = new Utf8String(values[i]);
+            Marshal.WriteIntPtr(_buffer, i * IntPtr.Size, _strings[i].Pointer);
+        }
+        Count = values.Count;
+    }
+
+    public int Count { get; }
+    public IntPtr Pointer => _buffer;
+
+    public void Dispose()
+    {
+        foreach (var str in _strings)
+        {
+            str.Dispose();
+        }
+        if (_buffer != IntPtr.Zero)
+        {
+            Marshal.FreeHGlobal(_buffer);
+            _buffer = IntPtr.Zero;
+        }
+    }
+}
+
 public sealed class PeerConnectionFactory : SafeHandle
 {
     private PeerConnectionFactory() : base(IntPtr.Zero, true) { }
@@ -99,15 +370,18 @@ public sealed class PeerConnectionFactory : SafeHandle
         NativeMethods.lrtc_factory_terminate(handle);
     }
 
-    public PeerConnection CreatePeerConnection(PeerConnectionCallbacks callbacks)
+    public PeerConnection CreatePeerConnection(PeerConnectionCallbacks callbacks, RtcConfiguration? config = null, MediaConstraints? constraints = null)
     {
         if (callbacks == null)
         {
             throw new ArgumentNullException(nameof(callbacks));
         }
         var native = callbacks.BuildNative();
+        using var configMarshaler = config != null ? new RtcConfigurationMarshaler(config) : null;
+        var configPtr = configMarshaler?.Pointer ?? IntPtr.Zero;
+        var constraintsPtr = constraints?.DangerousGetHandle() ?? IntPtr.Zero;
         var pcHandle = NativeMethods.lrtc_peer_connection_create(
-            handle, IntPtr.Zero, IntPtr.Zero, ref native, IntPtr.Zero);
+            handle, configPtr, constraintsPtr, ref native, IntPtr.Zero);
         if (pcHandle == IntPtr.Zero)
         {
             throw new InvalidOperationException("Failed to create peer connection.");
@@ -115,11 +389,354 @@ public sealed class PeerConnectionFactory : SafeHandle
         return new PeerConnection(pcHandle, callbacks);
     }
 
+    public AudioDevice GetAudioDevice()
+    {
+        var device = NativeMethods.lrtc_factory_get_audio_device(handle);
+        if (device == IntPtr.Zero)
+        {
+            throw new InvalidOperationException("Failed to get audio device.");
+        }
+        return new AudioDevice(device);
+    }
+
+    public VideoDevice GetVideoDevice()
+    {
+        var device = NativeMethods.lrtc_factory_get_video_device(handle);
+        if (device == IntPtr.Zero)
+        {
+            throw new InvalidOperationException("Failed to get video device.");
+        }
+        return new VideoDevice(device);
+    }
+
+    public AudioSource CreateAudioSource(string label, AudioSourceType sourceType = AudioSourceType.Microphone, AudioOptions? options = null)
+    {
+        using var labelUtf8 = new Utf8String(label);
+        var nativeOptions = new LrtcAudioOptions
+        {
+            echo_cancellation = options?.EchoCancellation ?? true,
+            auto_gain_control = options?.AutoGainControl ?? true,
+            noise_suppression = options?.NoiseSuppression ?? true,
+            highpass_filter = options?.HighpassFilter ?? false,
+        };
+        var source = NativeMethods.lrtc_factory_create_audio_source(handle, labelUtf8.Pointer, (LrtcAudioSourceType)sourceType, ref nativeOptions);
+        if (source == IntPtr.Zero)
+        {
+            throw new InvalidOperationException("Failed to create audio source.");
+        }
+        return new AudioSource(source);
+    }
+
+    public VideoSource CreateVideoSource(VideoCapturer capturer, string label, MediaConstraints? constraints = null)
+    {
+        if (capturer == null) throw new ArgumentNullException(nameof(capturer));
+        using var labelUtf8 = new Utf8String(label);
+        var source = NativeMethods.lrtc_factory_create_video_source(handle, capturer.DangerousGetHandle(), labelUtf8.Pointer, constraints?.DangerousGetHandle() ?? IntPtr.Zero);
+        if (source == IntPtr.Zero)
+        {
+            throw new InvalidOperationException("Failed to create video source.");
+        }
+        return new VideoSource(source);
+    }
+
+    public AudioTrack CreateAudioTrack(AudioSource source, string trackId)
+    {
+        if (source == null) throw new ArgumentNullException(nameof(source));
+        using var trackUtf8 = new Utf8String(trackId);
+        var track = NativeMethods.lrtc_factory_create_audio_track(handle, source.DangerousGetHandle(), trackUtf8.Pointer);
+        if (track == IntPtr.Zero)
+        {
+            throw new InvalidOperationException("Failed to create audio track.");
+        }
+        return new AudioTrack(track);
+    }
+
+    public VideoTrack CreateVideoTrack(VideoSource source, string trackId)
+    {
+        if (source == null) throw new ArgumentNullException(nameof(source));
+        using var trackUtf8 = new Utf8String(trackId);
+        var track = NativeMethods.lrtc_factory_create_video_track(handle, source.DangerousGetHandle(), trackUtf8.Pointer);
+        if (track == IntPtr.Zero)
+        {
+            throw new InvalidOperationException("Failed to create video track.");
+        }
+        return new VideoTrack(track);
+    }
+
+    public MediaStream CreateStream(string streamId)
+    {
+        using var streamUtf8 = new Utf8String(streamId);
+        var stream = NativeMethods.lrtc_factory_create_stream(handle, streamUtf8.Pointer);
+        if (stream == IntPtr.Zero)
+        {
+            throw new InvalidOperationException("Failed to create media stream.");
+        }
+        return new MediaStream(stream, streamId);
+    }
+
     public override bool IsInvalid => handle == IntPtr.Zero;
 
     protected override bool ReleaseHandle()
     {
         NativeMethods.lrtc_factory_release(handle);
+        return true;
+    }
+}
+
+public readonly record struct AudioDeviceInfo(string Name, string Guid);
+
+public sealed class AudioDevice : SafeHandle
+{
+    private const int MaxDeviceNameSize = 128;
+    private const int MaxGuidSize = 128;
+
+    internal AudioDevice(IntPtr handle) : base(IntPtr.Zero, true)
+    {
+        SetHandle(handle);
+    }
+
+    public short PlayoutDevices() => NativeMethods.lrtc_audio_device_playout_devices(handle);
+
+    public short RecordingDevices() => NativeMethods.lrtc_audio_device_recording_devices(handle);
+
+    public AudioDeviceInfo GetPlayoutDeviceName(ushort index)
+    {
+        return GetDeviceName(isPlayout: true, index);
+    }
+
+    public AudioDeviceInfo GetRecordingDeviceName(ushort index)
+    {
+        return GetDeviceName(isPlayout: false, index);
+    }
+
+    private AudioDeviceInfo GetDeviceName(bool isPlayout, ushort index)
+    {
+        var nameBuf = Marshal.AllocHGlobal(MaxDeviceNameSize);
+        var guidBuf = Marshal.AllocHGlobal(MaxGuidSize);
+        try
+        {
+            int result = isPlayout
+                ? NativeMethods.lrtc_audio_device_playout_device_name(handle, index, nameBuf, MaxDeviceNameSize, guidBuf, MaxGuidSize)
+                : NativeMethods.lrtc_audio_device_recording_device_name(handle, index, nameBuf, MaxDeviceNameSize, guidBuf, MaxGuidSize);
+            if (result != 0)
+            {
+                throw new InvalidOperationException("Failed to query audio device name.");
+            }
+            return new AudioDeviceInfo(Utf8String.Read(nameBuf), Utf8String.Read(guidBuf));
+        }
+        finally
+        {
+            Marshal.FreeHGlobal(nameBuf);
+            Marshal.FreeHGlobal(guidBuf);
+        }
+    }
+
+    public void SetPlayoutDevice(ushort index)
+    {
+        var result = NativeMethods.lrtc_audio_device_set_playout_device(handle, index);
+        if (result != 0) throw new InvalidOperationException("Failed to set playout device.");
+    }
+
+    public void SetRecordingDevice(ushort index)
+    {
+        var result = NativeMethods.lrtc_audio_device_set_recording_device(handle, index);
+        if (result != 0) throw new InvalidOperationException("Failed to set recording device.");
+    }
+
+    public void SetMicrophoneVolume(uint volume)
+    {
+        var result = NativeMethods.lrtc_audio_device_set_microphone_volume(handle, volume);
+        if (result != 0) throw new InvalidOperationException("Failed to set microphone volume.");
+    }
+
+    public uint GetMicrophoneVolume()
+    {
+        var result = NativeMethods.lrtc_audio_device_microphone_volume(handle, out var volume);
+        if (result != 0) throw new InvalidOperationException("Failed to get microphone volume.");
+        return volume;
+    }
+
+    public void SetSpeakerVolume(uint volume)
+    {
+        var result = NativeMethods.lrtc_audio_device_set_speaker_volume(handle, volume);
+        if (result != 0) throw new InvalidOperationException("Failed to set speaker volume.");
+    }
+
+    public uint GetSpeakerVolume()
+    {
+        var result = NativeMethods.lrtc_audio_device_speaker_volume(handle, out var volume);
+        if (result != 0) throw new InvalidOperationException("Failed to get speaker volume.");
+        return volume;
+    }
+
+    public override bool IsInvalid => handle == IntPtr.Zero;
+
+    protected override bool ReleaseHandle()
+    {
+        NativeMethods.lrtc_audio_device_release(handle);
+        return true;
+    }
+}
+
+public readonly record struct VideoDeviceInfo(string Name, string UniqueId);
+
+public sealed class VideoDevice : SafeHandle
+{
+    private const int MaxNameSize = 256;
+    private const int MaxUniqueIdSize = 256;
+
+    internal VideoDevice(IntPtr handle) : base(IntPtr.Zero, true)
+    {
+        SetHandle(handle);
+    }
+
+    public uint NumberOfDevices() => NativeMethods.lrtc_video_device_number_of_devices(handle);
+
+    public VideoDeviceInfo GetDeviceName(uint index)
+    {
+        var nameBuf = Marshal.AllocHGlobal(MaxNameSize);
+        var idBuf = Marshal.AllocHGlobal(MaxUniqueIdSize);
+        try
+        {
+            var result = NativeMethods.lrtc_video_device_get_device_name(handle, index, nameBuf, MaxNameSize, idBuf, MaxUniqueIdSize);
+            if (result != 0)
+            {
+                throw new InvalidOperationException("Failed to query video device name.");
+            }
+            return new VideoDeviceInfo(Utf8String.Read(nameBuf), Utf8String.Read(idBuf));
+        }
+        finally
+        {
+            Marshal.FreeHGlobal(nameBuf);
+            Marshal.FreeHGlobal(idBuf);
+        }
+    }
+
+    public VideoCapturer CreateCapturer(string name, uint index, uint width, uint height, uint fps)
+    {
+        using var nameUtf8 = new Utf8String(name);
+        var capturer = NativeMethods.lrtc_video_device_create_capturer(handle, nameUtf8.Pointer, index, width, height, fps);
+        if (capturer == IntPtr.Zero)
+        {
+            throw new InvalidOperationException("Failed to create video capturer.");
+        }
+        return new VideoCapturer(capturer);
+    }
+
+    public override bool IsInvalid => handle == IntPtr.Zero;
+
+    protected override bool ReleaseHandle()
+    {
+        NativeMethods.lrtc_video_device_release(handle);
+        return true;
+    }
+}
+
+public sealed class VideoCapturer : SafeHandle
+{
+    internal VideoCapturer(IntPtr handle) : base(IntPtr.Zero, true)
+    {
+        SetHandle(handle);
+    }
+
+    public bool Start() => NativeMethods.lrtc_video_capturer_start(handle);
+
+    public bool CaptureStarted() => NativeMethods.lrtc_video_capturer_capture_started(handle);
+
+    public void Stop() => NativeMethods.lrtc_video_capturer_stop(handle);
+
+    public override bool IsInvalid => handle == IntPtr.Zero;
+
+    protected override bool ReleaseHandle()
+    {
+        NativeMethods.lrtc_video_capturer_release(handle);
+        return true;
+    }
+}
+
+public sealed class AudioSource : SafeHandle
+{
+    internal AudioSource(IntPtr handle) : base(IntPtr.Zero, true)
+    {
+        SetHandle(handle);
+    }
+
+    public void CaptureFrame(ReadOnlySpan<byte> data, int bitsPerSample, int sampleRate, int channels, int frames)
+    {
+        if (data.IsEmpty) return;
+        unsafe
+        {
+            fixed (byte* ptr = data)
+            {
+                NativeMethods.lrtc_audio_source_capture_frame(handle, (IntPtr)ptr, bitsPerSample, sampleRate, (nuint)channels, (nuint)frames);
+            }
+        }
+    }
+
+    public override bool IsInvalid => handle == IntPtr.Zero;
+
+    protected override bool ReleaseHandle()
+    {
+        NativeMethods.lrtc_audio_source_release(handle);
+        return true;
+    }
+}
+
+public sealed class VideoSource : SafeHandle
+{
+    internal VideoSource(IntPtr handle) : base(IntPtr.Zero, true)
+    {
+        SetHandle(handle);
+    }
+
+    public override bool IsInvalid => handle == IntPtr.Zero;
+
+    protected override bool ReleaseHandle()
+    {
+        NativeMethods.lrtc_video_source_release(handle);
+        return true;
+    }
+}
+
+public sealed class MediaStream : SafeHandle
+{
+    public string Id { get; }
+
+    internal MediaStream(IntPtr handle, string id) : base(IntPtr.Zero, true)
+    {
+        Id = id;
+        SetHandle(handle);
+    }
+
+    public bool AddAudioTrack(AudioTrack track)
+    {
+        if (track == null) throw new ArgumentNullException(nameof(track));
+        return NativeMethods.lrtc_media_stream_add_audio_track(handle, track.DangerousGetHandle());
+    }
+
+    public bool AddVideoTrack(VideoTrack track)
+    {
+        if (track == null) throw new ArgumentNullException(nameof(track));
+        return NativeMethods.lrtc_media_stream_add_video_track(handle, track.DangerousGetHandle());
+    }
+
+    public bool RemoveAudioTrack(AudioTrack track)
+    {
+        if (track == null) throw new ArgumentNullException(nameof(track));
+        return NativeMethods.lrtc_media_stream_remove_audio_track(handle, track.DangerousGetHandle());
+    }
+
+    public bool RemoveVideoTrack(VideoTrack track)
+    {
+        if (track == null) throw new ArgumentNullException(nameof(track));
+        return NativeMethods.lrtc_media_stream_remove_video_track(handle, track.DangerousGetHandle());
+    }
+
+    public override bool IsInvalid => handle == IntPtr.Zero;
+
+    protected override bool ReleaseHandle()
+    {
+        NativeMethods.lrtc_media_stream_release(handle);
         return true;
     }
 }
@@ -230,6 +847,34 @@ public sealed class PeerConnection : SafeHandle
         NativeMethods.lrtc_peer_connection_add_ice_candidate(handle, midUtf8.Pointer, sdpMlineIndex, candUtf8.Pointer);
     }
 
+    public bool AddStream(MediaStream stream)
+    {
+        if (stream == null) throw new ArgumentNullException(nameof(stream));
+        return NativeMethods.lrtc_peer_connection_add_stream(handle, stream.DangerousGetHandle());
+    }
+
+    public bool RemoveStream(MediaStream stream)
+    {
+        if (stream == null) throw new ArgumentNullException(nameof(stream));
+        return NativeMethods.lrtc_peer_connection_remove_stream(handle, stream.DangerousGetHandle());
+    }
+
+    public bool AddAudioTrack(AudioTrack track, IReadOnlyList<string>? streamIds = null)
+    {
+        if (track == null) throw new ArgumentNullException(nameof(track));
+        using var ids = new Utf8StringArray(streamIds);
+        var result = NativeMethods.lrtc_peer_connection_add_audio_track(handle, track.DangerousGetHandle(), ids.Pointer, (uint)ids.Count);
+        return result != 0;
+    }
+
+    public bool AddVideoTrack(VideoTrack track, IReadOnlyList<string>? streamIds = null)
+    {
+        if (track == null) throw new ArgumentNullException(nameof(track));
+        using var ids = new Utf8StringArray(streamIds);
+        var result = NativeMethods.lrtc_peer_connection_add_video_track(handle, track.DangerousGetHandle(), ids.Pointer, (uint)ids.Count);
+        return result != 0;
+    }
+
     public override bool IsInvalid => handle == IntPtr.Zero;
 
     protected override bool ReleaseHandle()
@@ -276,6 +921,65 @@ public sealed class DataChannel : SafeHandle
     protected override bool ReleaseHandle()
     {
         NativeMethods.lrtc_data_channel_release(handle);
+        return true;
+    }
+}
+
+public sealed class AudioTrack : SafeHandle
+{
+    internal AudioTrack(IntPtr handle) : base(IntPtr.Zero, true)
+    {
+        SetHandle(handle);
+    }
+
+    public void SetVolume(double volume)
+    {
+        NativeMethods.lrtc_audio_track_set_volume(handle, volume);
+    }
+
+    public void AddSink(AudioSink sink)
+    {
+        if (sink == null) throw new ArgumentNullException(nameof(sink));
+        NativeMethods.lrtc_audio_track_add_sink(handle, sink.DangerousGetHandle());
+    }
+
+    public void RemoveSink(AudioSink sink)
+    {
+        if (sink == null) throw new ArgumentNullException(nameof(sink));
+        NativeMethods.lrtc_audio_track_remove_sink(handle, sink.DangerousGetHandle());
+    }
+
+    public override bool IsInvalid => handle == IntPtr.Zero;
+
+    protected override bool ReleaseHandle()
+    {
+        NativeMethods.lrtc_audio_track_release(handle);
+        return true;
+    }
+}
+
+public sealed class AudioSink : SafeHandle
+{
+    private readonly AudioSinkCallbacks _callbacks;
+
+    public AudioSink(AudioSinkCallbacks callbacks)
+        : base(IntPtr.Zero, true)
+    {
+        _callbacks = callbacks ?? throw new ArgumentNullException(nameof(callbacks));
+        var native = callbacks.BuildNative();
+        var handle = NativeMethods.lrtc_audio_sink_create(ref native, IntPtr.Zero);
+        if (handle == IntPtr.Zero)
+        {
+            throw new InvalidOperationException("Failed to create audio sink.");
+        }
+        SetHandle(handle);
+    }
+
+    public override bool IsInvalid => handle == IntPtr.Zero;
+
+    protected override bool ReleaseHandle()
+    {
+        NativeMethods.lrtc_audio_sink_release(handle);
         return true;
     }
 }
@@ -396,6 +1100,7 @@ public sealed class PeerConnectionCallbacks
     public Action<string, int, string>? OnIceCandidate;
     public Action<DataChannel>? OnDataChannel;
     public Action<VideoTrack>? OnVideoTrack;
+    public Action<AudioTrack>? OnAudioTrack;
     public Action? OnRenegotiationNeeded;
 
     private LrtcPeerConnectionStateCb? _signalingStateCb;
@@ -405,6 +1110,7 @@ public sealed class PeerConnectionCallbacks
     private LrtcIceCandidateCb? _iceCandidateCb;
     private LrtcDataChannelCreatedCb? _dataChannelCb;
     private LrtcVideoTrackCb? _videoTrackCb;
+    private LrtcAudioTrackCb? _audioTrackCb;
     private LrtcVoidCb? _renegotiationCb;
 
     internal LrtcPeerConnectionCallbacks BuildNative()
@@ -417,6 +1123,7 @@ public sealed class PeerConnectionCallbacks
             OnIceCandidate?.Invoke(Utf8String.Read(mid), mline, Utf8String.Read(cand));
         _dataChannelCb = (ud, channelPtr) => OnDataChannel?.Invoke(new DataChannel(channelPtr));
         _videoTrackCb = (ud, trackPtr) => OnVideoTrack?.Invoke(new VideoTrack(trackPtr));
+        _audioTrackCb = (ud, trackPtr) => OnAudioTrack?.Invoke(new AudioTrack(trackPtr));
         _renegotiationCb = ud => OnRenegotiationNeeded?.Invoke();
 
         return new LrtcPeerConnectionCallbacks
@@ -428,7 +1135,7 @@ public sealed class PeerConnectionCallbacks
             on_ice_candidate = _iceCandidateCb,
             on_data_channel = _dataChannelCb,
             on_video_track = _videoTrackCb,
-            on_audio_track = null,
+            on_audio_track = _audioTrackCb,
             on_renegotiation_needed = _renegotiationCb,
         };
     }
@@ -461,6 +1168,43 @@ public sealed class DataChannelCallbacks
         {
             on_state_change = _stateCb,
             on_message = _messageCb,
+        };
+    }
+}
+
+public sealed class AudioSinkCallbacks
+{
+    public Action<AudioFrame>? OnData;
+    private LrtcAudioFrameCb? _frameCb;
+
+    internal LrtcAudioSinkCallbacks BuildNative()
+    {
+        _frameCb = (ud, audioPtr, bitsPerSample, sampleRate, channels, frames) =>
+        {
+            var channelsInt = (int)channels;
+            var framesInt = (int)frames;
+            if (audioPtr == IntPtr.Zero || bitsPerSample <= 0 || channelsInt <= 0 || framesInt <= 0)
+            {
+                OnData?.Invoke(new AudioFrame(ReadOnlyMemory<byte>.Empty, bitsPerSample, sampleRate, channelsInt, framesInt));
+                return;
+            }
+
+            var bytesPerSample = Math.Max(1, (bitsPerSample + 7) / 8);
+            var totalBytes = (long)channelsInt * framesInt * bytesPerSample;
+            if (totalBytes <= 0 || totalBytes > int.MaxValue)
+            {
+                OnData?.Invoke(new AudioFrame(ReadOnlyMemory<byte>.Empty, bitsPerSample, sampleRate, channelsInt, framesInt));
+                return;
+            }
+
+            var data = new byte[(int)totalBytes];
+            Marshal.Copy(audioPtr, data, 0, (int)totalBytes);
+            OnData?.Invoke(new AudioFrame(data, bitsPerSample, sampleRate, channelsInt, framesInt));
+        };
+
+        return new LrtcAudioSinkCallbacks
+        {
+            on_data = _frameCb,
         };
     }
 }
