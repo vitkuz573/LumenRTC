@@ -6,5 +6,10 @@ obj/
 native/build/
 native/build-*/
 
+# Packaging artifacts
+artifacts/
+*.nupkg
+*.snupkg
+
 # OS
 .DS_Store

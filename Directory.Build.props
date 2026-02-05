@@ -6,5 +6,33 @@
     <AnalysisLevel>latest</AnalysisLevel>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);1591</NoWarn>
+    <IsPackable>false</IsPackable>
+    <RepositoryUrl>https://github.com/vitkuz573/LumenRTC</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageProjectUrl>https://github.com/vitkuz573/LumenRTC</PackageProjectUrl>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
+
+  <PropertyGroup Condition="'$(MSBuildProjectName)'=='LumenRTC'">
+    <IsPackable>true</IsPackable>
+    <PackageId>LumenRTC</PackageId>
+    <PackageDescription>WebRTC bindings for .NET with a stable C ABI layer.</PackageDescription>
+    <PackageTags>webrtc;rtc;dotnet;native;realtime;video;audio;datachannel</PackageTags>
+    <Authors>LumenRTC Contributors</Authors>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(MSBuildProjectName)'=='LumenRTC.Rendering.Sdl'">
+    <IsPackable>true</IsPackable>
+    <PackageId>LumenRTC.Rendering.Sdl</PackageId>
+    <PackageDescription>SDL2-based video renderer helper for LumenRTC.</PackageDescription>
+    <PackageTags>webrtc;dotnet;sdl2;rendering;video</PackageTags>
+    <Authors>LumenRTC Contributors</Authors>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(PackageReadmeFile)'!=''">
+    <None Include="$(MSBuildThisFileDirectory)README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 </Project>

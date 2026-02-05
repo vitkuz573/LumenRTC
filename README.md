@@ -82,6 +82,25 @@ For sample projects, the build will copy `lumenrtc` and `libwebrtc` into the
 output folder when possible. You can override paths via MSBuild properties:
 `LumenRtcNativeDir` and `LibWebRtcBuildDir` (or set `LIBWEBRTC_BUILD_DIR`).
 
+## Packaging
+
+The repo is ready for NuGet packaging but does not publish packages. Use the
+pack scripts to produce local `.nupkg` files.
+
+Windows (PowerShell):
+
+```powershell
+scripts\\pack.ps1 -Configuration Release -Rid win-x64 -LibWebRtcBuildDir C:\\path\\to\\webrtc\\out\\Release
+```
+
+Linux/macOS:
+
+```bash
+RID=linux-x64 LIBWEBRTC_BUILD_DIR=/path/to/webrtc/out/Release scripts/pack.sh
+```
+
+To pack without native libraries, use `-NoNative` (PowerShell) or `NO_NATIVE=true`.
+
 SDL renderer runtime (optional):
 
 - Windows: `SDL2.dll` must be on `PATH` or next to the app.

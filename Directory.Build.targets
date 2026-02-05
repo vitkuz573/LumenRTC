@@ -31,6 +31,14 @@
     <LibWebRtcBuildDir>$(WEBRTC_OUT)</LibWebRtcBuildDir>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(LumenRtcPackNative)'==''">
+    <LumenRtcPackNative>false</LumenRtcPackNative>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(LumenRtcPackNative)'=='true' and '$(LumenRtcPackRid)'=='' and '$(RuntimeIdentifier)'!=''">
+    <LumenRtcPackRid>$(RuntimeIdentifier)</LumenRtcPackRid>
+  </PropertyGroup>
+
   <PropertyGroup>
     <LumenRtcNativeFile Condition="'$(OS)'=='Windows_NT'">$(LumenRtcNativeDir)\lumenrtc.dll</LumenRtcNativeFile>
     <LumenRtcNativeFile Condition="'$(OS)'!='Windows_NT'">$(LumenRtcNativeDir)/liblumenrtc.so</LumenRtcNativeFile>
@@ -44,10 +52,24 @@
     <None Include="$(LibWebRtcNativeFile)" Condition="Exists('$(LibWebRtcNativeFile)')" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
+  <ItemGroup Condition="'$(LumenRtcPackNative)'=='true'">
+    <None Include="$(LumenRtcNativeFile)" Condition="Exists('$(LumenRtcNativeFile)')" Pack="true" PackagePath="runtimes/$(LumenRtcPackRid)/native/" />
+    <None Include="$(LibWebRtcNativeFile)" Condition="Exists('$(LibWebRtcNativeFile)')" Pack="true" PackagePath="runtimes/$(LumenRtcPackRid)/native/" />
+  </ItemGroup>
+
   <Target Name="LumenRtcNativeCopyWarnings" AfterTargets="Build" Condition="'$(LumenRtcCopyNative)'=='true'">
     <Warning Condition="'$(LumenRtcNativeDir)'=='' or !Exists('$(LumenRtcNativeFile)')"
              Text="LumenRTC native library was not copied. Set LumenRtcNativeDir or build native output. Expected: $(LumenRtcNativeFile)" />
     <Warning Condition="'$(LibWebRtcBuildDir)'=='' or !Exists('$(LibWebRtcNativeFile)')"
              Text="libwebrtc library was not copied. Set LIBWEBRTC_BUILD_DIR (or LibWebRtcBuildDir). Expected: $(LibWebRtcNativeFile)" />
+  </Target>
+
+  <Target Name="LumenRtcNativePackChecks" BeforeTargets="Pack" Condition="'$(LumenRtcPackNative)'=='true'">
+    <Error Condition="'$(LumenRtcPackRid)'==''"
+           Text="Set LumenRtcPackRid (e.g. win-x64, linux-x64) when packing native assets." />
+    <Error Condition="'$(LumenRtcNativeDir)'=='' or !Exists('$(LumenRtcNativeFile)')"
+           Text="LumenRTC native library missing. Set LumenRtcNativeDir or build native output. Expected: $(LumenRtcNativeFile)" />
+    <Error Condition="'$(LibWebRtcBuildDir)'=='' or !Exists('$(LibWebRtcNativeFile)')"
+           Text="libwebrtc library missing. Set LIBWEBRTC_BUILD_DIR (or LibWebRtcBuildDir). Expected: $(LibWebRtcNativeFile)" />
   </Target>
 </Project>
