@@ -62,8 +62,8 @@ if ([string]::IsNullOrWhiteSpace($LibWebRtcBuildDir) -or $LibWebRtcBuildDir -eq 
 }
 
 if ([string]::IsNullOrWhiteSpace($LibWebRtcBuildDir)) {
-  Write-Error "LIBWEBRTC_BUILD_DIR не задан. Укажите -LibWebRtcBuildDir или переменную окружения LIBWEBRTC_BUILD_DIR."
-  Write-Error "Подсказка: можно передать -LibWebRtcBuildDir auto для авто-поиска."
+  Write-Error "LIBWEBRTC_BUILD_DIR is not set. Pass -LibWebRtcBuildDir or set the LIBWEBRTC_BUILD_DIR environment variable."
+  Write-Error "Tip: you can pass -LibWebRtcBuildDir auto for auto-detection."
 }
 
 $cmakeArgs = @(

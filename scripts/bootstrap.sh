@@ -88,7 +88,7 @@ while [[ $# -gt 0 ]]; do
       exit 0
       ;;
     *)
-      echo "Unknown аргумент: $1" >&2
+      echo "Unknown argument: $1" >&2
       usage
       exit 1
       ;;
@@ -106,8 +106,8 @@ if [[ -z "$libwebrtc_build_dir" || "$libwebrtc_build_dir" == "auto" ]]; then
 fi
 
 if [[ -z "$libwebrtc_build_dir" ]]; then
-  echo "LIBWEBRTC_BUILD_DIR не задан. Передайте --libwebrtc-build-dir или переменную окружения LIBWEBRTC_BUILD_DIR." >&2
-  echo "Подсказка: можно передать --libwebrtc-build-dir auto для авто-поиска." >&2
+  echo "LIBWEBRTC_BUILD_DIR is not set. Pass --libwebrtc-build-dir or set the LIBWEBRTC_BUILD_DIR environment variable." >&2
+  echo "Tip: you can pass --libwebrtc-build-dir auto for auto-detection." >&2
   exit 1
 fi
 
