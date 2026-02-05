@@ -43,6 +43,20 @@ If you use the submodule at `external/libwebrtc`, you can omit
 If your `libwebrtc` was built without desktop capture, set
 `LUMENRTC_ENABLE_DESKTOP_CAPTURE=OFF` to avoid ABI mismatches.
 
+### One-command bootstrap
+
+Linux/macOS:
+
+```bash
+scripts/bootstrap.sh --libwebrtc-build-dir /path/to/webrtc/out-debug/Linux-x64
+```
+
+Windows (PowerShell):
+
+```powershell
+scripts\\bootstrap.ps1 -LibWebRtcBuildDir C:\\path\\to\\webrtc\\out-debug\\Windows-x64
+```
+
 Windows example (PowerShell):
 
 ```powershell
