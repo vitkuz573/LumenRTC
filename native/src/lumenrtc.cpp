@@ -150,6 +150,14 @@ struct lrtc_rtp_sender_t {
   scoped_refptr<libwebrtc::RTCRtpSender> ref;
 };
 
+struct lrtc_rtp_receiver_t {
+  scoped_refptr<libwebrtc::RTCRtpReceiver> ref;
+};
+
+struct lrtc_rtp_transceiver_t {
+  scoped_refptr<libwebrtc::RTCRtpTransceiver> ref;
+};
+
 static lrtc_result_t LrtcFailIfNull(const void* ptr) {
   return ptr ? LRTC_OK : LRTC_INVALID_ARG;
 }
@@ -1686,6 +1694,95 @@ lrtc_rtp_sender_t* LUMENRTC_CALL lrtc_peer_connection_add_video_track_sender(
   return handle;
 }
 
+int LUMENRTC_CALL lrtc_peer_connection_remove_track(
+    lrtc_peer_connection_t* pc, lrtc_rtp_sender_t* sender) {
+  if (!pc || !pc->ref.get() || !sender || !sender->ref.get()) {
+    return 0;
+  }
+  return pc->ref->RemoveTrack(sender->ref) ? 1 : 0;
+}
+
+uint32_t LUMENRTC_CALL lrtc_peer_connection_sender_count(
+    lrtc_peer_connection_t* pc) {
+  if (!pc || !pc->ref.get()) {
+    return 0;
+  }
+  return static_cast<uint32_t>(pc->ref->senders().size());
+}
+
+lrtc_rtp_sender_t* LUMENRTC_CALL lrtc_peer_connection_get_sender(
+    lrtc_peer_connection_t* pc, uint32_t index) {
+  if (!pc || !pc->ref.get()) {
+    return nullptr;
+  }
+  vector<scoped_refptr<libwebrtc::RTCRtpSender>> senders = pc->ref->senders();
+  if (index >= senders.size()) {
+    return nullptr;
+  }
+  scoped_refptr<libwebrtc::RTCRtpSender> sender = senders[index];
+  if (!sender.get()) {
+    return nullptr;
+  }
+  auto handle = new lrtc_rtp_sender_t();
+  handle->ref = sender;
+  return handle;
+}
+
+uint32_t LUMENRTC_CALL lrtc_peer_connection_receiver_count(
+    lrtc_peer_connection_t* pc) {
+  if (!pc || !pc->ref.get()) {
+    return 0;
+  }
+  return static_cast<uint32_t>(pc->ref->receivers().size());
+}
+
+lrtc_rtp_receiver_t* LUMENRTC_CALL lrtc_peer_connection_get_receiver(
+    lrtc_peer_connection_t* pc, uint32_t index) {
+  if (!pc || !pc->ref.get()) {
+    return nullptr;
+  }
+  vector<scoped_refptr<libwebrtc::RTCRtpReceiver>> receivers =
+      pc->ref->receivers();
+  if (index >= receivers.size()) {
+    return nullptr;
+  }
+  scoped_refptr<libwebrtc::RTCRtpReceiver> receiver = receivers[index];
+  if (!receiver.get()) {
+    return nullptr;
+  }
+  auto handle = new lrtc_rtp_receiver_t();
+  handle->ref = receiver;
+  return handle;
+}
+
+uint32_t LUMENRTC_CALL lrtc_peer_connection_transceiver_count(
+    lrtc_peer_connection_t* pc) {
+  if (!pc || !pc->ref.get()) {
+    return 0;
+  }
+  return static_cast<uint32_t>(pc->ref->transceivers().size());
+}
+
+lrtc_rtp_transceiver_t* LUMENRTC_CALL lrtc_peer_connection_get_transceiver(
+    lrtc_peer_connection_t* pc, uint32_t index) {
+  if (!pc || !pc->ref.get()) {
+    return nullptr;
+  }
+  vector<scoped_refptr<libwebrtc::RTCRtpTransceiver>> transceivers =
+      pc->ref->transceivers();
+  if (index >= transceivers.size()) {
+    return nullptr;
+  }
+  scoped_refptr<libwebrtc::RTCRtpTransceiver> transceiver =
+      transceivers[index];
+  if (!transceiver.get()) {
+    return nullptr;
+  }
+  auto handle = new lrtc_rtp_transceiver_t();
+  handle->ref = transceiver;
+  return handle;
+}
+
 lrtc_data_channel_t* LUMENRTC_CALL lrtc_peer_connection_create_data_channel(
     lrtc_peer_connection_t* pc, const char* label, int ordered, int reliable,
     int max_retransmit_time, int max_retransmits, const char* protocol,
@@ -1976,8 +2073,231 @@ int LUMENRTC_CALL lrtc_rtp_sender_set_encoding_parameters(
   return sender->ref->set_parameters(parameters) ? 1 : 0;
 }
 
+int LUMENRTC_CALL lrtc_rtp_sender_get_media_type(lrtc_rtp_sender_t* sender) {
+  if (!sender || !sender->ref.get()) {
+    return -1;
+  }
+  return static_cast<int>(sender->ref->media_type());
+}
+
+int32_t LUMENRTC_CALL lrtc_rtp_sender_get_id(
+    lrtc_rtp_sender_t* sender, char* buffer, uint32_t buffer_len) {
+  if (!sender || !sender->ref.get()) {
+    return -1;
+  }
+  return CopyPortableString(sender->ref->id(), buffer, buffer_len);
+}
+
+lrtc_audio_track_t* LUMENRTC_CALL lrtc_rtp_sender_get_audio_track(
+    lrtc_rtp_sender_t* sender) {
+  if (!sender || !sender->ref.get()) {
+    return nullptr;
+  }
+  scoped_refptr<RTCMediaTrack> track = sender->ref->track();
+  if (!track.get()) {
+    return nullptr;
+  }
+  string kind = track->kind();
+  if (std::strcmp(kind.c_string(), "audio") != 0) {
+    return nullptr;
+  }
+  auto handle = new lrtc_audio_track_t();
+  handle->ref = static_cast<RTCAudioTrack*>(track.get());
+  return handle;
+}
+
+lrtc_video_track_t* LUMENRTC_CALL lrtc_rtp_sender_get_video_track(
+    lrtc_rtp_sender_t* sender) {
+  if (!sender || !sender->ref.get()) {
+    return nullptr;
+  }
+  scoped_refptr<RTCMediaTrack> track = sender->ref->track();
+  if (!track.get()) {
+    return nullptr;
+  }
+  string kind = track->kind();
+  if (std::strcmp(kind.c_string(), "video") != 0) {
+    return nullptr;
+  }
+  auto handle = new lrtc_video_track_t();
+  handle->ref = static_cast<RTCVideoTrack*>(track.get());
+  return handle;
+}
+
 void LUMENRTC_CALL lrtc_rtp_sender_release(lrtc_rtp_sender_t* sender) {
   delete sender;
+}
+
+int LUMENRTC_CALL lrtc_rtp_receiver_get_media_type(
+    lrtc_rtp_receiver_t* receiver) {
+  if (!receiver || !receiver->ref.get()) {
+    return -1;
+  }
+  return static_cast<int>(receiver->ref->media_type());
+}
+
+int32_t LUMENRTC_CALL lrtc_rtp_receiver_get_id(
+    lrtc_rtp_receiver_t* receiver, char* buffer, uint32_t buffer_len) {
+  if (!receiver || !receiver->ref.get()) {
+    return -1;
+  }
+  return CopyPortableString(receiver->ref->id(), buffer, buffer_len);
+}
+
+lrtc_audio_track_t* LUMENRTC_CALL lrtc_rtp_receiver_get_audio_track(
+    lrtc_rtp_receiver_t* receiver) {
+  if (!receiver || !receiver->ref.get()) {
+    return nullptr;
+  }
+  scoped_refptr<RTCMediaTrack> track = receiver->ref->track();
+  if (!track.get()) {
+    return nullptr;
+  }
+  string kind = track->kind();
+  if (std::strcmp(kind.c_string(), "audio") != 0) {
+    return nullptr;
+  }
+  auto handle = new lrtc_audio_track_t();
+  handle->ref = static_cast<RTCAudioTrack*>(track.get());
+  return handle;
+}
+
+lrtc_video_track_t* LUMENRTC_CALL lrtc_rtp_receiver_get_video_track(
+    lrtc_rtp_receiver_t* receiver) {
+  if (!receiver || !receiver->ref.get()) {
+    return nullptr;
+  }
+  scoped_refptr<RTCMediaTrack> track = receiver->ref->track();
+  if (!track.get()) {
+    return nullptr;
+  }
+  string kind = track->kind();
+  if (std::strcmp(kind.c_string(), "video") != 0) {
+    return nullptr;
+  }
+  auto handle = new lrtc_video_track_t();
+  handle->ref = static_cast<RTCVideoTrack*>(track.get());
+  return handle;
+}
+
+void LUMENRTC_CALL lrtc_rtp_receiver_release(lrtc_rtp_receiver_t* receiver) {
+  delete receiver;
+}
+
+int LUMENRTC_CALL lrtc_rtp_transceiver_get_media_type(
+    lrtc_rtp_transceiver_t* transceiver) {
+  if (!transceiver || !transceiver->ref.get()) {
+    return -1;
+  }
+  return static_cast<int>(transceiver->ref->media_type());
+}
+
+int32_t LUMENRTC_CALL lrtc_rtp_transceiver_get_mid(
+    lrtc_rtp_transceiver_t* transceiver, char* buffer, uint32_t buffer_len) {
+  if (!transceiver || !transceiver->ref.get()) {
+    return -1;
+  }
+  return CopyPortableString(transceiver->ref->mid(), buffer, buffer_len);
+}
+
+int LUMENRTC_CALL lrtc_rtp_transceiver_get_direction(
+    lrtc_rtp_transceiver_t* transceiver) {
+  if (!transceiver || !transceiver->ref.get()) {
+    return -1;
+  }
+  return static_cast<int>(transceiver->ref->direction());
+}
+
+int LUMENRTC_CALL lrtc_rtp_transceiver_get_current_direction(
+    lrtc_rtp_transceiver_t* transceiver) {
+  if (!transceiver || !transceiver->ref.get()) {
+    return -1;
+  }
+  return static_cast<int>(transceiver->ref->current_direction());
+}
+
+int LUMENRTC_CALL lrtc_rtp_transceiver_get_stopped(
+    lrtc_rtp_transceiver_t* transceiver) {
+  if (!transceiver || !transceiver->ref.get()) {
+    return 0;
+  }
+  return transceiver->ref->Stopped() ? 1 : 0;
+}
+
+int LUMENRTC_CALL lrtc_rtp_transceiver_get_stopping(
+    lrtc_rtp_transceiver_t* transceiver) {
+  if (!transceiver || !transceiver->ref.get()) {
+    return 0;
+  }
+  return transceiver->ref->Stopping() ? 1 : 0;
+}
+
+int LUMENRTC_CALL lrtc_rtp_transceiver_set_direction(
+    lrtc_rtp_transceiver_t* transceiver, int direction, char* error,
+    uint32_t error_len) {
+  if (!transceiver || !transceiver->ref.get()) {
+    return 0;
+  }
+  string err = transceiver->ref->SetDirectionWithError(
+      static_cast<libwebrtc::RTCRtpTransceiverDirection>(direction));
+  string tmp = err;
+  if (tmp.size() > 0) {
+    if (error_len > 0 && error) {
+      CopyPortableString(tmp, error, error_len);
+    }
+    return 0;
+  }
+  return 1;
+}
+
+int LUMENRTC_CALL lrtc_rtp_transceiver_stop(
+    lrtc_rtp_transceiver_t* transceiver, char* error, uint32_t error_len) {
+  if (!transceiver || !transceiver->ref.get()) {
+    return 0;
+  }
+  string err = transceiver->ref->StopStandard();
+  string tmp = err;
+  if (tmp.size() > 0) {
+    if (error_len > 0 && error) {
+      CopyPortableString(tmp, error, error_len);
+    }
+    return 0;
+  }
+  return 1;
+}
+
+lrtc_rtp_sender_t* LUMENRTC_CALL lrtc_rtp_transceiver_get_sender(
+    lrtc_rtp_transceiver_t* transceiver) {
+  if (!transceiver || !transceiver->ref.get()) {
+    return nullptr;
+  }
+  scoped_refptr<libwebrtc::RTCRtpSender> sender = transceiver->ref->sender();
+  if (!sender.get()) {
+    return nullptr;
+  }
+  auto handle = new lrtc_rtp_sender_t();
+  handle->ref = sender;
+  return handle;
+}
+
+lrtc_rtp_receiver_t* LUMENRTC_CALL lrtc_rtp_transceiver_get_receiver(
+    lrtc_rtp_transceiver_t* transceiver) {
+  if (!transceiver || !transceiver->ref.get()) {
+    return nullptr;
+  }
+  scoped_refptr<libwebrtc::RTCRtpReceiver> receiver =
+      transceiver->ref->receiver();
+  if (!receiver.get()) {
+    return nullptr;
+  }
+  auto handle = new lrtc_rtp_receiver_t();
+  handle->ref = receiver;
+  return handle;
+}
+
+void LUMENRTC_CALL lrtc_rtp_transceiver_release(
+    lrtc_rtp_transceiver_t* transceiver) {
+  delete transceiver;
 }
 
 void LUMENRTC_CALL lrtc_factory_get_rtp_sender_codec_mime_types(

@@ -152,6 +152,15 @@ public enum DegradationPreference
     Balanced = 3,
 }
 
+public enum RtpTransceiverDirection
+{
+    SendRecv = 0,
+    SendOnly = 1,
+    RecvOnly = 2,
+    Inactive = 3,
+    Stopped = 4,
+}
+
 public enum VideoFrameFormat
 {
     Argb = 0,
@@ -398,6 +407,33 @@ internal sealed class Utf8StringArray : IDisposable
         {
             Marshal.FreeHGlobal(_buffer);
             _buffer = IntPtr.Zero;
+        }
+    }
+}
+
+internal static class NativeString
+{
+    public static string GetString(IntPtr handle, Func<IntPtr, IntPtr, uint, int> getter)
+    {
+        var required = getter(handle, IntPtr.Zero, 0);
+        if (required <= 0)
+        {
+            return string.Empty;
+        }
+
+        var buffer = Marshal.AllocHGlobal(required);
+        try
+        {
+            var result = getter(handle, buffer, (uint)required);
+            if (result < 0)
+            {
+                return string.Empty;
+            }
+            return Utf8String.Read(buffer);
+        }
+        finally
+        {
+            Marshal.FreeHGlobal(buffer);
         }
     }
 }
@@ -816,8 +852,8 @@ public sealed class MediaSource : SafeHandle
     internal MediaSource(IntPtr handle) : base(IntPtr.Zero, true)
     {
         SetHandle(handle);
-        Id = GetString(NativeMethods.lrtc_media_source_get_id);
-        Name = GetString(NativeMethods.lrtc_media_source_get_name);
+        Id = NativeString.GetString(handle, NativeMethods.lrtc_media_source_get_id);
+        Name = NativeString.GetString(handle, NativeMethods.lrtc_media_source_get_name);
         var typeValue = NativeMethods.lrtc_media_source_get_type(handle);
         Type = typeValue < 0 ? DesktopType.Screen : (DesktopType)typeValue;
     }
@@ -825,29 +861,6 @@ public sealed class MediaSource : SafeHandle
     public string Id { get; }
     public string Name { get; }
     public DesktopType Type { get; }
-
-    private string GetString(Func<IntPtr, IntPtr, uint, int> getter)
-    {
-        var required = getter(handle, IntPtr.Zero, 0);
-        if (required <= 0)
-        {
-            return string.Empty;
-        }
-        var buffer = Marshal.AllocHGlobal(required);
-        try
-        {
-            var result = getter(handle, buffer, (uint)required);
-            if (result < 0)
-            {
-                return string.Empty;
-            }
-            return Utf8String.Read(buffer);
-        }
-        finally
-        {
-            Marshal.FreeHGlobal(buffer);
-        }
-    }
 
     public override bool IsInvalid => handle == IntPtr.Zero;
 
@@ -1007,6 +1020,39 @@ public sealed class RtpSender : SafeHandle
         SetHandle(handle);
     }
 
+    public MediaType MediaType
+    {
+        get
+        {
+            var value = NativeMethods.lrtc_rtp_sender_get_media_type(handle);
+            if (value < 0)
+            {
+                throw new InvalidOperationException("Failed to get sender media type.");
+            }
+            return (MediaType)value;
+        }
+    }
+
+    public string Id => NativeString.GetString(handle, NativeMethods.lrtc_rtp_sender_get_id);
+
+    public AudioTrack? AudioTrack
+    {
+        get
+        {
+            var track = NativeMethods.lrtc_rtp_sender_get_audio_track(handle);
+            return track == IntPtr.Zero ? null : new AudioTrack(track);
+        }
+    }
+
+    public VideoTrack? VideoTrack
+    {
+        get
+        {
+            var track = NativeMethods.lrtc_rtp_sender_get_video_track(handle);
+            return track == IntPtr.Zero ? null : new VideoTrack(track);
+        }
+    }
+
     public bool SetEncodingParameters(RtpEncodingSettings settings)
     {
         if (settings == null) throw new ArgumentNullException(nameof(settings));
@@ -1021,6 +1067,196 @@ public sealed class RtpSender : SafeHandle
     {
         NativeMethods.lrtc_rtp_sender_release(handle);
         return true;
+    }
+}
+
+public sealed class RtpReceiver : SafeHandle
+{
+    internal RtpReceiver(IntPtr handle) : base(IntPtr.Zero, true)
+    {
+        SetHandle(handle);
+    }
+
+    public MediaType MediaType
+    {
+        get
+        {
+            var value = NativeMethods.lrtc_rtp_receiver_get_media_type(handle);
+            if (value < 0)
+            {
+                throw new InvalidOperationException("Failed to get receiver media type.");
+            }
+            return (MediaType)value;
+        }
+    }
+
+    public string Id => NativeString.GetString(handle, NativeMethods.lrtc_rtp_receiver_get_id);
+
+    public AudioTrack? AudioTrack
+    {
+        get
+        {
+            var track = NativeMethods.lrtc_rtp_receiver_get_audio_track(handle);
+            return track == IntPtr.Zero ? null : new AudioTrack(track);
+        }
+    }
+
+    public VideoTrack? VideoTrack
+    {
+        get
+        {
+            var track = NativeMethods.lrtc_rtp_receiver_get_video_track(handle);
+            return track == IntPtr.Zero ? null : new VideoTrack(track);
+        }
+    }
+
+    public override bool IsInvalid => handle == IntPtr.Zero;
+
+    protected override bool ReleaseHandle()
+    {
+        NativeMethods.lrtc_rtp_receiver_release(handle);
+        return true;
+    }
+}
+
+public sealed class RtpTransceiver : SafeHandle
+{
+    private delegate int TransceiverErrorInvoker(IntPtr transceiver, IntPtr error, uint errorLen);
+
+    internal RtpTransceiver(IntPtr handle) : base(IntPtr.Zero, true)
+    {
+        SetHandle(handle);
+    }
+
+    public MediaType MediaType
+    {
+        get
+        {
+            var value = NativeMethods.lrtc_rtp_transceiver_get_media_type(handle);
+            if (value < 0)
+            {
+                throw new InvalidOperationException("Failed to get transceiver media type.");
+            }
+            return (MediaType)value;
+        }
+    }
+
+    public string Mid => NativeString.GetString(handle, NativeMethods.lrtc_rtp_transceiver_get_mid);
+
+    public RtpTransceiverDirection Direction
+    {
+        get
+        {
+            var value = NativeMethods.lrtc_rtp_transceiver_get_direction(handle);
+            if (value < 0)
+            {
+                throw new InvalidOperationException("Failed to get transceiver direction.");
+            }
+            return (RtpTransceiverDirection)value;
+        }
+    }
+
+    public RtpTransceiverDirection CurrentDirection
+    {
+        get
+        {
+            var value = NativeMethods.lrtc_rtp_transceiver_get_current_direction(handle);
+            if (value < 0)
+            {
+                throw new InvalidOperationException("Failed to get transceiver current direction.");
+            }
+            return (RtpTransceiverDirection)value;
+        }
+    }
+
+    public bool Stopped => NativeMethods.lrtc_rtp_transceiver_get_stopped(handle) != 0;
+
+    public bool Stopping => NativeMethods.lrtc_rtp_transceiver_get_stopping(handle) != 0;
+
+    public RtpSender? Sender
+    {
+        get
+        {
+            var sender = NativeMethods.lrtc_rtp_transceiver_get_sender(handle);
+            return sender == IntPtr.Zero ? null : new RtpSender(sender);
+        }
+    }
+
+    public RtpReceiver? Receiver
+    {
+        get
+        {
+            var receiver = NativeMethods.lrtc_rtp_transceiver_get_receiver(handle);
+            return receiver == IntPtr.Zero ? null : new RtpReceiver(receiver);
+        }
+    }
+
+    public bool TrySetDirection(RtpTransceiverDirection direction, out string? error)
+    {
+        return InvokeWithError(
+            (transceiver, err, len) => NativeMethods.lrtc_rtp_transceiver_set_direction(
+                transceiver,
+                (LrtcRtpTransceiverDirection)direction,
+                err,
+                len),
+            out error);
+    }
+
+    public void SetDirection(RtpTransceiverDirection direction)
+    {
+        if (!TrySetDirection(direction, out var error))
+        {
+            throw new InvalidOperationException(error ?? "Failed to set transceiver direction.");
+        }
+    }
+
+    public bool TryStop(out string? error)
+    {
+        return InvokeWithError(
+            (transceiver, err, len) => NativeMethods.lrtc_rtp_transceiver_stop(transceiver, err, len),
+            out error);
+    }
+
+    public void Stop()
+    {
+        if (!TryStop(out var error))
+        {
+            throw new InvalidOperationException(error ?? "Failed to stop transceiver.");
+        }
+    }
+
+    public override bool IsInvalid => handle == IntPtr.Zero;
+
+    protected override bool ReleaseHandle()
+    {
+        NativeMethods.lrtc_rtp_transceiver_release(handle);
+        return true;
+    }
+
+    private bool InvokeWithError(TransceiverErrorInvoker invoker, out string? error)
+    {
+        const int BufferSize = 512;
+        var buffer = Marshal.AllocHGlobal(BufferSize);
+        try
+        {
+            unsafe
+            {
+                new Span<byte>((void*)buffer, BufferSize).Clear();
+            }
+            var result = invoker(handle, buffer, (uint)BufferSize);
+            if (result != 0)
+            {
+                error = null;
+                return true;
+            }
+            var message = Utf8String.Read(buffer);
+            error = string.IsNullOrWhiteSpace(message) ? null : message;
+            return false;
+        }
+        finally
+        {
+            Marshal.FreeHGlobal(buffer);
+        }
     }
 }
 
@@ -1253,6 +1489,73 @@ public sealed class PeerConnection : SafeHandle
             throw new InvalidOperationException("Failed to add video track sender.");
         }
         return new RtpSender(sender);
+    }
+
+    public bool RemoveTrack(RtpSender sender)
+    {
+        if (sender == null) throw new ArgumentNullException(nameof(sender));
+        var result = NativeMethods.lrtc_peer_connection_remove_track(handle, sender.DangerousGetHandle());
+        return result != 0;
+    }
+
+    public IReadOnlyList<RtpSender> GetSenders()
+    {
+        var count = NativeMethods.lrtc_peer_connection_sender_count(handle);
+        if (count == 0)
+        {
+            return Array.Empty<RtpSender>();
+        }
+
+        var list = new List<RtpSender>((int)count);
+        for (uint i = 0; i < count; i++)
+        {
+            var sender = NativeMethods.lrtc_peer_connection_get_sender(handle, i);
+            if (sender != IntPtr.Zero)
+            {
+                list.Add(new RtpSender(sender));
+            }
+        }
+        return list;
+    }
+
+    public IReadOnlyList<RtpReceiver> GetReceivers()
+    {
+        var count = NativeMethods.lrtc_peer_connection_receiver_count(handle);
+        if (count == 0)
+        {
+            return Array.Empty<RtpReceiver>();
+        }
+
+        var list = new List<RtpReceiver>((int)count);
+        for (uint i = 0; i < count; i++)
+        {
+            var receiver = NativeMethods.lrtc_peer_connection_get_receiver(handle, i);
+            if (receiver != IntPtr.Zero)
+            {
+                list.Add(new RtpReceiver(receiver));
+            }
+        }
+        return list;
+    }
+
+    public IReadOnlyList<RtpTransceiver> GetTransceivers()
+    {
+        var count = NativeMethods.lrtc_peer_connection_transceiver_count(handle);
+        if (count == 0)
+        {
+            return Array.Empty<RtpTransceiver>();
+        }
+
+        var list = new List<RtpTransceiver>((int)count);
+        for (uint i = 0; i < count; i++)
+        {
+            var transceiver = NativeMethods.lrtc_peer_connection_get_transceiver(handle, i);
+            if (transceiver != IntPtr.Zero)
+            {
+                list.Add(new RtpTransceiver(transceiver));
+            }
+        }
+        return list;
     }
 
     public bool SetCodecPreferences(MediaType mediaType, IReadOnlyList<string> mimeTypes)
