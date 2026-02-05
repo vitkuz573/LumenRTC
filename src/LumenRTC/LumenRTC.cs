@@ -602,8 +602,8 @@ public sealed record VideoQualityPreset(
 
 public static class VideoQualityPresets
 {
-    public static VideoQualityPreset RemoteControlLowLatency { get; } =
-        new("RemoteControlLowLatency",
+    public static VideoQualityPreset LowLatency { get; } =
+        new("LowLatency",
             MaxBitrateBps: 1_500_000,
             MaxFramerate: 60,
             ScaleResolutionDownBy: 1.0,
@@ -612,8 +612,8 @@ public static class VideoQualityPresets
             BitratePriority: 1.2,
             NumTemporalLayers: 2);
 
-    public static VideoQualityPreset RemoteControlBalanced { get; } =
-        new("RemoteControlBalanced",
+    public static VideoQualityPreset Balanced { get; } =
+        new("Balanced",
             MaxBitrateBps: 2_500_000,
             MaxFramerate: 60,
             ScaleResolutionDownBy: 1.0,
@@ -622,8 +622,8 @@ public static class VideoQualityPresets
             BitratePriority: 1.0,
             NumTemporalLayers: 2);
 
-    public static VideoQualityPreset RemoteControlHighQuality { get; } =
-        new("RemoteControlHighQuality",
+    public static VideoQualityPreset HighQuality { get; } =
+        new("HighQuality",
             MaxBitrateBps: 4_000_000,
             MaxFramerate: 60,
             ScaleResolutionDownBy: 1.0,
@@ -632,8 +632,8 @@ public static class VideoQualityPresets
             BitratePriority: 1.1,
             NumTemporalLayers: 2);
 
-    public static VideoQualityPreset ScreenShareBalanced { get; } =
-        new("ScreenShareBalanced",
+    public static VideoQualityPreset HighResolution { get; } =
+        new("HighResolution",
             MaxBitrateBps: 2_000_000,
             MaxFramerate: 30,
             ScaleResolutionDownBy: 1.0,
@@ -641,17 +641,8 @@ public static class VideoQualityPresets
             NetworkPriority: RtpPriority.Medium,
             BitratePriority: 1.0);
 
-    public static VideoQualityPreset ScreenShareHighQuality { get; } =
-        new("ScreenShareHighQuality",
-            MaxBitrateBps: 4_000_000,
-            MaxFramerate: 60,
-            ScaleResolutionDownBy: 1.0,
-            DegradationPreference: DegradationPreference.MaintainResolution,
-            NetworkPriority: RtpPriority.High,
-            BitratePriority: 1.2);
-
-    public static VideoQualityPreset ScreenShareLowBandwidth { get; } =
-        new("ScreenShareLowBandwidth",
+    public static VideoQualityPreset LowBandwidth { get; } =
+        new("LowBandwidth",
             MaxBitrateBps: 900_000,
             MaxFramerate: 20,
             ScaleResolutionDownBy: 1.5,
