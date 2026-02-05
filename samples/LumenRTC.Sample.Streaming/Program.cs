@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 using LumenRTC;
 using LumenRTC.Rendering.Sdl;
 
-namespace LumenRTC.Sample.RemoteControl;
+namespace LumenRTC.Sample.Streaming;
 
 internal static class Program
 {
@@ -74,7 +74,7 @@ internal static class Program
             }
 
             PeerConnection? pc = null;
-            DataChannel? controlChannel = null;
+            DataChannel? dataChannel = null;
             SdlVideoRenderer? renderer = null;
             var offerSent = false;
 
@@ -94,14 +94,14 @@ internal static class Program
                 {
                     if (role == "sender")
                     {
-                        controlChannel = channel;
-                        controlChannel.SetCallbacks(new DataChannelCallbacks
+                        dataChannel = channel;
+                        dataChannel.SetCallbacks(new DataChannelCallbacks
                         {
                             OnStateChange = state => Console.WriteLine($"DataChannel state: {state}"),
                             OnMessage = (data, _) =>
                             {
                                 var text = Encoding.UTF8.GetString(data.Span);
-                                Console.WriteLine($"Control message: {text}");
+                                Console.WriteLine($"Data message: {text}");
                             }
                         });
                     }

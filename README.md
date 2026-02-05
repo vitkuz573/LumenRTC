@@ -109,15 +109,15 @@ Signaling server (simple WebSocket relay):
 dotnet run --project samples/LumenRTC.Sample.SignalingServer/LumenRTC.Sample.SignalingServer.csproj -- --url http://localhost:8080/ws/
 ```
 
-Remote control demo (run in two terminals):
+Streaming demo (run in two terminals):
 
 ```bash
 # Sender (captures screen)
-dotnet run --project samples/LumenRTC.Sample.RemoteControl/LumenRTC.Sample.RemoteControl.csproj -- \\
+dotnet run --project samples/LumenRTC.Sample.Streaming/LumenRTC.Sample.Streaming.csproj -- \\
   --role sender --server ws://localhost:8080/ws/ --room demo --capture screen --source 0 --fps 30
 
 # Viewer (renders remote track + opens data channel)
-dotnet run --project samples/LumenRTC.Sample.RemoteControl/LumenRTC.Sample.RemoteControl.csproj -- \\
+dotnet run --project samples/LumenRTC.Sample.Streaming/LumenRTC.Sample.Streaming.csproj -- \\
   --role viewer --server ws://localhost:8080/ws/ --room demo
 ```
 
