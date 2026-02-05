@@ -136,7 +136,7 @@ public sealed class PeerConnection : SafeHandle
         SetHandle(handle);
     }
 
-    public void Close()
+    public new void Close()
     {
         NativeMethods.lrtc_peer_connection_close(handle);
     }
@@ -266,7 +266,7 @@ public sealed class DataChannel : SafeHandle
         }
     }
 
-    public void Close()
+    public new void Close()
     {
         NativeMethods.lrtc_data_channel_close(handle);
     }
@@ -373,7 +373,7 @@ public sealed class VideoFrame : SafeHandle
         var retained = NativeMethods.lrtc_video_frame_retain(handle);
         if (retained == IntPtr.Zero)
         {
-            throw new InvalidOperationException(\"Failed to retain video frame.\");
+            throw new InvalidOperationException("Failed to retain video frame.");
         }
         return new VideoFrame(retained);
     }
