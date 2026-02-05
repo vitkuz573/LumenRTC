@@ -1,0 +1,56 @@
+# LumenRTC
+
+LumenRTC is a C ABI + C# binding layer for the `webrtc-sdk/libwebrtc` wrapper.
+Upstream: `https://github.com/webrtc-sdk/libwebrtc`.
+The goal is a stable native ABI for .NET while keeping the heavy lifting in
+`libwebrtc`.
+
+## Layout
+
+- `native/` C ABI layer built as `lumenrtc` shared library.
+- `src/LumenRTC/` .NET wrapper (P/Invoke + managed API).
+
+## Build prerequisites
+
+1. Build `libwebrtc` as described in `libwebrtc/README.md` (in your WebRTC
+   checkout). You need a `libwebrtc` shared library (`.dll` or `.so`).
+2. Note the `libwebrtc` repo path and the build output directory.
+
+## Build native (C ABI)
+
+```bash
+cmake -S native -B native/build \
+  -DLIBWEBRTC_ROOT=/home/vitaly/libwebrtc \
+  -DLIBWEBRTC_BUILD_DIR=/path/to/webrtc/out-debug/Linux-x64
+
+cmake --build native/build -j
+```
+
+Windows example (PowerShell):
+
+```powershell
+cmake -S native -B native\build `
+  -DLIBWEBRTC_ROOT=C:\path\to\libwebrtc `
+  -DLIBWEBRTC_BUILD_DIR=C:\path\to\webrtc\src\out-debug\Windows-x64
+
+cmake --build native\build --config Release
+```
+
+## Runtime
+
+Make sure `lumenrtc` and `libwebrtc` are discoverable by the loader:
+
+- Windows: add to `PATH` or place DLLs next to the app.
+- Linux: add to `LD_LIBRARY_PATH` or use rpath.
+
+## ABI notes
+
+- Callbacks run on WebRTC worker/signaling threads.
+- Strings passed to callbacks are valid only for the duration of the callback.
+- `lrtc_video_frame_t` is a handle you must release. If you need to keep a frame
+  beyond the callback, call `lrtc_video_frame_retain` to create a new handle.
+
+## Status
+
+Current focus: core peer connection, data channel, and video sink interop.
+Audio sinks, capture helpers, and full stats marshaling will be added next.
