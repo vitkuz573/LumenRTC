@@ -1,5 +1,8 @@
 namespace LumenRTC;
 
+/// <summary>
+/// Signaling state as defined by WebRTC.
+/// </summary>
 public enum SignalingState
 {
     Stable = 0,

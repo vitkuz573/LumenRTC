@@ -1,5 +1,8 @@
 namespace LumenRTC;
 
+/// <summary>
+/// Helper for selecting presets based on resolution.
+/// </summary>
 public static class VideoQuality
 {
     public static bool ApplyPreset(

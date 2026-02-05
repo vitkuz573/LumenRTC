@@ -1,5 +1,8 @@
 namespace LumenRTC;
 
+/// <summary>
+/// Local or remote video track.
+/// </summary>
 public sealed class VideoTrack : SafeHandle
 {
     internal VideoTrack(IntPtr handle) : base(IntPtr.Zero, true)

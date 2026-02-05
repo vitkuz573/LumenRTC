@@ -1,5 +1,8 @@
 namespace LumenRTC;
 
+/// <summary>
+/// Enumerates and creates video capturers.
+/// </summary>
 public sealed class VideoDevice : SafeHandle
 {
     private const int MaxNameSize = 256;

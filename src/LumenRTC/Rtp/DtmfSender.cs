@@ -1,5 +1,8 @@
 namespace LumenRTC;
 
+/// <summary>
+/// Sends DTMF tones over an audio RTP sender.
+/// </summary>
 public sealed class DtmfSender : SafeHandle
 {
     private DtmfSenderCallbacks? _callbacks;

@@ -1,5 +1,8 @@
 namespace LumenRTC;
 
+/// <summary>
+/// Pixel format used when converting video frames.
+/// </summary>
 public enum VideoFrameFormat
 {
     Argb = 0,

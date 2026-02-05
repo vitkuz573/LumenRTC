@@ -1,5 +1,8 @@
 namespace LumenRTC;
 
+/// <summary>
+/// Media constraints used when creating offers, answers, or sources.
+/// </summary>
 public sealed class MediaConstraints : SafeHandle
 {
     private MediaConstraints() : base(IntPtr.Zero, true) { }

@@ -1,5 +1,8 @@
 namespace LumenRTC;
 
+/// <summary>
+/// Initialization parameters for a data channel.
+/// </summary>
 public readonly struct DataChannelInit
 {
     public static DataChannelInit Default => new(

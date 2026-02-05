@@ -1,5 +1,8 @@
 namespace LumenRTC;
 
+/// <summary>
+/// Data channel event callbacks.
+/// </summary>
 public sealed class DataChannelCallbacks
 {
     public Action<DataChannelState>? OnStateChange;

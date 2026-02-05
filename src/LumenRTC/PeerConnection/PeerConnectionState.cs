@@ -1,5 +1,8 @@
 namespace LumenRTC;
 
+/// <summary>
+/// Overall state of a peer connection.
+/// </summary>
 public enum PeerConnectionState
 {
     New = 0,

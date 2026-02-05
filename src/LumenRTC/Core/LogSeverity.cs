@@ -1,5 +1,8 @@
 namespace LumenRTC;
 
+/// <summary>
+/// Logging severity for native WebRTC output.
+/// </summary>
 public enum LogSeverity
 {
     Verbose = 0,

@@ -1,5 +1,8 @@
 namespace LumenRTC;
 
+/// <summary>
+/// DTLS transport state.
+/// </summary>
 public enum DtlsTransportState
 {
     New = 0,

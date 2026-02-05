@@ -1,5 +1,8 @@
 namespace LumenRTC;
 
+/// <summary>
+/// Initialization parameters for creating a transceiver.
+/// </summary>
 public sealed class RtpTransceiverInit
 {
     public RtpTransceiverDirection Direction { get; set; } = RtpTransceiverDirection.SendRecv;

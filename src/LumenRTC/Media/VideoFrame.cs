@@ -1,5 +1,8 @@
 namespace LumenRTC;
 
+/// <summary>
+/// Video frame handle provided by sinks.
+/// </summary>
 public sealed class VideoFrame : SafeHandle
 {
     internal VideoFrame(IntPtr handle) : base(IntPtr.Zero, true)

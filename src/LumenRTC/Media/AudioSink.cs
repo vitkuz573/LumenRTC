@@ -1,5 +1,8 @@
 namespace LumenRTC;
 
+/// <summary>
+/// Receives audio frames from a track.
+/// </summary>
 public sealed class AudioSink : SafeHandle
 {
     private readonly AudioSinkCallbacks _callbacks;

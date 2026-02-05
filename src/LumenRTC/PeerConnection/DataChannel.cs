@@ -1,5 +1,8 @@
 namespace LumenRTC;
 
+/// <summary>
+/// RTC data channel for arbitrary message transport.
+/// </summary>
 public sealed class DataChannel : SafeHandle
 {
     private DataChannelCallbacks? _callbacks;

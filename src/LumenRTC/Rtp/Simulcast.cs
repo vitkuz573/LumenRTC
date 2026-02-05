@@ -1,5 +1,8 @@
 namespace LumenRTC;
 
+/// <summary>
+/// Helpers for common simulcast encoding configurations.
+/// </summary>
 public static class Simulcast
 {
     public static RtpTransceiverInit CreateVideoSimulcast(

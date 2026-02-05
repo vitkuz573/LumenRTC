@@ -1,5 +1,8 @@
 namespace LumenRTC;
 
+/// <summary>
+/// Static entry point for initializing and terminating the native WebRTC runtime.
+/// </summary>
 public static class LumenRtc
 {
     public static void Initialize()

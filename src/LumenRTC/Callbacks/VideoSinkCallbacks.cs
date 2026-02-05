@@ -1,5 +1,8 @@
 namespace LumenRTC;
 
+/// <summary>
+/// Video sink callbacks.
+/// </summary>
 public sealed class VideoSinkCallbacks
 {
     public Action<VideoFrame>? OnFrame;

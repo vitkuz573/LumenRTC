@@ -1,5 +1,8 @@
 namespace LumenRTC;
 
+/// <summary>
+/// Configuration for creating a peer connection.
+/// </summary>
 public sealed class RtcConfiguration
 {
     public List<IceServer> IceServers { get; } = new();

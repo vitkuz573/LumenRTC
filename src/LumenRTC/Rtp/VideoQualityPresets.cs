@@ -1,5 +1,8 @@
 namespace LumenRTC;
 
+/// <summary>
+/// Built-in video quality presets.
+/// </summary>
 public static class VideoQualityPresets
 {
     public static VideoQualityPreset LowLatency { get; } =

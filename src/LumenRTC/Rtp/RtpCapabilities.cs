@@ -1,5 +1,8 @@
 namespace LumenRTC;
 
+/// <summary>
+/// Supported RTP codecs and header extensions.
+/// </summary>
 public sealed record RtpCapabilities(
     IReadOnlyList<RtpCodecCapability> Codecs,
     IReadOnlyList<RtpHeaderExtensionCapability> HeaderExtensions)

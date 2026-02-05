@@ -1,5 +1,8 @@
 namespace LumenRTC;
 
+/// <summary>
+/// Represents a desktop capture source (screen or window).
+/// </summary>
 public sealed class MediaSource : SafeHandle
 {
     internal MediaSource(IntPtr handle) : base(IntPtr.Zero, true)

@@ -1,5 +1,8 @@
 namespace LumenRTC;
 
+/// <summary>
+/// Single stats entry from a WebRTC stats report.
+/// </summary>
 public sealed class RtcStat
 {
     internal RtcStat(string id, string type, double timestampUs, JsonElement data)

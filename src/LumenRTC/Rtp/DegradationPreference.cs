@@ -1,5 +1,8 @@
 namespace LumenRTC;
 
+/// <summary>
+/// Preference for video quality degradation behavior.
+/// </summary>
 public enum DegradationPreference
 {
     Disabled = 0,

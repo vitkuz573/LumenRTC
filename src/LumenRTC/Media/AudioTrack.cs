@@ -1,5 +1,8 @@
 namespace LumenRTC;
 
+/// <summary>
+/// Local or remote audio track.
+/// </summary>
 public sealed class AudioTrack : SafeHandle
 {
     internal AudioTrack(IntPtr handle) : base(IntPtr.Zero, true)

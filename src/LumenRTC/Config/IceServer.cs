@@ -1,5 +1,8 @@
 namespace LumenRTC;
 
+/// <summary>
+/// Represents a STUN/TURN server configuration.
+/// </summary>
 public sealed class IceServer
 {
     public IceServer(string uri, string? username = null, string? password = null)

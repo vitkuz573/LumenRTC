@@ -1,5 +1,8 @@
 namespace LumenRTC;
 
+/// <summary>
+/// DTMF sender event callbacks.
+/// </summary>
 public sealed class DtmfSenderCallbacks
 {
     public Action<string, string?>? OnToneChange;

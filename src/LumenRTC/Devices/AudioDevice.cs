@@ -1,5 +1,8 @@
 namespace LumenRTC;
 
+/// <summary>
+/// Wraps the native audio device module for device selection and volume.
+/// </summary>
 public sealed class AudioDevice : SafeHandle
 {
     private const int MaxDeviceNameSize = 128;

@@ -1,5 +1,8 @@
 namespace LumenRTC;
 
+/// <summary>
+/// Represents a video quality preset for encoding.
+/// </summary>
 public sealed record VideoQualityPreset(
     string Name,
     int MaxBitrateBps,

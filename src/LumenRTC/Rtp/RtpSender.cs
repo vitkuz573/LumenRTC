@@ -1,5 +1,8 @@
 namespace LumenRTC;
 
+/// <summary>
+/// RTP sender for a local media track.
+/// </summary>
 public sealed class RtpSender : SafeHandle
 {
     internal RtpSender(IntPtr handle) : base(IntPtr.Zero, true)

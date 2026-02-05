@@ -1,5 +1,8 @@
 namespace LumenRTC;
 
+/// <summary>
+/// Captures frames from a camera device.
+/// </summary>
 public sealed class VideoCapturer : SafeHandle
 {
     internal VideoCapturer(IntPtr handle) : base(IntPtr.Zero, true)

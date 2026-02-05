@@ -1,5 +1,8 @@
 namespace LumenRTC;
 
+/// <summary>
+/// RTP receiver for a remote media track.
+/// </summary>
 public sealed class RtpReceiver : SafeHandle
 {
     internal RtpReceiver(IntPtr handle) : base(IntPtr.Zero, true)

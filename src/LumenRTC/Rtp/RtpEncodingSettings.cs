@@ -1,5 +1,8 @@
 namespace LumenRTC;
 
+/// <summary>
+/// Encoding settings applied to RTP senders.
+/// </summary>
 public sealed class RtpEncodingSettings
 {
     public int? MaxBitrateBps { get; set; }

@@ -1,5 +1,8 @@
 namespace LumenRTC;
 
+/// <summary>
+/// Represents a WebRTC peer connection.
+/// </summary>
 public sealed class PeerConnection : SafeHandle
 {
     private readonly PeerConnectionCallbacks _callbacks;

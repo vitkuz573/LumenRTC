@@ -1,5 +1,8 @@
 namespace LumenRTC;
 
+/// <summary>
+/// Collection of audio and video tracks.
+/// </summary>
 public sealed class MediaStream : SafeHandle
 {
     public string Id { get; }

@@ -1,5 +1,8 @@
 namespace LumenRTC;
 
+/// <summary>
+/// State of a data channel.
+/// </summary>
 public enum DataChannelState
 {
     Connecting = 0,

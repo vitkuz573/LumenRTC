@@ -1,5 +1,8 @@
 namespace LumenRTC;
 
+/// <summary>
+/// Configures native WebRTC logging callbacks and verbosity.
+/// </summary>
 public static class RtcLogging
 {
     private static LrtcLogMessageCb? _callback;

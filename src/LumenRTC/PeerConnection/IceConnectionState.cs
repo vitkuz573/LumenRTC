@@ -1,5 +1,8 @@
 namespace LumenRTC;
 
+/// <summary>
+/// State of the ICE connection.
+/// </summary>
 public enum IceConnectionState
 {
     New = 0,

@@ -1,5 +1,8 @@
 namespace LumenRTC;
 
+/// <summary>
+/// Controls which ICE candidate types are used.
+/// </summary>
 public enum IceTransportsType
 {
     None = 0,

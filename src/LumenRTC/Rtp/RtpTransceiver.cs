@@ -1,5 +1,8 @@
 namespace LumenRTC;
 
+/// <summary>
+/// RTP transceiver combining sender and receiver.
+/// </summary>
 public sealed class RtpTransceiver : SafeHandle
 {
     private delegate int TransceiverErrorInvoker(IntPtr transceiver, IntPtr error, uint errorLen);

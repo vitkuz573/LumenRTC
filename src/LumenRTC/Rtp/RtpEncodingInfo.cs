@@ -1,5 +1,8 @@
 namespace LumenRTC;
 
+/// <summary>
+/// Effective encoding settings reported by RTP sender or receiver.
+/// </summary>
 public readonly record struct RtpEncodingInfo(
     uint Ssrc,
     int MaxBitrateBps,

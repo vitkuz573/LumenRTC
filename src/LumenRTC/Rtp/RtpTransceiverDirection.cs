@@ -1,5 +1,8 @@
 namespace LumenRTC;
 
+/// <summary>
+/// Direction of media flow for a transceiver.
+/// </summary>
 public enum RtpTransceiverDirection
 {
     SendRecv = 0,

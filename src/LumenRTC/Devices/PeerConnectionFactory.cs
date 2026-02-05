@@ -1,5 +1,8 @@
 namespace LumenRTC;
 
+/// <summary>
+/// Creates peer connections, tracks, and device sources.
+/// </summary>
 public sealed class PeerConnectionFactory : SafeHandle
 {
     private static readonly JsonSerializerOptions s_rtpCapabilitiesJsonOptions = new()

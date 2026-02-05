@@ -1,5 +1,8 @@
 namespace LumenRTC;
 
+/// <summary>
+/// Audio source used to create local audio tracks.
+/// </summary>
 public sealed class AudioSource : SafeHandle
 {
     internal AudioSource(IntPtr handle) : base(IntPtr.Zero, true)

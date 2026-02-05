@@ -1,5 +1,8 @@
 namespace LumenRTC;
 
+/// <summary>
+/// Snapshot list of desktop capture sources.
+/// </summary>
 public sealed class DesktopMediaList : SafeHandle
 {
     public DesktopType Type { get; }

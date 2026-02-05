@@ -1,5 +1,8 @@
 namespace LumenRTC;
 
+/// <summary>
+/// Parsed WebRTC stats report.
+/// </summary>
 public sealed class RtcStatsReport : IDisposable
 {
     private readonly JsonDocument _document;

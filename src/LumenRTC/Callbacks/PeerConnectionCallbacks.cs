@@ -1,5 +1,8 @@
 namespace LumenRTC;
 
+/// <summary>
+/// Peer connection event callbacks.
+/// </summary>
 public sealed class PeerConnectionCallbacks
 {
     public Action<SignalingState>? OnSignalingState;

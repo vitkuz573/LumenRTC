@@ -1,5 +1,8 @@
 namespace LumenRTC;
 
+/// <summary>
+/// PCM audio frame data delivered by audio sinks.
+/// </summary>
 public readonly struct AudioFrame
 {
     public AudioFrame(ReadOnlyMemory<byte> data, int bitsPerSample, int sampleRate, int channels, int frames)

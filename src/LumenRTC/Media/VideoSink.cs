@@ -1,5 +1,8 @@
 namespace LumenRTC;
 
+/// <summary>
+/// Receives video frames from a track.
+/// </summary>
 public sealed class VideoSink : SafeHandle
 {
     private readonly VideoSinkCallbacks _callbacks;

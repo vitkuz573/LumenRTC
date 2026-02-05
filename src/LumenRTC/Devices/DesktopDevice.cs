@@ -1,5 +1,8 @@
 namespace LumenRTC;
 
+/// <summary>
+/// Enumerates desktop sources for screen/window capture.
+/// </summary>
 public sealed class DesktopDevice : SafeHandle
 {
     internal DesktopDevice(IntPtr handle) : base(IntPtr.Zero, true)

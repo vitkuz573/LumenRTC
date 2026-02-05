@@ -1,5 +1,8 @@
 namespace LumenRTC;
 
+/// <summary>
+/// Audio sink callbacks.
+/// </summary>
 public sealed class AudioSinkCallbacks
 {
     public Action<AudioFrame>? OnData;
