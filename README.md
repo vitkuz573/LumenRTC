@@ -78,6 +78,10 @@ Make sure `lumenrtc` and `libwebrtc` are discoverable by the loader:
 - Windows: add to `PATH` or place DLLs next to the app.
 - Linux: add to `LD_LIBRARY_PATH` or use rpath.
 
+For sample projects, the build will copy `lumenrtc` and `libwebrtc` into the
+output folder when possible. You can override paths via MSBuild properties:
+`LumenRtcNativeDir` and `LibWebRtcBuildDir` (or set `LIBWEBRTC_BUILD_DIR`).
+
 SDL renderer runtime (optional):
 
 - Windows: `SDL2.dll` must be on `PATH` or next to the app.
