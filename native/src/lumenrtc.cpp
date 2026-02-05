@@ -2487,6 +2487,128 @@ int LUMENRTC_CALL lrtc_rtp_sender_set_encoding_parameters_at(
   return sender->ref->set_parameters(parameters) ? 1 : 0;
 }
 
+uint32_t LUMENRTC_CALL lrtc_rtp_sender_encoding_count(
+    lrtc_rtp_sender_t* sender) {
+  if (!sender || !sender->ref.get()) {
+    return 0;
+  }
+  scoped_refptr<libwebrtc::RTCRtpParameters> parameters =
+      sender->ref->parameters();
+  if (!parameters.get()) {
+    return 0;
+  }
+  return static_cast<uint32_t>(parameters->encodings().size());
+}
+
+int LUMENRTC_CALL lrtc_rtp_sender_get_encoding_info(
+    lrtc_rtp_sender_t* sender, uint32_t index,
+    lrtc_rtp_encoding_info_t* info) {
+  if (!sender || !sender->ref.get() || !info) {
+    return 0;
+  }
+  scoped_refptr<libwebrtc::RTCRtpParameters> parameters =
+      sender->ref->parameters();
+  if (!parameters.get()) {
+    return 0;
+  }
+  vector<scoped_refptr<libwebrtc::RTCRtpEncodingParameters>> encodings =
+      parameters->encodings();
+  if (index >= encodings.size()) {
+    return 0;
+  }
+  scoped_refptr<libwebrtc::RTCRtpEncodingParameters> encoding =
+      encodings[index];
+  if (!encoding.get()) {
+    return 0;
+  }
+  info->ssrc = encoding->ssrc();
+  info->max_bitrate_bps = encoding->max_bitrate_bps();
+  info->min_bitrate_bps = encoding->min_bitrate_bps();
+  info->max_framerate = encoding->max_framerate();
+  info->scale_resolution_down_by = encoding->scale_resolution_down_by();
+  info->active = encoding->active() ? 1 : 0;
+  info->bitrate_priority = encoding->bitrate_priority();
+  info->network_priority = static_cast<int>(encoding->network_priority());
+  info->num_temporal_layers = encoding->num_temporal_layers();
+  info->adaptive_ptime = encoding->adaptive_ptime() ? 1 : 0;
+  return 1;
+}
+
+int32_t LUMENRTC_CALL lrtc_rtp_sender_get_encoding_rid(
+    lrtc_rtp_sender_t* sender, uint32_t index, char* buffer,
+    uint32_t buffer_len) {
+  if (!sender || !sender->ref.get()) {
+    return -1;
+  }
+  scoped_refptr<libwebrtc::RTCRtpParameters> parameters =
+      sender->ref->parameters();
+  if (!parameters.get()) {
+    return -1;
+  }
+  vector<scoped_refptr<libwebrtc::RTCRtpEncodingParameters>> encodings =
+      parameters->encodings();
+  if (index >= encodings.size()) {
+    return -1;
+  }
+  scoped_refptr<libwebrtc::RTCRtpEncodingParameters> encoding =
+      encodings[index];
+  if (!encoding.get()) {
+    return -1;
+  }
+  return CopyPortableString(encoding->rid(), buffer, buffer_len);
+}
+
+int32_t LUMENRTC_CALL lrtc_rtp_sender_get_encoding_scalability_mode(
+    lrtc_rtp_sender_t* sender, uint32_t index, char* buffer,
+    uint32_t buffer_len) {
+  if (!sender || !sender->ref.get()) {
+    return -1;
+  }
+  scoped_refptr<libwebrtc::RTCRtpParameters> parameters =
+      sender->ref->parameters();
+  if (!parameters.get()) {
+    return -1;
+  }
+  vector<scoped_refptr<libwebrtc::RTCRtpEncodingParameters>> encodings =
+      parameters->encodings();
+  if (index >= encodings.size()) {
+    return -1;
+  }
+  scoped_refptr<libwebrtc::RTCRtpEncodingParameters> encoding =
+      encodings[index];
+  if (!encoding.get()) {
+    return -1;
+  }
+  return CopyPortableString(encoding->scalability_mode(),
+                            buffer, buffer_len);
+}
+
+int LUMENRTC_CALL lrtc_rtp_sender_get_degradation_preference(
+    lrtc_rtp_sender_t* sender) {
+  if (!sender || !sender->ref.get()) {
+    return -1;
+  }
+  scoped_refptr<libwebrtc::RTCRtpParameters> parameters =
+      sender->ref->parameters();
+  if (!parameters.get()) {
+    return -1;
+  }
+  return static_cast<int>(parameters->GetDegradationPreference());
+}
+
+int32_t LUMENRTC_CALL lrtc_rtp_sender_get_parameters_mid(
+    lrtc_rtp_sender_t* sender, char* buffer, uint32_t buffer_len) {
+  if (!sender || !sender->ref.get()) {
+    return -1;
+  }
+  scoped_refptr<libwebrtc::RTCRtpParameters> parameters =
+      sender->ref->parameters();
+  if (!parameters.get()) {
+    return -1;
+  }
+  return CopyPortableString(parameters->mid(), buffer, buffer_len);
+}
+
 uint32_t LUMENRTC_CALL lrtc_rtp_sender_get_ssrc(lrtc_rtp_sender_t* sender) {
   if (!sender || !sender->ref.get()) {
     return 0;
@@ -2631,6 +2753,128 @@ int32_t LUMENRTC_CALL lrtc_rtp_receiver_get_id(
     return -1;
   }
   return CopyPortableString(receiver->ref->id(), buffer, buffer_len);
+}
+
+uint32_t LUMENRTC_CALL lrtc_rtp_receiver_encoding_count(
+    lrtc_rtp_receiver_t* receiver) {
+  if (!receiver || !receiver->ref.get()) {
+    return 0;
+  }
+  scoped_refptr<libwebrtc::RTCRtpParameters> parameters =
+      receiver->ref->parameters();
+  if (!parameters.get()) {
+    return 0;
+  }
+  return static_cast<uint32_t>(parameters->encodings().size());
+}
+
+int LUMENRTC_CALL lrtc_rtp_receiver_get_encoding_info(
+    lrtc_rtp_receiver_t* receiver, uint32_t index,
+    lrtc_rtp_encoding_info_t* info) {
+  if (!receiver || !receiver->ref.get() || !info) {
+    return 0;
+  }
+  scoped_refptr<libwebrtc::RTCRtpParameters> parameters =
+      receiver->ref->parameters();
+  if (!parameters.get()) {
+    return 0;
+  }
+  vector<scoped_refptr<libwebrtc::RTCRtpEncodingParameters>> encodings =
+      parameters->encodings();
+  if (index >= encodings.size()) {
+    return 0;
+  }
+  scoped_refptr<libwebrtc::RTCRtpEncodingParameters> encoding =
+      encodings[index];
+  if (!encoding.get()) {
+    return 0;
+  }
+  info->ssrc = encoding->ssrc();
+  info->max_bitrate_bps = encoding->max_bitrate_bps();
+  info->min_bitrate_bps = encoding->min_bitrate_bps();
+  info->max_framerate = encoding->max_framerate();
+  info->scale_resolution_down_by = encoding->scale_resolution_down_by();
+  info->active = encoding->active() ? 1 : 0;
+  info->bitrate_priority = encoding->bitrate_priority();
+  info->network_priority = static_cast<int>(encoding->network_priority());
+  info->num_temporal_layers = encoding->num_temporal_layers();
+  info->adaptive_ptime = encoding->adaptive_ptime() ? 1 : 0;
+  return 1;
+}
+
+int32_t LUMENRTC_CALL lrtc_rtp_receiver_get_encoding_rid(
+    lrtc_rtp_receiver_t* receiver, uint32_t index, char* buffer,
+    uint32_t buffer_len) {
+  if (!receiver || !receiver->ref.get()) {
+    return -1;
+  }
+  scoped_refptr<libwebrtc::RTCRtpParameters> parameters =
+      receiver->ref->parameters();
+  if (!parameters.get()) {
+    return -1;
+  }
+  vector<scoped_refptr<libwebrtc::RTCRtpEncodingParameters>> encodings =
+      parameters->encodings();
+  if (index >= encodings.size()) {
+    return -1;
+  }
+  scoped_refptr<libwebrtc::RTCRtpEncodingParameters> encoding =
+      encodings[index];
+  if (!encoding.get()) {
+    return -1;
+  }
+  return CopyPortableString(encoding->rid(), buffer, buffer_len);
+}
+
+int32_t LUMENRTC_CALL lrtc_rtp_receiver_get_encoding_scalability_mode(
+    lrtc_rtp_receiver_t* receiver, uint32_t index, char* buffer,
+    uint32_t buffer_len) {
+  if (!receiver || !receiver->ref.get()) {
+    return -1;
+  }
+  scoped_refptr<libwebrtc::RTCRtpParameters> parameters =
+      receiver->ref->parameters();
+  if (!parameters.get()) {
+    return -1;
+  }
+  vector<scoped_refptr<libwebrtc::RTCRtpEncodingParameters>> encodings =
+      parameters->encodings();
+  if (index >= encodings.size()) {
+    return -1;
+  }
+  scoped_refptr<libwebrtc::RTCRtpEncodingParameters> encoding =
+      encodings[index];
+  if (!encoding.get()) {
+    return -1;
+  }
+  return CopyPortableString(encoding->scalability_mode(),
+                            buffer, buffer_len);
+}
+
+int LUMENRTC_CALL lrtc_rtp_receiver_get_degradation_preference(
+    lrtc_rtp_receiver_t* receiver) {
+  if (!receiver || !receiver->ref.get()) {
+    return -1;
+  }
+  scoped_refptr<libwebrtc::RTCRtpParameters> parameters =
+      receiver->ref->parameters();
+  if (!parameters.get()) {
+    return -1;
+  }
+  return static_cast<int>(parameters->GetDegradationPreference());
+}
+
+int32_t LUMENRTC_CALL lrtc_rtp_receiver_get_parameters_mid(
+    lrtc_rtp_receiver_t* receiver, char* buffer, uint32_t buffer_len) {
+  if (!receiver || !receiver->ref.get()) {
+    return -1;
+  }
+  scoped_refptr<libwebrtc::RTCRtpParameters> parameters =
+      receiver->ref->parameters();
+  if (!parameters.get()) {
+    return -1;
+  }
+  return CopyPortableString(parameters->mid(), buffer, buffer_len);
 }
 
 uint32_t LUMENRTC_CALL lrtc_rtp_receiver_stream_id_count(

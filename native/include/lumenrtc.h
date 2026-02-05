@@ -230,6 +230,19 @@ typedef struct lrtc_rtp_encoding_settings_t {
   int adaptive_ptime;             // -1 keeps current, 0/1 sets
 } lrtc_rtp_encoding_settings_t;
 
+typedef struct lrtc_rtp_encoding_info_t {
+  uint32_t ssrc;
+  int max_bitrate_bps;
+  int min_bitrate_bps;
+  double max_framerate;
+  double scale_resolution_down_by;
+  int active;
+  double bitrate_priority;
+  int network_priority;
+  int num_temporal_layers;
+  int adaptive_ptime;
+} lrtc_rtp_encoding_info_t;
+
 typedef struct lrtc_rtp_transceiver_init_t {
   int direction;  // lrtc_rtp_transceiver_direction
   const char** stream_ids;
@@ -671,6 +684,22 @@ LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_sender_set_encoding_parameters(
 LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_sender_set_encoding_parameters_at(
     lrtc_rtp_sender_t* sender, uint32_t index,
     const lrtc_rtp_encoding_settings_t* settings);
+LUMENRTC_API uint32_t LUMENRTC_CALL lrtc_rtp_sender_encoding_count(
+    lrtc_rtp_sender_t* sender);
+LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_sender_get_encoding_info(
+    lrtc_rtp_sender_t* sender, uint32_t index,
+    lrtc_rtp_encoding_info_t* info);
+LUMENRTC_API int32_t LUMENRTC_CALL lrtc_rtp_sender_get_encoding_rid(
+    lrtc_rtp_sender_t* sender, uint32_t index, char* buffer,
+    uint32_t buffer_len);
+LUMENRTC_API int32_t LUMENRTC_CALL
+lrtc_rtp_sender_get_encoding_scalability_mode(
+    lrtc_rtp_sender_t* sender, uint32_t index, char* buffer,
+    uint32_t buffer_len);
+LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_sender_get_degradation_preference(
+    lrtc_rtp_sender_t* sender);
+LUMENRTC_API int32_t LUMENRTC_CALL lrtc_rtp_sender_get_parameters_mid(
+    lrtc_rtp_sender_t* sender, char* buffer, uint32_t buffer_len);
 LUMENRTC_API uint32_t LUMENRTC_CALL lrtc_rtp_sender_get_ssrc(
     lrtc_rtp_sender_t* sender);
 LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_sender_replace_audio_track(
@@ -699,6 +728,22 @@ LUMENRTC_API void LUMENRTC_CALL lrtc_rtp_sender_release(
 LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_receiver_get_media_type(
     lrtc_rtp_receiver_t* receiver);
 LUMENRTC_API int32_t LUMENRTC_CALL lrtc_rtp_receiver_get_id(
+    lrtc_rtp_receiver_t* receiver, char* buffer, uint32_t buffer_len);
+LUMENRTC_API uint32_t LUMENRTC_CALL lrtc_rtp_receiver_encoding_count(
+    lrtc_rtp_receiver_t* receiver);
+LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_receiver_get_encoding_info(
+    lrtc_rtp_receiver_t* receiver, uint32_t index,
+    lrtc_rtp_encoding_info_t* info);
+LUMENRTC_API int32_t LUMENRTC_CALL lrtc_rtp_receiver_get_encoding_rid(
+    lrtc_rtp_receiver_t* receiver, uint32_t index, char* buffer,
+    uint32_t buffer_len);
+LUMENRTC_API int32_t LUMENRTC_CALL
+lrtc_rtp_receiver_get_encoding_scalability_mode(
+    lrtc_rtp_receiver_t* receiver, uint32_t index, char* buffer,
+    uint32_t buffer_len);
+LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_receiver_get_degradation_preference(
+    lrtc_rtp_receiver_t* receiver);
+LUMENRTC_API int32_t LUMENRTC_CALL lrtc_rtp_receiver_get_parameters_mid(
     lrtc_rtp_receiver_t* receiver, char* buffer, uint32_t buffer_len);
 LUMENRTC_API uint32_t LUMENRTC_CALL lrtc_rtp_receiver_stream_id_count(
     lrtc_rtp_receiver_t* receiver);

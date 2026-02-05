@@ -266,6 +266,20 @@ public sealed class RtpEncodingSettings
     }
 }
 
+public readonly record struct RtpEncodingInfo(
+    uint Ssrc,
+    int MaxBitrateBps,
+    int MinBitrateBps,
+    double MaxFramerate,
+    double ScaleResolutionDownBy,
+    bool Active,
+    double BitratePriority,
+    RtpPriority NetworkPriority,
+    int NumTemporalLayers,
+    bool AdaptivePtime,
+    string Rid,
+    string ScalabilityMode);
+
 public sealed class RtpTransceiverInit
 {
     public RtpTransceiverDirection Direction { get; set; } = RtpTransceiverDirection.SendRecv;
@@ -1262,6 +1276,49 @@ public sealed class RtpSender : SafeHandle
         }
     }
 
+    public IReadOnlyList<RtpEncodingInfo> GetEncodings()
+    {
+        var count = NativeMethods.lrtc_rtp_sender_encoding_count(handle);
+        if (count == 0)
+        {
+            return Array.Empty<RtpEncodingInfo>();
+        }
+
+        var list = new List<RtpEncodingInfo>((int)count);
+        for (uint i = 0; i < count; i++)
+        {
+            if (NativeMethods.lrtc_rtp_sender_get_encoding_info(handle, i, out var info) == 0)
+            {
+                continue;
+            }
+            var rid = NativeString.GetIndexedString(handle, i, NativeMethods.lrtc_rtp_sender_get_encoding_rid);
+            var scalability = NativeString.GetIndexedString(handle, i, NativeMethods.lrtc_rtp_sender_get_encoding_scalability_mode);
+            list.Add(new RtpEncodingInfo(
+                info.ssrc,
+                info.max_bitrate_bps,
+                info.min_bitrate_bps,
+                info.max_framerate,
+                info.scale_resolution_down_by,
+                info.active != 0,
+                info.bitrate_priority,
+                (RtpPriority)info.network_priority,
+                info.num_temporal_layers,
+                info.adaptive_ptime != 0,
+                rid,
+                scalability));
+        }
+
+        return list;
+    }
+
+    public DegradationPreference? GetDegradationPreference()
+    {
+        var value = NativeMethods.lrtc_rtp_sender_get_degradation_preference(handle);
+        return value < 0 ? null : (DegradationPreference)value;
+    }
+
+    public string ParametersMid => NativeString.GetString(handle, NativeMethods.lrtc_rtp_sender_get_parameters_mid);
+
     public bool SetStreamIds(IReadOnlyList<string> streamIds)
     {
         if (streamIds == null) throw new ArgumentNullException(nameof(streamIds));
@@ -1360,6 +1417,49 @@ public sealed class RtpReceiver : SafeHandle
     {
         SetJitterBufferMinimumDelay(delay.TotalSeconds);
     }
+
+    public IReadOnlyList<RtpEncodingInfo> GetEncodings()
+    {
+        var count = NativeMethods.lrtc_rtp_receiver_encoding_count(handle);
+        if (count == 0)
+        {
+            return Array.Empty<RtpEncodingInfo>();
+        }
+
+        var list = new List<RtpEncodingInfo>((int)count);
+        for (uint i = 0; i < count; i++)
+        {
+            if (NativeMethods.lrtc_rtp_receiver_get_encoding_info(handle, i, out var info) == 0)
+            {
+                continue;
+            }
+            var rid = NativeString.GetIndexedString(handle, i, NativeMethods.lrtc_rtp_receiver_get_encoding_rid);
+            var scalability = NativeString.GetIndexedString(handle, i, NativeMethods.lrtc_rtp_receiver_get_encoding_scalability_mode);
+            list.Add(new RtpEncodingInfo(
+                info.ssrc,
+                info.max_bitrate_bps,
+                info.min_bitrate_bps,
+                info.max_framerate,
+                info.scale_resolution_down_by,
+                info.active != 0,
+                info.bitrate_priority,
+                (RtpPriority)info.network_priority,
+                info.num_temporal_layers,
+                info.adaptive_ptime != 0,
+                rid,
+                scalability));
+        }
+
+        return list;
+    }
+
+    public DegradationPreference? GetDegradationPreference()
+    {
+        var value = NativeMethods.lrtc_rtp_receiver_get_degradation_preference(handle);
+        return value < 0 ? null : (DegradationPreference)value;
+    }
+
+    public string ParametersMid => NativeString.GetString(handle, NativeMethods.lrtc_rtp_receiver_get_parameters_mid);
 
     public override bool IsInvalid => handle == IntPtr.Zero;
 

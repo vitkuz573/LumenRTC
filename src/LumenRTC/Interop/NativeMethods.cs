@@ -167,6 +167,21 @@ internal struct LrtcRtpEncodingSettings
 }
 
 [StructLayout(LayoutKind.Sequential)]
+internal struct LrtcRtpEncodingInfo
+{
+    public uint ssrc;
+    public int max_bitrate_bps;
+    public int min_bitrate_bps;
+    public double max_framerate;
+    public double scale_resolution_down_by;
+    public int active;
+    public double bitrate_priority;
+    public int network_priority;
+    public int num_temporal_layers;
+    public int adaptive_ptime;
+}
+
+[StructLayout(LayoutKind.Sequential)]
 internal struct LrtcRtpTransceiverInit
 {
     public LrtcRtpTransceiverDirection direction;
@@ -870,6 +885,38 @@ internal static class NativeMethods
         ref LrtcRtpEncodingSettings settings);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern uint lrtc_rtp_sender_encoding_count(IntPtr sender);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern int lrtc_rtp_sender_get_encoding_info(
+        IntPtr sender,
+        uint index,
+        out LrtcRtpEncodingInfo info);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern int lrtc_rtp_sender_get_encoding_rid(
+        IntPtr sender,
+        uint index,
+        IntPtr buffer,
+        uint bufferLen);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern int lrtc_rtp_sender_get_encoding_scalability_mode(
+        IntPtr sender,
+        uint index,
+        IntPtr buffer,
+        uint bufferLen);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern int lrtc_rtp_sender_get_degradation_preference(IntPtr sender);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern int lrtc_rtp_sender_get_parameters_mid(
+        IntPtr sender,
+        IntPtr buffer,
+        uint bufferLen);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     internal static extern uint lrtc_rtp_sender_get_ssrc(IntPtr sender);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
@@ -921,6 +968,38 @@ internal static class NativeMethods
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     internal static extern int lrtc_rtp_receiver_get_id(
+        IntPtr receiver,
+        IntPtr buffer,
+        uint bufferLen);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern uint lrtc_rtp_receiver_encoding_count(IntPtr receiver);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern int lrtc_rtp_receiver_get_encoding_info(
+        IntPtr receiver,
+        uint index,
+        out LrtcRtpEncodingInfo info);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern int lrtc_rtp_receiver_get_encoding_rid(
+        IntPtr receiver,
+        uint index,
+        IntPtr buffer,
+        uint bufferLen);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern int lrtc_rtp_receiver_get_encoding_scalability_mode(
+        IntPtr receiver,
+        uint index,
+        IntPtr buffer,
+        uint bufferLen);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern int lrtc_rtp_receiver_get_degradation_preference(IntPtr receiver);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern int lrtc_rtp_receiver_get_parameters_mid(
         IntPtr receiver,
         IntPtr buffer,
         uint bufferLen);
