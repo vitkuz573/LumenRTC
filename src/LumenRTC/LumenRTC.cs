@@ -144,6 +144,12 @@ public enum DesktopCaptureState
     Failed = 2,
 }
 
+public enum TrackState
+{
+    Live = 0,
+    Ended = 1,
+}
+
 public enum DegradationPreference
 {
     Disabled = 0,
@@ -2793,6 +2799,34 @@ public sealed class AudioTrack : SafeHandle
         SetHandle(handle);
     }
 
+    public string Id => NativeString.GetString(handle, NativeMethods.lrtc_audio_track_get_id);
+
+    public TrackState State
+    {
+        get
+        {
+            var value = NativeMethods.lrtc_audio_track_get_state(handle);
+            if (value < 0)
+            {
+                throw new InvalidOperationException("Failed to get audio track state.");
+            }
+            return (TrackState)value;
+        }
+    }
+
+    public bool Enabled
+    {
+        get => NativeMethods.lrtc_audio_track_get_enabled(handle) != 0;
+        set
+        {
+            var result = NativeMethods.lrtc_audio_track_set_enabled(handle, value ? 1 : 0);
+            if (result == 0)
+            {
+                throw new InvalidOperationException("Failed to set audio track enabled state.");
+            }
+        }
+    }
+
     public void SetVolume(double volume)
     {
         NativeMethods.lrtc_audio_track_set_volume(handle, volume);
@@ -2850,6 +2884,34 @@ public sealed class VideoTrack : SafeHandle
     internal VideoTrack(IntPtr handle) : base(IntPtr.Zero, true)
     {
         SetHandle(handle);
+    }
+
+    public string Id => NativeString.GetString(handle, NativeMethods.lrtc_video_track_get_id);
+
+    public TrackState State
+    {
+        get
+        {
+            var value = NativeMethods.lrtc_video_track_get_state(handle);
+            if (value < 0)
+            {
+                throw new InvalidOperationException("Failed to get video track state.");
+            }
+            return (TrackState)value;
+        }
+    }
+
+    public bool Enabled
+    {
+        get => NativeMethods.lrtc_video_track_get_enabled(handle) != 0;
+        set
+        {
+            var result = NativeMethods.lrtc_video_track_set_enabled(handle, value ? 1 : 0);
+            if (result == 0)
+            {
+                throw new InvalidOperationException("Failed to set video track enabled state.");
+            }
+        }
     }
 
     public void AddSink(VideoSink sink)

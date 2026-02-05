@@ -78,6 +78,11 @@ typedef enum lrtc_desktop_capture_state {
   LRTC_DESKTOP_CAPTURE_FAILED = 2,
 } lrtc_desktop_capture_state;
 
+typedef enum lrtc_track_state {
+  LRTC_TRACK_LIVE = 0,
+  LRTC_TRACK_ENDED = 1,
+} lrtc_track_state;
+
 typedef enum lrtc_rtp_transceiver_direction {
   LRTC_RTP_TRANSCEIVER_SEND_RECV = 0,
   LRTC_RTP_TRANSCEIVER_SEND_ONLY = 1,
@@ -492,6 +497,14 @@ LUMENRTC_API void LUMENRTC_CALL lrtc_video_source_release(
 
 LUMENRTC_API void LUMENRTC_CALL lrtc_audio_track_set_volume(
     lrtc_audio_track_t* track, double volume);
+LUMENRTC_API int32_t LUMENRTC_CALL lrtc_audio_track_get_id(
+    lrtc_audio_track_t* track, char* buffer, uint32_t buffer_len);
+LUMENRTC_API int LUMENRTC_CALL lrtc_audio_track_get_state(
+    lrtc_audio_track_t* track);
+LUMENRTC_API int LUMENRTC_CALL lrtc_audio_track_get_enabled(
+    lrtc_audio_track_t* track);
+LUMENRTC_API int LUMENRTC_CALL lrtc_audio_track_set_enabled(
+    lrtc_audio_track_t* track, int enabled);
 LUMENRTC_API void LUMENRTC_CALL lrtc_audio_track_add_sink(
     lrtc_audio_track_t* track, lrtc_audio_sink_t* sink);
 LUMENRTC_API void LUMENRTC_CALL lrtc_audio_track_remove_sink(
@@ -663,6 +676,14 @@ LUMENRTC_API void LUMENRTC_CALL lrtc_video_track_add_sink(
     lrtc_video_track_t* track, lrtc_video_sink_t* sink);
 LUMENRTC_API void LUMENRTC_CALL lrtc_video_track_remove_sink(
     lrtc_video_track_t* track, lrtc_video_sink_t* sink);
+LUMENRTC_API int32_t LUMENRTC_CALL lrtc_video_track_get_id(
+    lrtc_video_track_t* track, char* buffer, uint32_t buffer_len);
+LUMENRTC_API int LUMENRTC_CALL lrtc_video_track_get_state(
+    lrtc_video_track_t* track);
+LUMENRTC_API int LUMENRTC_CALL lrtc_video_track_get_enabled(
+    lrtc_video_track_t* track);
+LUMENRTC_API int LUMENRTC_CALL lrtc_video_track_set_enabled(
+    lrtc_video_track_t* track, int enabled);
 LUMENRTC_API void LUMENRTC_CALL lrtc_video_track_release(
     lrtc_video_track_t* track);
 

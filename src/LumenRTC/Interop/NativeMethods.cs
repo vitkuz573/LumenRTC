@@ -102,6 +102,12 @@ internal enum LrtcDesktopCaptureState : int
     Failed = 2,
 }
 
+internal enum LrtcTrackState : int
+{
+    Live = 0,
+    Ended = 1,
+}
+
 internal static class LrtcConstants
 {
     public const int MaxIceServers = 8;
@@ -547,6 +553,21 @@ internal static class NativeMethods
     internal static extern void lrtc_audio_track_set_volume(IntPtr track, double volume);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern int lrtc_audio_track_get_id(
+        IntPtr track,
+        IntPtr buffer,
+        uint bufferLen);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern int lrtc_audio_track_get_state(IntPtr track);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern int lrtc_audio_track_get_enabled(IntPtr track);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern int lrtc_audio_track_set_enabled(IntPtr track, int enabled);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     internal static extern void lrtc_audio_track_add_sink(IntPtr track, IntPtr sink);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
@@ -837,6 +858,21 @@ internal static class NativeMethods
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     internal static extern void lrtc_video_track_remove_sink(IntPtr track, IntPtr sink);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern int lrtc_video_track_get_id(
+        IntPtr track,
+        IntPtr buffer,
+        uint bufferLen);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern int lrtc_video_track_get_state(IntPtr track);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern int lrtc_video_track_get_enabled(IntPtr track);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern int lrtc_video_track_set_enabled(IntPtr track, int enabled);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     internal static extern void lrtc_video_track_release(IntPtr track);

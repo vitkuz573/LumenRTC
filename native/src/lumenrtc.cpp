@@ -1460,6 +1460,37 @@ void LUMENRTC_CALL lrtc_audio_track_set_volume(lrtc_audio_track_t* track,
   track->ref->SetVolume(volume);
 }
 
+int32_t LUMENRTC_CALL lrtc_audio_track_get_id(lrtc_audio_track_t* track,
+                                              char* buffer,
+                                              uint32_t buffer_len) {
+  if (!track || !track->ref.get()) {
+    return -1;
+  }
+  return CopyPortableString(track->ref->id(), buffer, buffer_len);
+}
+
+int LUMENRTC_CALL lrtc_audio_track_get_state(lrtc_audio_track_t* track) {
+  if (!track || !track->ref.get()) {
+    return -1;
+  }
+  return static_cast<int>(track->ref->state());
+}
+
+int LUMENRTC_CALL lrtc_audio_track_get_enabled(lrtc_audio_track_t* track) {
+  if (!track || !track->ref.get()) {
+    return 0;
+  }
+  return track->ref->enabled() ? 1 : 0;
+}
+
+int LUMENRTC_CALL lrtc_audio_track_set_enabled(lrtc_audio_track_t* track,
+                                               int enabled) {
+  if (!track || !track->ref.get()) {
+    return 0;
+  }
+  return track->ref->set_enabled(enabled != 0) ? 1 : 0;
+}
+
 void LUMENRTC_CALL lrtc_audio_track_add_sink(lrtc_audio_track_t* track,
                                              lrtc_audio_sink_t* sink) {
   if (!track || !track->ref.get() || !sink || !sink->sink) {
@@ -2277,6 +2308,37 @@ void LUMENRTC_CALL lrtc_video_track_remove_sink(lrtc_video_track_t* track,
     return;
   }
   track->ref->RemoveRenderer(sink->renderer);
+}
+
+int32_t LUMENRTC_CALL lrtc_video_track_get_id(lrtc_video_track_t* track,
+                                              char* buffer,
+                                              uint32_t buffer_len) {
+  if (!track || !track->ref.get()) {
+    return -1;
+  }
+  return CopyPortableString(track->ref->id(), buffer, buffer_len);
+}
+
+int LUMENRTC_CALL lrtc_video_track_get_state(lrtc_video_track_t* track) {
+  if (!track || !track->ref.get()) {
+    return -1;
+  }
+  return static_cast<int>(track->ref->state());
+}
+
+int LUMENRTC_CALL lrtc_video_track_get_enabled(lrtc_video_track_t* track) {
+  if (!track || !track->ref.get()) {
+    return 0;
+  }
+  return track->ref->enabled() ? 1 : 0;
+}
+
+int LUMENRTC_CALL lrtc_video_track_set_enabled(lrtc_video_track_t* track,
+                                               int enabled) {
+  if (!track || !track->ref.get()) {
+    return 0;
+  }
+  return track->ref->set_enabled(enabled != 0) ? 1 : 0;
 }
 
 void LUMENRTC_CALL lrtc_video_track_release(lrtc_video_track_t* track) {
