@@ -5,12 +5,16 @@
 #include "rtc_audio_source.h"
 #include "rtc_audio_track.h"
 #include "rtc_data_channel.h"
+#include "rtc_desktop_capturer.h"
+#include "rtc_desktop_device.h"
+#include "rtc_desktop_media_list.h"
 #include "rtc_ice_candidate.h"
 #include "rtc_media_stream.h"
 #include "rtc_media_track.h"
 #include "rtc_mediaconstraints.h"
 #include "rtc_peerconnection.h"
 #include "rtc_peerconnection_factory.h"
+#include "rtc_rtp_capabilities.h"
 #include "rtc_rtp_sender.h"
 #include "rtc_rtp_receiver.h"
 #include "rtc_rtp_transceiver.h"
@@ -22,6 +26,7 @@
 #include "rtc_video_renderer.h"
 
 #include <algorithm>
+#include <cctype>
 #include <cstring>
 #include <mutex>
 #include <string>
@@ -36,6 +41,9 @@ using libwebrtc::RTCConfiguration;
 using libwebrtc::RTCDataChannel;
 using libwebrtc::RTCDataChannelInit;
 using libwebrtc::RTCDataChannelObserver;
+using libwebrtc::RTCDesktopCapturer;
+using libwebrtc::RTCDesktopDevice;
+using libwebrtc::RTCDesktopMediaList;
 using libwebrtc::RTCIceCandidate;
 using libwebrtc::RTCMediaConstraints;
 using libwebrtc::RTCMediaStream;
@@ -44,6 +52,8 @@ using libwebrtc::MediaRTCStats;
 using libwebrtc::RTCPeerConnection;
 using libwebrtc::RTCPeerConnectionFactory;
 using libwebrtc::RTCPeerConnectionObserver;
+using libwebrtc::RTCRtpCapabilities;
+using libwebrtc::RTCRtpCodecCapability;
 using libwebrtc::RTCRtpReceiver;
 using libwebrtc::RTCRtpTransceiver;
 using libwebrtc::RTCVideoFrame;
@@ -52,6 +62,7 @@ using libwebrtc::RTCVideoSource;
 using libwebrtc::RTCVideoTrack;
 using libwebrtc::RTCVideoDevice;
 using libwebrtc::RTCVideoCapturer;
+using libwebrtc::MediaSource;
 using libwebrtc::scoped_refptr;
 using libwebrtc::string;
 using libwebrtc::vector;
@@ -72,6 +83,22 @@ struct lrtc_video_device_t {
   scoped_refptr<RTCVideoDevice> ref;
 };
 
+struct lrtc_desktop_device_t {
+  scoped_refptr<RTCDesktopDevice> ref;
+};
+
+struct lrtc_desktop_media_list_t {
+  scoped_refptr<RTCDesktopMediaList> ref;
+};
+
+struct lrtc_media_source_t {
+  scoped_refptr<MediaSource> ref;
+};
+
+struct lrtc_desktop_capturer_t {
+  scoped_refptr<RTCDesktopCapturer> ref;
+};
+
 struct lrtc_video_capturer_t {
   scoped_refptr<RTCVideoCapturer> ref;
 };
@@ -90,6 +117,7 @@ struct lrtc_media_stream_t {
 
 struct lrtc_peer_connection_t {
   scoped_refptr<RTCPeerConnection> ref;
+  scoped_refptr<RTCPeerConnectionFactory> factory;
   class PeerConnectionObserverImpl* observer = nullptr;
 };
 
@@ -156,6 +184,125 @@ static std::string BuildStatsJson(
   }
   json.push_back(']');
   return json;
+}
+
+static int32_t CopyPortableString(const string& value, char* buffer,
+                                  uint32_t buffer_len) {
+  string tmp = value;
+  const size_t len = tmp.size();
+  const size_t needed = len + 1;
+  if (!buffer || buffer_len == 0) {
+    return static_cast<int32_t>(needed);
+  }
+  if (buffer_len < needed) {
+    return -1;
+  }
+  if (len > 0) {
+    std::memcpy(buffer, tmp.c_string(), len);
+  }
+  buffer[len] = '\0';
+  return static_cast<int32_t>(len);
+}
+
+static void AppendJsonEscaped(std::string& out, const char* value) {
+  if (!value) {
+    return;
+  }
+  for (const char* p = value; *p; ++p) {
+    switch (*p) {
+      case '\"':
+        out.append("\\\"");
+        break;
+      case '\\':
+        out.append("\\\\");
+        break;
+      case '\b':
+        out.append("\\b");
+        break;
+      case '\f':
+        out.append("\\f");
+        break;
+      case '\n':
+        out.append("\\n");
+        break;
+      case '\r':
+        out.append("\\r");
+        break;
+      case '\t':
+        out.append("\\t");
+        break;
+      default:
+        out.push_back(*p);
+        break;
+    }
+  }
+}
+
+static std::string BuildCodecMimeJson(
+    const vector<scoped_refptr<RTCRtpCodecCapability>>& codecs) {
+  std::string json;
+  json.push_back('[');
+  const size_t count = codecs.size();
+  for (size_t i = 0; i < count; ++i) {
+    if (i > 0) {
+      json.push_back(',');
+    }
+    json.push_back('\"');
+    if (codecs[i].get()) {
+      string mime = codecs[i]->mime_type();
+      AppendJsonEscaped(json, mime.c_string());
+    }
+    json.push_back('\"');
+  }
+  json.push_back(']');
+  return json;
+}
+
+static bool MimeEquals(const string& a, const char* b) {
+  if (!b) {
+    return false;
+  }
+  const char* a_str = a.c_string();
+  if (!a_str) {
+    return false;
+  }
+  while (*a_str && *b) {
+    if (std::tolower(static_cast<unsigned char>(*a_str)) !=
+        std::tolower(static_cast<unsigned char>(*b))) {
+      return false;
+    }
+    ++a_str;
+    ++b;
+  }
+  return *a_str == '\0' && *b == '\0';
+}
+
+static vector<scoped_refptr<RTCRtpCodecCapability>>
+BuildCodecPreferences(
+    const vector<scoped_refptr<RTCRtpCodecCapability>>& codecs,
+    const char** mime_types, uint32_t count) {
+  if (!mime_types || count == 0) {
+    return vector<scoped_refptr<RTCRtpCodecCapability>>();
+  }
+  std::vector<scoped_refptr<RTCRtpCodecCapability>> selected;
+  selected.reserve(count);
+  for (uint32_t i = 0; i < count; ++i) {
+    const char* mime = mime_types[i];
+    if (!mime) {
+      continue;
+    }
+    for (size_t j = 0; j < codecs.size(); ++j) {
+      scoped_refptr<RTCRtpCodecCapability> codec = codecs[j];
+      if (!codec.get()) {
+        continue;
+      }
+      if (MimeEquals(codec->mime_type(), mime)) {
+        selected.push_back(codec);
+        break;
+      }
+    }
+  }
+  return vector<scoped_refptr<RTCRtpCodecCapability>>(selected);
 }
 
 static void CopyConfig(const lrtc_rtc_config_t* src, RTCConfiguration* dst) {
@@ -527,6 +674,25 @@ lrtc_video_device_t* LUMENRTC_CALL lrtc_factory_get_video_device(
   return handle;
 }
 
+lrtc_desktop_device_t* LUMENRTC_CALL lrtc_factory_get_desktop_device(
+    lrtc_factory_t* factory) {
+#ifdef RTC_DESKTOP_DEVICE
+  if (!factory || !factory->ref.get()) {
+    return nullptr;
+  }
+  auto handle = new lrtc_desktop_device_t();
+  handle->ref = factory->ref->GetDesktopDevice();
+  if (!handle->ref.get()) {
+    delete handle;
+    return nullptr;
+  }
+  return handle;
+#else
+  (void)factory;
+  return nullptr;
+#endif
+}
+
 lrtc_audio_source_t* LUMENRTC_CALL lrtc_factory_create_audio_source(
     lrtc_factory_t* factory, const char* label,
     lrtc_audio_source_type source_type, const lrtc_audio_options_t* options) {
@@ -572,6 +738,35 @@ lrtc_video_source_t* LUMENRTC_CALL lrtc_factory_create_video_source(
   auto handle = new lrtc_video_source_t();
   handle->ref = source;
   return handle;
+}
+
+lrtc_video_source_t* LUMENRTC_CALL lrtc_factory_create_desktop_source(
+    lrtc_factory_t* factory, lrtc_desktop_capturer_t* capturer,
+    const char* label, lrtc_media_constraints_t* constraints) {
+#ifdef RTC_DESKTOP_DEVICE
+  if (!factory || !factory->ref.get() || !capturer || !capturer->ref.get() ||
+      !label) {
+    return nullptr;
+  }
+  scoped_refptr<RTCMediaConstraints> mc;
+  if (constraints) {
+    mc = constraints->ref;
+  }
+  scoped_refptr<RTCVideoSource> source =
+      factory->ref->CreateDesktopSource(capturer->ref, string(label), mc);
+  if (!source.get()) {
+    return nullptr;
+  }
+  auto handle = new lrtc_video_source_t();
+  handle->ref = source;
+  return handle;
+#else
+  (void)factory;
+  (void)capturer;
+  (void)label;
+  (void)constraints;
+  return nullptr;
+#endif
 }
 
 lrtc_audio_track_t* LUMENRTC_CALL lrtc_factory_create_audio_track(
@@ -762,6 +957,218 @@ void LUMENRTC_CALL lrtc_audio_device_release(lrtc_audio_device_t* device) {
   delete device;
 }
 
+lrtc_desktop_media_list_t* LUMENRTC_CALL lrtc_desktop_device_get_media_list(
+    lrtc_desktop_device_t* device, lrtc_desktop_type type) {
+#ifdef RTC_DESKTOP_DEVICE
+  if (!device || !device->ref.get()) {
+    return nullptr;
+  }
+  scoped_refptr<RTCDesktopMediaList> list =
+      device->ref->GetDesktopMediaList(
+          static_cast<libwebrtc::DesktopType>(type));
+  if (!list.get()) {
+    return nullptr;
+  }
+  auto handle = new lrtc_desktop_media_list_t();
+  handle->ref = list;
+  return handle;
+#else
+  (void)device;
+  (void)type;
+  return nullptr;
+#endif
+}
+
+lrtc_desktop_capturer_t* LUMENRTC_CALL lrtc_desktop_device_create_capturer(
+    lrtc_desktop_device_t* device, lrtc_media_source_t* source,
+    bool show_cursor) {
+#ifdef RTC_DESKTOP_DEVICE
+  if (!device || !device->ref.get() || !source || !source->ref.get()) {
+    return nullptr;
+  }
+  scoped_refptr<RTCDesktopCapturer> capturer =
+      device->ref->CreateDesktopCapturer(source->ref, show_cursor);
+  if (!capturer.get()) {
+    return nullptr;
+  }
+  auto handle = new lrtc_desktop_capturer_t();
+  handle->ref = capturer;
+  return handle;
+#else
+  (void)device;
+  (void)source;
+  (void)show_cursor;
+  return nullptr;
+#endif
+}
+
+void LUMENRTC_CALL lrtc_desktop_device_release(lrtc_desktop_device_t* device) {
+  delete device;
+}
+
+int32_t LUMENRTC_CALL lrtc_desktop_media_list_update(
+    lrtc_desktop_media_list_t* list, bool force_reload, bool get_thumbnail) {
+#ifdef RTC_DESKTOP_DEVICE
+  if (!list || !list->ref.get()) {
+    return -1;
+  }
+  return list->ref->UpdateSourceList(force_reload, get_thumbnail);
+#else
+  (void)list;
+  (void)force_reload;
+  (void)get_thumbnail;
+  return -1;
+#endif
+}
+
+int LUMENRTC_CALL lrtc_desktop_media_list_get_source_count(
+    lrtc_desktop_media_list_t* list) {
+#ifdef RTC_DESKTOP_DEVICE
+  if (!list || !list->ref.get()) {
+    return 0;
+  }
+  return list->ref->GetSourceCount();
+#else
+  (void)list;
+  return 0;
+#endif
+}
+
+lrtc_media_source_t* LUMENRTC_CALL lrtc_desktop_media_list_get_source(
+    lrtc_desktop_media_list_t* list, int index) {
+#ifdef RTC_DESKTOP_DEVICE
+  if (!list || !list->ref.get()) {
+    return nullptr;
+  }
+  scoped_refptr<MediaSource> source = list->ref->GetSource(index);
+  if (!source.get()) {
+    return nullptr;
+  }
+  auto handle = new lrtc_media_source_t();
+  handle->ref = source;
+  return handle;
+#else
+  (void)list;
+  (void)index;
+  return nullptr;
+#endif
+}
+
+void LUMENRTC_CALL lrtc_desktop_media_list_release(
+    lrtc_desktop_media_list_t* list) {
+  delete list;
+}
+
+int32_t LUMENRTC_CALL lrtc_media_source_get_id(
+    lrtc_media_source_t* source, char* buffer, uint32_t buffer_len) {
+#ifdef RTC_DESKTOP_DEVICE
+  if (!source || !source->ref.get()) {
+    return -1;
+  }
+  return CopyPortableString(source->ref->id(), buffer, buffer_len);
+#else
+  (void)source;
+  (void)buffer;
+  (void)buffer_len;
+  return -1;
+#endif
+}
+
+int32_t LUMENRTC_CALL lrtc_media_source_get_name(
+    lrtc_media_source_t* source, char* buffer, uint32_t buffer_len) {
+#ifdef RTC_DESKTOP_DEVICE
+  if (!source || !source->ref.get()) {
+    return -1;
+  }
+  return CopyPortableString(source->ref->name(), buffer, buffer_len);
+#else
+  (void)source;
+  (void)buffer;
+  (void)buffer_len;
+  return -1;
+#endif
+}
+
+int LUMENRTC_CALL lrtc_media_source_get_type(lrtc_media_source_t* source) {
+#ifdef RTC_DESKTOP_DEVICE
+  if (!source || !source->ref.get()) {
+    return -1;
+  }
+  return static_cast<int>(source->ref->type());
+#else
+  (void)source;
+  return -1;
+#endif
+}
+
+void LUMENRTC_CALL lrtc_media_source_release(lrtc_media_source_t* source) {
+  delete source;
+}
+
+lrtc_desktop_capture_state LUMENRTC_CALL lrtc_desktop_capturer_start(
+    lrtc_desktop_capturer_t* capturer, uint32_t fps) {
+#ifdef RTC_DESKTOP_DEVICE
+  if (!capturer || !capturer->ref.get()) {
+    return LRTC_DESKTOP_CAPTURE_FAILED;
+  }
+  return static_cast<lrtc_desktop_capture_state>(capturer->ref->Start(fps));
+#else
+  (void)capturer;
+  (void)fps;
+  return LRTC_DESKTOP_CAPTURE_FAILED;
+#endif
+}
+
+lrtc_desktop_capture_state LUMENRTC_CALL lrtc_desktop_capturer_start_region(
+    lrtc_desktop_capturer_t* capturer, uint32_t fps, uint32_t x, uint32_t y,
+    uint32_t w, uint32_t h) {
+#ifdef RTC_DESKTOP_DEVICE
+  if (!capturer || !capturer->ref.get()) {
+    return LRTC_DESKTOP_CAPTURE_FAILED;
+  }
+  return static_cast<lrtc_desktop_capture_state>(
+      capturer->ref->Start(fps, x, y, w, h));
+#else
+  (void)capturer;
+  (void)fps;
+  (void)x;
+  (void)y;
+  (void)w;
+  (void)h;
+  return LRTC_DESKTOP_CAPTURE_FAILED;
+#endif
+}
+
+void LUMENRTC_CALL lrtc_desktop_capturer_stop(
+    lrtc_desktop_capturer_t* capturer) {
+#ifdef RTC_DESKTOP_DEVICE
+  if (!capturer || !capturer->ref.get()) {
+    return;
+  }
+  capturer->ref->Stop();
+#else
+  (void)capturer;
+#endif
+}
+
+bool LUMENRTC_CALL lrtc_desktop_capturer_is_running(
+    lrtc_desktop_capturer_t* capturer) {
+#ifdef RTC_DESKTOP_DEVICE
+  if (!capturer || !capturer->ref.get()) {
+    return false;
+  }
+  return capturer->ref->IsRunning();
+#else
+  (void)capturer;
+  return false;
+#endif
+}
+
+void LUMENRTC_CALL lrtc_desktop_capturer_release(
+    lrtc_desktop_capturer_t* capturer) {
+  delete capturer;
+}
+
 uint32_t LUMENRTC_CALL lrtc_video_device_number_of_devices(
     lrtc_video_device_t* device) {
   if (!device || !device->ref.get()) {
@@ -950,6 +1357,7 @@ lrtc_peer_connection_t* LUMENRTC_CALL lrtc_peer_connection_create(
   }
   auto handle = new lrtc_peer_connection_t();
   handle->ref = pc;
+  handle->factory = factory->ref;
   auto* observer = new PeerConnectionObserverImpl();
   observer->SetCallbacks(callbacks, user_data);
   pc->RegisterRTCPeerConnectionObserver(observer);
@@ -1155,6 +1563,40 @@ void LUMENRTC_CALL lrtc_peer_connection_get_stats(
           failure(user_data, error);
         }
       });
+}
+
+int LUMENRTC_CALL lrtc_peer_connection_set_codec_preferences(
+    lrtc_peer_connection_t* pc, lrtc_media_type media_type,
+    const char** mime_types, uint32_t mime_type_count) {
+  if (!pc || !pc->ref.get() || !pc->factory.get()) {
+    return 0;
+  }
+  scoped_refptr<RTCRtpCapabilities> caps =
+      pc->factory->GetRtpSenderCapabilities(
+          static_cast<libwebrtc::RTCMediaType>(media_type));
+  if (!caps.get()) {
+    return 0;
+  }
+  vector<scoped_refptr<RTCRtpCodecCapability>> selected =
+      BuildCodecPreferences(caps->codecs(), mime_types, mime_type_count);
+  if (selected.size() == 0) {
+    return 0;
+  }
+  vector<scoped_refptr<RTCRtpTransceiver>> transceivers =
+      pc->ref->transceivers();
+  bool applied = false;
+  for (size_t i = 0; i < transceivers.size(); ++i) {
+    scoped_refptr<RTCRtpTransceiver> transceiver = transceivers[i];
+    if (!transceiver.get()) {
+      continue;
+    }
+    if (transceiver->media_type() ==
+        static_cast<libwebrtc::RTCMediaType>(media_type)) {
+      transceiver->SetCodecPreferences(selected);
+      applied = true;
+    }
+  }
+  return applied ? 1 : 0;
 }
 
 void LUMENRTC_CALL lrtc_peer_connection_add_ice_candidate(
@@ -1430,6 +1872,31 @@ lrtc_video_frame_t* LUMENRTC_CALL lrtc_video_frame_retain(
 
 void LUMENRTC_CALL lrtc_video_frame_release(lrtc_video_frame_t* frame) {
   delete frame;
+}
+
+void LUMENRTC_CALL lrtc_factory_get_rtp_sender_codec_mime_types(
+    lrtc_factory_t* factory, lrtc_media_type media_type,
+    lrtc_stats_success_cb success, lrtc_stats_failure_cb failure,
+    void* user_data) {
+  if (!factory || !factory->ref.get()) {
+    if (failure) {
+      failure(user_data, "invalid arguments");
+    }
+    return;
+  }
+  scoped_refptr<RTCRtpCapabilities> caps =
+      factory->ref->GetRtpSenderCapabilities(
+          static_cast<libwebrtc::RTCMediaType>(media_type));
+  if (!caps.get()) {
+    if (failure) {
+      failure(user_data, "capabilities not available");
+    }
+    return;
+  }
+  if (success) {
+    std::string json = BuildCodecMimeJson(caps->codecs());
+    success(user_data, json.c_str());
+  }
 }
 
 }  // extern "C"

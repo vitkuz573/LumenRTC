@@ -31,6 +31,10 @@ typedef struct lrtc_media_constraints_t lrtc_media_constraints_t;
 typedef struct lrtc_data_channel_t lrtc_data_channel_t;
 typedef struct lrtc_audio_device_t lrtc_audio_device_t;
 typedef struct lrtc_video_device_t lrtc_video_device_t;
+typedef struct lrtc_desktop_device_t lrtc_desktop_device_t;
+typedef struct lrtc_desktop_media_list_t lrtc_desktop_media_list_t;
+typedef struct lrtc_media_source_t lrtc_media_source_t;
+typedef struct lrtc_desktop_capturer_t lrtc_desktop_capturer_t;
 typedef struct lrtc_video_capturer_t lrtc_video_capturer_t;
 typedef struct lrtc_video_source_t lrtc_video_source_t;
 typedef struct lrtc_audio_source_t lrtc_audio_source_t;
@@ -59,6 +63,17 @@ typedef enum lrtc_media_type {
   LRTC_MEDIA_VIDEO = 1,
   LRTC_MEDIA_DATA = 2,
 } lrtc_media_type;
+
+typedef enum lrtc_desktop_type {
+  LRTC_DESKTOP_SCREEN = 0,
+  LRTC_DESKTOP_WINDOW = 1,
+} lrtc_desktop_type;
+
+typedef enum lrtc_desktop_capture_state {
+  LRTC_DESKTOP_CAPTURE_RUNNING = 0,
+  LRTC_DESKTOP_CAPTURE_STOPPED = 1,
+  LRTC_DESKTOP_CAPTURE_FAILED = 2,
+} lrtc_desktop_capture_state;
 
 typedef enum lrtc_audio_source_type {
   LRTC_AUDIO_SOURCE_MICROPHONE = 0,
@@ -265,6 +280,8 @@ LUMENRTC_API lrtc_audio_device_t* LUMENRTC_CALL
 lrtc_factory_get_audio_device(lrtc_factory_t* factory);
 LUMENRTC_API lrtc_video_device_t* LUMENRTC_CALL
 lrtc_factory_get_video_device(lrtc_factory_t* factory);
+LUMENRTC_API lrtc_desktop_device_t* LUMENRTC_CALL
+lrtc_factory_get_desktop_device(lrtc_factory_t* factory);
 
 LUMENRTC_API lrtc_audio_source_t* LUMENRTC_CALL
 lrtc_factory_create_audio_source(lrtc_factory_t* factory, const char* label,
@@ -275,6 +292,11 @@ lrtc_factory_create_video_source(lrtc_factory_t* factory,
                                  lrtc_video_capturer_t* capturer,
                                  const char* label,
                                  lrtc_media_constraints_t* constraints);
+LUMENRTC_API lrtc_video_source_t* LUMENRTC_CALL
+lrtc_factory_create_desktop_source(lrtc_factory_t* factory,
+                                   lrtc_desktop_capturer_t* capturer,
+                                   const char* label,
+                                   lrtc_media_constraints_t* constraints);
 LUMENRTC_API lrtc_audio_track_t* LUMENRTC_CALL
 lrtc_factory_create_audio_track(lrtc_factory_t* factory,
                                 lrtc_audio_source_t* source,
@@ -321,6 +343,47 @@ LUMENRTC_API int32_t LUMENRTC_CALL lrtc_audio_device_speaker_volume(
     lrtc_audio_device_t* device, uint32_t* volume);
 LUMENRTC_API void LUMENRTC_CALL lrtc_audio_device_release(
     lrtc_audio_device_t* device);
+
+LUMENRTC_API lrtc_desktop_media_list_t* LUMENRTC_CALL
+lrtc_desktop_device_get_media_list(lrtc_desktop_device_t* device,
+                                   lrtc_desktop_type type);
+LUMENRTC_API lrtc_desktop_capturer_t* LUMENRTC_CALL
+lrtc_desktop_device_create_capturer(lrtc_desktop_device_t* device,
+                                    lrtc_media_source_t* source,
+                                    bool show_cursor);
+LUMENRTC_API void LUMENRTC_CALL lrtc_desktop_device_release(
+    lrtc_desktop_device_t* device);
+
+LUMENRTC_API int32_t LUMENRTC_CALL lrtc_desktop_media_list_update(
+    lrtc_desktop_media_list_t* list, bool force_reload, bool get_thumbnail);
+LUMENRTC_API int LUMENRTC_CALL lrtc_desktop_media_list_get_source_count(
+    lrtc_desktop_media_list_t* list);
+LUMENRTC_API lrtc_media_source_t* LUMENRTC_CALL
+lrtc_desktop_media_list_get_source(lrtc_desktop_media_list_t* list, int index);
+LUMENRTC_API void LUMENRTC_CALL lrtc_desktop_media_list_release(
+    lrtc_desktop_media_list_t* list);
+
+LUMENRTC_API int32_t LUMENRTC_CALL lrtc_media_source_get_id(
+    lrtc_media_source_t* source, char* buffer, uint32_t buffer_len);
+LUMENRTC_API int32_t LUMENRTC_CALL lrtc_media_source_get_name(
+    lrtc_media_source_t* source, char* buffer, uint32_t buffer_len);
+LUMENRTC_API int LUMENRTC_CALL lrtc_media_source_get_type(
+    lrtc_media_source_t* source);
+LUMENRTC_API void LUMENRTC_CALL lrtc_media_source_release(
+    lrtc_media_source_t* source);
+
+LUMENRTC_API lrtc_desktop_capture_state LUMENRTC_CALL
+lrtc_desktop_capturer_start(lrtc_desktop_capturer_t* capturer, uint32_t fps);
+LUMENRTC_API lrtc_desktop_capture_state LUMENRTC_CALL
+lrtc_desktop_capturer_start_region(lrtc_desktop_capturer_t* capturer,
+                                   uint32_t fps, uint32_t x, uint32_t y,
+                                   uint32_t w, uint32_t h);
+LUMENRTC_API void LUMENRTC_CALL lrtc_desktop_capturer_stop(
+    lrtc_desktop_capturer_t* capturer);
+LUMENRTC_API bool LUMENRTC_CALL lrtc_desktop_capturer_is_running(
+    lrtc_desktop_capturer_t* capturer);
+LUMENRTC_API void LUMENRTC_CALL lrtc_desktop_capturer_release(
+    lrtc_desktop_capturer_t* capturer);
 
 LUMENRTC_API uint32_t LUMENRTC_CALL lrtc_video_device_number_of_devices(
     lrtc_video_device_t* device);
@@ -417,6 +480,9 @@ LUMENRTC_API void LUMENRTC_CALL lrtc_peer_connection_get_remote_description(
 LUMENRTC_API void LUMENRTC_CALL lrtc_peer_connection_get_stats(
     lrtc_peer_connection_t* pc, lrtc_stats_success_cb success,
     lrtc_stats_failure_cb failure, void* user_data);
+LUMENRTC_API int LUMENRTC_CALL lrtc_peer_connection_set_codec_preferences(
+    lrtc_peer_connection_t* pc, lrtc_media_type media_type,
+    const char** mime_types, uint32_t mime_type_count);
 LUMENRTC_API void LUMENRTC_CALL lrtc_peer_connection_add_ice_candidate(
     lrtc_peer_connection_t* pc, const char* sdp_mid, int sdp_mline_index,
     const char* candidate);
@@ -491,6 +557,12 @@ LUMENRTC_API lrtc_video_frame_t* LUMENRTC_CALL lrtc_video_frame_retain(
     lrtc_video_frame_t* frame);
 LUMENRTC_API void LUMENRTC_CALL lrtc_video_frame_release(
     lrtc_video_frame_t* frame);
+
+LUMENRTC_API void LUMENRTC_CALL
+lrtc_factory_get_rtp_sender_codec_mime_types(
+    lrtc_factory_t* factory, lrtc_media_type media_type,
+    lrtc_stats_success_cb success, lrtc_stats_failure_cb failure,
+    void* user_data);
 
 #ifdef __cplusplus
 }  // extern "C"

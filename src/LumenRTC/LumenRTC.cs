@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using LumenRTC.Interop;
@@ -71,6 +72,13 @@ public enum DataChannelState
     Closed = 3,
 }
 
+public enum MediaType
+{
+    Audio = 0,
+    Video = 1,
+    Data = 2,
+}
+
 public enum IceTransportsType
 {
     None = 0,
@@ -121,6 +129,19 @@ public enum AudioSourceType
 {
     Microphone = 0,
     Custom = 1,
+}
+
+public enum DesktopType
+{
+    Screen = 0,
+    Window = 1,
+}
+
+public enum DesktopCaptureState
+{
+    Running = 0,
+    Stopped = 1,
+    Failed = 2,
 }
 
 public enum VideoFrameFormat
@@ -419,6 +440,16 @@ public sealed class PeerConnectionFactory : SafeHandle
         return new VideoDevice(device);
     }
 
+    public DesktopDevice GetDesktopDevice()
+    {
+        var device = NativeMethods.lrtc_factory_get_desktop_device(handle);
+        if (device == IntPtr.Zero)
+        {
+            throw new InvalidOperationException("Desktop capture is not available.");
+        }
+        return new DesktopDevice(device);
+    }
+
     public AudioSource CreateAudioSource(string label, AudioSourceType sourceType = AudioSourceType.Microphone, AudioOptions? options = null)
     {
         using var labelUtf8 = new Utf8String(label);
@@ -445,6 +476,18 @@ public sealed class PeerConnectionFactory : SafeHandle
         if (source == IntPtr.Zero)
         {
             throw new InvalidOperationException("Failed to create video source.");
+        }
+        return new VideoSource(source);
+    }
+
+    public VideoSource CreateDesktopSource(DesktopCapturer capturer, string label, MediaConstraints? constraints = null)
+    {
+        if (capturer == null) throw new ArgumentNullException(nameof(capturer));
+        using var labelUtf8 = new Utf8String(label);
+        var source = NativeMethods.lrtc_factory_create_desktop_source(handle, capturer.DangerousGetHandle(), labelUtf8.Pointer, constraints?.DangerousGetHandle() ?? IntPtr.Zero);
+        if (source == IntPtr.Zero)
+        {
+            throw new InvalidOperationException("Failed to create desktop source.");
         }
         return new VideoSource(source);
     }
@@ -482,6 +525,28 @@ public sealed class PeerConnectionFactory : SafeHandle
             throw new InvalidOperationException("Failed to create media stream.");
         }
         return new MediaStream(stream, streamId);
+    }
+
+    public IReadOnlyList<string> GetRtpSenderCodecMimeTypes(MediaType mediaType)
+    {
+        string? json = null;
+        string? error = null;
+        LrtcStatsSuccessCb success = (_, jsonPtr) => json = Utf8String.Read(jsonPtr);
+        LrtcStatsErrorCb failure = (_, errPtr) => error = Utf8String.Read(errPtr);
+
+        NativeMethods.lrtc_factory_get_rtp_sender_codec_mime_types(handle, (LrtcMediaType)mediaType, success, failure, IntPtr.Zero);
+
+        if (!string.IsNullOrEmpty(error))
+        {
+            throw new InvalidOperationException(error);
+        }
+
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return Array.Empty<string>();
+        }
+
+        return JsonSerializer.Deserialize<string[]>(json) ?? Array.Empty<string>();
     }
 
     public override bool IsInvalid => handle == IntPtr.Zero;
@@ -638,6 +703,159 @@ public sealed class VideoDevice : SafeHandle
     protected override bool ReleaseHandle()
     {
         NativeMethods.lrtc_video_device_release(handle);
+        return true;
+    }
+}
+
+public sealed class DesktopDevice : SafeHandle
+{
+    internal DesktopDevice(IntPtr handle) : base(IntPtr.Zero, true)
+    {
+        SetHandle(handle);
+    }
+
+    public DesktopMediaList GetMediaList(DesktopType type)
+    {
+        var list = NativeMethods.lrtc_desktop_device_get_media_list(handle, (LrtcDesktopType)type);
+        if (list == IntPtr.Zero)
+        {
+            throw new InvalidOperationException("Failed to get desktop media list.");
+        }
+        return new DesktopMediaList(list, type);
+    }
+
+    public DesktopCapturer CreateCapturer(MediaSource source, bool showCursor = true)
+    {
+        if (source == null) throw new ArgumentNullException(nameof(source));
+        var capturer = NativeMethods.lrtc_desktop_device_create_capturer(handle, source.DangerousGetHandle(), showCursor);
+        if (capturer == IntPtr.Zero)
+        {
+            throw new InvalidOperationException("Failed to create desktop capturer.");
+        }
+        return new DesktopCapturer(capturer);
+    }
+
+    public override bool IsInvalid => handle == IntPtr.Zero;
+
+    protected override bool ReleaseHandle()
+    {
+        NativeMethods.lrtc_desktop_device_release(handle);
+        return true;
+    }
+}
+
+public sealed class DesktopMediaList : SafeHandle
+{
+    public DesktopType Type { get; }
+
+    internal DesktopMediaList(IntPtr handle, DesktopType type) : base(IntPtr.Zero, true)
+    {
+        Type = type;
+        SetHandle(handle);
+    }
+
+    public int UpdateSourceList(bool forceReload = false, bool getThumbnail = true)
+    {
+        return NativeMethods.lrtc_desktop_media_list_update(handle, forceReload, getThumbnail);
+    }
+
+    public int SourceCount => NativeMethods.lrtc_desktop_media_list_get_source_count(handle);
+
+    public MediaSource GetSource(int index)
+    {
+        var source = NativeMethods.lrtc_desktop_media_list_get_source(handle, index);
+        if (source == IntPtr.Zero)
+        {
+            throw new InvalidOperationException("Failed to get desktop media source.");
+        }
+        return new MediaSource(source);
+    }
+
+    public override bool IsInvalid => handle == IntPtr.Zero;
+
+    protected override bool ReleaseHandle()
+    {
+        NativeMethods.lrtc_desktop_media_list_release(handle);
+        return true;
+    }
+}
+
+public sealed class MediaSource : SafeHandle
+{
+    internal MediaSource(IntPtr handle) : base(IntPtr.Zero, true)
+    {
+        SetHandle(handle);
+        Id = GetString(NativeMethods.lrtc_media_source_get_id);
+        Name = GetString(NativeMethods.lrtc_media_source_get_name);
+        var typeValue = NativeMethods.lrtc_media_source_get_type(handle);
+        Type = typeValue < 0 ? DesktopType.Screen : (DesktopType)typeValue;
+    }
+
+    public string Id { get; }
+    public string Name { get; }
+    public DesktopType Type { get; }
+
+    private string GetString(Func<IntPtr, IntPtr, uint, int> getter)
+    {
+        var required = getter(handle, IntPtr.Zero, 0);
+        if (required <= 0)
+        {
+            return string.Empty;
+        }
+        var buffer = Marshal.AllocHGlobal(required);
+        try
+        {
+            var result = getter(handle, buffer, (uint)required);
+            if (result < 0)
+            {
+                return string.Empty;
+            }
+            return Utf8String.Read(buffer);
+        }
+        finally
+        {
+            Marshal.FreeHGlobal(buffer);
+        }
+    }
+
+    public override bool IsInvalid => handle == IntPtr.Zero;
+
+    protected override bool ReleaseHandle()
+    {
+        NativeMethods.lrtc_media_source_release(handle);
+        return true;
+    }
+}
+
+public sealed class DesktopCapturer : SafeHandle
+{
+    internal DesktopCapturer(IntPtr handle) : base(IntPtr.Zero, true)
+    {
+        SetHandle(handle);
+    }
+
+    public DesktopCaptureState Start(uint fps)
+    {
+        return (DesktopCaptureState)NativeMethods.lrtc_desktop_capturer_start(handle, fps);
+    }
+
+    public DesktopCaptureState Start(uint fps, uint x, uint y, uint width, uint height)
+    {
+        return (DesktopCaptureState)NativeMethods.lrtc_desktop_capturer_start_region(handle, fps, x, y, width, height);
+    }
+
+    public void Stop()
+    {
+        NativeMethods.lrtc_desktop_capturer_stop(handle);
+    }
+
+    public bool IsRunning => NativeMethods.lrtc_desktop_capturer_is_running(handle);
+
+    public override bool IsInvalid => handle == IntPtr.Zero;
+
+    protected override bool ReleaseHandle()
+    {
+        NativeMethods.lrtc_desktop_capturer_release(handle);
         return true;
     }
 }
@@ -955,6 +1173,18 @@ public sealed class PeerConnection : SafeHandle
         if (track == null) throw new ArgumentNullException(nameof(track));
         using var ids = new Utf8StringArray(streamIds);
         var result = NativeMethods.lrtc_peer_connection_add_video_track(handle, track.DangerousGetHandle(), ids.Pointer, (uint)ids.Count);
+        return result != 0;
+    }
+
+    public bool SetCodecPreferences(MediaType mediaType, IReadOnlyList<string> mimeTypes)
+    {
+        if (mimeTypes == null) throw new ArgumentNullException(nameof(mimeTypes));
+        using var mimes = new Utf8StringArray(mimeTypes);
+        var result = NativeMethods.lrtc_peer_connection_set_codec_preferences(
+            handle,
+            (LrtcMediaType)mediaType,
+            mimes.Pointer,
+            (uint)mimes.Count);
         return result != 0;
     }
 

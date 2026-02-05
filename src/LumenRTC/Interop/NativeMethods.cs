@@ -58,10 +58,30 @@ internal enum LrtcDataChannelState : int
     Closed = 3,
 }
 
+internal enum LrtcMediaType : int
+{
+    Audio = 0,
+    Video = 1,
+    Data = 2,
+}
+
 internal enum LrtcAudioSourceType : int
 {
     Microphone = 0,
     Custom = 1,
+}
+
+internal enum LrtcDesktopType : int
+{
+    Screen = 0,
+    Window = 1,
+}
+
+internal enum LrtcDesktopCaptureState : int
+{
+    Running = 0,
+    Stopped = 1,
+    Failed = 2,
 }
 
 internal static class LrtcConstants
@@ -224,6 +244,9 @@ internal static class NativeMethods
     internal static extern IntPtr lrtc_factory_get_video_device(IntPtr factory);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern IntPtr lrtc_factory_get_desktop_device(IntPtr factory);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     internal static extern IntPtr lrtc_factory_create_audio_source(
         IntPtr factory,
         IntPtr label,
@@ -232,6 +255,13 @@ internal static class NativeMethods
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     internal static extern IntPtr lrtc_factory_create_video_source(
+        IntPtr factory,
+        IntPtr capturer,
+        IntPtr label,
+        IntPtr constraints);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern IntPtr lrtc_factory_create_desktop_source(
         IntPtr factory,
         IntPtr capturer,
         IntPtr label,
@@ -316,6 +346,78 @@ internal static class NativeMethods
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     internal static extern void lrtc_audio_device_release(IntPtr device);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern IntPtr lrtc_desktop_device_get_media_list(
+        IntPtr device,
+        LrtcDesktopType type);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern IntPtr lrtc_desktop_device_create_capturer(
+        IntPtr device,
+        IntPtr source,
+        [MarshalAs(UnmanagedType.I1)] bool showCursor);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern void lrtc_desktop_device_release(IntPtr device);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern int lrtc_desktop_media_list_update(
+        IntPtr list,
+        [MarshalAs(UnmanagedType.I1)] bool forceReload,
+        [MarshalAs(UnmanagedType.I1)] bool getThumbnail);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern int lrtc_desktop_media_list_get_source_count(IntPtr list);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern IntPtr lrtc_desktop_media_list_get_source(
+        IntPtr list,
+        int index);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern void lrtc_desktop_media_list_release(IntPtr list);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern int lrtc_media_source_get_id(
+        IntPtr source,
+        IntPtr buffer,
+        uint bufferLen);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern int lrtc_media_source_get_name(
+        IntPtr source,
+        IntPtr buffer,
+        uint bufferLen);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern int lrtc_media_source_get_type(IntPtr source);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern void lrtc_media_source_release(IntPtr source);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern LrtcDesktopCaptureState lrtc_desktop_capturer_start(
+        IntPtr capturer,
+        uint fps);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern LrtcDesktopCaptureState lrtc_desktop_capturer_start_region(
+        IntPtr capturer,
+        uint fps,
+        uint x,
+        uint y,
+        uint w,
+        uint h);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern void lrtc_desktop_capturer_stop(IntPtr capturer);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern bool lrtc_desktop_capturer_is_running(IntPtr capturer);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern void lrtc_desktop_capturer_release(IntPtr capturer);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     internal static extern uint lrtc_video_device_number_of_devices(IntPtr device);
@@ -480,6 +582,13 @@ internal static class NativeMethods
         IntPtr userData);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern int lrtc_peer_connection_set_codec_preferences(
+        IntPtr pc,
+        LrtcMediaType mediaType,
+        IntPtr mimeTypes,
+        uint mimeTypeCount);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     internal static extern void lrtc_peer_connection_add_ice_candidate(
         IntPtr pc,
         IntPtr sdpMid,
@@ -602,4 +711,12 @@ internal static class NativeMethods
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     internal static extern void lrtc_video_frame_release(IntPtr frame);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern void lrtc_factory_get_rtp_sender_codec_mime_types(
+        IntPtr factory,
+        LrtcMediaType mediaType,
+        LrtcStatsSuccessCb success,
+        LrtcStatsErrorCb failure,
+        IntPtr userData);
 }

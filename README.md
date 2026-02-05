@@ -61,12 +61,36 @@ track.AddSink(renderer.Sink);
 renderer.Run();
 ```
 
+## Codec Preferences
+
+```csharp
+var codecs = factory.GetRtpSenderCodecMimeTypes(MediaType.Video);
+Console.WriteLine(string.Join(", ", codecs));
+
+// Prefer AV1, then VP9, VP8, H264 (if supported by both peers).
+pc.SetCodecPreferences(MediaType.Video, new[]
+{
+    "video/AV1",
+    "video/VP9",
+    "video/VP8",
+    "video/H264",
+});
+```
+
+Apply codec preferences after adding tracks and before creating an offer.
+
 ## Samples
 
 Local camera preview (requires SDL2 runtime):
 
 ```bash
 dotnet run --project samples/LumenRTC.Sample.LocalCamera/LumenRTC.Sample.LocalCamera.csproj
+```
+
+Screen share preview (requires SDL2 runtime and desktop capture enabled):
+
+```bash
+dotnet run --project samples/LumenRTC.Sample.ScreenShare/LumenRTC.Sample.ScreenShare.csproj
 ```
 
 ## ABI notes
