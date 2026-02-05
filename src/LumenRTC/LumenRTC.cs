@@ -313,6 +313,152 @@ public readonly record struct DtlsTransportInfo(
     int SslCipherSuite,
     int SrtpCipherSuite);
 
+public sealed class RtcStatsReport : IDisposable
+{
+    private readonly JsonDocument _document;
+
+    private RtcStatsReport(JsonDocument document, List<RtcStat> stats, string rawJson)
+    {
+        _document = document;
+        Stats = stats;
+        RawJson = rawJson;
+    }
+
+    public string RawJson { get; }
+    public IReadOnlyList<RtcStat> Stats { get; }
+
+    public IEnumerable<RtcStat> GetByType(string type)
+    {
+        if (string.IsNullOrWhiteSpace(type))
+        {
+            yield break;
+        }
+
+        for (var i = 0; i < Stats.Count; i++)
+        {
+            var stat = Stats[i];
+            if (string.Equals(stat.Type, type, StringComparison.OrdinalIgnoreCase))
+            {
+                yield return stat;
+            }
+        }
+    }
+
+    public IEnumerable<RtcStat> InboundRtp => GetByType("inbound-rtp");
+    public IEnumerable<RtcStat> OutboundRtp => GetByType("outbound-rtp");
+    public IEnumerable<RtcStat> RemoteInboundRtp => GetByType("remote-inbound-rtp");
+    public IEnumerable<RtcStat> RemoteOutboundRtp => GetByType("remote-outbound-rtp");
+    public IEnumerable<RtcStat> CandidatePairs => GetByType("candidate-pair");
+    public IEnumerable<RtcStat> Transport => GetByType("transport");
+    public IEnumerable<RtcStat> Track => GetByType("track");
+
+    public static RtcStatsReport Parse(string? json)
+    {
+        var raw = string.IsNullOrWhiteSpace(json) ? "[]" : json!;
+        var document = JsonDocument.Parse(raw);
+        var stats = new List<RtcStat>();
+
+        if (document.RootElement.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var element in document.RootElement.EnumerateArray())
+            {
+                if (element.ValueKind != JsonValueKind.Object)
+                {
+                    continue;
+                }
+
+                var id = element.TryGetProperty("id", out var idProp)
+                    ? idProp.GetString() ?? string.Empty
+                    : string.Empty;
+                var type = element.TryGetProperty("type", out var typeProp)
+                    ? typeProp.GetString() ?? string.Empty
+                    : string.Empty;
+                double timestamp = 0;
+                if (element.TryGetProperty("timestampUs", out var tsProp) &&
+                    tsProp.ValueKind == JsonValueKind.Number)
+                {
+                    tsProp.TryGetDouble(out timestamp);
+                }
+
+                stats.Add(new RtcStat(id, type, timestamp, element));
+            }
+        }
+
+        return new RtcStatsReport(document, stats, raw);
+    }
+
+    public void Dispose()
+    {
+        _document.Dispose();
+    }
+}
+
+public sealed class RtcStat
+{
+    internal RtcStat(string id, string type, double timestampUs, JsonElement data)
+    {
+        Id = id;
+        Type = type;
+        TimestampUs = timestampUs;
+        Data = data;
+    }
+
+    public string Id { get; }
+    public string Type { get; }
+    public double TimestampUs { get; }
+    public JsonElement Data { get; }
+
+    public bool TryGetString(string name, out string? value)
+    {
+        if (Data.ValueKind == JsonValueKind.Object &&
+            Data.TryGetProperty(name, out var prop) &&
+            prop.ValueKind == JsonValueKind.String)
+        {
+            value = prop.GetString();
+            return true;
+        }
+        value = null;
+        return false;
+    }
+
+    public bool TryGetDouble(string name, out double value)
+    {
+        if (Data.ValueKind == JsonValueKind.Object &&
+            Data.TryGetProperty(name, out var prop) &&
+            prop.ValueKind == JsonValueKind.Number)
+        {
+            return prop.TryGetDouble(out value);
+        }
+        value = 0;
+        return false;
+    }
+
+    public bool TryGetInt64(string name, out long value)
+    {
+        if (Data.ValueKind == JsonValueKind.Object &&
+            Data.TryGetProperty(name, out var prop) &&
+            prop.ValueKind == JsonValueKind.Number)
+        {
+            return prop.TryGetInt64(out value);
+        }
+        value = 0;
+        return false;
+    }
+
+    public bool TryGetBool(string name, out bool value)
+    {
+        if (Data.ValueKind == JsonValueKind.Object &&
+            Data.TryGetProperty(name, out var prop) &&
+            (prop.ValueKind == JsonValueKind.True || prop.ValueKind == JsonValueKind.False))
+        {
+            value = prop.GetBoolean();
+            return true;
+        }
+        value = false;
+        return false;
+    }
+}
+
 public sealed class RtpTransceiverInit
 {
     public RtpTransceiverDirection Direction { get; set; } = RtpTransceiverDirection.SendRecv;
@@ -2066,6 +2212,12 @@ public sealed class PeerConnection : SafeHandle
         return tcs.Task;
     }
 
+    public async Task<RtcStatsReport> GetStatsReportAsync(CancellationToken cancellationToken = default)
+    {
+        var json = await GetStatsAsync(cancellationToken).ConfigureAwait(false);
+        return RtcStatsReport.Parse(json);
+    }
+
     public void GetSenderStats(RtpSender sender, Action<string> onSuccess, Action<string> onFailure)
     {
         if (sender == null) throw new ArgumentNullException(nameof(sender));
@@ -2111,6 +2263,14 @@ public sealed class PeerConnection : SafeHandle
         return tcs.Task;
     }
 
+    public async Task<RtcStatsReport> GetSenderStatsReportAsync(
+        RtpSender sender,
+        CancellationToken cancellationToken = default)
+    {
+        var json = await GetSenderStatsAsync(sender, cancellationToken).ConfigureAwait(false);
+        return RtcStatsReport.Parse(json);
+    }
+
     public void GetReceiverStats(RtpReceiver receiver, Action<string> onSuccess, Action<string> onFailure)
     {
         if (receiver == null) throw new ArgumentNullException(nameof(receiver));
@@ -2154,6 +2314,14 @@ public sealed class PeerConnection : SafeHandle
             });
 
         return tcs.Task;
+    }
+
+    public async Task<RtcStatsReport> GetReceiverStatsReportAsync(
+        RtpReceiver receiver,
+        CancellationToken cancellationToken = default)
+    {
+        var json = await GetReceiverStatsAsync(receiver, cancellationToken).ConfigureAwait(false);
+        return RtcStatsReport.Parse(json);
     }
 
     public bool AddStream(MediaStream stream)
