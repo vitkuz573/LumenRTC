@@ -23,6 +23,48 @@ cmake_build_dir="native/build"
 desktop_capture="ON"
 build_type="Release"
 
+detect_libwebrtc_build_dir() {
+  local repo_root
+  repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+  local candidates=()
+  if [[ -n "${LIBWEBRTC_BUILD_DIR:-}" ]]; then
+    candidates+=("${LIBWEBRTC_BUILD_DIR}")
+  fi
+  if [[ -n "${WEBRTC_BUILD_DIR:-}" ]]; then
+    candidates+=("${WEBRTC_BUILD_DIR}")
+  fi
+  if [[ -n "${WEBRTC_OUT_DIR:-}" ]]; then
+    candidates+=("${WEBRTC_OUT_DIR}")
+  fi
+  if [[ -n "${WEBRTC_OUT:-}" ]]; then
+    candidates+=("${WEBRTC_OUT}")
+  fi
+
+  candidates+=(
+    "${repo_root}/../webrtc_build/src/out-debug/Linux-x64"
+    "${repo_root}/../webrtc_build/src/out/Debug"
+    "${repo_root}/../webrtc_build/src/out/Release"
+    "${repo_root}/../webrtc/src/out/Debug"
+    "${repo_root}/../webrtc/src/out/Release"
+    "${repo_root}/../webrtc/src/out/Default"
+    "${repo_root}/../webrtc/src/out-default"
+  )
+
+  for dir in "${candidates[@]}"; do
+    [[ -z "$dir" ]] && continue
+    if [[ -f "${dir}/libwebrtc.so" ]] || \
+       [[ -f "${dir}/libwebrtc.dylib" ]] || \
+       [[ -f "${dir}/libwebrtc.dll" ]] || \
+       [[ -f "${dir}/libwebrtc.lib" ]]; then
+      echo "$dir"
+      return 0
+    fi
+  done
+
+  return 1
+}
+
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --libwebrtc-build-dir)
@@ -57,8 +99,15 @@ if [[ -z "$libwebrtc_build_dir" ]]; then
   libwebrtc_build_dir="${LIBWEBRTC_BUILD_DIR:-}"
 fi
 
+if [[ -z "$libwebrtc_build_dir" || "$libwebrtc_build_dir" == "auto" ]]; then
+  if detected="$(detect_libwebrtc_build_dir)"; then
+    libwebrtc_build_dir="$detected"
+  fi
+fi
+
 if [[ -z "$libwebrtc_build_dir" ]]; then
   echo "LIBWEBRTC_BUILD_DIR не задан. Передайте --libwebrtc-build-dir или переменную окружения LIBWEBRTC_BUILD_DIR." >&2
+  echo "Подсказка: можно передать --libwebrtc-build-dir auto для авто-поиска." >&2
   exit 1
 fi
 

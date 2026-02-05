@@ -4,6 +4,7 @@ obj/
 
 # CMake build
 native/build/
+native/build-*/
 
 # OS
 .DS_Store

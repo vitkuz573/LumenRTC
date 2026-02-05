@@ -57,6 +57,10 @@ Windows (PowerShell):
 scripts\\bootstrap.ps1 -LibWebRtcBuildDir C:\\path\\to\\webrtc\\out-debug\\Windows-x64
 ```
 
+If `--libwebrtc-build-dir` is omitted (or set to `auto`), the scripts attempt
+a small set of common output paths relative to the repo and environment
+variables such as `LIBWEBRTC_BUILD_DIR` and `WEBRTC_BUILD_DIR`.
+
 Windows example (PowerShell):
 
 ```powershell
