@@ -61,6 +61,14 @@ track.AddSink(renderer.Sink);
 renderer.Run();
 ```
 
+## Samples
+
+Local camera preview (requires SDL2 runtime):
+
+```bash
+dotnet run --project samples/LumenRTC.Sample.LocalCamera/LumenRTC.Sample.LocalCamera.csproj
+```
+
 ## ABI notes
 
 - Callbacks run on WebRTC worker/signaling threads.
