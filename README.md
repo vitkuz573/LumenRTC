@@ -9,6 +9,7 @@ The goal is a stable native ABI for .NET while keeping the heavy lifting in
 
 - `native/` C ABI layer built as `lumenrtc` shared library.
 - `src/LumenRTC/` .NET wrapper (P/Invoke + managed API).
+- `src/LumenRTC.Rendering.Sdl/` SDL2-based renderer helper (optional).
 
 ## Build prerequisites
 
@@ -43,6 +44,23 @@ Make sure `lumenrtc` and `libwebrtc` are discoverable by the loader:
 - Windows: add to `PATH` or place DLLs next to the app.
 - Linux: add to `LD_LIBRARY_PATH` or use rpath.
 
+SDL renderer runtime (optional):
+
+- Windows: `SDL2.dll` must be on `PATH` or next to the app.
+- Linux: `libSDL2-2.0.so.0` must be discoverable by the loader.
+
+## SDL Renderer
+
+The `LumenRTC.Rendering.Sdl` project provides a minimal video renderer using SDL2.
+
+```csharp
+using LumenRTC.Rendering.Sdl;
+
+using var renderer = new SdlVideoRenderer("LumenRTC", 1280, 720);
+track.AddSink(renderer.Sink);
+renderer.Run();
+```
+
 ## ABI notes
 
 - Callbacks run on WebRTC worker/signaling threads.
@@ -52,5 +70,5 @@ Make sure `lumenrtc` and `libwebrtc` are discoverable by the loader:
 
 ## Status
 
-Current focus: core peer connection, data channel, and video sink interop.
-Audio sinks, capture helpers, and full stats marshaling will be added next.
+Current focus: core peer connection, data channel, audio/video devices, and
+renderer integration. Stats marshaling and higher-level helpers are next.

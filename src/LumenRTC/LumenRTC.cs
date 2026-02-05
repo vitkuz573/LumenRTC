@@ -121,6 +121,14 @@ public enum AudioSourceType
     Custom = 1,
 }
 
+public enum VideoFrameFormat
+{
+    Argb = 0,
+    Bgra = 1,
+    Abgr = 2,
+    Rgba = 3,
+}
+
 public sealed class IceServer
 {
     public IceServer(string uri, string? username = null, string? password = null)
@@ -1070,6 +1078,11 @@ public sealed class VideoFrame : SafeHandle
                 NativeMethods.lrtc_video_frame_to_argb(handle, (IntPtr)argbPtr, strideArgb, width, height, format);
             }
         }
+    }
+
+    public void CopyToArgb(Span<byte> argb, int strideArgb, int width, int height, VideoFrameFormat format)
+    {
+        CopyToArgb(argb, strideArgb, width, height, (int)format);
     }
 
     public VideoFrame Retain()
