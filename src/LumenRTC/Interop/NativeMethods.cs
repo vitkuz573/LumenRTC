@@ -140,6 +140,17 @@ internal struct LrtcAudioOptions
     [MarshalAs(UnmanagedType.I1)] public bool highpass_filter;
 }
 
+[StructLayout(LayoutKind.Sequential)]
+internal struct LrtcRtpEncodingSettings
+{
+    public int max_bitrate_bps;
+    public int min_bitrate_bps;
+    public double max_framerate;
+    public double scale_resolution_down_by;
+    public int active;
+    public int degradation_preference;
+}
+
 [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 internal delegate void LrtcSdpSuccessCb(IntPtr userData, IntPtr sdp, IntPtr type);
 
@@ -616,6 +627,20 @@ internal static class NativeMethods
         uint streamIdCount);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern IntPtr lrtc_peer_connection_add_audio_track_sender(
+        IntPtr pc,
+        IntPtr track,
+        IntPtr streamIds,
+        uint streamIdCount);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern IntPtr lrtc_peer_connection_add_video_track_sender(
+        IntPtr pc,
+        IntPtr track,
+        IntPtr streamIds,
+        uint streamIdCount);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     internal static extern IntPtr lrtc_peer_connection_create_data_channel(
         IntPtr pc,
         IntPtr label,
@@ -711,6 +736,14 @@ internal static class NativeMethods
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     internal static extern void lrtc_video_frame_release(IntPtr frame);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern int lrtc_rtp_sender_set_encoding_parameters(
+        IntPtr sender,
+        ref LrtcRtpEncodingSettings settings);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern void lrtc_rtp_sender_release(IntPtr sender);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     internal static extern void lrtc_factory_get_rtp_sender_codec_mime_types(

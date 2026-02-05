@@ -144,6 +144,14 @@ public enum DesktopCaptureState
     Failed = 2,
 }
 
+public enum DegradationPreference
+{
+    Disabled = 0,
+    MaintainFramerate = 1,
+    MaintainResolution = 2,
+    Balanced = 3,
+}
+
 public enum VideoFrameFormat
 {
     Argb = 0,
@@ -197,6 +205,29 @@ public sealed class AudioOptions
     public bool AutoGainControl { get; set; } = true;
     public bool NoiseSuppression { get; set; } = true;
     public bool HighpassFilter { get; set; } = false;
+}
+
+public sealed class RtpEncodingSettings
+{
+    public int? MaxBitrateBps { get; set; }
+    public int? MinBitrateBps { get; set; }
+    public double? MaxFramerate { get; set; }
+    public double? ScaleResolutionDownBy { get; set; }
+    public bool? Active { get; set; }
+    public DegradationPreference? DegradationPreference { get; set; }
+
+    internal LrtcRtpEncodingSettings ToNative()
+    {
+        return new LrtcRtpEncodingSettings
+        {
+            max_bitrate_bps = MaxBitrateBps ?? -1,
+            min_bitrate_bps = MinBitrateBps ?? -1,
+            max_framerate = MaxFramerate ?? -1,
+            scale_resolution_down_by = ScaleResolutionDownBy ?? -1,
+            active = Active.HasValue ? (Active.Value ? 1 : 0) : -1,
+            degradation_preference = DegradationPreference.HasValue ? (int)DegradationPreference.Value : -1,
+        };
+    }
 }
 
 public readonly struct AudioFrame
@@ -969,6 +1000,30 @@ public sealed class MediaStream : SafeHandle
     }
 }
 
+public sealed class RtpSender : SafeHandle
+{
+    internal RtpSender(IntPtr handle) : base(IntPtr.Zero, true)
+    {
+        SetHandle(handle);
+    }
+
+    public bool SetEncodingParameters(RtpEncodingSettings settings)
+    {
+        if (settings == null) throw new ArgumentNullException(nameof(settings));
+        var native = settings.ToNative();
+        var result = NativeMethods.lrtc_rtp_sender_set_encoding_parameters(handle, ref native);
+        return result != 0;
+    }
+
+    public override bool IsInvalid => handle == IntPtr.Zero;
+
+    protected override bool ReleaseHandle()
+    {
+        NativeMethods.lrtc_rtp_sender_release(handle);
+        return true;
+    }
+}
+
 public sealed class PeerConnection : SafeHandle
 {
     private readonly PeerConnectionCallbacks _callbacks;
@@ -1174,6 +1229,30 @@ public sealed class PeerConnection : SafeHandle
         using var ids = new Utf8StringArray(streamIds);
         var result = NativeMethods.lrtc_peer_connection_add_video_track(handle, track.DangerousGetHandle(), ids.Pointer, (uint)ids.Count);
         return result != 0;
+    }
+
+    public RtpSender AddAudioTrackSender(AudioTrack track, IReadOnlyList<string>? streamIds = null)
+    {
+        if (track == null) throw new ArgumentNullException(nameof(track));
+        using var ids = new Utf8StringArray(streamIds);
+        var sender = NativeMethods.lrtc_peer_connection_add_audio_track_sender(handle, track.DangerousGetHandle(), ids.Pointer, (uint)ids.Count);
+        if (sender == IntPtr.Zero)
+        {
+            throw new InvalidOperationException("Failed to add audio track sender.");
+        }
+        return new RtpSender(sender);
+    }
+
+    public RtpSender AddVideoTrackSender(VideoTrack track, IReadOnlyList<string>? streamIds = null)
+    {
+        if (track == null) throw new ArgumentNullException(nameof(track));
+        using var ids = new Utf8StringArray(streamIds);
+        var sender = NativeMethods.lrtc_peer_connection_add_video_track_sender(handle, track.DangerousGetHandle(), ids.Pointer, (uint)ids.Count);
+        if (sender == IntPtr.Zero)
+        {
+            throw new InvalidOperationException("Failed to add video track sender.");
+        }
+        return new RtpSender(sender);
     }
 
     public bool SetCodecPreferences(MediaType mediaType, IReadOnlyList<string> mimeTypes)

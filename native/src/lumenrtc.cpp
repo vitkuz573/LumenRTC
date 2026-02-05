@@ -146,6 +146,10 @@ struct lrtc_video_frame_t {
   scoped_refptr<RTCVideoFrame> ref;
 };
 
+struct lrtc_rtp_sender_t {
+  scoped_refptr<libwebrtc::RTCRtpSender> ref;
+};
+
 static lrtc_result_t LrtcFailIfNull(const void* ptr) {
   return ptr ? LRTC_OK : LRTC_INVALID_ARG;
 }
@@ -1648,6 +1652,40 @@ int LUMENRTC_CALL lrtc_peer_connection_add_video_track(
   return sender.get() ? 1 : 0;
 }
 
+lrtc_rtp_sender_t* LUMENRTC_CALL lrtc_peer_connection_add_audio_track_sender(
+    lrtc_peer_connection_t* pc, lrtc_audio_track_t* track,
+    const char** stream_ids, uint32_t stream_id_count) {
+  if (!pc || !pc->ref.get() || !track || !track->ref.get()) {
+    return nullptr;
+  }
+  vector<string> streams = BuildStringVector(stream_ids, stream_id_count);
+  scoped_refptr<libwebrtc::RTCRtpSender> sender =
+      pc->ref->AddTrack(track->ref, streams);
+  if (!sender.get()) {
+    return nullptr;
+  }
+  auto handle = new lrtc_rtp_sender_t();
+  handle->ref = sender;
+  return handle;
+}
+
+lrtc_rtp_sender_t* LUMENRTC_CALL lrtc_peer_connection_add_video_track_sender(
+    lrtc_peer_connection_t* pc, lrtc_video_track_t* track,
+    const char** stream_ids, uint32_t stream_id_count) {
+  if (!pc || !pc->ref.get() || !track || !track->ref.get()) {
+    return nullptr;
+  }
+  vector<string> streams = BuildStringVector(stream_ids, stream_id_count);
+  scoped_refptr<libwebrtc::RTCRtpSender> sender =
+      pc->ref->AddTrack(track->ref, streams);
+  if (!sender.get()) {
+    return nullptr;
+  }
+  auto handle = new lrtc_rtp_sender_t();
+  handle->ref = sender;
+  return handle;
+}
+
 lrtc_data_channel_t* LUMENRTC_CALL lrtc_peer_connection_create_data_channel(
     lrtc_peer_connection_t* pc, const char* label, int ordered, int reliable,
     int max_retransmit_time, int max_retransmits, const char* protocol,
@@ -1872,6 +1910,74 @@ lrtc_video_frame_t* LUMENRTC_CALL lrtc_video_frame_retain(
 
 void LUMENRTC_CALL lrtc_video_frame_release(lrtc_video_frame_t* frame) {
   delete frame;
+}
+
+int LUMENRTC_CALL lrtc_rtp_sender_set_encoding_parameters(
+    lrtc_rtp_sender_t* sender, const lrtc_rtp_encoding_settings_t* settings) {
+  if (!sender || !sender->ref.get() || !settings) {
+    return 0;
+  }
+  scoped_refptr<libwebrtc::RTCRtpParameters> parameters =
+      sender->ref->parameters();
+  if (!parameters.get()) {
+    return 0;
+  }
+
+  vector<scoped_refptr<libwebrtc::RTCRtpEncodingParameters>> encodings =
+      parameters->encodings();
+
+  std::vector<scoped_refptr<libwebrtc::RTCRtpEncodingParameters>> list;
+  list.reserve(encodings.size());
+  for (size_t i = 0; i < encodings.size(); ++i) {
+    list.push_back(encodings[i]);
+  }
+
+  if (list.empty()) {
+    scoped_refptr<libwebrtc::RTCRtpEncodingParameters> created =
+        libwebrtc::RTCRtpEncodingParameters::Create();
+    if (created.get()) {
+      list.push_back(created);
+    }
+  }
+
+  if (list.empty()) {
+    return 0;
+  }
+
+  scoped_refptr<libwebrtc::RTCRtpEncodingParameters> encoding = list[0];
+  if (encoding.get()) {
+    if (settings->max_bitrate_bps >= 0) {
+      encoding->set_max_bitrate_bps(settings->max_bitrate_bps);
+    }
+    if (settings->min_bitrate_bps >= 0) {
+      encoding->set_min_bitrate_bps(settings->min_bitrate_bps);
+    }
+    if (settings->max_framerate > 0.0) {
+      encoding->set_max_framerate(settings->max_framerate);
+    }
+    if (settings->scale_resolution_down_by > 0.0) {
+      encoding->set_scale_resolution_down_by(
+          settings->scale_resolution_down_by);
+    }
+    if (settings->active >= 0) {
+      encoding->set_active(settings->active != 0);
+    }
+  }
+
+  parameters->set_encodings(
+      vector<scoped_refptr<libwebrtc::RTCRtpEncodingParameters>>(list));
+
+  if (settings->degradation_preference >= 0) {
+    parameters->SetDegradationPreference(
+        static_cast<libwebrtc::RTCDegradationPreference>(
+            settings->degradation_preference));
+  }
+
+  return sender->ref->set_parameters(parameters) ? 1 : 0;
+}
+
+void LUMENRTC_CALL lrtc_rtp_sender_release(lrtc_rtp_sender_t* sender) {
+  delete sender;
 }
 
 void LUMENRTC_CALL lrtc_factory_get_rtp_sender_codec_mime_types(

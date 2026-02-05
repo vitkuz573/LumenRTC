@@ -22,10 +22,14 @@ The goal is a stable native ABI for .NET while keeping the heavy lifting in
 ```bash
 cmake -S native -B native/build \
   -DLIBWEBRTC_ROOT=/home/vitaly/libwebrtc \
-  -DLIBWEBRTC_BUILD_DIR=/path/to/webrtc/out-debug/Linux-x64
+  -DLIBWEBRTC_BUILD_DIR=/path/to/webrtc/out-debug/Linux-x64 \
+  -DLUMENRTC_ENABLE_DESKTOP_CAPTURE=ON
 
 cmake --build native/build -j
 ```
+
+If your `libwebrtc` was built without desktop capture, set
+`LUMENRTC_ENABLE_DESKTOP_CAPTURE=OFF` to avoid ABI mismatches.
 
 Windows example (PowerShell):
 
@@ -91,6 +95,12 @@ Screen share preview (requires SDL2 runtime and desktop capture enabled):
 
 ```bash
 dotnet run --project samples/LumenRTC.Sample.ScreenShare/LumenRTC.Sample.ScreenShare.csproj
+```
+
+Screen share loopback (offer/answer in-process, codec preferences applied):
+
+```bash
+dotnet run --project samples/LumenRTC.Sample.ScreenShareLoopback/LumenRTC.Sample.ScreenShareLoopback.csproj
 ```
 
 ## ABI notes

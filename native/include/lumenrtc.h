@@ -44,6 +44,7 @@ typedef struct lrtc_audio_track_t lrtc_audio_track_t;
 typedef struct lrtc_audio_sink_t lrtc_audio_sink_t;
 typedef struct lrtc_video_sink_t lrtc_video_sink_t;
 typedef struct lrtc_video_frame_t lrtc_video_frame_t;
+typedef struct lrtc_rtp_sender_t lrtc_rtp_sender_t;
 
 typedef enum lrtc_result_t {
   LRTC_OK = 0,
@@ -112,6 +113,13 @@ typedef enum lrtc_sdp_semantics {
   LRTC_SDP_PLAN_B = 0,
   LRTC_SDP_UNIFIED_PLAN = 1,
 } lrtc_sdp_semantics;
+
+typedef enum lrtc_degradation_preference {
+  LRTC_DEGRADATION_DISABLED = 0,
+  LRTC_DEGRADATION_MAINTAIN_FRAMERATE = 1,
+  LRTC_DEGRADATION_MAINTAIN_RESOLUTION = 2,
+  LRTC_DEGRADATION_BALANCED = 3,
+} lrtc_degradation_preference;
 
 typedef enum lrtc_peer_connection_state {
   LRTC_PC_STATE_NEW = 0,
@@ -196,6 +204,15 @@ typedef struct lrtc_audio_options_t {
   bool noise_suppression;
   bool highpass_filter;
 } lrtc_audio_options_t;
+
+typedef struct lrtc_rtp_encoding_settings_t {
+  int max_bitrate_bps;            // -1 keeps current
+  int min_bitrate_bps;            // -1 keeps current
+  double max_framerate;           // <= 0 keeps current
+  double scale_resolution_down_by;  // <= 0 keeps current
+  int active;                     // -1 keeps current, 0/1 sets
+  int degradation_preference;     // -1 keeps current, else lrtc_degradation_preference
+} lrtc_rtp_encoding_settings_t;
 
 typedef void (LUMENRTC_CALL *lrtc_sdp_success_cb)(void* user_data,
                                                   const char* sdp,
@@ -497,6 +514,14 @@ LUMENRTC_API int LUMENRTC_CALL lrtc_peer_connection_add_audio_track(
 LUMENRTC_API int LUMENRTC_CALL lrtc_peer_connection_add_video_track(
     lrtc_peer_connection_t* pc, lrtc_video_track_t* track,
     const char** stream_ids, uint32_t stream_id_count);
+LUMENRTC_API lrtc_rtp_sender_t* LUMENRTC_CALL
+lrtc_peer_connection_add_audio_track_sender(
+    lrtc_peer_connection_t* pc, lrtc_audio_track_t* track,
+    const char** stream_ids, uint32_t stream_id_count);
+LUMENRTC_API lrtc_rtp_sender_t* LUMENRTC_CALL
+lrtc_peer_connection_add_video_track_sender(
+    lrtc_peer_connection_t* pc, lrtc_video_track_t* track,
+    const char** stream_ids, uint32_t stream_id_count);
 
 LUMENRTC_API lrtc_data_channel_t* LUMENRTC_CALL
 lrtc_peer_connection_create_data_channel(lrtc_peer_connection_t* pc,
@@ -557,6 +582,11 @@ LUMENRTC_API lrtc_video_frame_t* LUMENRTC_CALL lrtc_video_frame_retain(
     lrtc_video_frame_t* frame);
 LUMENRTC_API void LUMENRTC_CALL lrtc_video_frame_release(
     lrtc_video_frame_t* frame);
+
+LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_sender_set_encoding_parameters(
+    lrtc_rtp_sender_t* sender, const lrtc_rtp_encoding_settings_t* settings);
+LUMENRTC_API void LUMENRTC_CALL lrtc_rtp_sender_release(
+    lrtc_rtp_sender_t* sender);
 
 LUMENRTC_API void LUMENRTC_CALL
 lrtc_factory_get_rtp_sender_codec_mime_types(
