@@ -1,4 +1,4 @@
-namespace LumenRTC;
+namespace LumenRTC.Internal;
 
 internal static class NativeString
 {

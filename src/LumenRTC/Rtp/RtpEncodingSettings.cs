@@ -41,28 +41,3 @@ public sealed class RtpEncodingSettings
         };
     }
 }
-
-public readonly record struct RtpEncodingInfo(
-    uint Ssrc,
-    int MaxBitrateBps,
-    int MinBitrateBps,
-    double MaxFramerate,
-    double ScaleResolutionDownBy,
-    bool Active,
-    double BitratePriority,
-    RtpPriority NetworkPriority,
-    int NumTemporalLayers,
-    bool AdaptivePtime,
-    string Rid,
-    string ScalabilityMode);
-
-public readonly record struct RtpCodecCapability(
-    string MimeType,
-    int ClockRate,
-    int Channels,
-    string SdpFmtpLine);
-
-public readonly record struct RtpHeaderExtensionCapability(
-    string Uri,
-    int PreferredId,
-    bool PreferredEncrypt);
