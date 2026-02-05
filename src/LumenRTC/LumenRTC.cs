@@ -352,6 +352,41 @@ public sealed class RtcStatsReport : IDisposable
     public IEnumerable<RtcStat> Transport => GetByType("transport");
     public IEnumerable<RtcStat> Track => GetByType("track");
 
+    public IEnumerable<RtcStat> GetByTrackId(string trackId)
+    {
+        if (string.IsNullOrWhiteSpace(trackId))
+        {
+            yield break;
+        }
+
+        for (var i = 0; i < Stats.Count; i++)
+        {
+            var stat = Stats[i];
+            if (stat.TryGetString("trackId", out var value) &&
+                string.Equals(value, trackId, StringComparison.Ordinal))
+            {
+                yield return stat;
+            }
+        }
+    }
+
+    public IEnumerable<RtcStat> GetBySsrc(uint ssrc)
+    {
+        for (var i = 0; i < Stats.Count; i++)
+        {
+            var stat = Stats[i];
+            if (stat.TryGetUInt32("ssrc", out var value) && value == ssrc)
+            {
+                yield return stat;
+                continue;
+            }
+            if (stat.TryGetInt64("ssrc", out var value64) && value64 == ssrc)
+            {
+                yield return stat;
+            }
+        }
+    }
+
     public static RtcStatsReport Parse(string? json)
     {
         var raw = string.IsNullOrWhiteSpace(json) ? "[]" : json!;
@@ -457,6 +492,32 @@ public sealed class RtcStat
         value = false;
         return false;
     }
+
+    public bool TryGetUInt32(string name, out uint value)
+    {
+        if (Data.ValueKind == JsonValueKind.Object &&
+            Data.TryGetProperty(name, out var prop) &&
+            prop.ValueKind == JsonValueKind.Number)
+        {
+            if (prop.TryGetUInt32(out value))
+            {
+                return true;
+            }
+            if (prop.TryGetInt64(out var intValue) && intValue >= 0 && intValue <= uint.MaxValue)
+            {
+                value = (uint)intValue;
+                return true;
+            }
+            if (prop.TryGetDouble(out var doubleValue) &&
+                doubleValue >= 0 && doubleValue <= uint.MaxValue)
+            {
+                value = (uint)doubleValue;
+                return true;
+            }
+        }
+        value = 0;
+        return false;
+    }
 }
 
 public sealed class RtpTransceiverInit
@@ -508,6 +569,147 @@ public static class Simulcast
         }
 
         return init;
+    }
+}
+
+public sealed record VideoQualityPreset(
+    string Name,
+    int MaxBitrateBps,
+    double MaxFramerate,
+    double ScaleResolutionDownBy,
+    DegradationPreference DegradationPreference,
+    RtpPriority NetworkPriority,
+    double BitratePriority,
+    int? NumTemporalLayers = null,
+    string? ScalabilityMode = null)
+{
+    internal RtpEncodingSettings ToEncodingSettings()
+    {
+        return new RtpEncodingSettings
+        {
+            MaxBitrateBps = MaxBitrateBps,
+            MaxFramerate = MaxFramerate,
+            ScaleResolutionDownBy = ScaleResolutionDownBy,
+            DegradationPreference = DegradationPreference,
+            NetworkPriority = NetworkPriority,
+            BitratePriority = BitratePriority,
+            NumTemporalLayers = NumTemporalLayers,
+            ScalabilityMode = ScalabilityMode,
+            Active = true,
+        };
+    }
+}
+
+public static class VideoQualityPresets
+{
+    public static VideoQualityPreset RemoteControlLowLatency { get; } =
+        new("RemoteControlLowLatency",
+            MaxBitrateBps: 1_500_000,
+            MaxFramerate: 60,
+            ScaleResolutionDownBy: 1.0,
+            DegradationPreference: DegradationPreference.MaintainFramerate,
+            NetworkPriority: RtpPriority.High,
+            BitratePriority: 1.2,
+            NumTemporalLayers: 2);
+
+    public static VideoQualityPreset RemoteControlBalanced { get; } =
+        new("RemoteControlBalanced",
+            MaxBitrateBps: 2_500_000,
+            MaxFramerate: 60,
+            ScaleResolutionDownBy: 1.0,
+            DegradationPreference: DegradationPreference.Balanced,
+            NetworkPriority: RtpPriority.High,
+            BitratePriority: 1.0,
+            NumTemporalLayers: 2);
+
+    public static VideoQualityPreset RemoteControlHighQuality { get; } =
+        new("RemoteControlHighQuality",
+            MaxBitrateBps: 4_000_000,
+            MaxFramerate: 60,
+            ScaleResolutionDownBy: 1.0,
+            DegradationPreference: DegradationPreference.Balanced,
+            NetworkPriority: RtpPriority.High,
+            BitratePriority: 1.1,
+            NumTemporalLayers: 2);
+
+    public static VideoQualityPreset ScreenShareBalanced { get; } =
+        new("ScreenShareBalanced",
+            MaxBitrateBps: 2_000_000,
+            MaxFramerate: 30,
+            ScaleResolutionDownBy: 1.0,
+            DegradationPreference: DegradationPreference.MaintainResolution,
+            NetworkPriority: RtpPriority.Medium,
+            BitratePriority: 1.0);
+
+    public static VideoQualityPreset ScreenShareHighQuality { get; } =
+        new("ScreenShareHighQuality",
+            MaxBitrateBps: 4_000_000,
+            MaxFramerate: 60,
+            ScaleResolutionDownBy: 1.0,
+            DegradationPreference: DegradationPreference.MaintainResolution,
+            NetworkPriority: RtpPriority.High,
+            BitratePriority: 1.2);
+
+    public static VideoQualityPreset ScreenShareLowBandwidth { get; } =
+        new("ScreenShareLowBandwidth",
+            MaxBitrateBps: 900_000,
+            MaxFramerate: 20,
+            ScaleResolutionDownBy: 1.5,
+            DegradationPreference: DegradationPreference.MaintainResolution,
+            NetworkPriority: RtpPriority.Low,
+            BitratePriority: 0.8);
+}
+
+public static class VideoQuality
+{
+    public static bool ApplyPreset(
+        RtpSender sender,
+        VideoQualityPreset preset,
+        int? encodingIndex = null)
+    {
+        if (sender == null) throw new ArgumentNullException(nameof(sender));
+        if (preset == null) throw new ArgumentNullException(nameof(preset));
+        if (sender.MediaType != MediaType.Video)
+        {
+            throw new InvalidOperationException("Video quality presets can only be applied to video senders.");
+        }
+
+        var settings = preset.ToEncodingSettings();
+        if (encodingIndex.HasValue)
+        {
+            return sender.SetEncodingParameters(encodingIndex.Value, settings);
+        }
+
+        return sender.SetEncodingParameters(settings);
+    }
+
+    public static bool ApplyPresetToAllEncodings(
+        RtpSender sender,
+        VideoQualityPreset preset)
+    {
+        if (sender == null) throw new ArgumentNullException(nameof(sender));
+        if (preset == null) throw new ArgumentNullException(nameof(preset));
+        if (sender.MediaType != MediaType.Video)
+        {
+            throw new InvalidOperationException("Video quality presets can only be applied to video senders.");
+        }
+
+        var settings = preset.ToEncodingSettings();
+        var count = sender.GetEncodings().Count;
+        if (count == 0)
+        {
+            return sender.SetEncodingParameters(settings);
+        }
+
+        var success = true;
+        for (var i = 0; i < count; i++)
+        {
+            if (!sender.SetEncodingParameters(i, settings))
+            {
+                success = false;
+            }
+        }
+        return success;
     }
 }
 
