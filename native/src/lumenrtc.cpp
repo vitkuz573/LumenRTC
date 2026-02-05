@@ -40,8 +40,6 @@ using libwebrtc::scoped_refptr;
 using libwebrtc::string;
 using libwebrtc::vector;
 
-namespace {
-
 struct lrtc_factory_t {
   scoped_refptr<RTCPeerConnectionFactory> ref;
 };
@@ -52,12 +50,12 @@ struct lrtc_media_constraints_t {
 
 struct lrtc_peer_connection_t {
   scoped_refptr<RTCPeerConnection> ref;
-  std::unique_ptr<RTCPeerConnectionObserver> observer;
+  class PeerConnectionObserverImpl* observer = nullptr;
 };
 
 struct lrtc_data_channel_t {
   scoped_refptr<RTCDataChannel> ref;
-  std::unique_ptr<RTCDataChannelObserver> observer;
+  class DataChannelObserverImpl* observer = nullptr;
 };
 
 struct lrtc_video_track_t {
@@ -69,7 +67,7 @@ struct lrtc_audio_track_t {
 };
 
 struct lrtc_video_sink_t {
-  std::unique_ptr<RTCVideoRenderer<scoped_refptr<RTCVideoFrame>>> renderer;
+  class VideoSinkImpl* renderer = nullptr;
 };
 
 struct lrtc_video_frame_t {
@@ -90,12 +88,12 @@ static void CopyConfig(const lrtc_rtc_config_t* src, RTCConfiguration* dst) {
   const uint32_t count = std::min<uint32_t>(src->ice_server_count,
                                             LRTC_MAX_ICE_SERVERS);
   for (uint32_t i = 0; i < count; ++i) {
-    dst->ice_servers[i].uri = src->ice_servers[i].uri ? src->ice_servers[i].uri
-                                                      : "";
-    dst->ice_servers[i].username =
-        src->ice_servers[i].username ? src->ice_servers[i].username : "";
-    dst->ice_servers[i].password =
-        src->ice_servers[i].password ? src->ice_servers[i].password : "";
+    dst->ice_servers[i].uri = string(
+        src->ice_servers[i].uri ? src->ice_servers[i].uri : "");
+    dst->ice_servers[i].username = string(
+        src->ice_servers[i].username ? src->ice_servers[i].username : "");
+    dst->ice_servers[i].password = string(
+        src->ice_servers[i].password ? src->ice_servers[i].password : "");
   }
   dst->type = static_cast<libwebrtc::IceTransportsType>(
       src->ice_transports_type);
@@ -346,8 +344,6 @@ class VideoSinkImpl : public RTCVideoRenderer<scoped_refptr<RTCVideoFrame>> {
   void* user_data_ = nullptr;
 };
 
-}  // namespace
-
 extern "C" {
 
 lrtc_result_t LUMENRTC_CALL lrtc_initialize(void) {
@@ -440,10 +436,10 @@ lrtc_peer_connection_t* LUMENRTC_CALL lrtc_peer_connection_create(
   }
   auto handle = new lrtc_peer_connection_t();
   handle->ref = pc;
-  auto observer = std::make_unique<PeerConnectionObserverImpl>();
+  auto* observer = new PeerConnectionObserverImpl();
   observer->SetCallbacks(callbacks, user_data);
-  pc->RegisterRTCPeerConnectionObserver(observer.get());
-  handle->observer = std::move(observer);
+  pc->RegisterRTCPeerConnectionObserver(observer);
+  handle->observer = observer;
   return handle;
 }
 
@@ -453,8 +449,7 @@ void LUMENRTC_CALL lrtc_peer_connection_set_callbacks(
   if (!pc || !pc->observer) {
     return;
   }
-  auto* impl = static_cast<PeerConnectionObserverImpl*>(pc->observer.get());
-  impl->SetCallbacks(callbacks, user_data);
+  pc->observer->SetCallbacks(callbacks, user_data);
 }
 
 void LUMENRTC_CALL lrtc_peer_connection_close(lrtc_peer_connection_t* pc) {
@@ -471,6 +466,8 @@ void LUMENRTC_CALL lrtc_peer_connection_release(lrtc_peer_connection_t* pc) {
   if (pc->ref.get()) {
     pc->ref->DeRegisterRTCPeerConnectionObserver();
   }
+  delete pc->observer;
+  pc->observer = nullptr;
   delete pc;
 }
 
@@ -636,7 +633,7 @@ lrtc_data_channel_t* LUMENRTC_CALL lrtc_peer_connection_create_data_channel(
   init.maxRetransmitTime = max_retransmit_time;
   init.maxRetransmits = max_retransmits;
   if (protocol) {
-    init.protocol = protocol;
+    init.protocol = string(protocol);
   }
   init.negotiated = negotiated != 0;
   init.id = id;
@@ -658,11 +655,10 @@ void LUMENRTC_CALL lrtc_data_channel_set_callbacks(
     return;
   }
   if (!channel->observer) {
-    channel->observer = std::make_unique<DataChannelObserverImpl>();
-    channel->ref->RegisterObserver(channel->observer.get());
+    channel->observer = new DataChannelObserverImpl();
+    channel->ref->RegisterObserver(channel->observer);
   }
-  auto* impl = static_cast<DataChannelObserverImpl*>(channel->observer.get());
-  impl->SetCallbacks(callbacks, user_data);
+  channel->observer->SetCallbacks(callbacks, user_data);
 }
 
 void LUMENRTC_CALL lrtc_data_channel_send(lrtc_data_channel_t* channel,
@@ -688,19 +684,26 @@ void LUMENRTC_CALL lrtc_data_channel_release(lrtc_data_channel_t* channel) {
   if (channel->ref.get()) {
     channel->ref->UnregisterObserver();
   }
+  delete channel->observer;
+  channel->observer = nullptr;
   delete channel;
 }
 
 lrtc_video_sink_t* LUMENRTC_CALL lrtc_video_sink_create(
     const lrtc_video_sink_callbacks_t* callbacks, void* user_data) {
   auto handle = new lrtc_video_sink_t();
-  auto renderer = std::make_unique<VideoSinkImpl>();
+  auto* renderer = new VideoSinkImpl();
   renderer->SetCallbacks(callbacks, user_data);
-  handle->renderer = std::move(renderer);
+  handle->renderer = renderer;
   return handle;
 }
 
 void LUMENRTC_CALL lrtc_video_sink_release(lrtc_video_sink_t* sink) {
+  if (!sink) {
+    return;
+  }
+  delete sink->renderer;
+  sink->renderer = nullptr;
   delete sink;
 }
 
@@ -709,7 +712,7 @@ void LUMENRTC_CALL lrtc_video_track_add_sink(lrtc_video_track_t* track,
   if (!track || !track->ref.get() || !sink || !sink->renderer) {
     return;
   }
-  track->ref->AddRenderer(sink->renderer.get());
+  track->ref->AddRenderer(sink->renderer);
 }
 
 void LUMENRTC_CALL lrtc_video_track_remove_sink(lrtc_video_track_t* track,
@@ -717,7 +720,7 @@ void LUMENRTC_CALL lrtc_video_track_remove_sink(lrtc_video_track_t* track,
   if (!track || !track->ref.get() || !sink || !sink->renderer) {
     return;
   }
-  track->ref->RemoveRenderer(sink->renderer.get());
+  track->ref->RemoveRenderer(sink->renderer);
 }
 
 void LUMENRTC_CALL lrtc_video_track_release(lrtc_video_track_t* track) {

@@ -30,8 +30,11 @@ if(WIN32)
   target_compile_definitions(lumenrtc PRIVATE LIB_WEBRTC_API_DLL)
 endif()
 
-target_link_directories(lumenrtc PRIVATE "${LIBWEBRTC_BUILD_DIR}")
-target_link_libraries(lumenrtc PRIVATE libwebrtc)
+if(WIN32)
+  target_link_libraries(lumenrtc PRIVATE "${LIBWEBRTC_BUILD_DIR}/libwebrtc.lib")
+else()
+  target_link_libraries(lumenrtc PRIVATE "${LIBWEBRTC_BUILD_DIR}/libwebrtc.so")
+endif()
 
 if(UNIX AND NOT APPLE)
   set_target_properties(lumenrtc PROPERTIES
