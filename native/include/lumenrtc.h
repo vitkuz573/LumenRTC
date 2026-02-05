@@ -224,6 +224,14 @@ typedef struct lrtc_rtp_encoding_settings_t {
   int degradation_preference;     // -1 keeps current, else lrtc_degradation_preference
 } lrtc_rtp_encoding_settings_t;
 
+typedef struct lrtc_rtp_transceiver_init_t {
+  int direction;  // lrtc_rtp_transceiver_direction
+  const char** stream_ids;
+  uint32_t stream_id_count;
+  const lrtc_rtp_encoding_settings_t* send_encodings;
+  uint32_t send_encoding_count;
+} lrtc_rtp_transceiver_init_t;
+
 typedef void (LUMENRTC_CALL *lrtc_sdp_success_cb)(void* user_data,
                                                   const char* sdp,
                                                   const char* type);
@@ -559,6 +567,18 @@ lrtc_peer_connection_add_audio_track_transceiver(
 LUMENRTC_API lrtc_rtp_transceiver_t* LUMENRTC_CALL
 lrtc_peer_connection_add_video_track_transceiver(
     lrtc_peer_connection_t* pc, lrtc_video_track_t* track);
+LUMENRTC_API lrtc_rtp_transceiver_t* LUMENRTC_CALL
+lrtc_peer_connection_add_transceiver_with_init(
+    lrtc_peer_connection_t* pc, lrtc_media_type media_type,
+    const lrtc_rtp_transceiver_init_t* init);
+LUMENRTC_API lrtc_rtp_transceiver_t* LUMENRTC_CALL
+lrtc_peer_connection_add_audio_track_transceiver_with_init(
+    lrtc_peer_connection_t* pc, lrtc_audio_track_t* track,
+    const lrtc_rtp_transceiver_init_t* init);
+LUMENRTC_API lrtc_rtp_transceiver_t* LUMENRTC_CALL
+lrtc_peer_connection_add_video_track_transceiver_with_init(
+    lrtc_peer_connection_t* pc, lrtc_video_track_t* track,
+    const lrtc_rtp_transceiver_init_t* init);
 LUMENRTC_API int LUMENRTC_CALL lrtc_peer_connection_remove_track(
     lrtc_peer_connection_t* pc, lrtc_rtp_sender_t* sender);
 LUMENRTC_API uint32_t LUMENRTC_CALL lrtc_peer_connection_sender_count(
@@ -637,6 +657,8 @@ LUMENRTC_API void LUMENRTC_CALL lrtc_video_frame_release(
 
 LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_sender_set_encoding_parameters(
     lrtc_rtp_sender_t* sender, const lrtc_rtp_encoding_settings_t* settings);
+LUMENRTC_API uint32_t LUMENRTC_CALL lrtc_rtp_sender_get_ssrc(
+    lrtc_rtp_sender_t* sender);
 LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_sender_replace_audio_track(
     lrtc_rtp_sender_t* sender, lrtc_audio_track_t* track);
 LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_sender_replace_video_track(
@@ -688,6 +710,10 @@ LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_transceiver_get_direction(
     lrtc_rtp_transceiver_t* transceiver);
 LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_transceiver_get_current_direction(
     lrtc_rtp_transceiver_t* transceiver);
+LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_transceiver_get_fired_direction(
+    lrtc_rtp_transceiver_t* transceiver);
+LUMENRTC_API int32_t LUMENRTC_CALL lrtc_rtp_transceiver_get_id(
+    lrtc_rtp_transceiver_t* transceiver, char* buffer, uint32_t buffer_len);
 LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_transceiver_get_stopped(
     lrtc_rtp_transceiver_t* transceiver);
 LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_transceiver_get_stopping(

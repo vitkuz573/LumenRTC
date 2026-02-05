@@ -160,6 +160,16 @@ internal struct LrtcRtpEncodingSettings
     public int degradation_preference;
 }
 
+[StructLayout(LayoutKind.Sequential)]
+internal struct LrtcRtpTransceiverInit
+{
+    public LrtcRtpTransceiverDirection direction;
+    public IntPtr stream_ids;
+    public uint stream_id_count;
+    public IntPtr send_encodings;
+    public uint send_encoding_count;
+}
+
 [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 internal delegate void LrtcSdpSuccessCb(IntPtr userData, IntPtr sdp, IntPtr type);
 
@@ -691,6 +701,24 @@ internal static class NativeMethods
         IntPtr track);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern IntPtr lrtc_peer_connection_add_transceiver_with_init(
+        IntPtr pc,
+        LrtcMediaType mediaType,
+        ref LrtcRtpTransceiverInit init);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern IntPtr lrtc_peer_connection_add_audio_track_transceiver_with_init(
+        IntPtr pc,
+        IntPtr track,
+        ref LrtcRtpTransceiverInit init);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern IntPtr lrtc_peer_connection_add_video_track_transceiver_with_init(
+        IntPtr pc,
+        IntPtr track,
+        ref LrtcRtpTransceiverInit init);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     internal static extern int lrtc_peer_connection_remove_track(
         IntPtr pc,
         IntPtr sender);
@@ -822,6 +850,9 @@ internal static class NativeMethods
         ref LrtcRtpEncodingSettings settings);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern uint lrtc_rtp_sender_get_ssrc(IntPtr sender);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     internal static extern int lrtc_rtp_sender_replace_audio_track(
         IntPtr sender,
         IntPtr track);
@@ -915,6 +946,15 @@ internal static class NativeMethods
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     internal static extern int lrtc_rtp_transceiver_get_current_direction(IntPtr transceiver);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern int lrtc_rtp_transceiver_get_fired_direction(IntPtr transceiver);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern int lrtc_rtp_transceiver_get_id(
+        IntPtr transceiver,
+        IntPtr buffer,
+        uint bufferLen);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     internal static extern int lrtc_rtp_transceiver_get_stopped(IntPtr transceiver);

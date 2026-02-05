@@ -239,6 +239,13 @@ public sealed class RtpEncodingSettings
     }
 }
 
+public sealed class RtpTransceiverInit
+{
+    public RtpTransceiverDirection Direction { get; set; } = RtpTransceiverDirection.SendRecv;
+    public List<string> StreamIds { get; } = new();
+    public List<RtpEncodingSettings> SendEncodings { get; } = new();
+}
+
 public readonly struct AudioFrame
 {
     public AudioFrame(ReadOnlyMemory<byte> data, int bitsPerSample, int sampleRate, int channels, int frames)
@@ -461,6 +468,64 @@ internal static class NativeString
         finally
         {
             Marshal.FreeHGlobal(buffer);
+        }
+    }
+}
+
+internal sealed class RtpTransceiverInitMarshaler : IDisposable
+{
+    private readonly Utf8StringArray _streamIds;
+    private readonly IntPtr _encodingsPtr;
+    private readonly uint _encodingCount;
+
+    public LrtcRtpTransceiverInit Native { get; }
+
+    public RtpTransceiverInitMarshaler(RtpTransceiverInit init)
+    {
+        if (init == null) throw new ArgumentNullException(nameof(init));
+
+        _streamIds = new Utf8StringArray(init.StreamIds);
+        if (init.SendEncodings.Count > 0)
+        {
+            _encodingCount = (uint)init.SendEncodings.Count;
+            var size = Marshal.SizeOf<LrtcRtpEncodingSettings>();
+            _encodingsPtr = Marshal.AllocHGlobal(size * init.SendEncodings.Count);
+            for (var i = 0; i < init.SendEncodings.Count; i++)
+            {
+                var native = init.SendEncodings[i]?.ToNative() ?? new LrtcRtpEncodingSettings
+                {
+                    max_bitrate_bps = -1,
+                    min_bitrate_bps = -1,
+                    max_framerate = -1,
+                    scale_resolution_down_by = -1,
+                    active = -1,
+                    degradation_preference = -1,
+                };
+                Marshal.StructureToPtr(native, IntPtr.Add(_encodingsPtr, i * size), false);
+            }
+        }
+        else
+        {
+            _encodingsPtr = IntPtr.Zero;
+            _encodingCount = 0;
+        }
+
+        Native = new LrtcRtpTransceiverInit
+        {
+            direction = (LrtcRtpTransceiverDirection)init.Direction,
+            stream_ids = _streamIds.Pointer,
+            stream_id_count = (uint)_streamIds.Count,
+            send_encodings = _encodingsPtr,
+            send_encoding_count = _encodingCount,
+        };
+    }
+
+    public void Dispose()
+    {
+        _streamIds.Dispose();
+        if (_encodingsPtr != IntPtr.Zero)
+        {
+            Marshal.FreeHGlobal(_encodingsPtr);
         }
     }
 }
@@ -1064,6 +1129,8 @@ public sealed class RtpSender : SafeHandle
 
     public string Id => NativeString.GetString(handle, NativeMethods.lrtc_rtp_sender_get_id);
 
+    public uint Ssrc => NativeMethods.lrtc_rtp_sender_get_ssrc(handle);
+
     public IReadOnlyList<string> StreamIds => GetStreamIds();
 
     public AudioTrack? AudioTrack
@@ -1294,6 +1361,21 @@ public sealed class RtpTransceiver : SafeHandle
             return (RtpTransceiverDirection)value;
         }
     }
+
+    public RtpTransceiverDirection FiredDirection
+    {
+        get
+        {
+            var value = NativeMethods.lrtc_rtp_transceiver_get_fired_direction(handle);
+            if (value < 0)
+            {
+                throw new InvalidOperationException("Failed to get transceiver fired direction.");
+            }
+            return (RtpTransceiverDirection)value;
+        }
+    }
+
+    public string TransceiverId => NativeString.GetString(handle, NativeMethods.lrtc_rtp_transceiver_get_id);
 
     public bool Stopped => NativeMethods.lrtc_rtp_transceiver_get_stopped(handle) != 0;
 
@@ -1707,9 +1789,22 @@ public sealed class PeerConnection : SafeHandle
         return new RtpSender(sender);
     }
 
-    public RtpTransceiver AddTransceiver(MediaType mediaType)
+    public RtpTransceiver AddTransceiver(MediaType mediaType, RtpTransceiverInit? init = null)
     {
-        var transceiver = NativeMethods.lrtc_peer_connection_add_transceiver(handle, (LrtcMediaType)mediaType);
+        IntPtr transceiver;
+        if (init == null)
+        {
+            transceiver = NativeMethods.lrtc_peer_connection_add_transceiver(handle, (LrtcMediaType)mediaType);
+        }
+        else
+        {
+            using var marshaler = new RtpTransceiverInitMarshaler(init);
+            var native = marshaler.Native;
+            transceiver = NativeMethods.lrtc_peer_connection_add_transceiver_with_init(
+                handle,
+                (LrtcMediaType)mediaType,
+                ref native);
+        }
         if (transceiver == IntPtr.Zero)
         {
             throw new InvalidOperationException("Failed to add transceiver.");
@@ -1717,10 +1812,25 @@ public sealed class PeerConnection : SafeHandle
         return new RtpTransceiver(transceiver);
     }
 
-    public RtpTransceiver AddTransceiver(AudioTrack track)
+    public RtpTransceiver AddTransceiver(AudioTrack track, RtpTransceiverInit? init = null)
     {
         if (track == null) throw new ArgumentNullException(nameof(track));
-        var transceiver = NativeMethods.lrtc_peer_connection_add_audio_track_transceiver(handle, track.DangerousGetHandle());
+        IntPtr transceiver;
+        if (init == null)
+        {
+            transceiver = NativeMethods.lrtc_peer_connection_add_audio_track_transceiver(
+                handle,
+                track.DangerousGetHandle());
+        }
+        else
+        {
+            using var marshaler = new RtpTransceiverInitMarshaler(init);
+            var native = marshaler.Native;
+            transceiver = NativeMethods.lrtc_peer_connection_add_audio_track_transceiver_with_init(
+                handle,
+                track.DangerousGetHandle(),
+                ref native);
+        }
         if (transceiver == IntPtr.Zero)
         {
             throw new InvalidOperationException("Failed to add audio transceiver.");
@@ -1728,10 +1838,25 @@ public sealed class PeerConnection : SafeHandle
         return new RtpTransceiver(transceiver);
     }
 
-    public RtpTransceiver AddTransceiver(VideoTrack track)
+    public RtpTransceiver AddTransceiver(VideoTrack track, RtpTransceiverInit? init = null)
     {
         if (track == null) throw new ArgumentNullException(nameof(track));
-        var transceiver = NativeMethods.lrtc_peer_connection_add_video_track_transceiver(handle, track.DangerousGetHandle());
+        IntPtr transceiver;
+        if (init == null)
+        {
+            transceiver = NativeMethods.lrtc_peer_connection_add_video_track_transceiver(
+                handle,
+                track.DangerousGetHandle());
+        }
+        else
+        {
+            using var marshaler = new RtpTransceiverInitMarshaler(init);
+            var native = marshaler.Native;
+            transceiver = NativeMethods.lrtc_peer_connection_add_video_track_transceiver_with_init(
+                handle,
+                track.DangerousGetHandle(),
+                ref native);
+        }
         if (transceiver == IntPtr.Zero)
         {
             throw new InvalidOperationException("Failed to add video transceiver.");
