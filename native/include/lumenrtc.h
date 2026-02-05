@@ -47,6 +47,7 @@ typedef struct lrtc_video_frame_t lrtc_video_frame_t;
 typedef struct lrtc_rtp_sender_t lrtc_rtp_sender_t;
 typedef struct lrtc_rtp_receiver_t lrtc_rtp_receiver_t;
 typedef struct lrtc_rtp_transceiver_t lrtc_rtp_transceiver_t;
+typedef struct lrtc_dtmf_sender_t lrtc_dtmf_sender_t;
 
 typedef enum lrtc_result_t {
   LRTC_OK = 0,
@@ -54,6 +55,14 @@ typedef enum lrtc_result_t {
   LRTC_INVALID_ARG = 2,
   LRTC_NOT_IMPLEMENTED = 3,
 } lrtc_result_t;
+
+typedef enum lrtc_log_severity {
+  LRTC_LOG_VERBOSE = 0,
+  LRTC_LOG_INFO = 1,
+  LRTC_LOG_WARNING = 2,
+  LRTC_LOG_ERROR = 3,
+  LRTC_LOG_NONE = 4,
+} lrtc_log_severity;
 
 typedef enum lrtc_media_security_type {
   LRTC_SRTP_NONE = 0,
@@ -316,6 +325,13 @@ typedef void (LUMENRTC_CALL *lrtc_stats_success_cb)(void* user_data,
 typedef void (LUMENRTC_CALL *lrtc_stats_failure_cb)(void* user_data,
                                                     const char* error);
 
+typedef void (LUMENRTC_CALL *lrtc_log_message_cb)(void* user_data,
+                                                  const char* message);
+
+typedef void (LUMENRTC_CALL *lrtc_dtmf_tone_cb)(void* user_data,
+                                                const char* tone,
+                                                const char* tone_buffer);
+
 typedef struct lrtc_peer_connection_callbacks_t {
   lrtc_peer_connection_state_cb on_signaling_state;
   lrtc_peer_connection_state_cb on_peer_connection_state;
@@ -338,6 +354,10 @@ typedef struct lrtc_data_channel_callbacks_t {
   lrtc_data_channel_message_cb on_message;
 } lrtc_data_channel_callbacks_t;
 
+typedef struct lrtc_dtmf_sender_callbacks_t {
+  lrtc_dtmf_tone_cb on_tone_change;
+} lrtc_dtmf_sender_callbacks_t;
+
 typedef struct lrtc_video_sink_callbacks_t {
   lrtc_video_frame_cb on_frame;
 } lrtc_video_sink_callbacks_t;
@@ -348,6 +368,10 @@ typedef struct lrtc_audio_sink_callbacks_t {
 
 LUMENRTC_API lrtc_result_t LUMENRTC_CALL lrtc_initialize(void);
 LUMENRTC_API void LUMENRTC_CALL lrtc_terminate(void);
+LUMENRTC_API void LUMENRTC_CALL lrtc_logging_set_min_level(int severity);
+LUMENRTC_API void LUMENRTC_CALL lrtc_logging_set_callback(
+    int severity, lrtc_log_message_cb callback, void* user_data);
+LUMENRTC_API void LUMENRTC_CALL lrtc_logging_remove_callback(void);
 
 LUMENRTC_API lrtc_factory_t* LUMENRTC_CALL lrtc_factory_create(void);
 LUMENRTC_API lrtc_result_t LUMENRTC_CALL lrtc_factory_initialize(
@@ -759,6 +783,27 @@ LUMENRTC_API lrtc_audio_track_t* LUMENRTC_CALL lrtc_rtp_sender_get_audio_track(
     lrtc_rtp_sender_t* sender);
 LUMENRTC_API lrtc_video_track_t* LUMENRTC_CALL lrtc_rtp_sender_get_video_track(
     lrtc_rtp_sender_t* sender);
+LUMENRTC_API lrtc_dtmf_sender_t* LUMENRTC_CALL lrtc_rtp_sender_get_dtmf_sender(
+    lrtc_rtp_sender_t* sender);
+LUMENRTC_API void LUMENRTC_CALL lrtc_dtmf_sender_set_callbacks(
+    lrtc_dtmf_sender_t* sender,
+    const lrtc_dtmf_sender_callbacks_t* callbacks,
+    void* user_data);
+LUMENRTC_API int LUMENRTC_CALL lrtc_dtmf_sender_can_insert(
+    lrtc_dtmf_sender_t* sender);
+LUMENRTC_API int LUMENRTC_CALL lrtc_dtmf_sender_insert(
+    lrtc_dtmf_sender_t* sender, const char* tones, int duration,
+    int inter_tone_gap, int comma_delay);
+LUMENRTC_API int32_t LUMENRTC_CALL lrtc_dtmf_sender_tones(
+    lrtc_dtmf_sender_t* sender, char* buffer, uint32_t buffer_len);
+LUMENRTC_API int LUMENRTC_CALL lrtc_dtmf_sender_duration(
+    lrtc_dtmf_sender_t* sender);
+LUMENRTC_API int LUMENRTC_CALL lrtc_dtmf_sender_inter_tone_gap(
+    lrtc_dtmf_sender_t* sender);
+LUMENRTC_API int LUMENRTC_CALL lrtc_dtmf_sender_comma_delay(
+    lrtc_dtmf_sender_t* sender);
+LUMENRTC_API void LUMENRTC_CALL lrtc_dtmf_sender_release(
+    lrtc_dtmf_sender_t* sender);
 LUMENRTC_API void LUMENRTC_CALL lrtc_rtp_sender_release(
     lrtc_rtp_sender_t* sender);
 

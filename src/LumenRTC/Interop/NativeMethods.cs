@@ -11,6 +11,15 @@ internal enum LrtcResult : int
     NotImplemented = 3,
 }
 
+internal enum LrtcLogSeverity : int
+{
+    Verbose = 0,
+    Info = 1,
+    Warning = 2,
+    Error = 3,
+    None = 4,
+}
+
 internal enum LrtcPeerConnectionState : int
 {
     New = 0,
@@ -259,6 +268,12 @@ internal delegate void LrtcStatsSuccessCb(IntPtr userData, IntPtr json);
 [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 internal delegate void LrtcStatsErrorCb(IntPtr userData, IntPtr error);
 
+[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+internal delegate void LrtcLogMessageCb(IntPtr userData, IntPtr message);
+
+[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+internal delegate void LrtcDtmfToneCb(IntPtr userData, IntPtr tone, IntPtr toneBuffer);
+
 [StructLayout(LayoutKind.Sequential)]
 internal struct LrtcPeerConnectionCallbacks
 {
@@ -283,6 +298,12 @@ internal struct LrtcDataChannelCallbacks
 }
 
 [StructLayout(LayoutKind.Sequential)]
+internal struct LrtcDtmfSenderCallbacks
+{
+    public LrtcDtmfToneCb? on_tone_change;
+}
+
+[StructLayout(LayoutKind.Sequential)]
 internal struct LrtcVideoSinkCallbacks
 {
     public LrtcVideoFrameCb? on_frame;
@@ -303,6 +324,18 @@ internal static class NativeMethods
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     internal static extern void lrtc_terminate();
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern void lrtc_logging_set_min_level(int severity);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern void lrtc_logging_set_callback(
+        int severity,
+        LrtcLogMessageCb callback,
+        IntPtr userData);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern void lrtc_logging_remove_callback();
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     internal static extern IntPtr lrtc_factory_create();
@@ -1017,6 +1050,44 @@ internal static class NativeMethods
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     internal static extern IntPtr lrtc_rtp_sender_get_video_track(IntPtr sender);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern IntPtr lrtc_rtp_sender_get_dtmf_sender(IntPtr sender);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern void lrtc_dtmf_sender_set_callbacks(
+        IntPtr sender,
+        ref LrtcDtmfSenderCallbacks callbacks,
+        IntPtr userData);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern int lrtc_dtmf_sender_can_insert(IntPtr sender);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern int lrtc_dtmf_sender_insert(
+        IntPtr sender,
+        IntPtr tones,
+        int duration,
+        int interToneGap,
+        int commaDelay);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern int lrtc_dtmf_sender_tones(
+        IntPtr sender,
+        IntPtr buffer,
+        uint bufferLen);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern int lrtc_dtmf_sender_duration(IntPtr sender);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern int lrtc_dtmf_sender_inter_tone_gap(IntPtr sender);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern int lrtc_dtmf_sender_comma_delay(IntPtr sender);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern void lrtc_dtmf_sender_release(IntPtr sender);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     internal static extern void lrtc_rtp_sender_release(IntPtr sender);

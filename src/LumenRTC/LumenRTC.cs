@@ -25,6 +25,39 @@ public static class LumenRtc
     }
 }
 
+public static class RtcLogging
+{
+    private static LrtcLogMessageCb? _callback;
+    private static GCHandle _callbackHandle;
+    private static Action<string>? _managedCallback;
+
+    public static void SetMinLevel(LogSeverity severity)
+    {
+        NativeMethods.lrtc_logging_set_min_level((int)severity);
+    }
+
+    public static void SetLogSink(LogSeverity severity, Action<string> onMessage)
+    {
+        if (onMessage == null) throw new ArgumentNullException(nameof(onMessage));
+        RemoveLogSink();
+        _managedCallback = onMessage;
+        _callback = (_, messagePtr) => _managedCallback?.Invoke(Utf8String.Read(messagePtr));
+        _callbackHandle = GCHandle.Alloc(_callback);
+        NativeMethods.lrtc_logging_set_callback((int)severity, _callback, IntPtr.Zero);
+    }
+
+    public static void RemoveLogSink()
+    {
+        NativeMethods.lrtc_logging_remove_callback();
+        if (_callbackHandle.IsAllocated)
+        {
+            _callbackHandle.Free();
+        }
+        _callback = null;
+        _managedCallback = null;
+    }
+}
+
 public enum PeerConnectionState
 {
     New = 0,
@@ -182,6 +215,15 @@ public enum DtlsTransportState
     Connected = 2,
     Closed = 3,
     Failed = 4,
+}
+
+public enum LogSeverity
+{
+    Verbose = 0,
+    Info = 1,
+    Warning = 2,
+    Error = 3,
+    None = 4,
 }
 
 public enum VideoFrameFormat
@@ -1759,6 +1801,15 @@ public sealed class RtpSender : SafeHandle
         }
     }
 
+    public DtmfSender? DtmfSender
+    {
+        get
+        {
+            var sender = NativeMethods.lrtc_rtp_sender_get_dtmf_sender(handle);
+            return sender == IntPtr.Zero ? null : new DtmfSender(sender);
+        }
+    }
+
     public bool ReplaceTrack(AudioTrack? track)
     {
         var result = NativeMethods.lrtc_rtp_sender_replace_audio_track(
@@ -1907,6 +1958,53 @@ public sealed class RtpSender : SafeHandle
             }
         }
         return list;
+    }
+}
+
+public sealed class DtmfSender : SafeHandle
+{
+    private DtmfSenderCallbacks? _callbacks;
+
+    internal DtmfSender(IntPtr handle) : base(IntPtr.Zero, true)
+    {
+        SetHandle(handle);
+    }
+
+    public void SetCallbacks(DtmfSenderCallbacks callbacks)
+    {
+        _callbacks = callbacks ?? throw new ArgumentNullException(nameof(callbacks));
+        var native = callbacks.BuildNative();
+        NativeMethods.lrtc_dtmf_sender_set_callbacks(handle, ref native, IntPtr.Zero);
+    }
+
+    public bool CanInsert => NativeMethods.lrtc_dtmf_sender_can_insert(handle) != 0;
+
+    public bool InsertDtmf(string tones, int duration = 100, int interToneGap = 70, int commaDelay = -1)
+    {
+        if (tones == null) throw new ArgumentNullException(nameof(tones));
+        using var utf8 = new Utf8String(tones);
+        return NativeMethods.lrtc_dtmf_sender_insert(
+            handle,
+            utf8.Pointer,
+            duration,
+            interToneGap,
+            commaDelay) != 0;
+    }
+
+    public string Tones => NativeString.GetString(handle, NativeMethods.lrtc_dtmf_sender_tones);
+
+    public int Duration => NativeMethods.lrtc_dtmf_sender_duration(handle);
+
+    public int InterToneGap => NativeMethods.lrtc_dtmf_sender_inter_tone_gap(handle);
+
+    public int CommaDelay => NativeMethods.lrtc_dtmf_sender_comma_delay(handle);
+
+    public override bool IsInvalid => handle == IntPtr.Zero;
+
+    protected override bool ReleaseHandle()
+    {
+        NativeMethods.lrtc_dtmf_sender_release(handle);
+        return true;
     }
 }
 
@@ -3111,6 +3209,27 @@ public sealed class DataChannelCallbacks
         {
             on_state_change = _stateCb,
             on_message = _messageCb,
+        };
+    }
+}
+
+public sealed class DtmfSenderCallbacks
+{
+    public Action<string, string?>? OnToneChange;
+    private LrtcDtmfToneCb? _toneCb;
+
+    internal LrtcDtmfSenderCallbacks BuildNative()
+    {
+        _toneCb = (ud, tonePtr, toneBufferPtr) =>
+        {
+            var tone = Utf8String.Read(tonePtr);
+            var toneBuffer = Utf8String.Read(toneBufferPtr);
+            OnToneChange?.Invoke(tone, string.IsNullOrEmpty(toneBuffer) ? null : toneBuffer);
+        };
+
+        return new LrtcDtmfSenderCallbacks
+        {
+            on_tone_change = _toneCb,
         };
     }
 }

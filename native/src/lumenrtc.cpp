@@ -6,10 +6,12 @@
 #include "rtc_audio_track.h"
 #include "rtc_data_channel.h"
 #include "rtc_dtls_transport.h"
+#include "rtc_dtmf_sender.h"
 #include "rtc_desktop_capturer.h"
 #include "rtc_desktop_device.h"
 #include "rtc_desktop_media_list.h"
 #include "rtc_ice_candidate.h"
+#include "rtc_logging.h"
 #include "rtc_media_stream.h"
 #include "rtc_media_track.h"
 #include "rtc_mediaconstraints.h"
@@ -42,10 +44,14 @@ using libwebrtc::RTCConfiguration;
 using libwebrtc::RTCDataChannel;
 using libwebrtc::RTCDataChannelInit;
 using libwebrtc::RTCDataChannelObserver;
+using libwebrtc::RTCDtmfSender;
+using libwebrtc::RTCDtmfSenderObserver;
 using libwebrtc::RTCDesktopCapturer;
 using libwebrtc::RTCDesktopDevice;
 using libwebrtc::RTCDesktopMediaList;
 using libwebrtc::RTCIceCandidate;
+using libwebrtc::LibWebRTCLogging;
+using libwebrtc::RTCLoggingSeverity;
 using libwebrtc::RTCMediaConstraints;
 using libwebrtc::RTCMediaStream;
 using libwebrtc::RTCMediaTrack;
@@ -152,6 +158,11 @@ struct lrtc_video_frame_t {
 
 struct lrtc_rtp_sender_t {
   scoped_refptr<libwebrtc::RTCRtpSender> ref;
+};
+
+struct lrtc_dtmf_sender_t {
+  scoped_refptr<RTCDtmfSender> ref;
+  class DtmfSenderObserverImpl* observer = nullptr;
 };
 
 struct lrtc_rtp_receiver_t {
@@ -376,6 +387,27 @@ static int32_t CopyPortableString(const string& value, char* buffer,
   }
   buffer[len] = '\0';
   return static_cast<int32_t>(len);
+}
+
+struct LogCallbackState {
+  std::mutex mutex;
+  lrtc_log_message_cb callback = nullptr;
+  void* user_data = nullptr;
+};
+
+static LogCallbackState g_log_callback;
+
+static void LrtcLogMessageHandler(const string& message) {
+  lrtc_log_message_cb callback = nullptr;
+  void* user_data = nullptr;
+  {
+    std::lock_guard<std::mutex> lock(g_log_callback.mutex);
+    callback = g_log_callback.callback;
+    user_data = g_log_callback.user_data;
+  }
+  if (callback) {
+    callback(user_data, message.c_string());
+  }
 }
 
 static void AppendJsonEscaped(std::string& out, const char* value) {
@@ -732,6 +764,52 @@ class DataChannelObserverImpl : public RTCDataChannelObserver {
   void* user_data_ = nullptr;
 };
 
+class DtmfSenderObserverImpl : public RTCDtmfSenderObserver {
+ public:
+  DtmfSenderObserverImpl() = default;
+
+  void SetCallbacks(const lrtc_dtmf_sender_callbacks_t* callbacks,
+                    void* user_data) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (callbacks) {
+      callbacks_ = *callbacks;
+    } else {
+      std::memset(&callbacks_, 0, sizeof(callbacks_));
+    }
+    user_data_ = user_data;
+  }
+
+  void OnToneChange(const string tone, const string tone_buffer) override {
+    auto cb = GetCallbacks();
+    if (cb.callbacks.on_tone_change) {
+      cb.callbacks.on_tone_change(cb.user_data, tone.c_string(),
+                                  tone_buffer.c_string());
+    }
+  }
+
+  void OnToneChange(const string tone) override {
+    auto cb = GetCallbacks();
+    if (cb.callbacks.on_tone_change) {
+      cb.callbacks.on_tone_change(cb.user_data, tone.c_string(), nullptr);
+    }
+  }
+
+ private:
+  struct CallbackSnapshot {
+    lrtc_dtmf_sender_callbacks_t callbacks;
+    void* user_data;
+  };
+
+  CallbackSnapshot GetCallbacks() {
+    std::lock_guard<std::mutex> lock(mutex_);
+    return {callbacks_, user_data_};
+  }
+
+  std::mutex mutex_;
+  lrtc_dtmf_sender_callbacks_t callbacks_{};
+  void* user_data_ = nullptr;
+};
+
 class AudioSinkImpl : public libwebrtc::AudioTrackSink {
  public:
   AudioSinkImpl() = default;
@@ -814,6 +892,36 @@ lrtc_result_t LUMENRTC_CALL lrtc_initialize(void) {
 
 void LUMENRTC_CALL lrtc_terminate(void) {
   libwebrtc::LibWebRTC::Terminate();
+}
+
+void LUMENRTC_CALL lrtc_logging_set_min_level(int severity) {
+  LibWebRTCLogging::setMinDebugLogLevel(
+      static_cast<RTCLoggingSeverity>(severity));
+}
+
+void LUMENRTC_CALL lrtc_logging_set_callback(int severity,
+                                             lrtc_log_message_cb callback,
+                                             void* user_data) {
+  {
+    std::lock_guard<std::mutex> lock(g_log_callback.mutex);
+    g_log_callback.callback = callback;
+    g_log_callback.user_data = user_data;
+  }
+  if (callback) {
+    LibWebRTCLogging::setLogSink(static_cast<RTCLoggingSeverity>(severity),
+                                 LrtcLogMessageHandler);
+  } else {
+    LibWebRTCLogging::removeLogSink();
+  }
+}
+
+void LUMENRTC_CALL lrtc_logging_remove_callback(void) {
+  {
+    std::lock_guard<std::mutex> lock(g_log_callback.mutex);
+    g_log_callback.callback = nullptr;
+    g_log_callback.user_data = nullptr;
+  }
+  LibWebRTCLogging::removeLogSink();
 }
 
 lrtc_factory_t* LUMENRTC_CALL lrtc_factory_create(void) {
@@ -2890,6 +2998,103 @@ lrtc_video_track_t* LUMENRTC_CALL lrtc_rtp_sender_get_video_track(
   auto handle = new lrtc_video_track_t();
   handle->ref = static_cast<RTCVideoTrack*>(track.get());
   return handle;
+}
+
+lrtc_dtmf_sender_t* LUMENRTC_CALL lrtc_rtp_sender_get_dtmf_sender(
+    lrtc_rtp_sender_t* sender) {
+  if (!sender || !sender->ref.get()) {
+    return nullptr;
+  }
+  scoped_refptr<RTCDtmfSender> dtmf = sender->ref->dtmf_sender();
+  if (!dtmf.get()) {
+    return nullptr;
+  }
+  auto handle = new lrtc_dtmf_sender_t();
+  handle->ref = dtmf;
+  return handle;
+}
+
+void LUMENRTC_CALL lrtc_dtmf_sender_set_callbacks(
+    lrtc_dtmf_sender_t* sender,
+    const lrtc_dtmf_sender_callbacks_t* callbacks,
+    void* user_data) {
+  if (!sender || !sender->ref.get()) {
+    return;
+  }
+  if (!sender->observer) {
+    sender->observer = new DtmfSenderObserverImpl();
+  }
+  sender->observer->SetCallbacks(callbacks, user_data);
+  sender->ref->UnregisterObserver();
+  if (callbacks && callbacks->on_tone_change) {
+    sender->ref->RegisterObserver(sender->observer);
+  }
+}
+
+int LUMENRTC_CALL lrtc_dtmf_sender_can_insert(lrtc_dtmf_sender_t* sender) {
+  if (!sender || !sender->ref.get()) {
+    return 0;
+  }
+  return sender->ref->CanInsertDtmf() ? 1 : 0;
+}
+
+int LUMENRTC_CALL lrtc_dtmf_sender_insert(lrtc_dtmf_sender_t* sender,
+                                         const char* tones, int duration,
+                                         int inter_tone_gap,
+                                         int comma_delay) {
+  if (!sender || !sender->ref.get() || !tones) {
+    return 0;
+  }
+  if (comma_delay >= 0) {
+    return sender->ref->InsertDtmf(string(tones), duration, inter_tone_gap,
+                                   comma_delay)
+               ? 1
+               : 0;
+  }
+  return sender->ref->InsertDtmf(string(tones), duration, inter_tone_gap) ? 1
+                                                                          : 0;
+}
+
+int32_t LUMENRTC_CALL lrtc_dtmf_sender_tones(lrtc_dtmf_sender_t* sender,
+                                            char* buffer,
+                                            uint32_t buffer_len) {
+  if (!sender || !sender->ref.get()) {
+    return -1;
+  }
+  return CopyPortableString(sender->ref->tones(), buffer, buffer_len);
+}
+
+int LUMENRTC_CALL lrtc_dtmf_sender_duration(lrtc_dtmf_sender_t* sender) {
+  if (!sender || !sender->ref.get()) {
+    return -1;
+  }
+  return sender->ref->duration();
+}
+
+int LUMENRTC_CALL lrtc_dtmf_sender_inter_tone_gap(
+    lrtc_dtmf_sender_t* sender) {
+  if (!sender || !sender->ref.get()) {
+    return -1;
+  }
+  return sender->ref->inter_tone_gap();
+}
+
+int LUMENRTC_CALL lrtc_dtmf_sender_comma_delay(lrtc_dtmf_sender_t* sender) {
+  if (!sender || !sender->ref.get()) {
+    return -1;
+  }
+  return sender->ref->comma_delay();
+}
+
+void LUMENRTC_CALL lrtc_dtmf_sender_release(lrtc_dtmf_sender_t* sender) {
+  if (!sender) {
+    return;
+  }
+  if (sender->ref.get()) {
+    sender->ref->UnregisterObserver();
+  }
+  delete sender->observer;
+  delete sender;
 }
 
 void LUMENRTC_CALL lrtc_rtp_sender_release(lrtc_rtp_sender_t* sender) {

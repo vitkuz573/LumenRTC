@@ -113,6 +113,26 @@ pc.SetCodecPreferences(MediaType.Video, new[]
 
 Apply codec preferences after adding tracks and before creating an offer.
 
+## Logging
+
+```csharp
+RtcLogging.SetMinLevel(LogSeverity.Info);
+RtcLogging.SetLogSink(LogSeverity.Info, message => Console.WriteLine(message));
+```
+
+Call `RtcLogging.RemoveLogSink()` to detach the callback.
+
+## DTMF
+
+```csharp
+var sender = pc.GetSenders().First(s => s.MediaType == MediaType.Audio);
+var dtmf = sender.DtmfSender;
+if (dtmf?.CanInsert == true)
+{
+    dtmf.InsertDtmf("123#", duration: 100, interToneGap: 70);
+}
+```
+
 ## Samples
 
 Local camera preview (requires SDL2 runtime):
