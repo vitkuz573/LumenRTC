@@ -217,6 +217,12 @@ typedef void (LUMENRTC_CALL *lrtc_audio_frame_cb)(void* user_data,
 typedef void (LUMENRTC_CALL *lrtc_video_frame_cb)(void* user_data,
                                                   lrtc_video_frame_t* frame);
 
+typedef void (LUMENRTC_CALL *lrtc_stats_success_cb)(void* user_data,
+                                                    const char* json);
+
+typedef void (LUMENRTC_CALL *lrtc_stats_failure_cb)(void* user_data,
+                                                    const char* error);
+
 typedef struct lrtc_peer_connection_callbacks_t {
   lrtc_peer_connection_state_cb on_signaling_state;
   lrtc_peer_connection_state_cb on_peer_connection_state;
@@ -394,6 +400,8 @@ LUMENRTC_API void LUMENRTC_CALL lrtc_peer_connection_create_answer(
     lrtc_peer_connection_t* pc, lrtc_sdp_success_cb success,
     lrtc_sdp_error_cb failure, void* user_data,
     lrtc_media_constraints_t* constraints);
+LUMENRTC_API void LUMENRTC_CALL lrtc_peer_connection_restart_ice(
+    lrtc_peer_connection_t* pc);
 LUMENRTC_API void LUMENRTC_CALL lrtc_peer_connection_set_local_description(
     lrtc_peer_connection_t* pc, const char* sdp, const char* type,
     lrtc_void_cb success, lrtc_sdp_error_cb failure, void* user_data);
@@ -406,6 +414,9 @@ LUMENRTC_API void LUMENRTC_CALL lrtc_peer_connection_get_local_description(
 LUMENRTC_API void LUMENRTC_CALL lrtc_peer_connection_get_remote_description(
     lrtc_peer_connection_t* pc, lrtc_sdp_success_cb success,
     lrtc_sdp_error_cb failure, void* user_data);
+LUMENRTC_API void LUMENRTC_CALL lrtc_peer_connection_get_stats(
+    lrtc_peer_connection_t* pc, lrtc_stats_success_cb success,
+    lrtc_stats_failure_cb failure, void* user_data);
 LUMENRTC_API void LUMENRTC_CALL lrtc_peer_connection_add_ice_candidate(
     lrtc_peer_connection_t* pc, const char* sdp_mid, int sdp_mline_index,
     const char* candidate);

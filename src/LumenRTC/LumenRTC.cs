@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using System.Threading;
+using System.Threading.Tasks;
 using LumenRTC.Interop;
 
 namespace LumenRTC;
@@ -818,6 +820,11 @@ public sealed class PeerConnection : SafeHandle
         NativeMethods.lrtc_peer_connection_create_answer(handle, successCb, errorCb, IntPtr.Zero, IntPtr.Zero);
     }
 
+    public void RestartIce()
+    {
+        NativeMethods.lrtc_peer_connection_restart_ice(handle);
+    }
+
     public void SetLocalDescription(string sdp, string type, Action onSuccess, Action<string> onFailure)
     {
         using var sdpUtf8 = new Utf8String(sdp);
@@ -848,11 +855,79 @@ public sealed class PeerConnection : SafeHandle
             handle, sdpUtf8.Pointer, typeUtf8.Pointer, successCb, errorCb, IntPtr.Zero);
     }
 
+    public void GetLocalDescription(Action<string, string> onSuccess, Action<string> onFailure)
+    {
+        if (onSuccess == null) throw new ArgumentNullException(nameof(onSuccess));
+        if (onFailure == null) throw new ArgumentNullException(nameof(onFailure));
+
+        LrtcSdpSuccessCb successCb = (_, sdpPtr, typePtr) =>
+            onSuccess(Utf8String.Read(sdpPtr), Utf8String.Read(typePtr));
+        LrtcSdpErrorCb errorCb = (_, errPtr) => onFailure(Utf8String.Read(errPtr));
+
+        _keepAlive.Add(successCb);
+        _keepAlive.Add(errorCb);
+
+        NativeMethods.lrtc_peer_connection_get_local_description(handle, successCb, errorCb, IntPtr.Zero);
+    }
+
+    public void GetRemoteDescription(Action<string, string> onSuccess, Action<string> onFailure)
+    {
+        if (onSuccess == null) throw new ArgumentNullException(nameof(onSuccess));
+        if (onFailure == null) throw new ArgumentNullException(nameof(onFailure));
+
+        LrtcSdpSuccessCb successCb = (_, sdpPtr, typePtr) =>
+            onSuccess(Utf8String.Read(sdpPtr), Utf8String.Read(typePtr));
+        LrtcSdpErrorCb errorCb = (_, errPtr) => onFailure(Utf8String.Read(errPtr));
+
+        _keepAlive.Add(successCb);
+        _keepAlive.Add(errorCb);
+
+        NativeMethods.lrtc_peer_connection_get_remote_description(handle, successCb, errorCb, IntPtr.Zero);
+    }
+
     public void AddIceCandidate(string sdpMid, int sdpMlineIndex, string candidate)
     {
         using var midUtf8 = new Utf8String(sdpMid);
         using var candUtf8 = new Utf8String(candidate);
         NativeMethods.lrtc_peer_connection_add_ice_candidate(handle, midUtf8.Pointer, sdpMlineIndex, candUtf8.Pointer);
+    }
+
+    public void GetStats(Action<string> onSuccess, Action<string> onFailure)
+    {
+        if (onSuccess == null) throw new ArgumentNullException(nameof(onSuccess));
+        if (onFailure == null) throw new ArgumentNullException(nameof(onFailure));
+
+        LrtcStatsSuccessCb successCb = (_, jsonPtr) => onSuccess(Utf8String.Read(jsonPtr));
+        LrtcStatsErrorCb errorCb = (_, errPtr) => onFailure(Utf8String.Read(errPtr));
+
+        _keepAlive.Add(successCb);
+        _keepAlive.Add(errorCb);
+
+        NativeMethods.lrtc_peer_connection_get_stats(handle, successCb, errorCb, IntPtr.Zero);
+    }
+
+    public Task<string> GetStatsAsync(CancellationToken cancellationToken = default)
+    {
+        var tcs = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+        CancellationTokenRegistration registration = default;
+        if (cancellationToken.CanBeCanceled)
+        {
+            registration = cancellationToken.Register(() => tcs.TrySetCanceled(cancellationToken));
+        }
+
+        GetStats(
+            json =>
+            {
+                registration.Dispose();
+                tcs.TrySetResult(json);
+            },
+            error =>
+            {
+                registration.Dispose();
+                tcs.TrySetException(new InvalidOperationException(error));
+            });
+
+        return tcs.Task;
     }
 
     public bool AddStream(MediaStream stream)

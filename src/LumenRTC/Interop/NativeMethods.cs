@@ -156,6 +156,12 @@ internal delegate void LrtcVideoTrackCb(IntPtr userData, IntPtr track);
 [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 internal delegate void LrtcAudioTrackCb(IntPtr userData, IntPtr track);
 
+[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+internal delegate void LrtcStatsSuccessCb(IntPtr userData, IntPtr json);
+
+[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+internal delegate void LrtcStatsErrorCb(IntPtr userData, IntPtr error);
+
 [StructLayout(LayoutKind.Sequential)]
 internal struct LrtcPeerConnectionCallbacks
 {
@@ -432,6 +438,9 @@ internal static class NativeMethods
         IntPtr constraints);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern void lrtc_peer_connection_restart_ice(IntPtr pc);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     internal static extern void lrtc_peer_connection_set_local_description(
         IntPtr pc,
         IntPtr sdp,
@@ -461,6 +470,13 @@ internal static class NativeMethods
         IntPtr pc,
         LrtcSdpSuccessCb success,
         LrtcSdpErrorCb failure,
+        IntPtr userData);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern void lrtc_peer_connection_get_stats(
+        IntPtr pc,
+        LrtcStatsSuccessCb success,
+        LrtcStatsErrorCb failure,
         IntPtr userData);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]

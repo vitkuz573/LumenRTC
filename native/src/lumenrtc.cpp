@@ -24,6 +24,7 @@
 #include <algorithm>
 #include <cstring>
 #include <mutex>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -39,6 +40,7 @@ using libwebrtc::RTCIceCandidate;
 using libwebrtc::RTCMediaConstraints;
 using libwebrtc::RTCMediaStream;
 using libwebrtc::RTCMediaTrack;
+using libwebrtc::MediaRTCStats;
 using libwebrtc::RTCPeerConnection;
 using libwebrtc::RTCPeerConnectionFactory;
 using libwebrtc::RTCPeerConnectionObserver;
@@ -133,6 +135,27 @@ static vector<string> BuildStringVector(const char** items,
     }
   }
   return vector<string>(tmp);
+}
+
+static std::string BuildStatsJson(
+    const vector<scoped_refptr<MediaRTCStats>>& reports) {
+  std::string json;
+  json.push_back('[');
+  const size_t count = reports.size();
+  for (size_t i = 0; i < count; ++i) {
+    if (i > 0) {
+      json.push_back(',');
+    }
+    scoped_refptr<MediaRTCStats> report = reports[i];
+    if (!report.get()) {
+      json.append("null");
+      continue;
+    }
+    string report_json = report->ToJson();
+    json.append(report_json.c_string(), report_json.size());
+  }
+  json.push_back(']');
+  return json;
 }
 
 static void CopyConfig(const lrtc_rtc_config_t* src, RTCConfiguration* dst) {
@@ -1012,6 +1035,14 @@ void LUMENRTC_CALL lrtc_peer_connection_create_answer(
       mc);
 }
 
+void LUMENRTC_CALL lrtc_peer_connection_restart_ice(
+    lrtc_peer_connection_t* pc) {
+  if (!pc || !pc->ref.get()) {
+    return;
+  }
+  pc->ref->RestartIce();
+}
+
 void LUMENRTC_CALL lrtc_peer_connection_set_local_description(
     lrtc_peer_connection_t* pc, const char* sdp, const char* type,
     lrtc_void_cb success, lrtc_sdp_error_cb failure, void* user_data) {
@@ -1094,6 +1125,30 @@ void LUMENRTC_CALL lrtc_peer_connection_get_remote_description(
         if (success) {
           success(user_data, sdp, type);
         }
+      },
+      [failure, user_data](const char* error) {
+        if (failure) {
+          failure(user_data, error);
+        }
+      });
+}
+
+void LUMENRTC_CALL lrtc_peer_connection_get_stats(
+    lrtc_peer_connection_t* pc, lrtc_stats_success_cb success,
+    lrtc_stats_failure_cb failure, void* user_data) {
+  if (!pc || !pc->ref.get()) {
+    if (failure) {
+      failure(user_data, "invalid arguments");
+    }
+    return;
+  }
+  pc->ref->GetStats(
+      [success, user_data](vector<scoped_refptr<MediaRTCStats>> reports) {
+        if (!success) {
+          return;
+        }
+        std::string json = BuildStatsJson(reports);
+        success(user_data, json.c_str());
       },
       [failure, user_data](const char* error) {
         if (failure) {
