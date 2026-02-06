@@ -1763,6 +1763,10 @@ LUMENRTC_API void LUMENRTC_CALL lrtc_peer_connection_create_offer(
   if (constraints) {
     mc = constraints->ref;
   }
+  if (!mc.get()) {
+    // Some libwebrtc wrappers assume non-null constraints.
+    mc = RTCMediaConstraints::Create();
+  }
   pc->ref->CreateOffer(
       [success, user_data](const string sdp, const string type) {
         if (success) {
@@ -1787,6 +1791,10 @@ LUMENRTC_API void LUMENRTC_CALL lrtc_peer_connection_create_answer(
   scoped_refptr<RTCMediaConstraints> mc;
   if (constraints) {
     mc = constraints->ref;
+  }
+  if (!mc.get()) {
+    // Some libwebrtc wrappers assume non-null constraints.
+    mc = RTCMediaConstraints::Create();
   }
   pc->ref->CreateAnswer(
       [success, user_data](const string sdp, const string type) {
