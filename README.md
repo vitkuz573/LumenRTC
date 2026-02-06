@@ -82,6 +82,43 @@ For sample projects, the build will copy `lumenrtc` and `libwebrtc` into the
 output folder when possible. You can override paths via MSBuild properties:
 `LumenRtcNativeDir` and `LibWebRtcBuildDir` (or set `LIBWEBRTC_BUILD_DIR`).
 
+## Quickstart (Convenience API)
+
+Minimal camera preview:
+
+```csharp
+using LumenRTC;
+using LumenRTC.Rendering.Sdl;
+
+using var rtc = RtcContext.Create();
+using var camera = rtc.CreateCameraTrack(new CameraTrackOptions
+{
+    Width = 1280,
+    Height = 720,
+    Fps = 30,
+});
+
+using var renderer = new SdlVideoRenderer("LumenRTC Camera", 1280, 720);
+camera.Track.AddSink(renderer.Sink);
+renderer.Run();
+```
+
+Async offer/answer flow:
+
+```csharp
+using var rtc = RtcContext.Create();
+var config = new RtcConfiguration()
+    .WithStun("stun:stun.l.google.com:19302")
+    .EnableDscp();
+
+using var pc = rtc.CreatePeerConnection(builder => builder
+    .WithConfiguration(config)
+    .OnIceCandidate(candidate => Console.WriteLine(candidate.Candidate)));
+
+var offer = await pc.CreateOfferAsync();
+await pc.SetLocalDescriptionAsync(offer);
+```
+
 ## Packaging
 
 The repo is ready for NuGet packaging but does not publish packages. Use the
@@ -221,4 +258,4 @@ Optional STUN:
 ## Status
 
 Current focus: core peer connection, data channel, audio/video devices, and
-renderer integration. Stats marshaling and higher-level helpers are next.
+renderer integration. Convenience helpers and async wrappers are available.

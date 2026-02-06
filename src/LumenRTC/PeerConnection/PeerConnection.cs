@@ -57,6 +57,36 @@ public sealed class PeerConnection : SafeHandle
         NativeMethods.lrtc_peer_connection_create_offer(handle, successCb, errorCb, IntPtr.Zero, IntPtr.Zero);
     }
 
+    public void CreateOffer(Action<SessionDescription> onSuccess, Action<string> onFailure)
+    {
+        if (onSuccess == null) throw new ArgumentNullException(nameof(onSuccess));
+        CreateOffer((sdp, type) => onSuccess(new SessionDescription(sdp, type)), onFailure);
+    }
+
+    public Task<SessionDescription> CreateOfferAsync(CancellationToken cancellationToken = default)
+    {
+        var tcs = new TaskCompletionSource<SessionDescription>(TaskCreationOptions.RunContinuationsAsynchronously);
+        CancellationTokenRegistration registration = default;
+        if (cancellationToken.CanBeCanceled)
+        {
+            registration = cancellationToken.Register(() => tcs.TrySetCanceled(cancellationToken));
+        }
+
+        CreateOffer(
+            description =>
+            {
+                registration.Dispose();
+                tcs.TrySetResult(description);
+            },
+            error =>
+            {
+                registration.Dispose();
+                tcs.TrySetException(new InvalidOperationException(error));
+            });
+
+        return tcs.Task;
+    }
+
     public void CreateAnswer(Action<string, string> onSuccess, Action<string> onFailure)
     {
         if (onSuccess == null) throw new ArgumentNullException(nameof(onSuccess));
@@ -70,6 +100,36 @@ public sealed class PeerConnection : SafeHandle
         _keepAlive.Add(errorCb);
 
         NativeMethods.lrtc_peer_connection_create_answer(handle, successCb, errorCb, IntPtr.Zero, IntPtr.Zero);
+    }
+
+    public void CreateAnswer(Action<SessionDescription> onSuccess, Action<string> onFailure)
+    {
+        if (onSuccess == null) throw new ArgumentNullException(nameof(onSuccess));
+        CreateAnswer((sdp, type) => onSuccess(new SessionDescription(sdp, type)), onFailure);
+    }
+
+    public Task<SessionDescription> CreateAnswerAsync(CancellationToken cancellationToken = default)
+    {
+        var tcs = new TaskCompletionSource<SessionDescription>(TaskCreationOptions.RunContinuationsAsynchronously);
+        CancellationTokenRegistration registration = default;
+        if (cancellationToken.CanBeCanceled)
+        {
+            registration = cancellationToken.Register(() => tcs.TrySetCanceled(cancellationToken));
+        }
+
+        CreateAnswer(
+            description =>
+            {
+                registration.Dispose();
+                tcs.TrySetResult(description);
+            },
+            error =>
+            {
+                registration.Dispose();
+                tcs.TrySetException(new InvalidOperationException(error));
+            });
+
+        return tcs.Task;
     }
 
     public void RestartIce()
@@ -92,6 +152,42 @@ public sealed class PeerConnection : SafeHandle
             handle, sdpUtf8.Pointer, typeUtf8.Pointer, successCb, errorCb, IntPtr.Zero);
     }
 
+    public void SetLocalDescription(SessionDescription description, Action onSuccess, Action<string> onFailure)
+    {
+        SetLocalDescription(description.Sdp, description.Type, onSuccess, onFailure);
+    }
+
+    public Task SetLocalDescriptionAsync(string sdp, string type, CancellationToken cancellationToken = default)
+    {
+        var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        CancellationTokenRegistration registration = default;
+        if (cancellationToken.CanBeCanceled)
+        {
+            registration = cancellationToken.Register(() => tcs.TrySetCanceled(cancellationToken));
+        }
+
+        SetLocalDescription(
+            sdp,
+            type,
+            () =>
+            {
+                registration.Dispose();
+                tcs.TrySetResult(true);
+            },
+            error =>
+            {
+                registration.Dispose();
+                tcs.TrySetException(new InvalidOperationException(error));
+            });
+
+        return tcs.Task;
+    }
+
+    public Task SetLocalDescriptionAsync(SessionDescription description, CancellationToken cancellationToken = default)
+    {
+        return SetLocalDescriptionAsync(description.Sdp, description.Type, cancellationToken);
+    }
+
     public void SetRemoteDescription(string sdp, string type, Action onSuccess, Action<string> onFailure)
     {
         using var sdpUtf8 = new Utf8String(sdp);
@@ -105,6 +201,42 @@ public sealed class PeerConnection : SafeHandle
 
         NativeMethods.lrtc_peer_connection_set_remote_description(
             handle, sdpUtf8.Pointer, typeUtf8.Pointer, successCb, errorCb, IntPtr.Zero);
+    }
+
+    public void SetRemoteDescription(SessionDescription description, Action onSuccess, Action<string> onFailure)
+    {
+        SetRemoteDescription(description.Sdp, description.Type, onSuccess, onFailure);
+    }
+
+    public Task SetRemoteDescriptionAsync(string sdp, string type, CancellationToken cancellationToken = default)
+    {
+        var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        CancellationTokenRegistration registration = default;
+        if (cancellationToken.CanBeCanceled)
+        {
+            registration = cancellationToken.Register(() => tcs.TrySetCanceled(cancellationToken));
+        }
+
+        SetRemoteDescription(
+            sdp,
+            type,
+            () =>
+            {
+                registration.Dispose();
+                tcs.TrySetResult(true);
+            },
+            error =>
+            {
+                registration.Dispose();
+                tcs.TrySetException(new InvalidOperationException(error));
+            });
+
+        return tcs.Task;
+    }
+
+    public Task SetRemoteDescriptionAsync(SessionDescription description, CancellationToken cancellationToken = default)
+    {
+        return SetRemoteDescriptionAsync(description.Sdp, description.Type, cancellationToken);
     }
 
     public void GetLocalDescription(Action<string, string> onSuccess, Action<string> onFailure)
@@ -122,6 +254,36 @@ public sealed class PeerConnection : SafeHandle
         NativeMethods.lrtc_peer_connection_get_local_description(handle, successCb, errorCb, IntPtr.Zero);
     }
 
+    public void GetLocalDescription(Action<SessionDescription> onSuccess, Action<string> onFailure)
+    {
+        if (onSuccess == null) throw new ArgumentNullException(nameof(onSuccess));
+        GetLocalDescription((sdp, type) => onSuccess(new SessionDescription(sdp, type)), onFailure);
+    }
+
+    public Task<SessionDescription> GetLocalDescriptionAsync(CancellationToken cancellationToken = default)
+    {
+        var tcs = new TaskCompletionSource<SessionDescription>(TaskCreationOptions.RunContinuationsAsynchronously);
+        CancellationTokenRegistration registration = default;
+        if (cancellationToken.CanBeCanceled)
+        {
+            registration = cancellationToken.Register(() => tcs.TrySetCanceled(cancellationToken));
+        }
+
+        GetLocalDescription(
+            description =>
+            {
+                registration.Dispose();
+                tcs.TrySetResult(description);
+            },
+            error =>
+            {
+                registration.Dispose();
+                tcs.TrySetException(new InvalidOperationException(error));
+            });
+
+        return tcs.Task;
+    }
+
     public void GetRemoteDescription(Action<string, string> onSuccess, Action<string> onFailure)
     {
         if (onSuccess == null) throw new ArgumentNullException(nameof(onSuccess));
@@ -137,11 +299,46 @@ public sealed class PeerConnection : SafeHandle
         NativeMethods.lrtc_peer_connection_get_remote_description(handle, successCb, errorCb, IntPtr.Zero);
     }
 
+    public void GetRemoteDescription(Action<SessionDescription> onSuccess, Action<string> onFailure)
+    {
+        if (onSuccess == null) throw new ArgumentNullException(nameof(onSuccess));
+        GetRemoteDescription((sdp, type) => onSuccess(new SessionDescription(sdp, type)), onFailure);
+    }
+
+    public Task<SessionDescription> GetRemoteDescriptionAsync(CancellationToken cancellationToken = default)
+    {
+        var tcs = new TaskCompletionSource<SessionDescription>(TaskCreationOptions.RunContinuationsAsynchronously);
+        CancellationTokenRegistration registration = default;
+        if (cancellationToken.CanBeCanceled)
+        {
+            registration = cancellationToken.Register(() => tcs.TrySetCanceled(cancellationToken));
+        }
+
+        GetRemoteDescription(
+            description =>
+            {
+                registration.Dispose();
+                tcs.TrySetResult(description);
+            },
+            error =>
+            {
+                registration.Dispose();
+                tcs.TrySetException(new InvalidOperationException(error));
+            });
+
+        return tcs.Task;
+    }
+
     public void AddIceCandidate(string sdpMid, int sdpMlineIndex, string candidate)
     {
         using var midUtf8 = new Utf8String(sdpMid);
         using var candUtf8 = new Utf8String(candidate);
         NativeMethods.lrtc_peer_connection_add_ice_candidate(handle, midUtf8.Pointer, sdpMlineIndex, candUtf8.Pointer);
+    }
+
+    public void AddIceCandidate(IceCandidate candidate)
+    {
+        AddIceCandidate(candidate.SdpMid, candidate.SdpMlineIndex, candidate.Candidate);
     }
 
     public void GetStats(Action<string> onSuccess, Action<string> onFailure)
