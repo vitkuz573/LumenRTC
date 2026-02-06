@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using LumenRTC;
 using LumenRTC.Rendering.Sdl;
@@ -17,28 +18,153 @@ internal static class Program
             factory.Initialize();
 
             using var renderer = new SdlVideoRenderer("LumenRTC Screen Share (Loopback)", 1280, 720);
+            VideoTrack? remoteVideoTrack = null;
+            var iceSync = new object();
+            var pendingForPc1 = new List<(string Mid, int Mline, string Candidate)>();
+            var pendingForPc2 = new List<(string Mid, int Mline, string Candidate)>();
+            var pc1RemoteDescriptionSet = false;
+            var pc2RemoteDescriptionSet = false;
 
             PeerConnection? pc1 = null;
             PeerConnection? pc2 = null;
+
+            void AttachRemoteTrack(VideoTrack track)
+            {
+                try
+                {
+                    if (remoteVideoTrack != null && remoteVideoTrack.Id == track.Id)
+                    {
+                        track.Dispose();
+                        return;
+                    }
+                }
+                catch
+                {
+                    // Ignore id lookup failures and continue with latest track.
+                }
+
+                remoteVideoTrack?.Dispose();
+                remoteVideoTrack = track;
+                remoteVideoTrack.Enabled = true;
+                remoteVideoTrack.AddSink(renderer.Sink);
+                Console.WriteLine($"Attached remote video track: {remoteVideoTrack.Id}");
+            }
+
+            void QueueOrForwardToPc1(string mid, int mline, string candidate)
+            {
+                var forwardNow = false;
+                lock (iceSync)
+                {
+                    if (pc1RemoteDescriptionSet)
+                    {
+                        forwardNow = true;
+                    }
+                    else
+                    {
+                        pendingForPc1.Add((mid, mline, candidate));
+                    }
+                }
+
+                if (forwardNow)
+                {
+                    pc1?.AddIceCandidate(mid, mline, candidate);
+                }
+            }
+
+            void QueueOrForwardToPc2(string mid, int mline, string candidate)
+            {
+                var forwardNow = false;
+                lock (iceSync)
+                {
+                    if (pc2RemoteDescriptionSet)
+                    {
+                        forwardNow = true;
+                    }
+                    else
+                    {
+                        pendingForPc2.Add((mid, mline, candidate));
+                    }
+                }
+
+                if (forwardNow)
+                {
+                    pc2?.AddIceCandidate(mid, mline, candidate);
+                }
+            }
+
+            void MarkPc1RemoteSetAndFlush()
+            {
+                List<(string Mid, int Mline, string Candidate)> pending;
+                lock (iceSync)
+                {
+                    pc1RemoteDescriptionSet = true;
+                    pending = new List<(string Mid, int Mline, string Candidate)>(pendingForPc1);
+                    pendingForPc1.Clear();
+                }
+
+                foreach (var candidate in pending)
+                {
+                    pc1?.AddIceCandidate(candidate.Mid, candidate.Mline, candidate.Candidate);
+                }
+            }
+
+            void MarkPc2RemoteSetAndFlush()
+            {
+                List<(string Mid, int Mline, string Candidate)> pending;
+                lock (iceSync)
+                {
+                    pc2RemoteDescriptionSet = true;
+                    pending = new List<(string Mid, int Mline, string Candidate)>(pendingForPc2);
+                    pendingForPc2.Clear();
+                }
+
+                foreach (var candidate in pending)
+                {
+                    pc2?.AddIceCandidate(candidate.Mid, candidate.Mline, candidate.Candidate);
+                }
+            }
 
             pc1 = factory.CreatePeerConnection(new PeerConnectionCallbacks
             {
                 OnIceCandidate = (mid, mline, cand) =>
                 {
-                    pc2?.AddIceCandidate(mid, mline, cand);
-                }
+                    QueueOrForwardToPc2(mid, mline, cand);
+                },
+                OnPeerConnectionState = state => Console.WriteLine($"pc1 state: {state}"),
+                OnIceConnectionState = state => Console.WriteLine($"pc1 ice: {state}"),
             });
 
             pc2 = factory.CreatePeerConnection(new PeerConnectionCallbacks
             {
                 OnIceCandidate = (mid, mline, cand) =>
                 {
-                    pc1?.AddIceCandidate(mid, mline, cand);
+                    QueueOrForwardToPc1(mid, mline, cand);
                 },
                 OnVideoTrack = track =>
                 {
-                    track.AddSink(renderer.Sink);
-                }
+                    AttachRemoteTrack(track);
+                },
+                OnTrack = (transceiver, receiver) =>
+                {
+                    try
+                    {
+                        if (receiver.MediaType == MediaType.Video)
+                        {
+                            var track = receiver.VideoTrack;
+                            if (track != null)
+                            {
+                                AttachRemoteTrack(track);
+                            }
+                        }
+                    }
+                    finally
+                    {
+                        transceiver.Dispose();
+                        receiver.Dispose();
+                    }
+                },
+                OnPeerConnectionState = state => Console.WriteLine($"pc2 state: {state}"),
+                OnIceConnectionState = state => Console.WriteLine($"pc2 ice: {state}"),
             });
 
             // Desktop capture
@@ -93,17 +219,41 @@ internal static class Program
             pc1.CreateOffer(
                 (sdp, type) =>
                 {
-                    pc1.SetLocalDescription(sdp, type, () => { }, err => Console.WriteLine(err));
-                    pc2.SetRemoteDescription(sdp, type, () =>
-                    {
-                        pc2.CreateAnswer(
-                            (answerSdp, answerType) =>
-                            {
-                                pc2.SetLocalDescription(answerSdp, answerType, () => { }, err => Console.WriteLine(err));
-                                pc1.SetRemoteDescription(answerSdp, answerType, () => { }, err => Console.WriteLine(err));
-                            },
-                            err => Console.WriteLine(err));
-                    }, err => Console.WriteLine(err));
+                    pc1.SetLocalDescription(
+                        sdp,
+                        type,
+                        () =>
+                        {
+                            pc2.SetRemoteDescription(
+                                sdp,
+                                type,
+                                () =>
+                                {
+                                    MarkPc2RemoteSetAndFlush();
+                                    pc2.CreateAnswer(
+                                        (answerSdp, answerType) =>
+                                        {
+                                            pc2.SetLocalDescription(
+                                                answerSdp,
+                                                answerType,
+                                                () =>
+                                                {
+                                                    pc1.SetRemoteDescription(
+                                                        answerSdp,
+                                                        answerType,
+                                                        () =>
+                                                        {
+                                                            MarkPc1RemoteSetAndFlush();
+                                                        },
+                                                        err => Console.WriteLine(err));
+                                                },
+                                                err => Console.WriteLine(err));
+                                        },
+                                        err => Console.WriteLine(err));
+                                },
+                                err => Console.WriteLine(err));
+                        },
+                        err => Console.WriteLine(err));
                 },
                 err => Console.WriteLine(err));
 
@@ -111,6 +261,7 @@ internal static class Program
             renderer.Run();
 
             capturer.Stop();
+            remoteVideoTrack?.Dispose();
             pc1?.Close();
             pc2?.Close();
             pc1?.Dispose();
