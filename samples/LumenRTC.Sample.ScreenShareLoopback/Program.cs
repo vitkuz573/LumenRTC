@@ -4,7 +4,6 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
-using System.Threading.Channels;
 using System.Threading.Tasks;
 using LumenRTC;
 using LumenRTC.Rendering.Sdl;
@@ -37,8 +36,6 @@ internal static class Program
         public long Applied;
         public long Failed;
         public long Dropped;
-        public long DirectFallbackApplied;
-        public long WorkerFaults;
     }
 
     public static async Task Main(string[] args)
@@ -48,7 +45,7 @@ internal static class Program
         var showCursor = GetBoolArg(args, "--cursor", true);
         var traceSignaling = GetBoolArg(args, "--trace-signaling", false);
         var statsIntervalMs = Math.Max(0, GetIntArg(args, "--stats-interval-ms", 2000));
-        var disableIpv6 = GetBoolArg(args, "--disable-ipv6", true);
+        var disableIpv6 = GetBoolArg(args, "--disable-ipv6", false);
         var stun = GetArg(args, "--stun", string.Empty);
         var forceLocalLoopback = GetBoolArg(args, "--force-local-loopback", false);
         var dumpSdp = GetBoolArg(args, "--dump-sdp", false);
@@ -103,56 +100,24 @@ internal static class Program
             var pendingForPc2 = new List<CandidateForwardItem>();
             var pc1CanApplyRemoteCandidates = false;
             var pc2CanApplyRemoteCandidates = false;
-            var pc1LastMid = "0";
-            var pc2LastMid = "0";
-            var pc1LastMline = 0;
-            var pc2LastMline = 0;
             var startedAt = DateTime.UtcNow;
 
             PeerConnection? pc1 = null;
             PeerConnection? pc2 = null;
             RtpSender? sender = null;
             var dispatchMetrics = new CandidateDispatchMetrics();
-            var candidatePumpFaulted = 0;
-            var candidatePumpFallbackLogged = 0;
-            using var candidatePumpCts = new CancellationTokenSource();
-            var candidateChannel = Channel.CreateUnbounded<CandidateForwardItem>(new UnboundedChannelOptions
-            {
-                SingleReader = true,
-                SingleWriter = false,
-                AllowSynchronousContinuations = false,
-            });
 
             bool DispatchCandidate(CandidateForwardItem item)
             {
-                var useDirectApply = iceMode == IceApplyMode.Direct || Volatile.Read(ref candidatePumpFaulted) != 0;
-                if (useDirectApply)
-                {
-                    if (iceMode != IceApplyMode.Direct && Interlocked.CompareExchange(ref candidatePumpFallbackLogged, 1, 0) == 0)
-                    {
-                        Console.WriteLine("Candidate worker faulted. Falling back to direct candidate apply.");
-                    }
-
-                    Interlocked.Increment(ref dispatchMetrics.DirectFallbackApplied);
-                    return TryApplyCandidate(
-                        item,
-                        () => pc1,
-                        () => pc2,
-                        iceMode,
-                        dispatchMetrics,
-                        Trace,
-                        countDequeued: false);
-                }
-
-                if (candidateChannel.Writer.TryWrite(item))
-                {
-                    Interlocked.Increment(ref dispatchMetrics.Enqueued);
-                    return true;
-                }
-
-                Console.WriteLine($"Failed to enqueue candidate {item.SourcePc}->{item.TargetPc} mid={item.Mid} mline={item.Mline}.");
-                Interlocked.Increment(ref dispatchMetrics.Failed);
-                return false;
+                Interlocked.Increment(ref dispatchMetrics.Enqueued);
+                return TryApplyCandidate(
+                    item,
+                    () => pc1,
+                    () => pc2,
+                    iceMode,
+                    dispatchMetrics,
+                    Trace,
+                    countDequeued: true);
             }
 
             void AttachRemoteTrack(VideoTrack track)
@@ -304,11 +269,6 @@ internal static class Program
                     var candidateType = ExtractCandidateType(cand);
                     var candidateAddress = ExtractCandidateAddress(cand);
                     Trace($"pc1 local candidate type={candidateType} addr={candidateAddress} mid={mid} mline={mline}");
-                    lock (iceSync)
-                    {
-                        pc1LastMid = string.IsNullOrWhiteSpace(mid) ? "0" : mid;
-                        pc1LastMline = mline;
-                    }
                     QueueOrForwardToPc2("pc1", mid, mline, cand);
                 },
                 OnPeerConnectionState = state => Console.WriteLine($"pc1 state: {state}"),
@@ -318,15 +278,7 @@ internal static class Program
                     Console.WriteLine($"pc1 gathering: {state}");
                     if (state == IceGatheringState.Complete)
                     {
-                        string mid;
-                        int mline;
-                        lock (iceSync)
-                        {
-                            mid = pc1LastMid;
-                            mline = pc1LastMline;
-                        }
-                        Trace($"pc1 local eoc mid={mid} mline={mline}");
-                        QueueOrForwardToPc2("pc1", mid, mline, string.Empty, endOfCandidates: true);
+                        Trace("pc1 gathering complete");
                     }
                 },
             }, config);
@@ -338,11 +290,6 @@ internal static class Program
                     var candidateType = ExtractCandidateType(cand);
                     var candidateAddress = ExtractCandidateAddress(cand);
                     Trace($"pc2 local candidate type={candidateType} addr={candidateAddress} mid={mid} mline={mline}");
-                    lock (iceSync)
-                    {
-                        pc2LastMid = string.IsNullOrWhiteSpace(mid) ? "0" : mid;
-                        pc2LastMline = mline;
-                    }
                     QueueOrForwardToPc1("pc2", mid, mline, cand);
                 },
                 OnVideoTrack = AttachRemoteTrack,
@@ -353,15 +300,7 @@ internal static class Program
                     Console.WriteLine($"pc2 gathering: {state}");
                     if (state == IceGatheringState.Complete)
                     {
-                        string mid;
-                        int mline;
-                        lock (iceSync)
-                        {
-                            mid = pc2LastMid;
-                            mline = pc2LastMline;
-                        }
-                        Trace($"pc2 local eoc mid={mid} mline={mline}");
-                        QueueOrForwardToPc1("pc2", mid, mline, string.Empty, endOfCandidates: true);
+                        Trace("pc2 gathering complete");
                     }
                 },
             }, config);
@@ -412,25 +351,6 @@ internal static class Program
                 Console.WriteLine("Warning: failed to set sender encoding parameters.");
             }
 
-            Task candidatePumpTask = Task.CompletedTask;
-            if (iceMode != IceApplyMode.Direct)
-            {
-                candidatePumpTask = CandidateApplyLoopAsync(
-                    candidateChannel.Reader,
-                    () => pc1,
-                    () => pc2,
-                    iceMode,
-                    dispatchMetrics,
-                    Trace,
-                    ex =>
-                    {
-                        Interlocked.Exchange(ref candidatePumpFaulted, 1);
-                        Interlocked.Increment(ref dispatchMetrics.WorkerFaults);
-                        Console.WriteLine($"Candidate worker faulted: {ex.GetType().Name}: {ex.Message}");
-                    },
-                    candidatePumpCts.Token);
-            }
-
             await NegotiateAsync(
                     pc1,
                     pc2,
@@ -465,8 +385,6 @@ internal static class Program
             finally
             {
                 statsCts.Cancel();
-                candidatePumpCts.Cancel();
-                candidateChannel.Writer.TryComplete();
                 try
                 {
                     await statsTask.ConfigureAwait(false);
@@ -474,18 +392,6 @@ internal static class Program
                 catch (OperationCanceledException)
                 {
                     // Expected on shutdown.
-                }
-                try
-                {
-                    await candidatePumpTask.ConfigureAwait(false);
-                }
-                catch (OperationCanceledException)
-                {
-                    // Expected on shutdown.
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Candidate worker stopped with error: {ex.GetType().Name}: {ex.Message}");
                 }
             }
 
@@ -546,6 +452,7 @@ internal static class Program
 
         trace("SetRemoteDescription(offer) on pc2");
         await SetRemoteDescriptionAsync(pc2, offerSdp, offerType).ConfigureAwait(false);
+        onPc2ReadyForRemoteCandidates();
 
         trace("CreateAnswer");
         var (answerSdp, answerType) = await CreateAnswerAsync(pc2).ConfigureAwait(false);
@@ -556,7 +463,6 @@ internal static class Program
 
         trace("SetLocalDescription(answer) on pc2");
         await SetLocalDescriptionAsync(pc2, answerSdp, answerType).ConfigureAwait(false);
-        onPc2ReadyForRemoteCandidates();
 
         trace("SetRemoteDescription(answer) on pc1");
         await SetRemoteDescriptionAsync(pc1, answerSdp, answerType).ConfigureAwait(false);
@@ -728,43 +634,6 @@ internal static class Program
         }
     }
 
-    private static async Task CandidateApplyLoopAsync(
-        ChannelReader<CandidateForwardItem> reader,
-        Func<PeerConnection?> getPc1,
-        Func<PeerConnection?> getPc2,
-        IceApplyMode iceMode,
-        CandidateDispatchMetrics metrics,
-        Action<string> trace,
-        Action<Exception> onWorkerFault,
-        CancellationToken token)
-    {
-        try
-        {
-            while (await reader.WaitToReadAsync(token).ConfigureAwait(false))
-            {
-                while (reader.TryRead(out var item))
-                {
-                    TryApplyCandidate(
-                        item,
-                        getPc1,
-                        getPc2,
-                        iceMode,
-                        metrics,
-                        trace,
-                        countDequeued: true);
-                }
-            }
-        }
-        catch (OperationCanceledException)
-        {
-            // Expected on shutdown.
-        }
-        catch (Exception ex)
-        {
-            onWorkerFault(ex);
-        }
-    }
-
     private static bool TryApplyCandidate(
         CandidateForwardItem item,
         Func<PeerConnection?> getPc1,
@@ -842,9 +711,7 @@ internal static class Program
         var applied = Interlocked.Read(ref metrics.Applied);
         var failed = Interlocked.Read(ref metrics.Failed);
         var dropped = Interlocked.Read(ref metrics.Dropped);
-        var direct = Interlocked.Read(ref metrics.DirectFallbackApplied);
-        var faults = Interlocked.Read(ref metrics.WorkerFaults);
-        return $"enq={enqueued} deq={dequeued} applied={applied} failed={failed} dropped={dropped} direct={direct} faults={faults}";
+        return $"enq={enqueued} deq={dequeued} applied={applied} failed={failed} dropped={dropped}";
     }
 
     private static int CountStats(IEnumerable<RtcStat> stats)
