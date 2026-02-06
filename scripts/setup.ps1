@@ -285,20 +285,23 @@ try {
   $isDebug = if ($BuildType -eq "Debug") { "true" } else { "false" }
   $desktopCaptureFlag = if ($DesktopCapture -eq "ON") { "true" } else { "false" }
 
-  $gnArgs = @(
-    'target_os="win"',
-    "target_cpu=`"$TargetCpu`"",
-    "is_component_build=false",
-    "is_clang=true",
-    "is_debug=$isDebug",
-    "rtc_use_h264=true",
-    'ffmpeg_branding="Chrome"',
-    "rtc_include_tests=false",
-    "rtc_build_examples=false",
-    "libwebrtc_desktop_capture=$desktopCaptureFlag"
-  ) -join " "
+  New-Item -ItemType Directory -Force -Path $outDir | Out-Null
+  $argsGnPath = Join-PathSafe $outDir "args.gn"
+  $argsContent = @(
+    'target_os = "win"',
+    "target_cpu = \"$TargetCpu\"",
+    "is_component_build = false",
+    "is_clang = true",
+    "is_debug = $isDebug",
+    "rtc_use_h264 = true",
+    'ffmpeg_branding = "Chrome"',
+    "rtc_include_tests = false",
+    "rtc_build_examples = false",
+    "libwebrtc_desktop_capture = $desktopCaptureFlag"
+  ) -join "`n"
 
-  gn gen $outDir --args="$gnArgs"
+  Set-Content -Path $argsGnPath -Value $argsContent -Encoding ASCII
+  gn gen $outDir
   ninja -C $outDir libwebrtc
 
   if (-not $SkipBootstrap) {
@@ -319,6 +322,10 @@ finally {
   Pop-Location
 }
 
+if ($scriptRoot -is [System.Management.Automation.PathInfo]) {
+  $scriptRoot = $scriptRoot.Path
+}
+
 $nativeDefault = Join-PathSafe $scriptRoot "..\\native\\build\\$BuildType"
 if (-not (Test-Path $nativeDefault)) {
   $nativeDefault = Join-PathSafe $scriptRoot "..\\native\\build"
@@ -326,6 +333,9 @@ if (-not (Test-Path $nativeDefault)) {
 
 Write-Host ""
 Write-Host "Next steps:"
+if ($srcDirRoot -is [System.Management.Automation.PathInfo]) {
+  $srcDirRoot = $srcDirRoot.Path
+}
 Write-Host "  `$env:LIBWEBRTC_BUILD_DIR=\"$($srcDirRoot)\\out\\$BuildType\""
 Write-Host "  `$env:LumenRtcNativeDir=\"$nativeDefault\""
 Write-Host "  dotnet run --project .\\samples\\LumenRTC.Sample.LocalCamera\\LumenRTC.Sample.LocalCamera.csproj"
