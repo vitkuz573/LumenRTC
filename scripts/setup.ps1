@@ -143,7 +143,7 @@ function Ensure-DepotTools {
   $candidates += @(
     (Join-Path $PSScriptRoot "..\\depot_tools"),
     (Join-Path $PSScriptRoot "..\\..\\depot_tools"),
-    (Join-Path $env:USERPROFILE "depot_tools")
+    $(if (-not [string]::IsNullOrWhiteSpace($env:USERPROFILE)) { Join-Path $env:USERPROFILE "depot_tools" })
   )
 
   $found = Find-DepotTools -Candidates $candidates
