@@ -6,6 +6,7 @@ usage() {
 Usage: scripts/setup.sh [options]
 
 Options:
+  --depot-tools-dir <path>    Depot_tools directory (default: ../depot_tools)
   --webrtc-root <path>         Root directory for WebRTC checkout (default: ../webrtc_build)
   --webrtc-branch <branch>     WebRTC branch (default: m137_release)
   --target-cpu <cpu>           Target CPU (default: x64)
@@ -26,6 +27,7 @@ desktop_capture="ON"
 skip_sync=false
 skip_patch=false
 skip_bootstrap=false
+depot_tools_dir=""
 
 require_cmd() {
   if ! command -v "$1" >/dev/null 2>&1; then
@@ -38,6 +40,10 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     --webrtc-root)
       webrtc_root="$2"
+      shift 2
+      ;;
+    --depot-tools-dir)
+      depot_tools_dir="$2"
       shift 2
       ;;
     --webrtc-branch)
@@ -85,11 +91,24 @@ if [[ -z "$webrtc_root" ]]; then
   webrtc_root="${repo_root}/../webrtc_build"
 fi
 
+if [[ -z "$depot_tools_dir" ]]; then
+  depot_tools_dir="${repo_root}/../depot_tools"
+fi
+
 require_cmd git
+require_cmd python3
+
+if ! command -v gclient >/dev/null 2>&1; then
+  if [[ ! -d "$depot_tools_dir" ]]; then
+    echo "Cloning depot_tools into $depot_tools_dir"
+    git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git "$depot_tools_dir"
+  fi
+  export PATH="$depot_tools_dir:$PATH"
+fi
+
 require_cmd gclient
 require_cmd gn
 require_cmd ninja
-require_cmd python3
 
 mkdir -p "$webrtc_root"
 if [[ ! -f "${webrtc_root}/.gclient" ]]; then

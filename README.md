@@ -31,6 +31,9 @@ git submodule update --init --recursive
 The setup scripts will fetch and build `libwebrtc`, then build `lumenrtc` and the
 .NET wrapper. This can take time and disk space.
 
+The scripts require `depot_tools`. If `gclient` is missing, the setup scripts will
+clone `depot_tools` into `../depot_tools` automatically.
+
 Windows (run from Developer PowerShell for VS 2022):
 
 ```powershell

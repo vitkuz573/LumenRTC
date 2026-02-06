@@ -1,5 +1,8 @@
 Param(
   [Parameter(Mandatory = $false)]
+  [string]$DepotToolsDir = $env:DEPOT_TOOLS,
+
+  [Parameter(Mandatory = $false)]
   [string]$WebRtcRoot = (Join-Path $PSScriptRoot "..\\webrtc_build"),
 
   [Parameter(Mandatory = $false)]
@@ -118,7 +121,58 @@ function Ensure-BuildGnIncludesLibWebRtc {
   }
 }
 
+function Find-DepotTools {
+  param([string[]]$Candidates)
+  foreach ($dir in $Candidates) {
+    if ([string]::IsNullOrWhiteSpace($dir)) { continue }
+    $gclient = Join-Path $dir "gclient.bat"
+    if (Test-Path $gclient) { return $dir }
+    $gclient = Join-Path $dir "gclient"
+    if (Test-Path $gclient) { return $dir }
+  }
+  return $null
+}
+
+function Ensure-DepotTools {
+  param([string]$PreferredDir)
+
+  $candidates = @()
+  if (-not [string]::IsNullOrWhiteSpace($PreferredDir)) { $candidates += $PreferredDir }
+  if (-not [string]::IsNullOrWhiteSpace($env:DEPOT_TOOLS)) { $candidates += $env:DEPOT_TOOLS }
+
+  $candidates += @(
+    (Join-Path $PSScriptRoot "..\\depot_tools"),
+    (Join-Path $PSScriptRoot "..\\..\\depot_tools"),
+    (Join-Path $env:USERPROFILE "depot_tools")
+  )
+
+  $found = Find-DepotTools -Candidates $candidates
+  if ($found) { return $found }
+
+  $target = $candidates | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Select-Object -First 1
+  if (-not $target) {
+    $target = Join-Path $PSScriptRoot "..\\depot_tools"
+  }
+
+  if (-not (Test-Path $target)) {
+    New-Item -ItemType Directory -Force -Path $target | Out-Null
+  }
+
+  Write-Host "Cloning depot_tools into $target"
+  git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git $target
+  return $target
+}
+
 Require-Command git
+
+$resolvedDepotTools = Ensure-DepotTools -PreferredDir $DepotToolsDir
+if (-not [string]::IsNullOrWhiteSpace($resolvedDepotTools)) {
+  $env:DEPOT_TOOLS = $resolvedDepotTools
+  if (-not $env:PATH.Contains($resolvedDepotTools)) {
+    $env:PATH = "$resolvedDepotTools;$env:PATH"
+  }
+}
+
 Require-Command gclient
 Require-Command gn
 Require-Command ninja
