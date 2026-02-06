@@ -261,26 +261,26 @@ if (-not $webRtcRoot) {
 
 Ensure-GclientConfig -Root $webRtcRoot -Branch $WebRtcBranch
 
-Push-Location $webRtcRoot
+$srcDirRoot = Join-PathSafe $webRtcRoot "src"
+if (-not (Test-Path $srcDirRoot)) {
+  throw "Expected src directory at $srcDirRoot. gclient sync may have failed."
+}
+
+Push-Location $srcDirRoot
 try {
   if (-not $SkipSync) {
     gclient sync
   }
 
-  $srcDir = Join-PathSafe $webRtcRoot "src"
-  if (-not (Test-Path $srcDir)) {
-    throw "Expected src directory at $srcDir. gclient sync may have failed."
-  }
-
-  $libWebRtcDir = Ensure-LibWebRtcRepo -SrcDir $srcDir
+  $libWebRtcDir = Ensure-LibWebRtcRepo -SrcDir $srcDirRoot
   if (-not $SkipPatch) {
     Apply-CustomPatch -LibWebRtcDir $libWebRtcDir
   }
 
-  $buildGnPath = Join-PathSafe $srcDir "BUILD.gn"
+  $buildGnPath = Join-PathSafe $srcDirRoot "BUILD.gn"
   Ensure-BuildGnIncludesLibWebRtc -BuildGnPath $buildGnPath
 
-  $outDir = Join-PathSafe $srcDir "out\\$BuildType"
+  $outDir = Join-PathSafe $srcDirRoot "out\\$BuildType"
   $isDebug = if ($BuildType -eq "Debug") { "true" } else { "false" }
   $desktopCaptureFlag = if ($DesktopCapture -eq "ON") { "true" } else { "false" }
 
@@ -319,6 +319,6 @@ if (-not (Test-Path $nativeDefault)) {
 
 Write-Host ""
 Write-Host "Next steps:"
-Write-Host "  `$env:LIBWEBRTC_BUILD_DIR=\"$($webRtcRoot)\\src\\out\\$BuildType\""
+Write-Host "  `$env:LIBWEBRTC_BUILD_DIR=\"$($srcDirRoot)\\out\\$BuildType\""
 Write-Host "  `$env:LumenRtcNativeDir=\"$nativeDefault\""
 Write-Host "  dotnet run --project .\\samples\\LumenRTC.Sample.LocalCamera\\LumenRTC.Sample.LocalCamera.csproj"
