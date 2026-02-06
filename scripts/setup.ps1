@@ -165,13 +165,13 @@ try {
   $desktopCaptureFlag = if ($DesktopCapture -eq "ON") { "true" } else { "false" }
 
   $gnArgs = @(
-    "target_os=\"win\"",
-    "target_cpu=\"$TargetCpu\"",
+    'target_os="win"',
+    "target_cpu=`"$TargetCpu`"",
     "is_component_build=false",
     "is_clang=true",
     "is_debug=$isDebug",
     "rtc_use_h264=true",
-    "ffmpeg_branding=\"Chrome\"",
+    'ffmpeg_branding="Chrome"',
     "rtc_include_tests=false",
     "rtc_build_examples=false",
     "libwebrtc_desktop_capture=$desktopCaptureFlag"
