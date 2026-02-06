@@ -265,6 +265,12 @@ dotnet run --project samples/LumenRTC.Sample.Streaming/LumenRTC.Sample.Streaming
   --role viewer --server ws://localhost:8080/ws/ --room demo
 ```
 
+Windows one-command launcher (opens signaling + viewer + sender in separate windows):
+
+```powershell
+scripts\\run-streaming-demo.cmd -NoBuild
+```
+
 Optional STUN:
 
 ```bash
