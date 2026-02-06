@@ -44,16 +44,21 @@ public sealed class PeerConnectionFactory : SafeHandle
         {
             throw new ArgumentNullException(nameof(callbacks));
         }
-        var native = callbacks.BuildNative();
+        // Create with empty callbacks first to avoid reverse-P/Invoke during native
+        // registration. We apply managed callbacks in a second step.
+        var emptyCallbacks = default(LrtcPeerConnectionCallbacks);
         using var configMarshaler = config != null ? new RtcConfigurationMarshaler(config) : null;
         var configPtr = configMarshaler?.Pointer ?? IntPtr.Zero;
         var constraintsPtr = constraints?.DangerousGetHandle() ?? IntPtr.Zero;
         var pcHandle = NativeMethods.lrtc_peer_connection_create(
-            handle, configPtr, constraintsPtr, ref native, IntPtr.Zero);
+            handle, configPtr, constraintsPtr, ref emptyCallbacks, IntPtr.Zero);
         if (pcHandle == IntPtr.Zero)
         {
             throw new InvalidOperationException("Failed to create peer connection.");
         }
+
+        var native = callbacks.BuildNative();
+        NativeMethods.lrtc_peer_connection_set_callbacks(pcHandle, ref native, IntPtr.Zero);
         return new PeerConnection(pcHandle, callbacks);
     }
 
