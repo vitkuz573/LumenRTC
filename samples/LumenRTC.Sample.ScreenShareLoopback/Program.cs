@@ -75,11 +75,8 @@ internal static class Program
         LumenRtc.Initialize();
         try
         {
-            using var senderFactory = PeerConnectionFactory.Create();
-            senderFactory.Initialize();
-
-            using var receiverFactory = PeerConnectionFactory.Create();
-            receiverFactory.Initialize();
+            using var factory = PeerConnectionFactory.Create();
+            factory.Initialize();
 
             var firstFrameLogged = 0;
             using var renderer = new SdlVideoRenderer("LumenRTC Screen Share (Loopback)", 1280, 720);
@@ -262,7 +259,7 @@ internal static class Program
                 config.IceServers.Add(new IceServer(stun));
             }
 
-            pc1 = senderFactory.CreatePeerConnection(new PeerConnectionCallbacks
+            pc1 = factory.CreatePeerConnection(new PeerConnectionCallbacks
             {
                 OnIceCandidate = (mid, mline, cand) =>
                 {
@@ -283,7 +280,7 @@ internal static class Program
                 },
             }, config);
 
-            pc2 = receiverFactory.CreatePeerConnection(new PeerConnectionCallbacks
+            pc2 = factory.CreatePeerConnection(new PeerConnectionCallbacks
             {
                 OnIceCandidate = (mid, mline, cand) =>
                 {
@@ -305,7 +302,7 @@ internal static class Program
                 },
             }, config);
 
-            using var desktop = senderFactory.GetDesktopDevice();
+            using var desktop = factory.GetDesktopDevice();
             using var list = desktop.GetMediaList(DesktopType.Screen);
 
             var updateResult = list.UpdateSourceList(forceReload: true, getThumbnail: false);
@@ -338,8 +335,8 @@ internal static class Program
                 return;
             }
 
-            using var videoSource = senderFactory.CreateDesktopSource(capturer, "screen");
-            using var track = senderFactory.CreateVideoTrack(videoSource, "screen0");
+            using var videoSource = factory.CreateDesktopSource(capturer, "screen");
+            using var track = factory.CreateVideoTrack(videoSource, "screen0");
             sender = pc1.AddVideoTrackSender(track, new[] { "stream0" });
             if (!sender.SetEncodingParameters(new RtpEncodingSettings
                 {
@@ -423,8 +420,7 @@ internal static class Program
             pc2.Close();
             pc1.Dispose();
             pc2.Dispose();
-            senderFactory.Terminate();
-            receiverFactory.Terminate();
+            factory.Terminate();
         }
         finally
         {
