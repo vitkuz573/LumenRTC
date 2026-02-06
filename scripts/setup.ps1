@@ -117,8 +117,8 @@ function Resolve-VisualStudio {
       $result.Version = Get-VersionFromPath -Path $candidate
     }
   }
-  if (-not [string]::IsNullOrWhiteSpace($env:GYP_MSVS_VERSION)) {
-    $result.Version = $env:GYP_MSVS_VERSION
+  if (-not [string]::IsNullOrWhiteSpace($env:LUMENRTC_VS_YEAR)) {
+    $result.Version = $env:LUMENRTC_VS_YEAR.Trim()
   }
   if (-not [string]::IsNullOrWhiteSpace($result.Path)) {
     return $result
@@ -333,10 +333,14 @@ if ([string]::IsNullOrWhiteSpace($env:GYP_MSVS_OVERRIDE_PATH)) {
 }
 $detectedVersion = $vsInfo.Version
 if ([string]::IsNullOrWhiteSpace($detectedVersion)) {
-  $detectedVersion = "unknown"
+  if ($vsPathCheck -match '\\\\(20\\d{2})\\\\') {
+    $detectedVersion = $Matches[1]
+  } else {
+    $detectedVersion = "unknown"
+  }
 }
 if ($detectedVersion -ne "2026") {
-  throw "Only Visual Studio 2026 is supported. Detected: $detectedVersion."
+  throw "Only Visual Studio 2026 is supported. Detected: $detectedVersion. Set LUMENRTC_VS_YEAR=2026 if detection fails."
 }
 $vsPathCheck = $env:GYP_MSVS_OVERRIDE_PATH.TrimEnd('\\')
 if (-not (Test-Path $vsPathCheck)) {
