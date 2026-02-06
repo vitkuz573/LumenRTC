@@ -98,6 +98,18 @@ function Resolve-VisualStudio {
     return ""
   }
 
+  function Try-ParseVswhereJson {
+    param([string]$Json)
+    if ([string]::IsNullOrWhiteSpace($Json)) {
+      return $null
+    }
+    try {
+      return ($Json | ConvertFrom-Json)
+    } catch {
+      return $null
+    }
+  }
+
   function Test-VisualStudioPath {
     param([string]$Path)
     if ([string]::IsNullOrWhiteSpace($Path)) {
@@ -142,6 +154,55 @@ function Resolve-VisualStudio {
   }
 
   if (Test-Path $vswherePath) {
+    $vswhereJson = & $vswherePath -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -format json 2>$null
+    $jsonData = Try-ParseVswhereJson -Json $vswhereJson
+    if ($null -ne $jsonData) {
+      $entry = $jsonData
+      if ($entry -is [array]) {
+        $entry = $entry | Select-Object -First 1
+      }
+
+      if ($null -ne $entry.installationPath) {
+        $candidate = [string]$entry.installationPath
+        if (Test-VisualStudioPath -Path $candidate) {
+          $result.Path = $candidate.Trim()
+        }
+      }
+
+      $versionCandidates = @()
+      if ($null -ne $entry.catalog) {
+        $versionCandidates += [string]$entry.catalog.productLineVersion
+        $versionCandidates += [string]$entry.catalog.productDisplayVersion
+        $versionCandidates += [string]$entry.catalog.productLine
+        $versionCandidates += [string]$entry.catalog.productSemanticVersion
+        $versionCandidates += [string]$entry.catalog.buildVersion
+      }
+      $versionCandidates += [string]$entry.installationVersion
+
+      foreach ($candidate in $versionCandidates) {
+        if ([string]::IsNullOrWhiteSpace($candidate)) {
+          continue
+        }
+        if ($candidate -match '2026') {
+          $result.Version = "2026"
+          break
+        }
+      }
+
+      if ([string]::IsNullOrWhiteSpace($result.Version)) {
+        $installVersion = [string]$entry.installationVersion
+        if ($installVersion -match '^18\.') {
+          $result.Version = "2026"
+        } elseif ($installVersion -match '^17\.') {
+          $result.Version = "2022"
+        } elseif ($installVersion -match '^16\.') {
+          $result.Version = "2019"
+        } elseif ($installVersion -match '^15\.') {
+          $result.Version = "2017"
+        }
+      }
+    }
+
     $installPath = & $vswherePath -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath 2>$null
     if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($installPath)) {
       $candidate = $installPath.Trim()
@@ -150,30 +211,32 @@ function Resolve-VisualStudio {
       }
     }
 
-    $lineVersion = & $vswherePath -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property catalog_productLineVersion 2>$null
-    if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($lineVersion)) {
-      if ($lineVersion -match '2026') {
-        $result.Version = "2026"
+    if ([string]::IsNullOrWhiteSpace($result.Version)) {
+      $lineVersion = & $vswherePath -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property catalog_productLineVersion 2>$null
+      if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($lineVersion)) {
+        if ($lineVersion -match '2026') {
+          $result.Version = "2026"
+        }
       }
-    }
 
-    $displayVersion = & $vswherePath -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property catalog_productDisplayVersion 2>$null
-    if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($displayVersion)) {
-      if ($displayVersion -match '2026') {
-        $result.Version = "2026"
+      $displayVersion = & $vswherePath -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property catalog_productDisplayVersion 2>$null
+      if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($displayVersion)) {
+        if ($displayVersion -match '2026') {
+          $result.Version = "2026"
+        }
       }
-    }
 
-    $installVersion = & $vswherePath -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationVersion 2>$null
-    if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($installVersion)) {
-      if ($installVersion -match '^18\.') {
-        $result.Version = "2026"
-      } elseif ($installVersion -match '^17\.') {
-        $result.Version = "2022"
-      } elseif ($installVersion -match '^16\.') {
-        $result.Version = "2019"
-      } elseif ($installVersion -match '^15\.') {
-        $result.Version = "2017"
+      $installVersion = & $vswherePath -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationVersion 2>$null
+      if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($installVersion)) {
+        if ($installVersion -match '^18\.') {
+          $result.Version = "2026"
+        } elseif ($installVersion -match '^17\.') {
+          $result.Version = "2022"
+        } elseif ($installVersion -match '^16\.') {
+          $result.Version = "2019"
+        } elseif ($installVersion -match '^15\.') {
+          $result.Version = "2017"
+        }
       }
     }
   }
