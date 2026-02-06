@@ -36,6 +36,21 @@ Param(
 
 $ErrorActionPreference = "Stop"
 
+function Join-PathSafe {
+  param(
+    [string]$BasePath,
+    [string]$ChildPath
+  )
+
+  if ([string]::IsNullOrWhiteSpace($BasePath)) {
+    return $ChildPath
+  }
+  if ([string]::IsNullOrWhiteSpace($ChildPath)) {
+    return $BasePath
+  }
+  return (Join-Path $BasePath $ChildPath)
+}
+
 function Resolve-ScriptRoot {
   param([string]$OverrideRoot)
 
@@ -89,7 +104,7 @@ function Ensure-GclientConfig {
     [string]$Branch
   )
 
-  $gclientPath = Join-Path $Root ".gclient"
+  $gclientPath = Join-PathSafe $Root ".gclient"
   if (Test-Path $gclientPath) {
     return
   }
@@ -116,7 +131,7 @@ target_os = ['win']
 function Ensure-LibWebRtcRepo {
   param([string]$SrcDir)
 
-  $libWebRtcDir = Join-Path $SrcDir "libwebrtc"
+  $libWebRtcDir = Join-PathSafe $SrcDir "libwebrtc"
   if (-not (Test-Path $libWebRtcDir)) {
     git clone https://github.com/webrtc-sdk/libwebrtc $libWebRtcDir
   }
@@ -126,7 +141,7 @@ function Ensure-LibWebRtcRepo {
 function Apply-CustomPatch {
   param([string]$LibWebRtcDir)
 
-  $patchPath = Join-Path $LibWebRtcDir "patchs\\custom_audio_source_m137.patch"
+  $patchPath = Join-PathSafe $LibWebRtcDir "patchs\\custom_audio_source_m137.patch"
   if (-not (Test-Path $patchPath)) {
     Write-Warning "Patch not found: $patchPath"
     return
@@ -168,9 +183,9 @@ function Find-DepotTools {
   param([string[]]$Candidates)
   foreach ($dir in $Candidates) {
     if ([string]::IsNullOrWhiteSpace($dir)) { continue }
-    $gclient = Join-Path $dir "gclient.bat"
+    $gclient = Join-PathSafe $dir "gclient.bat"
     if (Test-Path $gclient) { return $dir }
-    $gclient = Join-Path $dir "gclient"
+    $gclient = Join-PathSafe $dir "gclient"
     if (Test-Path $gclient) { return $dir }
   }
   return $null
@@ -184,11 +199,11 @@ function Ensure-DepotTools {
   if (-not [string]::IsNullOrWhiteSpace($env:DEPOT_TOOLS)) { $candidates += $env:DEPOT_TOOLS }
 
   if (-not [string]::IsNullOrWhiteSpace($scriptRoot)) {
-    $candidates += (Join-Path $scriptRoot "..\\depot_tools")
-    $candidates += (Join-Path $scriptRoot "..\\..\\depot_tools")
+    $candidates += (Join-PathSafe $scriptRoot "..\\depot_tools")
+    $candidates += (Join-PathSafe $scriptRoot "..\\..\\depot_tools")
   }
   if (-not [string]::IsNullOrWhiteSpace($env:USERPROFILE)) {
-    $candidates += (Join-Path $env:USERPROFILE "depot_tools")
+    $candidates += (Join-PathSafe $env:USERPROFILE "depot_tools")
   }
 
   $found = Find-DepotTools -Candidates $candidates
@@ -197,7 +212,7 @@ function Ensure-DepotTools {
   $target = $candidates | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Select-Object -First 1
   if (-not $target) {
     if (-not [string]::IsNullOrWhiteSpace($scriptRoot)) {
-      $target = Join-Path $scriptRoot "..\\depot_tools"
+      $target = Join-PathSafe $scriptRoot "..\\depot_tools"
     } else {
       $target = "..\\depot_tools"
     }
@@ -238,10 +253,17 @@ if ([string]::IsNullOrWhiteSpace($env:GYP_MSVS_OVERRIDE_PATH) -and -not [string]
 
 if ([string]::IsNullOrWhiteSpace($WebRtcRoot)) {
   if (-not [string]::IsNullOrWhiteSpace($scriptRoot)) {
-    $WebRtcRoot = Join-Path $scriptRoot "..\\webrtc_build"
+    $WebRtcRoot = Join-PathSafe $scriptRoot "..\\webrtc_build"
   } else {
     $WebRtcRoot = "..\\webrtc_build"
   }
+}
+
+if ($env:LUMENRTC_SETUP_DEBUG -eq "1") {
+  Write-Host "setup.ps1 debug:"
+  Write-Host "  ScriptRoot: $scriptRoot"
+  Write-Host "  WebRtcRoot: $WebRtcRoot"
+  Write-Host "  DepotToolsDir: $DepotToolsDir"
 }
 
 $webRtcRoot = Resolve-Path -LiteralPath $WebRtcRoot -ErrorAction SilentlyContinue
@@ -258,7 +280,7 @@ try {
     gclient sync
   }
 
-  $srcDir = Join-Path $webRtcRoot "src"
+  $srcDir = Join-PathSafe $webRtcRoot "src"
   if (-not (Test-Path $srcDir)) {
     throw "Expected src directory at $srcDir. gclient sync may have failed."
   }
@@ -268,10 +290,10 @@ try {
     Apply-CustomPatch -LibWebRtcDir $libWebRtcDir
   }
 
-  $buildGnPath = Join-Path $srcDir "BUILD.gn"
+  $buildGnPath = Join-PathSafe $srcDir "BUILD.gn"
   Ensure-BuildGnIncludesLibWebRtc -BuildGnPath $buildGnPath
 
-  $outDir = Join-Path $srcDir "out\\$BuildType"
+  $outDir = Join-PathSafe $srcDir "out\\$BuildType"
   $isDebug = if ($BuildType -eq "Debug") { "true" } else { "false" }
   $desktopCaptureFlag = if ($DesktopCapture -eq "ON") { "true" } else { "false" }
 
@@ -295,7 +317,7 @@ try {
     $env:LIBWEBRTC_ROOT = $libWebRtcDir
     $env:LIBWEBRTC_BUILD_DIR = $outDir
 
-    $bootstrapScript = Join-Path $scriptRoot "bootstrap.ps1"
+    $bootstrapScript = Join-PathSafe $scriptRoot "bootstrap.ps1"
     & $bootstrapScript -LibWebRtcBuildDir $outDir -BuildType $BuildType -DesktopCapture $DesktopCapture
   }
 }
@@ -303,9 +325,9 @@ finally {
   Pop-Location
 }
 
-$nativeDefault = Join-Path $scriptRoot "..\\native\\build\\$BuildType"
+$nativeDefault = Join-PathSafe $scriptRoot "..\\native\\build\\$BuildType"
 if (-not (Test-Path $nativeDefault)) {
-  $nativeDefault = Join-Path $scriptRoot "..\\native\\build"
+  $nativeDefault = Join-PathSafe $scriptRoot "..\\native\\build"
 }
 
 Write-Host ""
