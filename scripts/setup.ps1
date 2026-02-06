@@ -289,7 +289,7 @@ try {
   $argsGnPath = Join-PathSafe $outDir "args.gn"
   $argsContent = @(
     'target_os = "win"',
-    "target_cpu = \"$TargetCpu\"",
+    ('target_cpu = "{0}"' -f $TargetCpu),
     "is_component_build = false",
     "is_clang = true",
     "is_debug = $isDebug",
