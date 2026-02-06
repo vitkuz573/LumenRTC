@@ -35,10 +35,21 @@ $ErrorActionPreference = "Stop"
 
 $scriptRoot = $PSScriptRoot
 if ([string]::IsNullOrWhiteSpace($scriptRoot)) {
-  $scriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
+  if (-not [string]::IsNullOrWhiteSpace($PSCommandPath)) {
+    $scriptRoot = Split-Path -Parent $PSCommandPath
+  }
+}
+if ([string]::IsNullOrWhiteSpace($scriptRoot)) {
+  $invocationPath = $MyInvocation.MyCommand.Path
+  if (-not [string]::IsNullOrWhiteSpace($invocationPath)) {
+    $scriptRoot = Split-Path -Parent $invocationPath
+  }
 }
 if ([string]::IsNullOrWhiteSpace($scriptRoot)) {
   $scriptRoot = (Get-Location).Path
+}
+if ([string]::IsNullOrWhiteSpace($scriptRoot)) {
+  $scriptRoot = "."
 }
 
 function Require-Command {
