@@ -21,6 +21,7 @@ function Test-LibWebRtcBuildDir {
   if ([string]::IsNullOrWhiteSpace($Path)) { return $false }
   $candidates = @(
     (Join-Path $Path "libwebrtc.dll"),
+    (Join-Path $Path "libwebrtc.dll.lib"),
     (Join-Path $Path "libwebrtc.lib"),
     (Join-Path $Path "libwebrtc.so"),
     (Join-Path $Path "libwebrtc.dylib")
