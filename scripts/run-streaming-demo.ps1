@@ -29,15 +29,13 @@ Param(
   [switch]$SkipServer,
 
   [Parameter(Mandatory = $false)]
-  [switch]$KillExisting
+  [switch]$KillExisting,
+
+  [Parameter(Mandatory = $false)]
+  [switch]$VerboseLaunch
 )
 
 $ErrorActionPreference = "Stop"
-
-function Quote-PsString {
-  param([string]$Value)
-  return "'" + ($Value -replace "'", "''") + "'"
-}
 
 function Ensure-TrailingSlash {
   param([string]$Url)
@@ -167,27 +165,41 @@ function Stop-RunningSampleProcesses {
 function Start-PowerShellWindow {
   param(
     [string]$PowerShellExe,
-    [string]$Command
+    [string]$ScriptPath,
+    [string[]]$ScriptArgs,
+    [switch]$VerboseLaunch
   )
 
-  $encodedCommand = [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($Command))
+  $argList = @()
   $exeName = [System.IO.Path]::GetFileNameWithoutExtension($PowerShellExe)
   if ($exeName -ieq "pwsh") {
-    return Start-Process -FilePath $PowerShellExe -ArgumentList @("-NoExit", "-EncodedCommand", $encodedCommand) -PassThru
+    $argList += @("-NoExit", "-File", $ScriptPath)
+  } else {
+    $argList += @("-NoExit", "-ExecutionPolicy", "Bypass", "-File", $ScriptPath)
   }
-  return Start-Process -FilePath $PowerShellExe -ArgumentList @("-NoExit", "-ExecutionPolicy", "Bypass", "-EncodedCommand", $encodedCommand) -PassThru
+  if ($ScriptArgs -and $ScriptArgs.Count -gt 0) {
+    $argList += $ScriptArgs
+  }
+  if ($VerboseLaunch) {
+    Write-Host "Launch:" $PowerShellExe ($argList -join " ")
+  }
+  return Start-Process -FilePath $PowerShellExe -ArgumentList $argList -PassThru
 }
 
 $repoRoot = Resolve-RepoRoot
 
 $signalingProject = Join-Path $repoRoot "samples\LumenRTC.Sample.SignalingServer\LumenRTC.Sample.SignalingServer.csproj"
 $streamingProject = Join-Path $repoRoot "samples\LumenRTC.Sample.Streaming\LumenRTC.Sample.Streaming.csproj"
+$childScript = Join-Path $repoRoot "scripts\run-streaming-child.ps1"
 
 if (-not (Test-Path $signalingProject)) {
   throw "Signaling project not found: $signalingProject"
 }
 if (-not (Test-Path $streamingProject)) {
   throw "Streaming project not found: $streamingProject"
+}
+if (-not (Test-Path $childScript)) {
+  throw "Child script not found: $childScript"
 }
 
 if ($KillExisting) {
@@ -213,43 +225,46 @@ if (-not $NoBuild) {
 $normalizedSignalUrl = Ensure-TrailingSlash $SignalUrl
 $clientServerUrl = Convert-ToClientServerUrl $normalizedSignalUrl
 $cursorValue = if ($NoCursor) { "false" } else { "true" }
-$runFlag = "--no-build"
 $psExe = Resolve-PowerShellExe
 
-$common = @(
-  '$ErrorActionPreference = "Stop"',
-  "Set-Location " + (Quote-PsString $repoRoot),
-  "`$env:LIBWEBRTC_BUILD_DIR = " + (Quote-PsString $libWebRtcBuildDir),
-  "`$env:LumenRtcNativeDir = " + (Quote-PsString $lumenRtcNativeDir)
-) -join "; "
+$commonChildArgs = @(
+  "-RepoRoot", $repoRoot,
+  "-Configuration", $Configuration,
+  "-LibWebRtcBuildDir", $libWebRtcBuildDir,
+  "-LumenRtcNativeDir", $lumenRtcNativeDir,
+  "-NoBuild"
+)
 
-$serverCommand = @(
-  $common,
-  '$Host.UI.RawUI.WindowTitle = "LumenRTC Signaling Server"',
-  "dotnet run $runFlag --configuration $Configuration --project " + (Quote-PsString $signalingProject) + " -- --url " + (Quote-PsString $normalizedSignalUrl)
-) -join "; "
+$serverArgs = @(
+  "-Mode", "server",
+  "-SignalUrl", $normalizedSignalUrl
+) + $commonChildArgs
 
-$viewerCommand = @(
-  $common,
-  '$Host.UI.RawUI.WindowTitle = "LumenRTC Streaming Viewer"',
-  "dotnet run $runFlag --configuration $Configuration --project " + (Quote-PsString $streamingProject) + " -- --role viewer --server " + (Quote-PsString $clientServerUrl) + " --room " + (Quote-PsString $Room)
-) -join "; "
+$viewerArgs = @(
+  "-Mode", "viewer",
+  "-SignalUrl", $clientServerUrl,
+  "-Room", $Room
+) + $commonChildArgs
 
-$senderCommand = @(
-  $common,
-  '$Host.UI.RawUI.WindowTitle = "LumenRTC Streaming Sender"',
-  "dotnet run $runFlag --configuration $Configuration --project " + (Quote-PsString $streamingProject) + " -- --role sender --server " + (Quote-PsString $clientServerUrl) + " --room " + (Quote-PsString $Room) + " --capture $Capture --source $Source --fps $Fps --cursor $cursorValue"
-) -join "; "
+$senderArgs = @(
+  "-Mode", "sender",
+  "-SignalUrl", $clientServerUrl,
+  "-Room", $Room,
+  "-Capture", $Capture,
+  "-Source", "$Source",
+  "-Fps", "$Fps",
+  "-Cursor", $cursorValue
+) + $commonChildArgs
 
 $serverProcess = $null
 if (-not $SkipServer) {
-  $serverProcess = Start-PowerShellWindow -PowerShellExe $psExe -Command $serverCommand
+  $serverProcess = Start-PowerShellWindow -PowerShellExe $psExe -ScriptPath $childScript -ScriptArgs $serverArgs -VerboseLaunch:$VerboseLaunch
   Start-Sleep -Seconds 1
 }
 
-$viewerProcess = Start-PowerShellWindow -PowerShellExe $psExe -Command $viewerCommand
+$viewerProcess = Start-PowerShellWindow -PowerShellExe $psExe -ScriptPath $childScript -ScriptArgs $viewerArgs -VerboseLaunch:$VerboseLaunch
 Start-Sleep -Seconds 1
-$senderProcess = Start-PowerShellWindow -PowerShellExe $psExe -Command $senderCommand
+$senderProcess = Start-PowerShellWindow -PowerShellExe $psExe -ScriptPath $childScript -ScriptArgs $senderArgs -VerboseLaunch:$VerboseLaunch
 
 Write-Host "Started streaming demo."
 if ($serverProcess) {
