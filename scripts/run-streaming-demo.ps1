@@ -32,7 +32,10 @@ Param(
   [switch]$KillExisting,
 
   [Parameter(Mandatory = $false)]
-  [switch]$VerboseLaunch
+  [switch]$VerboseLaunch,
+
+  [Parameter(Mandatory = $false)]
+  [switch]$TraceSignaling
 )
 
 $ErrorActionPreference = "Stop"
@@ -234,6 +237,9 @@ $commonChildArgs = @(
   "-LumenRtcNativeDir", $lumenRtcNativeDir,
   "-NoBuild"
 )
+if ($TraceSignaling) {
+  $commonChildArgs += "-TraceSignaling"
+}
 
 $serverArgs = @(
   "-Mode", "server",

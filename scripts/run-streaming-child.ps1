@@ -37,6 +37,9 @@ Param(
   [string]$LumenRtcNativeDir = "",
 
   [Parameter(Mandatory = $false)]
+  [switch]$TraceSignaling,
+
+  [Parameter(Mandatory = $false)]
   [switch]$NoBuild
 )
 
@@ -79,6 +82,10 @@ switch ($Mode) {
       "--cursor", $Cursor
     )
   }
+}
+
+if ($TraceSignaling -and $Mode -ne "server") {
+  $modeArgs += @("--trace-signaling", "true")
 }
 
 if (-not (Test-Path $projectPath)) {

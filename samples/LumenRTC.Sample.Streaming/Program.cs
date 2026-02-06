@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.WebSockets;
@@ -25,6 +26,7 @@ internal static class Program
         var fps = GetIntArg(args, "--fps", 30);
         var showCursor = GetBoolArg(args, "--cursor", true);
         var maxBitrateKbps = GetIntArg(args, "--max-bitrate-kbps", 3000);
+        var traceSignaling = GetBoolArg(args, "--trace-signaling", false);
 
         var uri = BuildUri(server, room);
 
@@ -46,8 +48,19 @@ internal static class Program
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
         };
 
+        void Trace(string text)
+        {
+            if (!traceSignaling)
+            {
+                return;
+            }
+
+            Console.WriteLine($"[trace:{role}] {text}");
+        }
+
         async Task SendAsync(SignalMessage message)
         {
+            Trace($"tx {message.Type} role={message.Role ?? "-"} sdp={(message.Sdp != null ? "yes" : "no")} cand={(message.Candidate != null ? "yes" : "no")} peerCount={(message.PeerCount?.ToString() ?? "-")}");
             var json = JsonSerializer.Serialize(message, jsonOptions);
             var bytes = Encoding.UTF8.GetBytes(json);
             await sendLock.WaitAsync(cts.Token).ConfigureAwait(false);
@@ -77,7 +90,13 @@ internal static class Program
             DataChannel? dataChannel = null;
             DataChannel? controlChannel = null;
             SdlVideoRenderer? renderer = null;
+            VideoSink? firstFrameProbeSink = null;
+            var firstFrameLogged = 0;
             var offerSent = false;
+            var offerSync = new object();
+            var remoteDescriptionSet = false;
+            var remoteDescriptionSync = new object();
+            var queuedCandidates = new List<(string Mid, int MlineIndex, string Candidate)>();
             var remoteVideoTracks = new List<VideoTrack>();
 
             void AttachRemoteVideoTrack(VideoTrack track)
@@ -89,6 +108,10 @@ internal static class Program
                 }
 
                 track.AddSink(renderer.Sink);
+                if (firstFrameProbeSink != null)
+                {
+                    track.AddSink(firstFrameProbeSink);
+                }
                 remoteVideoTracks.Add(track);
 
                 string trackId;
@@ -102,6 +125,56 @@ internal static class Program
                 }
 
                 Console.WriteLine($"Attached remote video track: {trackId}");
+            }
+
+            void QueueOrApplyRemoteCandidate(string sdpMid, int sdpMLineIndex, string candidate)
+            {
+                var applyNow = false;
+                lock (remoteDescriptionSync)
+                {
+                    if (remoteDescriptionSet)
+                    {
+                        applyNow = true;
+                    }
+                    else
+                    {
+                        queuedCandidates.Add((sdpMid, sdpMLineIndex, candidate));
+                    }
+                }
+
+                if (applyNow)
+                {
+                    Trace($"apply candidate mid={sdpMid} mline={sdpMLineIndex}");
+                    pc?.AddIceCandidate(sdpMid, sdpMLineIndex, candidate);
+                }
+                else
+                {
+                    Trace($"queue candidate mid={sdpMid} mline={sdpMLineIndex}");
+                }
+            }
+
+            void MarkRemoteDescriptionSetAndFlush()
+            {
+                List<(string Mid, int MlineIndex, string Candidate)> pending;
+                lock (remoteDescriptionSync)
+                {
+                    if (remoteDescriptionSet && queuedCandidates.Count == 0)
+                    {
+                        return;
+                    }
+                    remoteDescriptionSet = true;
+                    pending = new List<(string Mid, int MlineIndex, string Candidate)>(queuedCandidates);
+                    queuedCandidates.Clear();
+                }
+
+                if (pending.Count > 0)
+                {
+                    Trace($"flush queued candidates: {pending.Count}");
+                }
+                foreach (var item in pending)
+                {
+                    pc?.AddIceCandidate(item.Mid, item.MlineIndex, item.Candidate);
+                }
             }
 
             var callbacks = new PeerConnectionCallbacks
@@ -211,6 +284,16 @@ internal static class Program
             {
                 renderer = new SdlVideoRenderer("LumenRTC Remote Viewer", 1280, 720);
                 renderer.Start();
+                firstFrameProbeSink = new VideoSink(new VideoSinkCallbacks
+                {
+                    OnFrame = frame =>
+                    {
+                        if (Interlocked.Exchange(ref firstFrameLogged, 1) == 0)
+                        {
+                            Console.WriteLine($"First frame received: {frame.Width}x{frame.Height}");
+                        }
+                    }
+                });
 
                 controlChannel = pc.CreateDataChannel("control");
                 controlChannel.SetCallbacks(new DataChannelCallbacks
@@ -234,25 +317,56 @@ internal static class Program
 
             async Task StartOfferAsync()
             {
-                if (offerSent || pc == null)
+                if (pc == null)
                 {
                     return;
                 }
 
-                offerSent = true;
+                lock (offerSync)
+                {
+                    if (offerSent)
+                    {
+                        Trace("StartOfferAsync skipped: already sent");
+                        return;
+                    }
+                    offerSent = true;
+                }
+
+                Trace("StartOfferAsync: creating offer");
                 pc.CreateOffer(
                     (sdp, type) =>
                     {
+                        Trace("CreateOffer success");
                         pc.SetLocalDescription(sdp, type,
-                            () => _ = SendAsync(new SignalMessage
+                            () =>
                             {
-                                Type = "offer",
-                                Sdp = sdp,
-                                SdpType = type
-                            }),
-                            err => Console.WriteLine(err));
+                                Trace("SetLocalDescription(offer) success");
+                                _ = SendAsync(new SignalMessage
+                                {
+                                    Type = "offer",
+                                    Sdp = sdp,
+                                    SdpType = type
+                                });
+                            },
+                            err =>
+                            {
+                                Trace($"SetLocalDescription(offer) failed: {err}");
+                                Console.WriteLine(err);
+                                lock (offerSync)
+                                {
+                                    offerSent = false;
+                                }
+                            });
                     },
-                    err => Console.WriteLine(err));
+                    err =>
+                    {
+                        Trace($"CreateOffer failed: {err}");
+                        Console.WriteLine(err);
+                        lock (offerSync)
+                        {
+                            offerSent = false;
+                        }
+                    });
             }
 
             async Task HandleMessageAsync(SignalMessage message)
@@ -264,55 +378,102 @@ internal static class Program
 
                 switch (message.Type)
                 {
+                    case "room_state":
+                        Trace($"rx room_state peerCount={message.PeerCount?.ToString() ?? "-"}");
+                        if (role == "sender" && (message.PeerCount ?? 0) > 1)
+                        {
+                            await StartOfferAsync().ConfigureAwait(false);
+                        }
+                        break;
                     case "peer_joined":
+                        Trace($"rx peer_joined peerId={message.PeerId ?? "-"} peerCount={message.PeerCount?.ToString() ?? "-"}");
                         if (role == "sender" && (message.PeerCount ?? 0) > 1)
                         {
                             await StartOfferAsync().ConfigureAwait(false);
                         }
                         break;
                     case "peer_left":
+                        Trace($"rx peer_left peerId={message.PeerId ?? "-"} peerCount={message.PeerCount?.ToString() ?? "-"}");
                         Console.WriteLine($"Peer left: {message.PeerId ?? "<unknown>"}");
                         break;
                     case "ready":
+                        Trace($"rx ready role={message.Role ?? "-"}");
                         if (role == "sender" && message.Role == "viewer")
                         {
                             await StartOfferAsync().ConfigureAwait(false);
                         }
                         break;
                     case "offer":
+                        Trace($"rx offer sdpType={message.SdpType ?? "-"}");
                         if (role == "viewer" && message.Sdp != null && message.SdpType != null)
                         {
                             pc.SetRemoteDescription(message.Sdp, message.SdpType,
                                 () =>
                                 {
+                                    Trace("SetRemoteDescription(offer) success");
+                                    MarkRemoteDescriptionSetAndFlush();
                                     pc.CreateAnswer(
                                         (sdp, type) =>
                                         {
+                                            Trace("CreateAnswer success");
                                             pc.SetLocalDescription(sdp, type,
-                                                () => _ = SendAsync(new SignalMessage
+                                                () =>
                                                 {
-                                                    Type = "answer",
-                                                    Sdp = sdp,
-                                                    SdpType = type
-                                                }),
-                                                err => Console.WriteLine(err));
+                                                    Trace("SetLocalDescription(answer) success");
+                                                    _ = SendAsync(new SignalMessage
+                                                    {
+                                                        Type = "answer",
+                                                        Sdp = sdp,
+                                                        SdpType = type
+                                                    });
+                                                },
+                                                err =>
+                                                {
+                                                    Trace($"SetLocalDescription(answer) failed: {err}");
+                                                    Console.WriteLine(err);
+                                                });
                                         },
-                                        err => Console.WriteLine(err));
+                                        err =>
+                                        {
+                                            Trace($"CreateAnswer failed: {err}");
+                                            Console.WriteLine(err);
+                                        });
                                 },
-                                err => Console.WriteLine(err));
+                                err =>
+                                {
+                                    Trace($"SetRemoteDescription(offer) failed: {err}");
+                                    Console.WriteLine(err);
+                                });
                         }
                         break;
                     case "answer":
+                        Trace($"rx answer sdpType={message.SdpType ?? "-"}");
                         if (role == "sender" && message.Sdp != null && message.SdpType != null)
                         {
-                            pc.SetRemoteDescription(message.Sdp, message.SdpType, () => { }, err => Console.WriteLine(err));
+                            pc.SetRemoteDescription(
+                                message.Sdp,
+                                message.SdpType,
+                                () =>
+                                {
+                                    Trace("SetRemoteDescription(answer) success");
+                                    MarkRemoteDescriptionSetAndFlush();
+                                },
+                                err =>
+                                {
+                                    Trace($"SetRemoteDescription(answer) failed: {err}");
+                                    Console.WriteLine(err);
+                                });
                         }
                         break;
                     case "candidate":
+                        Trace($"rx candidate mid={message.SdpMid ?? "-"} mline={(message.SdpMLineIndex?.ToString() ?? "-")}");
                         if (!string.IsNullOrWhiteSpace(message.Candidate) && !string.IsNullOrWhiteSpace(message.SdpMid))
                         {
-                            pc.AddIceCandidate(message.SdpMid, message.SdpMLineIndex ?? 0, message.Candidate);
+                            QueueOrApplyRemoteCandidate(message.SdpMid, message.SdpMLineIndex ?? 0, message.Candidate);
                         }
+                        break;
+                    default:
+                        Trace($"rx {message.Type}");
                         break;
                 }
             }
@@ -350,8 +511,20 @@ internal static class Program
             controlChannel?.Dispose();
             foreach (var remoteTrack in remoteVideoTracks)
             {
+                if (firstFrameProbeSink != null)
+                {
+                    try
+                    {
+                        remoteTrack.RemoveSink(firstFrameProbeSink);
+                    }
+                    catch
+                    {
+                        // ignore cleanup errors
+                    }
+                }
                 remoteTrack.Dispose();
             }
+            firstFrameProbeSink?.Dispose();
             renderer?.Dispose();
             pc.Close();
             pc.Dispose();

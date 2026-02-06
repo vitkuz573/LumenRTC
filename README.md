@@ -265,13 +265,19 @@ dotnet run --project samples/LumenRTC.Sample.Streaming/LumenRTC.Sample.Streaming
   --role viewer --server ws://localhost:8080/ws/ --room demo
 ```
 
-The signaling sample emits `peer_joined` events, so negotiation starts reliably
-even if the viewer starts before the sender.
+The signaling sample emits `room_state` and `peer_joined` events, so
+negotiation starts reliably even if the viewer starts before the sender.
 
 Windows one-command launcher (opens signaling + viewer + sender in separate windows):
 
 ```powershell
 scripts\\run-streaming-demo.cmd -NoBuild
+```
+
+For signaling diagnostics:
+
+```powershell
+scripts\\run-streaming-demo.cmd -NoBuild -TraceSignaling
 ```
 
 Optional STUN:

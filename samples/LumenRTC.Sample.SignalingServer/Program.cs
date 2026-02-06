@@ -83,7 +83,8 @@ internal static class Program
         var roomSockets = rooms.GetOrAdd(room, _ => new ConcurrentDictionary<Guid, WebSocket>());
         roomSockets[id] = socket;
         Console.WriteLine($"[{room}] connected {id}");
-        await BroadcastRoomEventAsync(roomSockets, "peer_joined", id, roomSockets.Count, token).ConfigureAwait(false);
+        await SendRoomStateAsync(socket, roomSockets.Count, token).ConfigureAwait(false);
+        await BroadcastRoomEventAsync(roomSockets, "peer_joined", id, roomSockets.Count, token, excludePeerId: id).ConfigureAwait(false);
 
         try
         {
@@ -94,7 +95,7 @@ internal static class Program
             roomSockets.TryRemove(id, out _);
             if (!roomSockets.IsEmpty)
             {
-                await BroadcastRoomEventAsync(roomSockets, "peer_left", id, roomSockets.Count, token).ConfigureAwait(false);
+                await BroadcastRoomEventAsync(roomSockets, "peer_left", id, roomSockets.Count, token, excludePeerId: Guid.Empty).ConfigureAwait(false);
             }
             if (roomSockets.IsEmpty)
             {
@@ -115,12 +116,40 @@ internal static class Program
         }
     }
 
+    private static async Task SendRoomStateAsync(
+        WebSocket socket,
+        int peerCount,
+        CancellationToken token)
+    {
+        if (socket.State != WebSocketState.Open)
+        {
+            return;
+        }
+
+        var json = JsonSerializer.Serialize(new
+        {
+            type = "room_state",
+            peerCount
+        });
+        var bytes = Encoding.UTF8.GetBytes(json);
+
+        try
+        {
+            await socket.SendAsync(bytes, WebSocketMessageType.Text, true, token).ConfigureAwait(false);
+        }
+        catch
+        {
+            // ignore send errors
+        }
+    }
+
     private static async Task BroadcastRoomEventAsync(
         ConcurrentDictionary<Guid, WebSocket> peers,
         string type,
         Guid peerId,
         int peerCount,
-        CancellationToken token)
+        CancellationToken token,
+        Guid excludePeerId)
     {
         var json = JsonSerializer.Serialize(new
         {
@@ -132,6 +161,10 @@ internal static class Program
 
         foreach (var peer in peers)
         {
+            if (excludePeerId != Guid.Empty && peer.Key == excludePeerId)
+            {
+                continue;
+            }
             if (peer.Value.State != WebSocketState.Open)
             {
                 continue;
