@@ -7,7 +7,19 @@
     <LumenRtcRoot>$(MSBuildThisFileDirectory)</LumenRtcRoot>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(LumenRtcNativeDir)'=='' and Exists('$(LumenRtcRoot)native\\build\\Release')">
+  <PropertyGroup Condition="'$(LumenRtcNativeDir)'=='' and Exists('$(LumenRtcRoot)native\\build\\lumenrtc.dll')">
+    <LumenRtcNativeDir>$(LumenRtcRoot)native\build</LumenRtcNativeDir>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(LumenRtcNativeDir)'=='' and Exists('$(LumenRtcRoot)native\\build\\Release\\lumenrtc.dll')">
+    <LumenRtcNativeDir>$(LumenRtcRoot)native\build\Release</LumenRtcNativeDir>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(LumenRtcNativeDir)'=='' and Exists('$(LumenRtcRoot)native\\build\\liblumenrtc.so')">
+    <LumenRtcNativeDir>$(LumenRtcRoot)native\build</LumenRtcNativeDir>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(LumenRtcNativeDir)'=='' and Exists('$(LumenRtcRoot)native\\build\\Release\\liblumenrtc.so')">
     <LumenRtcNativeDir>$(LumenRtcRoot)native\build\Release</LumenRtcNativeDir>
   </PropertyGroup>
 

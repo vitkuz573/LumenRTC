@@ -534,6 +534,13 @@ Write-Host "Next steps:"
 if ($srcDirRoot -is [System.Management.Automation.PathInfo]) {
   $srcDirRoot = $srcDirRoot.Path
 }
-Write-Host "  `$env:LIBWEBRTC_BUILD_DIR=\"$($srcDirRoot)\\out\\$BuildType\""
-Write-Host "  `$env:LumenRtcNativeDir=\"$nativeDefault\""
+$libWebRtcOutDir = Join-PathSafe $srcDirRoot "out\\$BuildType"
+if (Test-Path $libWebRtcOutDir) {
+  $libWebRtcOutDir = (Resolve-Path -LiteralPath $libWebRtcOutDir).Path
+}
+if (Test-Path $nativeDefault) {
+  $nativeDefault = (Resolve-Path -LiteralPath $nativeDefault).Path
+}
+Write-Host ('  $env:LIBWEBRTC_BUILD_DIR="{0}"' -f $libWebRtcOutDir)
+Write-Host ('  $env:LumenRtcNativeDir="{0}"' -f $nativeDefault)
 Write-Host "  dotnet run --project .\\samples\\LumenRTC.Sample.LocalCamera\\LumenRTC.Sample.LocalCamera.csproj"
