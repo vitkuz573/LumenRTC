@@ -22,8 +22,8 @@ internal static class Program
             var iceSync = new object();
             var pendingForPc1 = new List<(string Mid, int Mline, string Candidate)>();
             var pendingForPc2 = new List<(string Mid, int Mline, string Candidate)>();
-            var pc1RemoteDescriptionSet = false;
-            var pc2RemoteDescriptionSet = false;
+            var pc1CanApplyRemoteCandidates = false;
+            var pc2CanApplyRemoteCandidates = false;
 
             PeerConnection? pc1 = null;
             PeerConnection? pc2 = null;
@@ -65,7 +65,7 @@ internal static class Program
                 var forwardNow = false;
                 lock (iceSync)
                 {
-                    if (pc1RemoteDescriptionSet)
+                    if (pc1CanApplyRemoteCandidates)
                     {
                         forwardNow = true;
                     }
@@ -86,7 +86,7 @@ internal static class Program
                 var forwardNow = false;
                 lock (iceSync)
                 {
-                    if (pc2RemoteDescriptionSet)
+                    if (pc2CanApplyRemoteCandidates)
                     {
                         forwardNow = true;
                     }
@@ -102,12 +102,12 @@ internal static class Program
                 }
             }
 
-            void MarkPc1RemoteSetAndFlush()
+            void MarkPc1ReadyForRemoteCandidatesAndFlush()
             {
                 List<(string Mid, int Mline, string Candidate)> pending;
                 lock (iceSync)
                 {
-                    pc1RemoteDescriptionSet = true;
+                    pc1CanApplyRemoteCandidates = true;
                     pending = new List<(string Mid, int Mline, string Candidate)>(pendingForPc1);
                     pendingForPc1.Clear();
                 }
@@ -118,12 +118,12 @@ internal static class Program
                 }
             }
 
-            void MarkPc2RemoteSetAndFlush()
+            void MarkPc2ReadyForRemoteCandidatesAndFlush()
             {
                 List<(string Mid, int Mline, string Candidate)> pending;
                 lock (iceSync)
                 {
-                    pc2RemoteDescriptionSet = true;
+                    pc2CanApplyRemoteCandidates = true;
                     pending = new List<(string Mid, int Mline, string Candidate)>(pendingForPc2);
                     pendingForPc2.Clear();
                 }
@@ -239,7 +239,6 @@ internal static class Program
                                 type,
                                 () =>
                                 {
-                                    MarkPc2RemoteSetAndFlush();
                                     pc2.CreateAnswer(
                                         (answerSdp, answerType) =>
                                         {
@@ -248,12 +247,16 @@ internal static class Program
                                                 answerType,
                                                 () =>
                                                 {
+                                                    // Apply queued candidates only after pc2 has both local
+                                                    // and remote descriptions, otherwise some candidates may
+                                                    // be rejected and lost.
+                                                    MarkPc2ReadyForRemoteCandidatesAndFlush();
                                                     pc1.SetRemoteDescription(
                                                         answerSdp,
                                                         answerType,
                                                         () =>
                                                         {
-                                                            MarkPc1RemoteSetAndFlush();
+                                                            MarkPc1ReadyForRemoteCandidatesAndFlush();
                                                         },
                                                         err => Console.WriteLine(err));
                                                 },
