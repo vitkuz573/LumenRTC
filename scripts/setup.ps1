@@ -87,6 +87,17 @@ function Resolve-VisualStudio {
     Version = ""
   }
 
+  function Get-VersionFromPath {
+    param([string]$Path)
+    if ([string]::IsNullOrWhiteSpace($Path)) {
+      return ""
+    }
+    if ($Path -match '\\\\(20\\d{2})\\\\') {
+      return $Matches[1]
+    }
+    return ""
+  }
+
   function Test-VisualStudioPath {
     param([string]$Path)
     if ([string]::IsNullOrWhiteSpace($Path)) {
@@ -100,9 +111,10 @@ function Resolve-VisualStudio {
   }
 
   if (-not [string]::IsNullOrWhiteSpace($env:GYP_MSVS_OVERRIDE_PATH)) {
-    $candidate = $env:GYP_MSVS_OVERRIDE_PATH.TrimEnd('\')
+    $candidate = $env:GYP_MSVS_OVERRIDE_PATH.TrimEnd('\\')
     if (Test-VisualStudioPath -Path $candidate) {
       $result.Path = $candidate
+      $result.Version = Get-VersionFromPath -Path $candidate
     }
   }
   if (-not [string]::IsNullOrWhiteSpace($env:GYP_MSVS_VERSION)) {
@@ -116,6 +128,7 @@ function Resolve-VisualStudio {
     $candidate = $env:VSINSTALLDIR.TrimEnd('\\')
     if (Test-VisualStudioPath -Path $candidate) {
       $result.Path = $candidate
+      $result.Version = Get-VersionFromPath -Path $candidate
       return $result
     }
   }
@@ -137,9 +150,25 @@ function Resolve-VisualStudio {
       }
     }
 
+    $lineVersion = & $vswherePath -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property catalog_productLineVersion 2>$null
+    if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($lineVersion)) {
+      if ($lineVersion -match '2026') {
+        $result.Version = "2026"
+      }
+    }
+
+    $displayVersion = & $vswherePath -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property catalog_productDisplayVersion 2>$null
+    if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($displayVersion)) {
+      if ($displayVersion -match '2026') {
+        $result.Version = "2026"
+      }
+    }
+
     $installVersion = & $vswherePath -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationVersion 2>$null
     if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($installVersion)) {
-      if ($installVersion -match '^17\.') {
+      if ($installVersion -match '^18\.') {
+        $result.Version = "2026"
+      } elseif ($installVersion -match '^17\.') {
         $result.Version = "2022"
       } elseif ($installVersion -match '^16\.') {
         $result.Version = "2019"
@@ -294,17 +323,20 @@ if ([string]::IsNullOrWhiteSpace($env:DEPOT_TOOLS_WIN_TOOLCHAIN)) {
 }
 $vsInfo = Resolve-VisualStudio
 if ([string]::IsNullOrWhiteSpace($env:GYP_MSVS_VERSION)) {
-  if (-not [string]::IsNullOrWhiteSpace($vsInfo.Version)) {
-    $env:GYP_MSVS_VERSION = $vsInfo.Version
-  } else {
-    $env:GYP_MSVS_VERSION = "2022"
-  }
+  $env:GYP_MSVS_VERSION = "2022"
 }
 if ([string]::IsNullOrWhiteSpace($env:GYP_MSVS_OVERRIDE_PATH) -and -not [string]::IsNullOrWhiteSpace($vsInfo.Path)) {
   $env:GYP_MSVS_OVERRIDE_PATH = $vsInfo.Path
 }
 if ([string]::IsNullOrWhiteSpace($env:GYP_MSVS_OVERRIDE_PATH)) {
-  throw "Visual Studio with C++ build tools not found. Install VS 2022 (Desktop development with C++) or set GYP_MSVS_OVERRIDE_PATH."
+  throw "Visual Studio 2026 with C++ build tools not found. Install VS 2026 (Desktop development with C++) or set GYP_MSVS_OVERRIDE_PATH."
+}
+$detectedVersion = $vsInfo.Version
+if ([string]::IsNullOrWhiteSpace($detectedVersion)) {
+  $detectedVersion = "unknown"
+}
+if ($detectedVersion -ne "2026") {
+  throw "Only Visual Studio 2026 is supported. Detected: $detectedVersion."
 }
 $vsPathCheck = $env:GYP_MSVS_OVERRIDE_PATH.TrimEnd('\\')
 if (-not (Test-Path $vsPathCheck)) {
