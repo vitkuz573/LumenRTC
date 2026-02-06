@@ -168,7 +168,7 @@ if (-not [string]::IsNullOrWhiteSpace($env:LIBWEBRTC_ROOT)) {
 
 if ($env:OS -eq "Windows_NT") {
   $resolvedNinja = Resolve-WindowsNinjaForCMake
-  $cmakeConfigureArgs = @("-S", "native", "-B", $CMakeBuildDir) + $cmakeArgs + @("-G", "Ninja", "-DCMAKE_C_COMPILER=cl", "-DCMAKE_CXX_COMPILER=cl")
+  $cmakeConfigureArgs = @("-S", "native", "-B", $CMakeBuildDir) + $cmakeArgs + @("-G", "Ninja", "-DCMAKE_C_COMPILER=cl", "-DCMAKE_CXX_COMPILER=cl", "-DCMAKE_BUILD_TYPE=$BuildType")
   if (-not [string]::IsNullOrWhiteSpace($resolvedNinja)) {
     $cmakeConfigureArgs += "-DCMAKE_MAKE_PROGRAM=$resolvedNinja"
     Write-Host "Using Ninja for CMake: $resolvedNinja"
