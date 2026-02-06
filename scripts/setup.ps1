@@ -219,7 +219,10 @@ if ([string]::IsNullOrWhiteSpace($env:GYP_MSVS_OVERRIDE_PATH) -and -not [string]
 }
 
 if ([string]::IsNullOrWhiteSpace($WebRtcRoot)) {
-  $WebRtcRoot = Join-PathSafe $repoRoot "webrtc_build"
+  if ([string]::IsNullOrWhiteSpace($repoRoot)) {
+    $repoRoot = "."
+  }
+  $WebRtcRoot = [System.IO.Path]::Combine($repoRoot, "webrtc_build")
 }
 
 if ($env:LUMENRTC_SETUP_DEBUG -eq "1") {
@@ -236,6 +239,13 @@ if ([string]::IsNullOrWhiteSpace($WebRtcRoot)) {
 
 $webRtcRoot = Resolve-Path -LiteralPath $WebRtcRoot -ErrorAction SilentlyContinue
 if (-not $webRtcRoot) {
+  if ([string]::IsNullOrWhiteSpace($WebRtcRoot)) {
+    throw "WebRtcRoot is empty before directory creation. Pass -WebRtcRoot explicitly."
+  }
+  $WebRtcRoot = $WebRtcRoot.Trim()
+  if ([string]::IsNullOrWhiteSpace($WebRtcRoot)) {
+    throw "WebRtcRoot is empty after trimming. Pass -WebRtcRoot explicitly."
+  }
   New-Item -ItemType Directory -Force -Path $WebRtcRoot | Out-Null
   $webRtcRoot = Resolve-Path -LiteralPath $WebRtcRoot
 }
