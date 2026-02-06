@@ -12,4 +12,4 @@ if errorlevel 1 (
   exit /b 1
 )
 
-pwsh -NoProfile -ExecutionPolicy Bypass -File "%SCRIPT_DIR%\\setup.ps1" -DepotToolsDir "%DEPOT_DIR%" -WebRtcRoot "%WEBRTC_ROOT%" %*
+pwsh -NoProfile -ExecutionPolicy Bypass -File "%SCRIPT_DIR%\\setup.ps1" -RepoRoot "%REPO_DIR%" -DepotToolsDir "%DEPOT_DIR%" -WebRtcRoot "%WEBRTC_ROOT%" %*

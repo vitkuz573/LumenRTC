@@ -9,6 +9,9 @@ Param(
   [string]$ScriptRoot = "",
 
   [Parameter(Mandatory = $false)]
+  [string]$RepoRoot = "",
+
+  [Parameter(Mandatory = $false)]
   [ValidateSet("m137_release")]
   [string]$WebRtcBranch = "m137_release",
 
@@ -51,29 +54,27 @@ function Join-PathSafe {
   return (Join-Path $BasePath $ChildPath)
 }
 
-function Resolve-ScriptRoot {
-  param([string]$OverrideRoot)
-
-  if (-not [string]::IsNullOrWhiteSpace($OverrideRoot)) {
-    return $OverrideRoot
-  }
-
-  $candidates = @(
-    $PSScriptRoot,
-    $PSCommandPath,
-    $MyInvocation.MyCommand.Path,
-    $MyInvocation.MyCommand.Definition
+function Resolve-RepoRoot {
+  param(
+    [string]$OverrideRepo,
+    [string]$OverrideScriptRoot
   )
 
-  foreach ($candidate in $candidates) {
-    if ([string]::IsNullOrWhiteSpace($candidate)) { continue }
-    $path = $candidate
-    if (Test-Path $path -PathType Leaf) {
-      $path = Split-Path -Parent $path
+  if (-not [string]::IsNullOrWhiteSpace($OverrideRepo)) {
+    return $OverrideRepo
+  }
+
+  if (-not [string]::IsNullOrWhiteSpace($OverrideScriptRoot)) {
+    if (Test-Path $OverrideScriptRoot -PathType Container) {
+      if ((Split-Path -Leaf $OverrideScriptRoot) -eq "scripts") {
+        return (Split-Path -Parent $OverrideScriptRoot)
+      }
+      return $OverrideScriptRoot
     }
-    if (-not [string]::IsNullOrWhiteSpace($path)) {
-      return $path
-    }
+  }
+
+  if (-not [string]::IsNullOrWhiteSpace($PSScriptRoot)) {
+    return (Split-Path -Parent $PSScriptRoot)
   }
 
   $cwd = (Get-Location).Path
@@ -89,7 +90,8 @@ function Resolve-ScriptRoot {
   return "."
 }
 
-$scriptRoot = Resolve-ScriptRoot -OverrideRoot $ScriptRoot
+$repoRoot = Resolve-RepoRoot -OverrideRepo $RepoRoot -OverrideScriptRoot $ScriptRoot
+$scriptRoot = if (-not [string]::IsNullOrWhiteSpace($PSScriptRoot)) { $PSScriptRoot } else { Join-PathSafe $repoRoot "scripts" }
 
 function Require-Command {
   param([string]$Name)
@@ -198,9 +200,9 @@ function Ensure-DepotTools {
   if (-not [string]::IsNullOrWhiteSpace($PreferredDir)) { $candidates += $PreferredDir }
   if (-not [string]::IsNullOrWhiteSpace($env:DEPOT_TOOLS)) { $candidates += $env:DEPOT_TOOLS }
 
-  if (-not [string]::IsNullOrWhiteSpace($scriptRoot)) {
-    $candidates += (Join-PathSafe $scriptRoot "..\\depot_tools")
-    $candidates += (Join-PathSafe $scriptRoot "..\\..\\depot_tools")
+  if (-not [string]::IsNullOrWhiteSpace($repoRoot)) {
+    $candidates += (Join-PathSafe $repoRoot "depot_tools")
+    $candidates += (Join-PathSafe $repoRoot "..\\depot_tools")
   }
   if (-not [string]::IsNullOrWhiteSpace($env:USERPROFILE)) {
     $candidates += (Join-PathSafe $env:USERPROFILE "depot_tools")
@@ -211,10 +213,10 @@ function Ensure-DepotTools {
 
   $target = $candidates | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Select-Object -First 1
   if (-not $target) {
-    if (-not [string]::IsNullOrWhiteSpace($scriptRoot)) {
-      $target = Join-PathSafe $scriptRoot "..\\depot_tools"
+    if (-not [string]::IsNullOrWhiteSpace($repoRoot)) {
+      $target = Join-PathSafe $repoRoot "depot_tools"
     } else {
-      $target = "..\\depot_tools"
+      $target = "depot_tools"
     }
   }
 
@@ -252,18 +254,23 @@ if ([string]::IsNullOrWhiteSpace($env:GYP_MSVS_OVERRIDE_PATH) -and -not [string]
 }
 
 if ([string]::IsNullOrWhiteSpace($WebRtcRoot)) {
-  if (-not [string]::IsNullOrWhiteSpace($scriptRoot)) {
-    $WebRtcRoot = Join-PathSafe $scriptRoot "..\\webrtc_build"
+  if (-not [string]::IsNullOrWhiteSpace($repoRoot)) {
+    $WebRtcRoot = Join-PathSafe $repoRoot "webrtc_build"
   } else {
-    $WebRtcRoot = "..\\webrtc_build"
+    $WebRtcRoot = "webrtc_build"
   }
 }
 
 if ($env:LUMENRTC_SETUP_DEBUG -eq "1") {
   Write-Host "setup.ps1 debug:"
+  Write-Host "  RepoRoot: $repoRoot"
   Write-Host "  ScriptRoot: $scriptRoot"
   Write-Host "  WebRtcRoot: $WebRtcRoot"
   Write-Host "  DepotToolsDir: $DepotToolsDir"
+}
+
+if ([string]::IsNullOrWhiteSpace($WebRtcRoot)) {
+  throw "WebRtcRoot resolved to empty. Pass -WebRtcRoot explicitly."
 }
 
 $webRtcRoot = Resolve-Path -LiteralPath $WebRtcRoot -ErrorAction SilentlyContinue
