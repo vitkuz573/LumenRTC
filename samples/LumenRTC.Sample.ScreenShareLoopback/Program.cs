@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
+using System.Text;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
@@ -12,6 +13,13 @@ namespace LumenRTC.Sample.ScreenShareLoopback;
 
 internal static class Program
 {
+    private enum IceApplyMode
+    {
+        Auto,
+        Direct,
+        HostOnly,
+    }
+
     private readonly record struct CandidateForwardItem(
         string SourcePc,
         string TargetPc,
@@ -21,6 +29,17 @@ internal static class Program
         bool EndOfCandidates);
 
     private readonly record struct ParsedCandidate(string Protocol, string Address, string Type);
+
+    private sealed class CandidateDispatchMetrics
+    {
+        public long Enqueued;
+        public long Dequeued;
+        public long Applied;
+        public long Failed;
+        public long Dropped;
+        public long DirectFallbackApplied;
+        public long WorkerFaults;
+    }
 
     public static async Task Main(string[] args)
     {
@@ -32,6 +51,18 @@ internal static class Program
         var disableIpv6 = GetBoolArg(args, "--disable-ipv6", true);
         var stun = GetArg(args, "--stun", string.Empty);
         var forceLocalLoopback = GetBoolArg(args, "--force-local-loopback", false);
+        var dumpSdp = GetBoolArg(args, "--dump-sdp", false);
+        var iceModeRaw = GetArg(args, "--ice-mode", "auto");
+        var hasExplicitIceMode = HasArg(args, "--ice-mode");
+        var iceMode = ParseIceApplyMode(iceModeRaw);
+        if (forceLocalLoopback && !hasExplicitIceMode)
+        {
+            iceMode = IceApplyMode.HostOnly;
+        }
+        if (forceLocalLoopback && hasExplicitIceMode && iceMode != IceApplyMode.HostOnly)
+        {
+            Console.WriteLine("Warning: --force-local-loopback=true ignored because --ice-mode is explicitly set.");
+        }
 
         void Trace(string text)
         {
@@ -43,6 +74,7 @@ internal static class Program
             Console.WriteLine($"[trace:loopback] {text}");
         }
 
+        Console.WriteLine($"ICE apply mode: {ToIceModeArg(iceMode)}");
         LumenRtc.Initialize();
         try
         {
@@ -80,6 +112,9 @@ internal static class Program
             PeerConnection? pc1 = null;
             PeerConnection? pc2 = null;
             RtpSender? sender = null;
+            var dispatchMetrics = new CandidateDispatchMetrics();
+            var candidatePumpFaulted = 0;
+            var candidatePumpFallbackLogged = 0;
             using var candidatePumpCts = new CancellationTokenSource();
             var candidateChannel = Channel.CreateUnbounded<CandidateForwardItem>(new UnboundedChannelOptions
             {
@@ -88,14 +123,35 @@ internal static class Program
                 AllowSynchronousContinuations = false,
             });
 
-            bool TryEnqueueCandidate(CandidateForwardItem item)
+            bool DispatchCandidate(CandidateForwardItem item)
             {
+                var useDirectApply = iceMode == IceApplyMode.Direct || Volatile.Read(ref candidatePumpFaulted) != 0;
+                if (useDirectApply)
+                {
+                    if (iceMode != IceApplyMode.Direct && Interlocked.CompareExchange(ref candidatePumpFallbackLogged, 1, 0) == 0)
+                    {
+                        Console.WriteLine("Candidate worker faulted. Falling back to direct candidate apply.");
+                    }
+
+                    Interlocked.Increment(ref dispatchMetrics.DirectFallbackApplied);
+                    return TryApplyCandidate(
+                        item,
+                        () => pc1,
+                        () => pc2,
+                        iceMode,
+                        dispatchMetrics,
+                        Trace,
+                        countDequeued: false);
+                }
+
                 if (candidateChannel.Writer.TryWrite(item))
                 {
+                    Interlocked.Increment(ref dispatchMetrics.Enqueued);
                     return true;
                 }
 
                 Console.WriteLine($"Failed to enqueue candidate {item.SourcePc}->{item.TargetPc} mid={item.Mid} mline={item.Mline}.");
+                Interlocked.Increment(ref dispatchMetrics.Failed);
                 return false;
             }
 
@@ -161,7 +217,7 @@ internal static class Program
 
                 if (forwardNow)
                 {
-                    TryEnqueueCandidate(item);
+                    DispatchCandidate(item);
                 }
             }
 
@@ -185,7 +241,7 @@ internal static class Program
 
                 if (forwardNow)
                 {
-                    TryEnqueueCandidate(item);
+                    DispatchCandidate(item);
                 }
             }
 
@@ -206,7 +262,7 @@ internal static class Program
 
                 foreach (var candidate in pending)
                 {
-                    TryEnqueueCandidate(candidate);
+                    DispatchCandidate(candidate);
                 }
             }
 
@@ -227,7 +283,7 @@ internal static class Program
 
                 foreach (var candidate in pending)
                 {
-                    TryEnqueueCandidate(candidate);
+                    DispatchCandidate(candidate);
                 }
             }
 
@@ -356,15 +412,32 @@ internal static class Program
                 Console.WriteLine("Warning: failed to set sender encoding parameters.");
             }
 
-            var candidatePumpTask = CandidateApplyLoopAsync(
-                candidateChannel.Reader,
-                () => pc1,
-                () => pc2,
-                forceLocalLoopback,
-                Trace,
-                candidatePumpCts.Token);
+            Task candidatePumpTask = Task.CompletedTask;
+            if (iceMode != IceApplyMode.Direct)
+            {
+                candidatePumpTask = CandidateApplyLoopAsync(
+                    candidateChannel.Reader,
+                    () => pc1,
+                    () => pc2,
+                    iceMode,
+                    dispatchMetrics,
+                    Trace,
+                    ex =>
+                    {
+                        Interlocked.Exchange(ref candidatePumpFaulted, 1);
+                        Interlocked.Increment(ref dispatchMetrics.WorkerFaults);
+                        Console.WriteLine($"Candidate worker faulted: {ex.GetType().Name}: {ex.Message}");
+                    },
+                    candidatePumpCts.Token);
+            }
 
-            await NegotiateAsync(pc1, pc2, MarkPc2ReadyForRemoteCandidatesAndFlush, MarkPc1ReadyForRemoteCandidatesAndFlush, Trace)
+            await NegotiateAsync(
+                    pc1,
+                    pc2,
+                    MarkPc2ReadyForRemoteCandidatesAndFlush,
+                    MarkPc1ReadyForRemoteCandidatesAndFlush,
+                    Trace,
+                    dumpSdp)
                 .ConfigureAwait(false);
 
             using var statsCts = new CancellationTokenSource();
@@ -378,6 +451,8 @@ internal static class Program
                         statsIntervalMs,
                         () => Volatile.Read(ref firstFrameLogged) != 0,
                         () => DateTime.UtcNow - startedAt,
+                        dispatchMetrics,
+                        iceMode,
                         statsCts.Token),
                     statsCts.Token);
             }
@@ -407,6 +482,10 @@ internal static class Program
                 catch (OperationCanceledException)
                 {
                     // Expected on shutdown.
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Candidate worker stopped with error: {ex.GetType().Name}: {ex.Message}");
                 }
             }
 
@@ -452,10 +531,15 @@ internal static class Program
         PeerConnection pc2,
         Action onPc2ReadyForRemoteCandidates,
         Action onPc1ReadyForRemoteCandidates,
-        Action<string> trace)
+        Action<string> trace,
+        bool dumpSdp)
     {
         trace("CreateOffer");
         var (offerSdp, offerType) = await CreateOfferAsync(pc1).ConfigureAwait(false);
+        if (dumpSdp)
+        {
+            DumpSdpSummary("pc1 offer", offerSdp);
+        }
 
         trace("SetLocalDescription(offer) on pc1");
         await SetLocalDescriptionAsync(pc1, offerSdp, offerType).ConfigureAwait(false);
@@ -465,6 +549,10 @@ internal static class Program
 
         trace("CreateAnswer");
         var (answerSdp, answerType) = await CreateAnswerAsync(pc2).ConfigureAwait(false);
+        if (dumpSdp)
+        {
+            DumpSdpSummary("pc2 answer", answerSdp);
+        }
 
         trace("SetLocalDescription(answer) on pc2");
         await SetLocalDescriptionAsync(pc2, answerSdp, answerType).ConfigureAwait(false);
@@ -521,33 +609,43 @@ internal static class Program
         int intervalMs,
         Func<bool> firstFrameReceived,
         Func<TimeSpan> elapsed,
+        CandidateDispatchMetrics dispatchMetrics,
+        IceApplyMode iceMode,
         CancellationToken token)
     {
-        var firstFrameWarningPrinted = false;
+        var timeoutPrinted = false;
 
         while (!token.IsCancellationRequested)
         {
             await Task.Delay(intervalMs, token).ConfigureAwait(false);
-            await PrintStatsAsync("pc1", pc1, token).ConfigureAwait(false);
-            await PrintStatsAsync("pc2", pc2, token).ConfigureAwait(false);
+            var pc1HasSucceededPair = await PrintStatsAsync("pc1", pc1, token).ConfigureAwait(false);
+            var pc2HasSucceededPair = await PrintStatsAsync("pc2", pc2, token).ConfigureAwait(false);
+            PrintDispatchHeartbeat(dispatchMetrics, iceMode);
 
-            if (!firstFrameWarningPrinted &&
+            if (!timeoutPrinted &&
                 !firstFrameReceived() &&
-                elapsed() > TimeSpan.FromSeconds(8))
+                elapsed() > TimeSpan.FromSeconds(12))
             {
-                firstFrameWarningPrinted = true;
-                Console.WriteLine("No video frame received after 8s. Try --trace-signaling=true and --stun=stun:stun.l.google.com:19302.");
+                timeoutPrinted = true;
+                Console.WriteLine(
+                    $"No video frame received after 12s. mode={ToIceModeArg(iceMode)} " +
+                    $"dispatch={GetDispatchSummary(dispatchMetrics)} " +
+                    $"pairSelected={(pc1HasSucceededPair || pc2HasSucceededPair)}");
+                Console.WriteLine("Next diagnostics:");
+                Console.WriteLine("  dotnet run --project .\\samples\\LumenRTC.Sample.ScreenShareLoopback\\LumenRTC.Sample.ScreenShareLoopback.csproj -- --trace-signaling=true --stun=stun:stun.l.google.com:19302 --stats-interval-ms=2000 --ice-mode=direct");
+                Console.WriteLine("  dotnet run --project .\\samples\\LumenRTC.Sample.ScreenShareLoopback\\LumenRTC.Sample.ScreenShareLoopback.csproj -- --trace-signaling=true --stun=stun:stun.l.google.com:19302 --stats-interval-ms=2000 --ice-mode=host-only");
             }
         }
     }
 
-    private static async Task PrintStatsAsync(string label, PeerConnection pc, CancellationToken token)
+    private static async Task<bool> PrintStatsAsync(string label, PeerConnection pc, CancellationToken token)
     {
         try
         {
             using var report = await pc.GetStatsReportAsync(token).ConfigureAwait(false);
 
             var pairCount = 0;
+            var hasSucceededPair = false;
             var stateCounts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
             var candidateSummary = "none";
             foreach (var pair in report.CandidatePairs)
@@ -561,6 +659,7 @@ internal static class Program
 
                     if (string.Equals(state, "succeeded", StringComparison.OrdinalIgnoreCase))
                     {
+                        hasSucceededPair = true;
                         pair.TryGetBool("nominated", out var nominated);
                         var sent = ReadInt64(pair, "bytesSent");
                         var recv = ReadInt64(pair, "bytesReceived");
@@ -577,6 +676,19 @@ internal static class Program
                     parts.Add($"{kv.Key}:{kv.Value}");
                 }
                 candidateSummary = $"pairs={pairCount},states={string.Join(",", parts)}";
+            }
+
+            var localCandidateCount = CountStats(report.GetByType("local-candidate"));
+            var remoteCandidateCount = CountStats(report.GetByType("remote-candidate"));
+
+            var transportSummary = "none";
+            foreach (var transport in report.Transport)
+            {
+                transport.TryGetString("selectedCandidatePairId", out var selectedPairId);
+                var sent = ReadInt64(transport, "bytesSent");
+                var recv = ReadInt64(transport, "bytesReceived");
+                transportSummary = $"selectedPair={(string.IsNullOrWhiteSpace(selectedPairId) ? "-" : selectedPairId)},bytes={sent}/{recv}";
+                break;
             }
 
             long outboundVideoBytes = 0;
@@ -597,15 +709,22 @@ internal static class Program
                 }
             }
 
-            Console.WriteLine($"[{label} stats] candidate={candidateSummary} outboundVideoBytes={outboundVideoBytes} inboundVideoBytes={inboundVideoBytes}");
+            Console.WriteLine(
+                $"[{label} stats] candidate={candidateSummary} " +
+                $"localCand={localCandidateCount} remoteCand={remoteCandidateCount} " +
+                $"transport={transportSummary} " +
+                $"outboundVideoBytes={outboundVideoBytes} inboundVideoBytes={inboundVideoBytes}");
+            return hasSucceededPair;
         }
         catch (OperationCanceledException)
         {
             // Expected on shutdown.
+            return false;
         }
         catch (Exception ex)
         {
             Console.WriteLine($"[{label} stats] failed: {ex.Message}");
+            return false;
         }
     }
 
@@ -613,48 +732,177 @@ internal static class Program
         ChannelReader<CandidateForwardItem> reader,
         Func<PeerConnection?> getPc1,
         Func<PeerConnection?> getPc2,
-        bool forceLocalLoopback,
+        IceApplyMode iceMode,
+        CandidateDispatchMetrics metrics,
         Action<string> trace,
+        Action<Exception> onWorkerFault,
         CancellationToken token)
     {
-        while (await reader.WaitToReadAsync(token).ConfigureAwait(false))
+        try
         {
-            while (reader.TryRead(out var item))
+            while (await reader.WaitToReadAsync(token).ConfigureAwait(false))
             {
-                var target = string.Equals(item.TargetPc, "pc1", StringComparison.OrdinalIgnoreCase)
-                    ? getPc1()
-                    : getPc2();
-                if (target == null)
+                while (reader.TryRead(out var item))
                 {
-                    trace($"drop candidate: target {item.TargetPc} is not available");
-                    continue;
-                }
-
-                if (!item.EndOfCandidates && forceLocalLoopback && !IsLoopbackFriendlyCandidate(item.Candidate))
-                {
-                    trace(
-                        $"drop {item.SourcePc}->{item.TargetPc} candidate type={ExtractCandidateType(item.Candidate)} " +
-                        $"addr={ExtractCandidateAddress(item.Candidate)} (force-local-loopback)");
-                    continue;
-                }
-
-                var candidateValue = item.EndOfCandidates ? string.Empty : item.Candidate;
-                var applied = target.TryAddIceCandidate(item.Mid, item.Mline, candidateValue);
-
-                var candidateKind = item.EndOfCandidates
-                    ? "eoc"
-                    : $"candidate type={ExtractCandidateType(item.Candidate)} addr={ExtractCandidateAddress(item.Candidate)}";
-
-                if (applied)
-                {
-                    trace($"{item.TargetPc} apply {candidateKind} from {item.SourcePc} mid={item.Mid} mline={item.Mline}");
-                }
-                else
-                {
-                    Console.WriteLine($"{item.TargetPc} failed to apply {candidateKind} from {item.SourcePc} mid={item.Mid} mline={item.Mline}");
+                    TryApplyCandidate(
+                        item,
+                        getPc1,
+                        getPc2,
+                        iceMode,
+                        metrics,
+                        trace,
+                        countDequeued: true);
                 }
             }
         }
+        catch (OperationCanceledException)
+        {
+            // Expected on shutdown.
+        }
+        catch (Exception ex)
+        {
+            onWorkerFault(ex);
+        }
+    }
+
+    private static bool TryApplyCandidate(
+        CandidateForwardItem item,
+        Func<PeerConnection?> getPc1,
+        Func<PeerConnection?> getPc2,
+        IceApplyMode iceMode,
+        CandidateDispatchMetrics metrics,
+        Action<string> trace,
+        bool countDequeued)
+    {
+        if (countDequeued)
+        {
+            Interlocked.Increment(ref metrics.Dequeued);
+        }
+
+        var target = string.Equals(item.TargetPc, "pc1", StringComparison.OrdinalIgnoreCase)
+            ? getPc1()
+            : getPc2();
+        if (target == null)
+        {
+            Interlocked.Increment(ref metrics.Dropped);
+            trace($"drop candidate: target {item.TargetPc} is not available");
+            return false;
+        }
+
+        if (!ShouldForwardCandidate(item, iceMode))
+        {
+            Interlocked.Increment(ref metrics.Dropped);
+            trace(
+                $"drop {item.SourcePc}->{item.TargetPc} candidate type={ExtractCandidateType(item.Candidate)} " +
+                $"addr={ExtractCandidateAddress(item.Candidate)} (mode={ToIceModeArg(iceMode)})");
+            return true;
+        }
+
+        var candidateValue = item.EndOfCandidates ? string.Empty : item.Candidate;
+        var applied = target.TryAddIceCandidate(item.Mid, item.Mline, candidateValue);
+        var candidateKind = item.EndOfCandidates
+            ? "eoc"
+            : $"candidate type={ExtractCandidateType(item.Candidate)} addr={ExtractCandidateAddress(item.Candidate)}";
+
+        if (applied)
+        {
+            Interlocked.Increment(ref metrics.Applied);
+            trace($"{item.TargetPc} apply {candidateKind} from {item.SourcePc} mid={item.Mid} mline={item.Mline}");
+            return true;
+        }
+
+        Interlocked.Increment(ref metrics.Failed);
+        Console.WriteLine($"{item.TargetPc} failed to apply {candidateKind} from {item.SourcePc} mid={item.Mid} mline={item.Mline}");
+        return false;
+    }
+
+    private static bool ShouldForwardCandidate(CandidateForwardItem item, IceApplyMode iceMode)
+    {
+        if (item.EndOfCandidates)
+        {
+            return true;
+        }
+
+        return iceMode switch
+        {
+            IceApplyMode.HostOnly => IsLoopbackFriendlyCandidate(item.Candidate),
+            _ => true,
+        };
+    }
+
+    private static void PrintDispatchHeartbeat(CandidateDispatchMetrics metrics, IceApplyMode mode)
+    {
+        Console.WriteLine($"[ice-dispatch] mode={ToIceModeArg(mode)} {GetDispatchSummary(metrics)}");
+    }
+
+    private static string GetDispatchSummary(CandidateDispatchMetrics metrics)
+    {
+        var enqueued = Interlocked.Read(ref metrics.Enqueued);
+        var dequeued = Interlocked.Read(ref metrics.Dequeued);
+        var applied = Interlocked.Read(ref metrics.Applied);
+        var failed = Interlocked.Read(ref metrics.Failed);
+        var dropped = Interlocked.Read(ref metrics.Dropped);
+        var direct = Interlocked.Read(ref metrics.DirectFallbackApplied);
+        var faults = Interlocked.Read(ref metrics.WorkerFaults);
+        return $"enq={enqueued} deq={dequeued} applied={applied} failed={failed} dropped={dropped} direct={direct} faults={faults}";
+    }
+
+    private static int CountStats(IEnumerable<RtcStat> stats)
+    {
+        var count = 0;
+        foreach (var _ in stats)
+        {
+            count++;
+        }
+
+        return count;
+    }
+
+    private static void DumpSdpSummary(string label, string sdp)
+    {
+        if (string.IsNullOrWhiteSpace(sdp))
+        {
+            Console.WriteLine($"[{label} sdp] <empty>");
+            return;
+        }
+
+        var lines = sdp.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+        var candidateLines = new List<string>();
+        var totalCandidateLines = 0;
+        var sb = new StringBuilder();
+        sb.AppendLine($"[{label} sdp]");
+
+        foreach (var raw in lines)
+        {
+            var line = raw.Trim();
+            if (line.StartsWith("a=candidate:", StringComparison.Ordinal))
+            {
+                totalCandidateLines++;
+                if (candidateLines.Count < 6)
+                {
+                    candidateLines.Add(line);
+                }
+                continue;
+            }
+
+            if (line.StartsWith("m=video ", StringComparison.Ordinal) ||
+                line.StartsWith("a=ice-ufrag:", StringComparison.Ordinal) ||
+                line.StartsWith("a=ice-pwd:", StringComparison.Ordinal) ||
+                line.StartsWith("a=fingerprint:", StringComparison.Ordinal) ||
+                line.StartsWith("a=setup:", StringComparison.Ordinal) ||
+                line.StartsWith("a=rtcp-mux", StringComparison.Ordinal))
+            {
+                sb.AppendLine($"  {line}");
+            }
+        }
+
+        sb.AppendLine($"  candidateLines={totalCandidateLines}");
+        for (var i = 0; i < candidateLines.Count; i++)
+        {
+            sb.AppendLine($"  cand[{i}] {candidateLines[i]}");
+        }
+
+        Console.Write(sb.ToString());
     }
 
     private static bool IsLoopbackFriendlyCandidate(string candidate)
@@ -822,6 +1070,62 @@ internal static class Program
         }
 
         return 0;
+    }
+
+    private static IceApplyMode ParseIceApplyMode(string? raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return IceApplyMode.Auto;
+        }
+
+        if (raw.Equals("auto", StringComparison.OrdinalIgnoreCase))
+        {
+            return IceApplyMode.Auto;
+        }
+
+        if (raw.Equals("direct", StringComparison.OrdinalIgnoreCase))
+        {
+            return IceApplyMode.Direct;
+        }
+
+        if (raw.Equals("host-only", StringComparison.OrdinalIgnoreCase))
+        {
+            return IceApplyMode.HostOnly;
+        }
+
+        Console.WriteLine($"Unknown --ice-mode '{raw}', using auto.");
+        return IceApplyMode.Auto;
+    }
+
+    private static string ToIceModeArg(IceApplyMode mode)
+    {
+        return mode switch
+        {
+            IceApplyMode.Auto => "auto",
+            IceApplyMode.Direct => "direct",
+            IceApplyMode.HostOnly => "host-only",
+            _ => "auto",
+        };
+    }
+
+    private static bool HasArg(string[] args, string name)
+    {
+        for (var i = 0; i < args.Length; i++)
+        {
+            var arg = args[i];
+            if (arg.StartsWith(name + "=", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            if (string.Equals(arg, name, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static string GetArg(string[] args, string name, string fallback)
