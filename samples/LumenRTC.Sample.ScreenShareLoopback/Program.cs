@@ -45,9 +45,19 @@ internal static class Program
 
                 remoteVideoTrack?.Dispose();
                 remoteVideoTrack = track;
-                remoteVideoTrack.Enabled = true;
                 remoteVideoTrack.AddSink(renderer.Sink);
-                Console.WriteLine($"Attached remote video track: {remoteVideoTrack.Id}");
+
+                string trackId;
+                try
+                {
+                    trackId = remoteVideoTrack.Id;
+                }
+                catch
+                {
+                    trackId = "<unknown>";
+                }
+
+                Console.WriteLine($"Attached remote video track: {trackId}");
             }
 
             void QueueOrForwardToPc1(string mid, int mline, string candidate)
