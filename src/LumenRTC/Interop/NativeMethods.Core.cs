@@ -78,7 +78,10 @@ internal static partial class NativeMethods
 
         AddNativeCandidate(candidates, seen, Environment.GetEnvironmentVariable("LumenRtcNativeDir"), fileName);
         AddNativeCandidate(candidates, seen, Environment.GetEnvironmentVariable("LUMENRTC_NATIVE_DIR"), fileName);
+        AddNativeCandidate(candidates, seen, Path.Combine(AppContext.BaseDirectory, "native"), fileName);
+        AddNativeCandidate(candidates, seen, Path.Combine(AppContext.BaseDirectory, "runtimes", RuntimeInformation.RuntimeIdentifier, "native"), fileName);
         AddNativeCandidate(candidates, seen, AppContext.BaseDirectory, fileName);
+        AddNativeCandidate(candidates, seen, Path.Combine(Path.GetDirectoryName(typeof(NativeMethods).Assembly.Location) ?? string.Empty, "native"), fileName);
         AddNativeCandidate(candidates, seen, Path.GetDirectoryName(typeof(NativeMethods).Assembly.Location), fileName);
         AddNativeCandidate(candidates, seen, Path.Combine(Environment.CurrentDirectory, "native", "build"), fileName);
         AddNativeCandidate(candidates, seen, Path.Combine(Environment.CurrentDirectory, "native", "build", "Release"), fileName);
