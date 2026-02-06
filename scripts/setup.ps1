@@ -53,7 +53,16 @@ function Join-PathSafe {
 
 $repoRoot = $RepoRoot
 if ([string]::IsNullOrWhiteSpace($repoRoot)) {
-  $repoRoot = (Get-Location).Path
+  $repoRoot = $PSCommandPath
+  if (-not [string]::IsNullOrWhiteSpace($repoRoot)) {
+    $repoRoot = Split-Path -Parent $repoRoot
+  }
+}
+if ([string]::IsNullOrWhiteSpace($repoRoot)) {
+  $repoRoot = $PWD.ProviderPath
+}
+if ([string]::IsNullOrWhiteSpace($repoRoot)) {
+  $repoRoot = (Get-Location).ProviderPath
 }
 if ([string]::IsNullOrWhiteSpace($repoRoot)) {
   $repoRoot = [Environment]::CurrentDirectory
@@ -223,6 +232,9 @@ if ([string]::IsNullOrWhiteSpace($WebRtcRoot)) {
     $repoRoot = "."
   }
   $WebRtcRoot = [System.IO.Path]::Combine($repoRoot, "webrtc_build")
+  if ([string]::IsNullOrWhiteSpace($WebRtcRoot)) {
+    $WebRtcRoot = "webrtc_build"
+  }
 }
 
 if ($env:LUMENRTC_SETUP_DEBUG -eq "1") {
@@ -234,17 +246,14 @@ if ($env:LUMENRTC_SETUP_DEBUG -eq "1") {
 }
 
 if ([string]::IsNullOrWhiteSpace($WebRtcRoot)) {
-  throw "WebRtcRoot resolved to empty. Pass -WebRtcRoot explicitly."
+  $WebRtcRoot = "webrtc_build"
 }
 
 $webRtcRoot = Resolve-Path -LiteralPath $WebRtcRoot -ErrorAction SilentlyContinue
 if (-not $webRtcRoot) {
+  $WebRtcRoot = ($WebRtcRoot ?? "").Trim()
   if ([string]::IsNullOrWhiteSpace($WebRtcRoot)) {
-    throw "WebRtcRoot is empty before directory creation. Pass -WebRtcRoot explicitly."
-  }
-  $WebRtcRoot = $WebRtcRoot.Trim()
-  if ([string]::IsNullOrWhiteSpace($WebRtcRoot)) {
-    throw "WebRtcRoot is empty after trimming. Pass -WebRtcRoot explicitly."
+    $WebRtcRoot = "webrtc_build"
   }
   New-Item -ItemType Directory -Force -Path $WebRtcRoot | Out-Null
   $webRtcRoot = Resolve-Path -LiteralPath $WebRtcRoot
