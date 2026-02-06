@@ -170,11 +170,12 @@ function Start-PowerShellWindow {
     [string]$Command
   )
 
+  $encodedCommand = [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($Command))
   $exeName = [System.IO.Path]::GetFileNameWithoutExtension($PowerShellExe)
   if ($exeName -ieq "pwsh") {
-    return Start-Process -FilePath $PowerShellExe -ArgumentList @("-NoExit", "-Command", $Command) -PassThru
+    return Start-Process -FilePath $PowerShellExe -ArgumentList @("-NoExit", "-EncodedCommand", $encodedCommand) -PassThru
   }
-  return Start-Process -FilePath $PowerShellExe -ArgumentList @("-NoExit", "-ExecutionPolicy", "Bypass", "-Command", $Command) -PassThru
+  return Start-Process -FilePath $PowerShellExe -ArgumentList @("-NoExit", "-ExecutionPolicy", "Bypass", "-EncodedCommand", $encodedCommand) -PassThru
 }
 
 $repoRoot = Resolve-RepoRoot
