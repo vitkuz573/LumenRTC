@@ -19,7 +19,7 @@ internal static class Program
             using var list = desktop.GetMediaList(DesktopType.Screen);
 
             var updateResult = list.UpdateSourceList(forceReload: true, getThumbnail: false);
-            if (updateResult != 0)
+            if (updateResult < 0)
             {
                 Console.WriteLine("Failed to update screen sources.");
                 return;

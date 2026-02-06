@@ -75,6 +75,7 @@ internal static class Program
 
             PeerConnection? pc = null;
             DataChannel? dataChannel = null;
+            DataChannel? controlChannel = null;
             SdlVideoRenderer? renderer = null;
             var offerSent = false;
 
@@ -134,7 +135,7 @@ internal static class Program
                 mediaList = desktopDevice.GetMediaList(type);
 
                 var updateResult = mediaList.UpdateSourceList(forceReload: true, getThumbnail: false);
-                if (updateResult != 0)
+                if (updateResult < 0)
                 {
                     Console.WriteLine("Failed to update desktop sources.");
                     return;
