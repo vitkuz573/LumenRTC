@@ -12,6 +12,9 @@ Param(
   [switch]$TraceSignaling,
 
   [Parameter(Mandatory = $false)]
+  [switch]$TraceIceNative,
+
+  [Parameter(Mandatory = $false)]
   [int]$StatsIntervalMs = 2000,
 
   [Parameter(Mandatory = $false)]
@@ -157,6 +160,10 @@ if ($TraceSignaling) {
   $runArgs += @("--trace-signaling", "true")
 }
 
+if ($TraceIceNative) {
+  $runArgs += @("--trace-ice-native", "true")
+}
+
 Write-Host "Running loopback demo..."
 Write-Host "  Project:   $projectPath"
 Write-Host "  Source:    $Source"
@@ -164,6 +171,7 @@ Write-Host "  FPS:       $Fps"
 Write-Host "  Cursor:    $cursorValue"
 Write-Host "  Signaling: $SignalingMode"
 Write-Host "  ICE Xchg:  $IceExchange"
+Write-Host "  ICE Trace: $(if ($TraceIceNative) { 'native' } else { 'off' })"
 if ($SignalingMode -eq "ws") {
   Write-Host "  Server:    $Server"
   Write-Host "  Room:      $Room"

@@ -348,6 +348,7 @@ internal static class Program
         var fps = Math.Max(1, GetIntArg(args, "--fps", 30));
         var showCursor = GetBoolArg(args, "--cursor", true);
         var traceSignaling = GetBoolArg(args, "--trace-signaling", false);
+        var traceIceNative = GetBoolArg(args, "--trace-ice-native", false);
         var statsIntervalMs = Math.Max(0, GetIntArg(args, "--stats-interval-ms", 2000));
         var disableIpv6 = GetBoolArg(args, "--disable-ipv6", false);
         var stun = GetArg(args, "--stun", string.Empty);
@@ -374,6 +375,7 @@ internal static class Program
         Console.WriteLine($"ICE apply mode: {ToIceModeArg(iceMode)}");
         Console.WriteLine($"ICE exchange: {ToIceExchangeModeArg(iceExchangeMode)}");
         Console.WriteLine($"Signaling mode: {ToSignalingModeArg(signalingMode)}");
+        Console.WriteLine($"Native ICE trace: {(traceIceNative ? "on" : "off")}");
 
         void Trace(string role, string text)
         {
@@ -385,6 +387,7 @@ internal static class Program
             Console.WriteLine($"[trace:{role}] {text}");
         }
 
+        Environment.SetEnvironmentVariable("LUMENRTC_TRACE_ICE_NATIVE", traceIceNative ? "1" : "0");
         LumenRtc.Initialize();
         try
         {
@@ -1020,7 +1023,15 @@ internal static class Program
 
         try
         {
-            pc.AddIceCandidate(mid, mline, candidate);
+            if (!pc.TryAddIceCandidate(mid, mline, candidate))
+            {
+                Interlocked.Increment(ref metrics.Failed);
+                Console.WriteLine(
+                    $"{role} rejected candidate mid={mid} mline={mline} " +
+                    $"type={ExtractCandidateType(candidate)} addr={ExtractCandidateAddress(candidate)}");
+                return;
+            }
+
             Interlocked.Increment(ref metrics.Applied);
             if (traceEnabled)
             {

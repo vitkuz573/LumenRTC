@@ -30,6 +30,8 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <mutex>
 #include <string>
@@ -175,6 +177,35 @@ struct lrtc_rtp_transceiver_t {
 
 static lrtc_result_t LrtcFailIfNull(const void* ptr) {
   return ptr ? LRTC_OK : LRTC_INVALID_ARG;
+}
+
+static bool CStringEqualsIgnoreCase(const char* a, const char* b) {
+  if (!a || !b) {
+    return false;
+  }
+  while (*a && *b) {
+    if (std::tolower(static_cast<unsigned char>(*a)) !=
+        std::tolower(static_cast<unsigned char>(*b))) {
+      return false;
+    }
+    ++a;
+    ++b;
+  }
+  return *a == '\0' && *b == '\0';
+}
+
+static bool IsTraceIceNativeEnabled() {
+  const char* value = std::getenv("LUMENRTC_TRACE_ICE_NATIVE");
+  if (!value || value[0] == '\0') {
+    return false;
+  }
+  if (CStringEqualsIgnoreCase(value, "0") ||
+      CStringEqualsIgnoreCase(value, "false") ||
+      CStringEqualsIgnoreCase(value, "no") ||
+      CStringEqualsIgnoreCase(value, "off")) {
+    return false;
+  }
+  return true;
 }
 
 static vector<string> BuildStringVector(const char** items,
@@ -2043,11 +2074,28 @@ LUMENRTC_API int LUMENRTC_CALL lrtc_peer_connection_set_transceiver_codec_prefer
 LUMENRTC_API int LUMENRTC_CALL lrtc_peer_connection_add_ice_candidate_ex(
     lrtc_peer_connection_t* pc, const char* sdp_mid, int sdp_mline_index,
     const char* candidate) {
+  const bool trace_ice_native = IsTraceIceNativeEnabled();
   if (!pc || !pc->ref.get() || !sdp_mid || !candidate) {
+    if (trace_ice_native) {
+      std::fprintf(stderr,
+                   "[lumenrtc:ice] add candidate rejected: invalid args "
+                   "pc=%d mid=%d candidate=%d\n",
+                   (pc && pc->ref.get()) ? 1 : 0, sdp_mid ? 1 : 0,
+                   candidate ? 1 : 0);
+    }
     return 0;
   }
-  pc->ref->AddCandidate(string(sdp_mid), sdp_mline_index, string(candidate));
-  return 1;
+  const bool accepted =
+      pc->ref->AddCandidate(string(sdp_mid), sdp_mline_index,
+                            string(candidate));
+  if (!accepted && trace_ice_native) {
+    std::fprintf(
+        stderr,
+        "[lumenrtc:ice] add candidate rejected by peer connection: "
+        "mid=%s mline=%d len=%zu\n",
+        sdp_mid, sdp_mline_index, std::strlen(candidate));
+  }
+  return accepted ? 1 : 0;
 }
 
 LUMENRTC_API void LUMENRTC_CALL lrtc_peer_connection_add_ice_candidate(

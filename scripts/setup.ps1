@@ -302,6 +302,32 @@ function Apply-CustomPatch {
   }
 }
 
+function Apply-RepoLibWebRtcPatch {
+  param(
+    [string]$LibWebRtcDir,
+    [string]$PatchPath
+  )
+
+  if ([string]::IsNullOrWhiteSpace($PatchPath) -or -not (Test-Path $PatchPath)) {
+    Write-Warning "Patch not found: $PatchPath"
+    return
+  }
+
+  Push-Location $LibWebRtcDir
+  try {
+    & git apply --check $PatchPath 2>$null
+    if ($LASTEXITCODE -eq 0) {
+      git apply $PatchPath
+      Write-Host "Applied patch: $(Split-Path -Leaf $PatchPath)"
+    } else {
+      Write-Host "Patch already applied or not applicable; skipping: $(Split-Path -Leaf $PatchPath)"
+    }
+  }
+  finally {
+    Pop-Location
+  }
+}
+
 function Ensure-BuildGnIncludesLibWebRtc {
   param([string]$BuildGnPath)
 
@@ -468,6 +494,8 @@ try {
   $libWebRtcDir = Ensure-LibWebRtcRepo -SrcDir $srcDirRoot
   if (-not $SkipPatch) {
     Apply-CustomPatch -LibWebRtcDir $libWebRtcDir
+    $iceCandidatePatch = Join-PathSafe $lumenRoot "scripts\\patches\\libwebrtc_ice_candidate_status.patch"
+    Apply-RepoLibWebRtcPatch -LibWebRtcDir $libWebRtcDir -PatchPath $iceCandidatePatch
   }
 
   $buildGnPath = Join-PathSafe $srcDirRoot "BUILD.gn"

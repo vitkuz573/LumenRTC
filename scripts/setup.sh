@@ -155,6 +155,20 @@ if [[ "$skip_patch" == false ]]; then
   else
     echo "Patch not found: $patch_path" >&2
   fi
+
+  repo_patch="${repo_root}/scripts/patches/libwebrtc_ice_candidate_status.patch"
+  if [[ -f "$repo_patch" ]]; then
+    pushd "${src_dir}/libwebrtc" >/dev/null
+    if git apply --check "$repo_patch" >/dev/null 2>&1; then
+      git apply "$repo_patch"
+      echo "Applied patch: libwebrtc_ice_candidate_status.patch"
+    else
+      echo "Patch already applied or not applicable; skipping: libwebrtc_ice_candidate_status.patch"
+    fi
+    popd >/dev/null
+  else
+    echo "Patch not found: $repo_patch" >&2
+  fi
 fi
 
 build_gn_path="${src_dir}/BUILD.gn"
