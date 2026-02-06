@@ -60,8 +60,8 @@
   </PropertyGroup>
 
   <ItemGroup Condition="'$(LumenRtcCopyNative)'=='true'">
-    <None Include="$(LumenRtcNativeFile)" Condition="Exists('$(LumenRtcNativeFile)')" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="$(LibWebRtcNativeFile)" Condition="Exists('$(LibWebRtcNativeFile)')" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="$(LumenRtcNativeFile)" Condition="Exists('$(LumenRtcNativeFile)')" CopyToOutputDirectory="Always" />
+    <None Include="$(LibWebRtcNativeFile)" Condition="Exists('$(LibWebRtcNativeFile)')" CopyToOutputDirectory="Always" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(LumenRtcPackNative)'=='true'">
