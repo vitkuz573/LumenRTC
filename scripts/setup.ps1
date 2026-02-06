@@ -314,6 +314,9 @@ $vsToolchainDir = Join-PathSafe $vsPathCheck "VC\\Tools\\MSVC"
 if (-not (Test-Path $vsToolchainDir)) {
   throw "GYP_MSVS_OVERRIDE_PATH does not contain VC\\Tools\\MSVC. Install C++ build tools or fix the path."
 }
+if ([string]::IsNullOrWhiteSpace($env:vs2022_install)) {
+  $env:vs2022_install = $vsPathCheck
+}
 
 if ([string]::IsNullOrWhiteSpace($WebRtcRoot)) {
   if ([string]::IsNullOrWhiteSpace($repoRoot)) {
