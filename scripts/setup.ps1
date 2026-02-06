@@ -72,6 +72,7 @@ if ([string]::IsNullOrWhiteSpace($repoRoot)) {
 }
 
 $scriptRoot = if (-not [string]::IsNullOrWhiteSpace($PSScriptRoot)) { $PSScriptRoot } else { Join-PathSafe $repoRoot "scripts" }
+$lumenRoot = if (-not [string]::IsNullOrWhiteSpace($scriptRoot)) { Split-Path -Parent $scriptRoot } else { $repoRoot }
 
 function Require-Command {
   param([string]$Name)
@@ -305,7 +306,13 @@ try {
     $env:LIBWEBRTC_BUILD_DIR = $outDir
 
     $bootstrapScript = Join-PathSafe $scriptRoot "bootstrap.ps1"
-    & $bootstrapScript -LibWebRtcBuildDir $outDir -BuildType $BuildType -DesktopCapture $DesktopCapture
+    Push-Location $lumenRoot
+    try {
+      & $bootstrapScript -LibWebRtcBuildDir $outDir -BuildType $BuildType -DesktopCapture $DesktopCapture
+    }
+    finally {
+      Pop-Location
+    }
   }
 }
 finally {
