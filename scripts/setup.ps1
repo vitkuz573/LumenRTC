@@ -103,8 +103,8 @@ function Resolve-VisualStudio {
   }
 
   $vswherePath = $null
-  if (-not [string]::IsNullOrWhiteSpace($env:ProgramFiles(x86))) {
-    $vswherePath = Join-PathSafe $env:ProgramFiles(x86) "Microsoft Visual Studio\\Installer\\vswhere.exe"
+  if (-not [string]::IsNullOrWhiteSpace(${env:ProgramFiles(x86)})) {
+    $vswherePath = Join-PathSafe ${env:ProgramFiles(x86)} "Microsoft Visual Studio\\Installer\\vswhere.exe"
   }
   if (-not (Test-Path $vswherePath) -and -not [string]::IsNullOrWhiteSpace($env:ProgramFiles)) {
     $vswherePath = Join-PathSafe $env:ProgramFiles "Microsoft Visual Studio\\Installer\\vswhere.exe"
