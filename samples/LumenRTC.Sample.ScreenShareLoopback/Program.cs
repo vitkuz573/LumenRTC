@@ -8,6 +8,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 using LumenRTC;
 using LumenRTC.Rendering.Sdl;
@@ -58,32 +59,74 @@ internal static class Program
 
     private sealed class InProcessSignalingChannel : ISignalingChannel
     {
+        private readonly Channel<(string TargetRole, SignalMessage Message)> _outbound =
+            Channel.CreateUnbounded<(string TargetRole, SignalMessage Message)>(new UnboundedChannelOptions
+            {
+                SingleReader = true,
+                SingleWriter = false,
+                AllowSynchronousContinuations = false,
+            });
+
         private Func<string, SignalMessage, Task>? _onMessage;
+        private CancellationTokenSource? _pumpCts;
+        private Task? _pumpTask;
 
         public Task StartAsync(Func<string, SignalMessage, Task> onMessage, CancellationToken token)
         {
             _onMessage = onMessage;
+            _pumpCts = CancellationTokenSource.CreateLinkedTokenSource(token);
+            _pumpTask = Task.Run(() => PumpAsync(_pumpCts.Token));
             return Task.CompletedTask;
         }
 
-        public Task SendAsync(string role, SignalMessage message, CancellationToken token)
+        public async Task SendAsync(string role, SignalMessage message, CancellationToken token)
+        {
+            var targetRole = string.Equals(role, "sender", StringComparison.OrdinalIgnoreCase)
+                ? "viewer"
+                : "sender";
+            var item = (targetRole, CloneSignalMessage(message));
+
+            await _outbound.Writer.WriteAsync(item, token).ConfigureAwait(false);
+        }
+
+        public async ValueTask DisposeAsync()
+        {
+            _outbound.Writer.TryComplete();
+            if (_pumpCts != null)
+            {
+                _pumpCts.Cancel();
+            }
+
+            if (_pumpTask != null)
+            {
+                try
+                {
+                    await _pumpTask.ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    // Expected on shutdown.
+                }
+            }
+
+            _pumpCts?.Dispose();
+        }
+
+        private async Task PumpAsync(CancellationToken token)
         {
             var onMessage = _onMessage;
             if (onMessage == null)
             {
-                return Task.CompletedTask;
+                return;
             }
 
-            var targetRole = string.Equals(role, "sender", StringComparison.OrdinalIgnoreCase)
-                ? "viewer"
-                : "sender";
-
-            return onMessage(targetRole, CloneSignalMessage(message));
-        }
-
-        public ValueTask DisposeAsync()
-        {
-            return ValueTask.CompletedTask;
+            while (await _outbound.Reader.WaitToReadAsync(token).ConfigureAwait(false))
+            {
+                while (_outbound.Reader.TryRead(out var item))
+                {
+                    await onMessage(item.TargetRole, item.Message).ConfigureAwait(false);
+                }
+            }
         }
     }
 
