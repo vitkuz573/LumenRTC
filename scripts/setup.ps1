@@ -87,8 +87,23 @@ function Resolve-VisualStudio {
     Version = ""
   }
 
+  function Test-VisualStudioPath {
+    param([string]$Path)
+    if ([string]::IsNullOrWhiteSpace($Path)) {
+      return $false
+    }
+    if (-not (Test-Path $Path)) {
+      return $false
+    }
+    $vcTools = Join-PathSafe $Path "VC\\Tools\\MSVC"
+    return (Test-Path $vcTools)
+  }
+
   if (-not [string]::IsNullOrWhiteSpace($env:GYP_MSVS_OVERRIDE_PATH)) {
-    $result.Path = $env:GYP_MSVS_OVERRIDE_PATH.TrimEnd('\')
+    $candidate = $env:GYP_MSVS_OVERRIDE_PATH.TrimEnd('\')
+    if (Test-VisualStudioPath -Path $candidate) {
+      $result.Path = $candidate
+    }
   }
   if (-not [string]::IsNullOrWhiteSpace($env:GYP_MSVS_VERSION)) {
     $result.Version = $env:GYP_MSVS_VERSION
@@ -98,8 +113,11 @@ function Resolve-VisualStudio {
   }
 
   if (-not [string]::IsNullOrWhiteSpace($env:VSINSTALLDIR)) {
-    $result.Path = $env:VSINSTALLDIR.TrimEnd('\')
-    return $result
+    $candidate = $env:VSINSTALLDIR.TrimEnd('\\')
+    if (Test-VisualStudioPath -Path $candidate) {
+      $result.Path = $candidate
+      return $result
+    }
   }
 
   $vswherePath = $null
@@ -113,7 +131,10 @@ function Resolve-VisualStudio {
   if (Test-Path $vswherePath) {
     $installPath = & $vswherePath -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath 2>$null
     if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($installPath)) {
-      $result.Path = $installPath.Trim()
+      $candidate = $installPath.Trim()
+      if (Test-VisualStudioPath -Path $candidate) {
+        $result.Path = $candidate
+      }
     }
 
     $installVersion = & $vswherePath -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationVersion 2>$null
@@ -284,6 +305,14 @@ if ([string]::IsNullOrWhiteSpace($env:GYP_MSVS_OVERRIDE_PATH) -and -not [string]
 }
 if ([string]::IsNullOrWhiteSpace($env:GYP_MSVS_OVERRIDE_PATH)) {
   throw "Visual Studio with C++ build tools not found. Install VS 2022 (Desktop development with C++) or set GYP_MSVS_OVERRIDE_PATH."
+}
+$vsPathCheck = $env:GYP_MSVS_OVERRIDE_PATH.TrimEnd('\\')
+if (-not (Test-Path $vsPathCheck)) {
+  throw "GYP_MSVS_OVERRIDE_PATH points to a missing folder: $vsPathCheck"
+}
+$vsToolchainDir = Join-PathSafe $vsPathCheck "VC\\Tools\\MSVC"
+if (-not (Test-Path $vsToolchainDir)) {
+  throw "GYP_MSVS_OVERRIDE_PATH does not contain VC\\Tools\\MSVC. Install C++ build tools or fix the path."
 }
 
 if ([string]::IsNullOrWhiteSpace($WebRtcRoot)) {
