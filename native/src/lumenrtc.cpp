@@ -1706,6 +1706,10 @@ LUMENRTC_API lrtc_peer_connection_t* LUMENRTC_CALL lrtc_peer_connection_create(
   if (constraints) {
     mc = constraints->ref;
   }
+  if (!mc.get()) {
+    // Some libwebrtc wrappers assume non-null constraints.
+    mc = RTCMediaConstraints::Create();
+  }
   scoped_refptr<RTCPeerConnection> pc = factory->ref->Create(cfg, mc);
   if (!pc.get()) {
     return nullptr;
