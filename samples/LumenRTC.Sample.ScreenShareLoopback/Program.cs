@@ -30,6 +30,12 @@ internal static class Program
         Ws,
     }
 
+    private enum IceExchangeMode
+    {
+        NonTrickle,
+        Trickle,
+    }
+
     private sealed class CandidateDispatchMetrics
     {
         public long Enqueued;
@@ -361,10 +367,12 @@ internal static class Program
         }
 
         var signalingMode = ParseSignalingMode(GetArg(args, "--signaling-mode", "inproc"));
+        var iceExchangeMode = ParseIceExchangeMode(GetArg(args, "--ice-exchange", "nontrickle"));
         var signalingServer = GetArg(args, "--server", "ws://localhost:8080/ws/");
         var signalingRoom = GetArg(args, "--room", "demo");
 
         Console.WriteLine($"ICE apply mode: {ToIceModeArg(iceMode)}");
+        Console.WriteLine($"ICE exchange: {ToIceExchangeModeArg(iceExchangeMode)}");
         Console.WriteLine($"Signaling mode: {ToSignalingModeArg(signalingMode)}");
 
         void Trace(string role, string text)
@@ -395,6 +403,10 @@ internal static class Program
             var senderQueuedCandidates = new List<(string Mid, int MlineIndex, string Candidate)>();
             var viewerQueuedCandidates = new List<(string Mid, int MlineIndex, string Candidate)>();
             var dispatchMetrics = new CandidateDispatchMetrics();
+            var senderGatheringComplete =
+                new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var viewerGatheringComplete =
+                new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
             PeerConnection? senderPc = null;
             PeerConnection? viewerPc = null;
@@ -560,6 +572,10 @@ internal static class Program
                 OnIceCandidate = (mid, mline, cand) =>
                 {
                     Trace("sender", $"local candidate type={ExtractCandidateType(cand)} addr={ExtractCandidateAddress(cand)} mid={mid} mline={mline}");
+                    if (iceExchangeMode != IceExchangeMode.Trickle)
+                    {
+                        return;
+                    }
                     _ = signaling.SendAsync("sender", new SignalMessage
                     {
                         Type = "candidate",
@@ -570,7 +586,14 @@ internal static class Program
                 },
                 OnPeerConnectionState = state => Console.WriteLine($"sender state: {state}"),
                 OnIceConnectionState = state => Console.WriteLine($"sender ice: {state}"),
-                OnIceGatheringState = state => Console.WriteLine($"sender gathering: {state}"),
+                OnIceGatheringState = state =>
+                {
+                    Console.WriteLine($"sender gathering: {state}");
+                    if (state == IceGatheringState.Complete)
+                    {
+                        senderGatheringComplete.TrySetResult();
+                    }
+                },
             }, config);
 
             viewerPc = factory.CreatePeerConnection(new PeerConnectionCallbacks
@@ -578,6 +601,10 @@ internal static class Program
                 OnIceCandidate = (mid, mline, cand) =>
                 {
                     Trace("viewer", $"local candidate type={ExtractCandidateType(cand)} addr={ExtractCandidateAddress(cand)} mid={mid} mline={mline}");
+                    if (iceExchangeMode != IceExchangeMode.Trickle)
+                    {
+                        return;
+                    }
                     _ = signaling.SendAsync("viewer", new SignalMessage
                     {
                         Type = "candidate",
@@ -589,7 +616,14 @@ internal static class Program
                 OnVideoTrack = AttachRemoteTrack,
                 OnPeerConnectionState = state => Console.WriteLine($"viewer state: {state}"),
                 OnIceConnectionState = state => Console.WriteLine($"viewer ice: {state}"),
-                OnIceGatheringState = state => Console.WriteLine($"viewer gathering: {state}"),
+                OnIceGatheringState = state =>
+                {
+                    Console.WriteLine($"viewer gathering: {state}");
+                    if (state == IceGatheringState.Complete)
+                    {
+                        viewerGatheringComplete.TrySetResult();
+                    }
+                },
             }, config);
 
             using var desktop = factory.GetDesktopDevice();
@@ -664,12 +698,33 @@ internal static class Program
                             type,
                             () =>
                             {
-                                _ = signaling.SendAsync("sender", new SignalMessage
+                                _ = Task.Run(async () =>
                                 {
-                                    Type = "offer",
-                                    Sdp = sdp,
-                                    SdpType = type,
-                                }, CancellationToken.None);
+                                    try
+                                    {
+                                        var offerToSend = (Sdp: sdp, Type: type);
+                                        if (iceExchangeMode == IceExchangeMode.NonTrickle)
+                                        {
+                                            await WaitForGatheringCompleteAsync("sender", senderGatheringComplete.Task, Trace).ConfigureAwait(false);
+                                            offerToSend = await GetLocalDescriptionAsync(senderPc).ConfigureAwait(false);
+                                        }
+
+                                        await signaling.SendAsync("sender", new SignalMessage
+                                        {
+                                            Type = "offer",
+                                            Sdp = offerToSend.Sdp,
+                                            SdpType = offerToSend.Type,
+                                        }, CancellationToken.None).ConfigureAwait(false);
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        Console.WriteLine($"Failed to send offer: {ex.Message}");
+                                        lock (offerSync)
+                                        {
+                                            offerSent = false;
+                                        }
+                                    }
+                                });
                             },
                             error =>
                             {
@@ -734,7 +789,18 @@ internal static class Program
                             message.SdpType,
                             () =>
                             {
-                                MarkViewerRemoteDescriptionSetAndFlush();
+                                if (iceExchangeMode == IceExchangeMode.Trickle)
+                                {
+                                    MarkViewerRemoteDescriptionSetAndFlush();
+                                }
+                                else
+                                {
+                                    lock (candidateSync)
+                                    {
+                                        viewerRemoteDescriptionSet = true;
+                                        viewerQueuedCandidates.Clear();
+                                    }
+                                }
                                 viewerPc.CreateAnswer(
                                     (answerSdp, answerType) =>
                                     {
@@ -748,12 +814,29 @@ internal static class Program
                                             answerType,
                                             () =>
                                             {
-                                                _ = signaling.SendAsync("viewer", new SignalMessage
+                                                _ = Task.Run(async () =>
                                                 {
-                                                    Type = "answer",
-                                                    Sdp = answerSdp,
-                                                    SdpType = answerType,
-                                                }, CancellationToken.None);
+                                                    try
+                                                    {
+                                                        var answerToSend = (Sdp: answerSdp, Type: answerType);
+                                                        if (iceExchangeMode == IceExchangeMode.NonTrickle)
+                                                        {
+                                                            await WaitForGatheringCompleteAsync("viewer", viewerGatheringComplete.Task, Trace).ConfigureAwait(false);
+                                                            answerToSend = await GetLocalDescriptionAsync(viewerPc).ConfigureAwait(false);
+                                                        }
+
+                                                        await signaling.SendAsync("viewer", new SignalMessage
+                                                        {
+                                                            Type = "answer",
+                                                            Sdp = answerToSend.Sdp,
+                                                            SdpType = answerToSend.Type,
+                                                        }, CancellationToken.None).ConfigureAwait(false);
+                                                    }
+                                                    catch (Exception ex)
+                                                    {
+                                                        Console.WriteLine($"Failed to send answer: {ex.Message}");
+                                                    }
+                                                });
                                             },
                                             error => Console.WriteLine($"SetLocalDescription(answer) failed: {error}"));
                                     },
@@ -772,10 +855,29 @@ internal static class Program
                         senderPc.SetRemoteDescription(
                             message.Sdp,
                             message.SdpType,
-                            () => MarkSenderRemoteDescriptionSetAndFlush(),
+                            () =>
+                            {
+                                if (iceExchangeMode == IceExchangeMode.Trickle)
+                                {
+                                    MarkSenderRemoteDescriptionSetAndFlush();
+                                }
+                                else
+                                {
+                                    lock (candidateSync)
+                                    {
+                                        senderRemoteDescriptionSet = true;
+                                        senderQueuedCandidates.Clear();
+                                    }
+                                }
+                            },
                             error => Console.WriteLine($"SetRemoteDescription(answer) failed: {error}"));
                         break;
                     case "candidate":
+                        if (iceExchangeMode != IceExchangeMode.Trickle)
+                        {
+                            break;
+                        }
+
                         if (string.IsNullOrWhiteSpace(message.Candidate) || string.IsNullOrWhiteSpace(message.SdpMid))
                         {
                             break;
@@ -1056,6 +1158,42 @@ internal static class Program
             Console.WriteLine($"[{label} stats] failed: {ex.Message}");
             return false;
         }
+    }
+
+    private static async Task WaitForGatheringCompleteAsync(
+        string role,
+        Task gatheringTask,
+        Action<string, string> trace)
+    {
+        if (gatheringTask.IsCompleted)
+        {
+            return;
+        }
+
+        trace(role, "waiting for ICE gathering complete before sending SDP");
+        var completed = await Task.WhenAny(gatheringTask, Task.Delay(TimeSpan.FromSeconds(8))).ConfigureAwait(false);
+        if (completed != gatheringTask)
+        {
+            Console.WriteLine($"{role} gathering did not complete within 8s, sending current local description.");
+            return;
+        }
+
+        await gatheringTask.ConfigureAwait(false);
+    }
+
+    private static Task<(string Sdp, string Type)> GetLocalDescriptionAsync(PeerConnection? pc)
+    {
+        if (pc == null)
+        {
+            throw new InvalidOperationException("Peer connection is not available.");
+        }
+
+        var tcs =
+            new TaskCompletionSource<(string Sdp, string Type)>(TaskCreationOptions.RunContinuationsAsynchronously);
+        pc.GetLocalDescription(
+            (sdp, type) => tcs.TrySetResult((sdp, type)),
+            error => tcs.TrySetException(new InvalidOperationException($"GetLocalDescription failed: {error}")));
+        return tcs.Task;
     }
 
     private static ISignalingChannel CreateSignalingChannel(SignalingMode mode, string server, string room)
@@ -1376,6 +1514,37 @@ internal static class Program
             IceApplyMode.Direct => "direct",
             IceApplyMode.HostOnly => "host-only",
             _ => "auto",
+        };
+    }
+
+    private static IceExchangeMode ParseIceExchangeMode(string? raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return IceExchangeMode.NonTrickle;
+        }
+
+        if (raw.Equals("nontrickle", StringComparison.OrdinalIgnoreCase))
+        {
+            return IceExchangeMode.NonTrickle;
+        }
+
+        if (raw.Equals("trickle", StringComparison.OrdinalIgnoreCase))
+        {
+            return IceExchangeMode.Trickle;
+        }
+
+        Console.WriteLine($"Unknown --ice-exchange '{raw}', using nontrickle.");
+        return IceExchangeMode.NonTrickle;
+    }
+
+    private static string ToIceExchangeModeArg(IceExchangeMode mode)
+    {
+        return mode switch
+        {
+            IceExchangeMode.NonTrickle => "nontrickle",
+            IceExchangeMode.Trickle => "trickle",
+            _ => "nontrickle",
         };
     }
 

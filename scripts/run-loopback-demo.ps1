@@ -22,6 +22,10 @@ Param(
   [string]$SignalingMode = "inproc",
 
   [Parameter(Mandatory = $false)]
+  [ValidateSet("nontrickle", "trickle")]
+  [string]$IceExchange = "nontrickle",
+
+  [Parameter(Mandatory = $false)]
   [string]$Server = "ws://localhost:8080/ws/",
 
   [Parameter(Mandatory = $false)]
@@ -139,6 +143,7 @@ $runArgs = @("run", "--configuration", $Configuration, "--project", $projectPath
 $runArgs += @("--source", "$Source", "--fps", "$Fps", "--cursor", $cursorValue)
 $runArgs += @("--stats-interval-ms", "$StatsIntervalMs")
 $runArgs += @("--signaling-mode", $SignalingMode)
+$runArgs += @("--ice-exchange", $IceExchange)
 
 if (-not [string]::IsNullOrWhiteSpace($Stun)) {
   $runArgs += @("--stun", $Stun)
@@ -158,6 +163,7 @@ Write-Host "  Source:    $Source"
 Write-Host "  FPS:       $Fps"
 Write-Host "  Cursor:    $cursorValue"
 Write-Host "  Signaling: $SignalingMode"
+Write-Host "  ICE Xchg:  $IceExchange"
 if ($SignalingMode -eq "ws") {
   Write-Host "  Server:    $Server"
   Write-Host "  Room:      $Room"
