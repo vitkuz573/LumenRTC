@@ -3,7 +3,7 @@ Param(
   [string]$DepotToolsDir = $env:DEPOT_TOOLS,
 
   [Parameter(Mandatory = $false)]
-  [string]$WebRtcRoot = (Join-Path $PSScriptRoot "..\\webrtc_build"),
+  [string]$WebRtcRoot = "",
 
   [Parameter(Mandatory = $false)]
   [ValidateSet("m137_release")]
@@ -32,6 +32,14 @@ Param(
 )
 
 $ErrorActionPreference = "Stop"
+
+$scriptRoot = $PSScriptRoot
+if ([string]::IsNullOrWhiteSpace($scriptRoot)) {
+  $scriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
+}
+if ([string]::IsNullOrWhiteSpace($scriptRoot)) {
+  $scriptRoot = (Get-Location).Path
+}
 
 function Require-Command {
   param([string]$Name)
@@ -141,8 +149,8 @@ function Ensure-DepotTools {
   if (-not [string]::IsNullOrWhiteSpace($env:DEPOT_TOOLS)) { $candidates += $env:DEPOT_TOOLS }
 
   $candidates += @(
-    (Join-Path $PSScriptRoot "..\\depot_tools"),
-    (Join-Path $PSScriptRoot "..\\..\\depot_tools"),
+    (Join-Path $scriptRoot "..\\depot_tools"),
+    (Join-Path $scriptRoot "..\\..\\depot_tools"),
     $(if (-not [string]::IsNullOrWhiteSpace($env:USERPROFILE)) { Join-Path $env:USERPROFILE "depot_tools" })
   )
 
@@ -151,7 +159,7 @@ function Ensure-DepotTools {
 
   $target = $candidates | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Select-Object -First 1
   if (-not $target) {
-    $target = Join-Path $PSScriptRoot "..\\depot_tools"
+    $target = Join-Path $scriptRoot "..\\depot_tools"
   }
 
   if (-not (Test-Path $target)) {
@@ -185,6 +193,10 @@ if ([string]::IsNullOrWhiteSpace($env:GYP_MSVS_VERSION)) {
 }
 if ([string]::IsNullOrWhiteSpace($env:GYP_MSVS_OVERRIDE_PATH) -and -not [string]::IsNullOrWhiteSpace($env:VSINSTALLDIR)) {
   $env:GYP_MSVS_OVERRIDE_PATH = $env:VSINSTALLDIR.TrimEnd('\\')
+}
+
+if ([string]::IsNullOrWhiteSpace($WebRtcRoot)) {
+  $WebRtcRoot = Join-Path $scriptRoot "..\\webrtc_build"
 }
 
 $webRtcRoot = Resolve-Path -LiteralPath $WebRtcRoot -ErrorAction SilentlyContinue
@@ -238,7 +250,7 @@ try {
     $env:LIBWEBRTC_ROOT = $libWebRtcDir
     $env:LIBWEBRTC_BUILD_DIR = $outDir
 
-    $bootstrapScript = Join-Path $PSScriptRoot "bootstrap.ps1"
+    $bootstrapScript = Join-Path $scriptRoot "bootstrap.ps1"
     & $bootstrapScript -LibWebRtcBuildDir $outDir -BuildType $BuildType -DesktopCapture $DesktopCapture
   }
 }
@@ -246,9 +258,9 @@ finally {
   Pop-Location
 }
 
-$nativeDefault = Join-Path $PSScriptRoot "..\\native\\build\\$BuildType"
+$nativeDefault = Join-Path $scriptRoot "..\\native\\build\\$BuildType"
 if (-not (Test-Path $nativeDefault)) {
-  $nativeDefault = Join-Path $PSScriptRoot "..\\native\\build"
+  $nativeDefault = Join-Path $scriptRoot "..\\native\\build"
 }
 
 Write-Host ""
