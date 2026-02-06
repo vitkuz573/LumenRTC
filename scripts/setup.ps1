@@ -57,6 +57,11 @@ function Resolve-ScriptRoot {
     return $cwd
   }
 
+  $envCwd = [Environment]::CurrentDirectory
+  if (-not [string]::IsNullOrWhiteSpace($envCwd)) {
+    return $envCwd
+  }
+
   return "."
 }
 
@@ -169,18 +174,24 @@ function Ensure-DepotTools {
   if (-not [string]::IsNullOrWhiteSpace($PreferredDir)) { $candidates += $PreferredDir }
   if (-not [string]::IsNullOrWhiteSpace($env:DEPOT_TOOLS)) { $candidates += $env:DEPOT_TOOLS }
 
-  $candidates += @(
-    (Join-Path $scriptRoot "..\\depot_tools"),
-    (Join-Path $scriptRoot "..\\..\\depot_tools"),
-    $(if (-not [string]::IsNullOrWhiteSpace($env:USERPROFILE)) { Join-Path $env:USERPROFILE "depot_tools" })
-  )
+  if (-not [string]::IsNullOrWhiteSpace($scriptRoot)) {
+    $candidates += (Join-Path $scriptRoot "..\\depot_tools")
+    $candidates += (Join-Path $scriptRoot "..\\..\\depot_tools")
+  }
+  if (-not [string]::IsNullOrWhiteSpace($env:USERPROFILE)) {
+    $candidates += (Join-Path $env:USERPROFILE "depot_tools")
+  }
 
   $found = Find-DepotTools -Candidates $candidates
   if ($found) { return $found }
 
   $target = $candidates | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Select-Object -First 1
   if (-not $target) {
-    $target = Join-Path $scriptRoot "..\\depot_tools"
+    if (-not [string]::IsNullOrWhiteSpace($scriptRoot)) {
+      $target = Join-Path $scriptRoot "..\\depot_tools"
+    } else {
+      $target = "..\\depot_tools"
+    }
   }
 
   if (-not (Test-Path $target)) {
@@ -217,7 +228,11 @@ if ([string]::IsNullOrWhiteSpace($env:GYP_MSVS_OVERRIDE_PATH) -and -not [string]
 }
 
 if ([string]::IsNullOrWhiteSpace($WebRtcRoot)) {
-  $WebRtcRoot = Join-Path $scriptRoot "..\\webrtc_build"
+  if (-not [string]::IsNullOrWhiteSpace($scriptRoot)) {
+    $WebRtcRoot = Join-Path $scriptRoot "..\\webrtc_build"
+  } else {
+    $WebRtcRoot = "..\\webrtc_build"
+  }
 }
 
 $webRtcRoot = Resolve-Path -LiteralPath $WebRtcRoot -ErrorAction SilentlyContinue
