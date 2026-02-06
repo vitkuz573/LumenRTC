@@ -33,24 +33,34 @@ Param(
 
 $ErrorActionPreference = "Stop"
 
-$scriptRoot = $PSScriptRoot
-if ([string]::IsNullOrWhiteSpace($scriptRoot)) {
-  if (-not [string]::IsNullOrWhiteSpace($PSCommandPath)) {
-    $scriptRoot = Split-Path -Parent $PSCommandPath
+function Resolve-ScriptRoot {
+  $candidates = @(
+    $PSScriptRoot,
+    $PSCommandPath,
+    $MyInvocation.MyCommand.Path,
+    $MyInvocation.MyCommand.Definition
+  )
+
+  foreach ($candidate in $candidates) {
+    if ([string]::IsNullOrWhiteSpace($candidate)) { continue }
+    $path = $candidate
+    if (Test-Path $path -PathType Leaf) {
+      $path = Split-Path -Parent $path
+    }
+    if (-not [string]::IsNullOrWhiteSpace($path)) {
+      return $path
+    }
   }
-}
-if ([string]::IsNullOrWhiteSpace($scriptRoot)) {
-  $invocationPath = $MyInvocation.MyCommand.Path
-  if (-not [string]::IsNullOrWhiteSpace($invocationPath)) {
-    $scriptRoot = Split-Path -Parent $invocationPath
+
+  $cwd = (Get-Location).Path
+  if (-not [string]::IsNullOrWhiteSpace($cwd)) {
+    return $cwd
   }
+
+  return "."
 }
-if ([string]::IsNullOrWhiteSpace($scriptRoot)) {
-  $scriptRoot = (Get-Location).Path
-}
-if ([string]::IsNullOrWhiteSpace($scriptRoot)) {
-  $scriptRoot = "."
-}
+
+$scriptRoot = Resolve-ScriptRoot
 
 function Require-Command {
   param([string]$Name)
