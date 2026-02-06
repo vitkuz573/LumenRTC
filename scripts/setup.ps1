@@ -81,6 +81,56 @@ function Require-Command {
   }
 }
 
+function Resolve-VisualStudio {
+  $result = [ordered]@{
+    Path = ""
+    Version = ""
+  }
+
+  if (-not [string]::IsNullOrWhiteSpace($env:GYP_MSVS_OVERRIDE_PATH)) {
+    $result.Path = $env:GYP_MSVS_OVERRIDE_PATH.TrimEnd('\')
+  }
+  if (-not [string]::IsNullOrWhiteSpace($env:GYP_MSVS_VERSION)) {
+    $result.Version = $env:GYP_MSVS_VERSION
+  }
+  if (-not [string]::IsNullOrWhiteSpace($result.Path)) {
+    return $result
+  }
+
+  if (-not [string]::IsNullOrWhiteSpace($env:VSINSTALLDIR)) {
+    $result.Path = $env:VSINSTALLDIR.TrimEnd('\')
+    return $result
+  }
+
+  $vswherePath = $null
+  if (-not [string]::IsNullOrWhiteSpace($env:ProgramFiles(x86))) {
+    $vswherePath = Join-PathSafe $env:ProgramFiles(x86) "Microsoft Visual Studio\\Installer\\vswhere.exe"
+  }
+  if (-not (Test-Path $vswherePath) -and -not [string]::IsNullOrWhiteSpace($env:ProgramFiles)) {
+    $vswherePath = Join-PathSafe $env:ProgramFiles "Microsoft Visual Studio\\Installer\\vswhere.exe"
+  }
+
+  if (Test-Path $vswherePath) {
+    $installPath = & $vswherePath -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath 2>$null
+    if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($installPath)) {
+      $result.Path = $installPath.Trim()
+    }
+
+    $installVersion = & $vswherePath -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationVersion 2>$null
+    if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($installVersion)) {
+      if ($installVersion -match '^17\.') {
+        $result.Version = "2022"
+      } elseif ($installVersion -match '^16\.') {
+        $result.Version = "2019"
+      } elseif ($installVersion -match '^15\.') {
+        $result.Version = "2017"
+      }
+    }
+  }
+
+  return $result
+}
+
 function Ensure-GclientConfig {
   param(
     [string]$Root,
@@ -221,11 +271,19 @@ Require-Command ninja
 if ([string]::IsNullOrWhiteSpace($env:DEPOT_TOOLS_WIN_TOOLCHAIN)) {
   $env:DEPOT_TOOLS_WIN_TOOLCHAIN = "0"
 }
+$vsInfo = Resolve-VisualStudio
 if ([string]::IsNullOrWhiteSpace($env:GYP_MSVS_VERSION)) {
-  $env:GYP_MSVS_VERSION = "2022"
+  if (-not [string]::IsNullOrWhiteSpace($vsInfo.Version)) {
+    $env:GYP_MSVS_VERSION = $vsInfo.Version
+  } else {
+    $env:GYP_MSVS_VERSION = "2022"
+  }
 }
-if ([string]::IsNullOrWhiteSpace($env:GYP_MSVS_OVERRIDE_PATH) -and -not [string]::IsNullOrWhiteSpace($env:VSINSTALLDIR)) {
-  $env:GYP_MSVS_OVERRIDE_PATH = $env:VSINSTALLDIR.TrimEnd('\\')
+if ([string]::IsNullOrWhiteSpace($env:GYP_MSVS_OVERRIDE_PATH) -and -not [string]::IsNullOrWhiteSpace($vsInfo.Path)) {
+  $env:GYP_MSVS_OVERRIDE_PATH = $vsInfo.Path
+}
+if ([string]::IsNullOrWhiteSpace($env:GYP_MSVS_OVERRIDE_PATH)) {
+  throw "Visual Studio with C++ build tools not found. Install VS 2022 (Desktop development with C++) or set GYP_MSVS_OVERRIDE_PATH."
 }
 
 if ([string]::IsNullOrWhiteSpace($WebRtcRoot)) {
@@ -271,6 +329,9 @@ Push-Location $srcDirRoot
 try {
   if (-not $SkipSync) {
     gclient sync
+    if ($LASTEXITCODE -ne 0) {
+      throw "gclient sync failed. Check depot_tools and network access."
+    }
   }
 
   $libWebRtcDir = Ensure-LibWebRtcRepo -SrcDir $srcDirRoot
@@ -302,7 +363,13 @@ try {
 
   Set-Content -Path $argsGnPath -Value $argsContent -Encoding ASCII
   gn gen $outDir
+  if ($LASTEXITCODE -ne 0) {
+    throw "gn gen failed. Ensure Visual Studio with C++ build tools is installed and GYP_MSVS_OVERRIDE_PATH is set."
+  }
   ninja -C $outDir libwebrtc
+  if ($LASTEXITCODE -ne 0) {
+    throw "ninja build failed. See the errors above for details."
+  }
 
   if (-not $SkipBootstrap) {
     $env:LIBWEBRTC_ROOT = $libWebRtcDir
