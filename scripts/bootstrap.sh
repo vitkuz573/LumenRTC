@@ -108,6 +108,7 @@ fi
 if [[ -z "$libwebrtc_build_dir" ]]; then
   echo "LIBWEBRTC_BUILD_DIR is not set. Pass --libwebrtc-build-dir or set the LIBWEBRTC_BUILD_DIR environment variable." >&2
   echo "Tip: you can pass --libwebrtc-build-dir auto for auto-detection." >&2
+  echo "If you have not built libwebrtc yet, run scripts/setup.sh to fetch and build it." >&2
   exit 1
 fi
 

@@ -19,12 +19,32 @@ The goal is a stable native ABI for .NET while keeping the heavy lifting in
 git submodule update --init --recursive
 ```
 
-This populates `external/libwebrtc` and is used by default if
-`LIBWEBRTC_ROOT` is not set.
+   This populates `external/libwebrtc` and is used by default if
+   `LIBWEBRTC_ROOT` is not set.
 
 2. Build `libwebrtc` as described in `external/libwebrtc/README.md` (in your WebRTC
    checkout). You need a `libwebrtc` shared library (`.dll` or `.so`).
 3. Note the build output directory (webrtc `out` folder).
+
+### First clone quickstart (recommended)
+
+The setup scripts will fetch and build `libwebrtc`, then build `lumenrtc` and the
+.NET wrapper. This can take time and disk space.
+
+Windows (run from Developer PowerShell for VS 2022):
+
+```powershell
+scripts\\setup.ps1 -BuildType Release
+```
+
+Linux:
+
+```bash
+scripts/setup.sh --build-type Release
+```
+
+If you already have a WebRTC checkout, you can pass `-WebRtcRoot` (PowerShell) or
+`--webrtc-root` (bash) to reuse it.
 
 ## Build native (C ABI)
 

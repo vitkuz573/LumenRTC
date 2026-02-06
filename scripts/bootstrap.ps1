@@ -64,6 +64,7 @@ if ([string]::IsNullOrWhiteSpace($LibWebRtcBuildDir) -or $LibWebRtcBuildDir -eq 
 if ([string]::IsNullOrWhiteSpace($LibWebRtcBuildDir)) {
   Write-Error "LIBWEBRTC_BUILD_DIR is not set. Pass -LibWebRtcBuildDir or set the LIBWEBRTC_BUILD_DIR environment variable."
   Write-Error "Tip: you can pass -LibWebRtcBuildDir auto for auto-detection."
+  Write-Error "If you have not built libwebrtc yet, run scripts\\setup.ps1 to fetch and build it."
 }
 
 $cmakeArgs = @(
