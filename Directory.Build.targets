@@ -78,11 +78,11 @@
   <ItemGroup Condition="'$(LumenRtcCopyNative)'=='true'">
     <None Include="$(LumenRtcNativeFile)"
           Condition="Exists('$(LumenRtcNativeFile)')"
-          CopyToOutputDirectory="Always"
+          CopyToOutputDirectory="PreserveNewest"
           TargetPath="native/%(Filename)%(Extension)" />
     <None Include="$(LibWebRtcNativeFile)"
           Condition="Exists('$(LibWebRtcNativeFile)')"
-          CopyToOutputDirectory="Always"
+          CopyToOutputDirectory="PreserveNewest"
           TargetPath="native/%(Filename)%(Extension)" />
   </ItemGroup>
 
