@@ -84,6 +84,43 @@ function Test-LibWebRtcBuildDir {
   return $false
 }
 
+function Resolve-WindowsNinjaForCMake {
+  if ($env:OS -ne "Windows_NT") { return $null }
+
+  $repoRoot = Resolve-Path (Join-Path $PSScriptRoot "..") -ErrorAction SilentlyContinue
+  $repoRootPath = if ($repoRoot) { $repoRoot.Path } else { $null }
+  $candidates = @()
+
+  if (-not [string]::IsNullOrWhiteSpace($env:DEPOT_TOOLS)) {
+    $candidates += (Join-Path $env:DEPOT_TOOLS "ninja.bat")
+    $candidates += (Join-Path $env:DEPOT_TOOLS "ninja.exe")
+  }
+
+  if (-not [string]::IsNullOrWhiteSpace($repoRootPath)) {
+    $candidates += (Join-Path $repoRootPath "depot_tools\\ninja.bat")
+    $candidates += (Join-Path $repoRootPath "depot_tools\\ninja.exe")
+    $candidates += (Join-Path $repoRootPath "..\\depot_tools\\ninja.bat")
+    $candidates += (Join-Path $repoRootPath "..\\depot_tools\\ninja.exe")
+  }
+
+  foreach ($candidate in $candidates) {
+    if (-not [string]::IsNullOrWhiteSpace($candidate) -and (Test-Path $candidate)) {
+      return (Resolve-Path $candidate).Path
+    }
+  }
+
+  foreach ($commandName in @("ninja.bat", "ninja.exe", "ninja")) {
+    $command = Get-Command $commandName -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($command) {
+      if (-not [string]::IsNullOrWhiteSpace($command.Source)) { return $command.Source }
+      if (-not [string]::IsNullOrWhiteSpace($command.Path)) { return $command.Path }
+      return $commandName
+    }
+  }
+
+  return "ninja"
+}
+
 function Find-LibWebRtcBuildDir {
   $repoRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
   $candidates = @()
@@ -130,7 +167,12 @@ if (-not [string]::IsNullOrWhiteSpace($env:LIBWEBRTC_ROOT)) {
 }
 
 if ($env:OS -eq "Windows_NT") {
+  $resolvedNinja = Resolve-WindowsNinjaForCMake
   $cmakeConfigureArgs = @("-S", "native", "-B", $CMakeBuildDir) + $cmakeArgs + @("-G", "Ninja", "-DCMAKE_C_COMPILER=cl", "-DCMAKE_CXX_COMPILER=cl")
+  if (-not [string]::IsNullOrWhiteSpace($resolvedNinja)) {
+    $cmakeConfigureArgs += "-DCMAKE_MAKE_PROGRAM=$resolvedNinja"
+    Write-Host "Using Ninja for CMake: $resolvedNinja"
+  }
   $cmakeBuildArgs = @("--build", $CMakeBuildDir, "--config", $BuildType)
   $configureCmd = "cmake " + (($cmakeConfigureArgs | ForEach-Object { Quote-CmdArg $_ }) -join " ")
   $buildCmd = "cmake " + (($cmakeBuildArgs | ForEach-Object { Quote-CmdArg $_ }) -join " ")
