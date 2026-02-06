@@ -2040,13 +2040,21 @@ LUMENRTC_API int LUMENRTC_CALL lrtc_peer_connection_set_transceiver_codec_prefer
   return 1;
 }
 
-LUMENRTC_API void LUMENRTC_CALL lrtc_peer_connection_add_ice_candidate(
+LUMENRTC_API int LUMENRTC_CALL lrtc_peer_connection_add_ice_candidate_ex(
     lrtc_peer_connection_t* pc, const char* sdp_mid, int sdp_mline_index,
     const char* candidate) {
   if (!pc || !pc->ref.get() || !sdp_mid || !candidate) {
-    return;
+    return 0;
   }
   pc->ref->AddCandidate(string(sdp_mid), sdp_mline_index, string(candidate));
+  return 1;
+}
+
+LUMENRTC_API void LUMENRTC_CALL lrtc_peer_connection_add_ice_candidate(
+    lrtc_peer_connection_t* pc, const char* sdp_mid, int sdp_mline_index,
+    const char* candidate) {
+  lrtc_peer_connection_add_ice_candidate_ex(pc, sdp_mid, sdp_mline_index,
+                                            candidate);
 }
 
 LUMENRTC_API bool LUMENRTC_CALL lrtc_peer_connection_add_stream(

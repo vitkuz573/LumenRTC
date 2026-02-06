@@ -333,7 +333,32 @@ public sealed class PeerConnection : SafeHandle
     {
         using var midUtf8 = new Utf8String(sdpMid);
         using var candUtf8 = new Utf8String(candidate);
-        NativeMethods.lrtc_peer_connection_add_ice_candidate(handle, midUtf8.Pointer, sdpMlineIndex, candUtf8.Pointer);
+        NativeMethods.lrtc_peer_connection_add_ice_candidate(
+            handle,
+            midUtf8.Pointer,
+            sdpMlineIndex,
+            candUtf8.Pointer);
+    }
+
+    public bool TryAddIceCandidate(string sdpMid, int sdpMlineIndex, string candidate)
+    {
+        if (string.IsNullOrWhiteSpace(sdpMid))
+        {
+            return false;
+        }
+        if (candidate == null)
+        {
+            return false;
+        }
+
+        using var midUtf8 = new Utf8String(sdpMid);
+        using var candUtf8 = new Utf8String(candidate);
+        var result = NativeMethods.lrtc_peer_connection_add_ice_candidate_ex(
+            handle,
+            midUtf8.Pointer,
+            sdpMlineIndex,
+            candUtf8.Pointer);
+        return result != 0;
     }
 
     public void AddIceCandidate(IceCandidate candidate)

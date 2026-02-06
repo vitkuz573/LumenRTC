@@ -614,6 +614,9 @@ lrtc_peer_connection_set_transceiver_codec_preferences(
 LUMENRTC_API void LUMENRTC_CALL lrtc_peer_connection_add_ice_candidate(
     lrtc_peer_connection_t* pc, const char* sdp_mid, int sdp_mline_index,
     const char* candidate);
+LUMENRTC_API int LUMENRTC_CALL lrtc_peer_connection_add_ice_candidate_ex(
+    lrtc_peer_connection_t* pc, const char* sdp_mid, int sdp_mline_index,
+    const char* candidate);
 
 LUMENRTC_API bool LUMENRTC_CALL lrtc_peer_connection_add_stream(
     lrtc_peer_connection_t* pc, lrtc_media_stream_t* stream);

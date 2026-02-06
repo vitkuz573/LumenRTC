@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Net;
+using System.Net.Sockets;
 using System.Threading;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 using LumenRTC;
 using LumenRTC.Rendering.Sdl;
@@ -10,6 +12,16 @@ namespace LumenRTC.Sample.ScreenShareLoopback;
 
 internal static class Program
 {
+    private readonly record struct CandidateForwardItem(
+        string SourcePc,
+        string TargetPc,
+        string Mid,
+        int Mline,
+        string Candidate,
+        bool EndOfCandidates);
+
+    private readonly record struct ParsedCandidate(string Protocol, string Address, string Type);
+
     public static async Task Main(string[] args)
     {
         var sourceIndex = Math.Max(0, GetIntArg(args, "--source", 0));
@@ -19,6 +31,7 @@ internal static class Program
         var statsIntervalMs = Math.Max(0, GetIntArg(args, "--stats-interval-ms", 2000));
         var disableIpv6 = GetBoolArg(args, "--disable-ipv6", true);
         var stun = GetArg(args, "--stun", string.Empty);
+        var forceLocalLoopback = GetBoolArg(args, "--force-local-loopback", false);
 
         void Trace(string text)
         {
@@ -54,32 +67,36 @@ internal static class Program
 
             VideoTrack? remoteVideoTrack = null;
             var iceSync = new object();
-            var pendingForPc1 = new List<(string Mid, int Mline, string Candidate)>();
-            var pendingForPc2 = new List<(string Mid, int Mline, string Candidate)>();
+            var pendingForPc1 = new List<CandidateForwardItem>();
+            var pendingForPc2 = new List<CandidateForwardItem>();
             var pc1CanApplyRemoteCandidates = false;
             var pc2CanApplyRemoteCandidates = false;
+            var pc1LastMid = "0";
+            var pc2LastMid = "0";
+            var pc1LastMline = 0;
+            var pc2LastMline = 0;
             var startedAt = DateTime.UtcNow;
 
             PeerConnection? pc1 = null;
             PeerConnection? pc2 = null;
             RtpSender? sender = null;
-
-            void SafeApplyRemoteCandidate(PeerConnection? pc, string who, string mid, int mline, string candidate)
+            using var candidatePumpCts = new CancellationTokenSource();
+            var candidateChannel = Channel.CreateUnbounded<CandidateForwardItem>(new UnboundedChannelOptions
             {
-                if (pc == null)
+                SingleReader = true,
+                SingleWriter = false,
+                AllowSynchronousContinuations = false,
+            });
+
+            bool TryEnqueueCandidate(CandidateForwardItem item)
+            {
+                if (candidateChannel.Writer.TryWrite(item))
                 {
-                    return;
+                    return true;
                 }
 
-                try
-                {
-                    pc.AddIceCandidate(mid, mline, candidate);
-                    Trace($"{who} apply candidate mid={mid} mline={mline}");
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"{who} failed to apply ICE candidate: {ex.Message}");
-                }
+                Console.WriteLine($"Failed to enqueue candidate {item.SourcePc}->{item.TargetPc} mid={item.Mid} mline={item.Mline}.");
+                return false;
             }
 
             void AttachRemoteTrack(VideoTrack track)
@@ -124,8 +141,10 @@ internal static class Program
                 Console.WriteLine($"Attached remote video track: {trackId}");
             }
 
-            void QueueOrForwardToPc1(string mid, int mline, string candidate)
+            void QueueOrForwardToPc1(string sourcePc, string mid, int mline, string candidate, bool endOfCandidates = false)
             {
+                var normalizedMid = string.IsNullOrWhiteSpace(mid) ? "0" : mid;
+                var item = new CandidateForwardItem(sourcePc, "pc1", normalizedMid, mline, candidate ?? string.Empty, endOfCandidates);
                 var forwardNow = false;
                 lock (iceSync)
                 {
@@ -135,19 +154,21 @@ internal static class Program
                     }
                     else
                     {
-                        pendingForPc1.Add((mid, mline, candidate));
-                        Trace($"pc1 queue candidate mid={mid} mline={mline}");
+                        pendingForPc1.Add(item);
+                        Trace($"pc1 queue {(endOfCandidates ? "eoc" : "candidate")} from {sourcePc} mid={normalizedMid} mline={mline}");
                     }
                 }
 
                 if (forwardNow)
                 {
-                    SafeApplyRemoteCandidate(pc1, "pc1", mid, mline, candidate);
+                    TryEnqueueCandidate(item);
                 }
             }
 
-            void QueueOrForwardToPc2(string mid, int mline, string candidate)
+            void QueueOrForwardToPc2(string sourcePc, string mid, int mline, string candidate, bool endOfCandidates = false)
             {
+                var normalizedMid = string.IsNullOrWhiteSpace(mid) ? "0" : mid;
+                var item = new CandidateForwardItem(sourcePc, "pc2", normalizedMid, mline, candidate ?? string.Empty, endOfCandidates);
                 var forwardNow = false;
                 lock (iceSync)
                 {
@@ -157,24 +178,24 @@ internal static class Program
                     }
                     else
                     {
-                        pendingForPc2.Add((mid, mline, candidate));
-                        Trace($"pc2 queue candidate mid={mid} mline={mline}");
+                        pendingForPc2.Add(item);
+                        Trace($"pc2 queue {(endOfCandidates ? "eoc" : "candidate")} from {sourcePc} mid={normalizedMid} mline={mline}");
                     }
                 }
 
                 if (forwardNow)
                 {
-                    SafeApplyRemoteCandidate(pc2, "pc2", mid, mline, candidate);
+                    TryEnqueueCandidate(item);
                 }
             }
 
             void MarkPc1ReadyForRemoteCandidatesAndFlush()
             {
-                List<(string Mid, int Mline, string Candidate)> pending;
+                List<CandidateForwardItem> pending;
                 lock (iceSync)
                 {
                     pc1CanApplyRemoteCandidates = true;
-                    pending = new List<(string Mid, int Mline, string Candidate)>(pendingForPc1);
+                    pending = new List<CandidateForwardItem>(pendingForPc1);
                     pendingForPc1.Clear();
                 }
 
@@ -185,17 +206,17 @@ internal static class Program
 
                 foreach (var candidate in pending)
                 {
-                    SafeApplyRemoteCandidate(pc1, "pc1", candidate.Mid, candidate.Mline, candidate.Candidate);
+                    TryEnqueueCandidate(candidate);
                 }
             }
 
             void MarkPc2ReadyForRemoteCandidatesAndFlush()
             {
-                List<(string Mid, int Mline, string Candidate)> pending;
+                List<CandidateForwardItem> pending;
                 lock (iceSync)
                 {
                     pc2CanApplyRemoteCandidates = true;
-                    pending = new List<(string Mid, int Mline, string Candidate)>(pendingForPc2);
+                    pending = new List<CandidateForwardItem>(pendingForPc2);
                     pendingForPc2.Clear();
                 }
 
@@ -206,7 +227,7 @@ internal static class Program
 
                 foreach (var candidate in pending)
                 {
-                    SafeApplyRemoteCandidate(pc2, "pc2", candidate.Mid, candidate.Mline, candidate.Candidate);
+                    TryEnqueueCandidate(candidate);
                 }
             }
 
@@ -224,23 +245,69 @@ internal static class Program
             {
                 OnIceCandidate = (mid, mline, cand) =>
                 {
-                    Trace($"pc1 local candidate mid={mid} mline={mline}");
-                    QueueOrForwardToPc2(mid, mline, cand);
+                    var candidateType = ExtractCandidateType(cand);
+                    var candidateAddress = ExtractCandidateAddress(cand);
+                    Trace($"pc1 local candidate type={candidateType} addr={candidateAddress} mid={mid} mline={mline}");
+                    lock (iceSync)
+                    {
+                        pc1LastMid = string.IsNullOrWhiteSpace(mid) ? "0" : mid;
+                        pc1LastMline = mline;
+                    }
+                    QueueOrForwardToPc2("pc1", mid, mline, cand);
                 },
                 OnPeerConnectionState = state => Console.WriteLine($"pc1 state: {state}"),
                 OnIceConnectionState = state => Console.WriteLine($"pc1 ice: {state}"),
+                OnIceGatheringState = state =>
+                {
+                    Console.WriteLine($"pc1 gathering: {state}");
+                    if (state == IceGatheringState.Complete)
+                    {
+                        string mid;
+                        int mline;
+                        lock (iceSync)
+                        {
+                            mid = pc1LastMid;
+                            mline = pc1LastMline;
+                        }
+                        Trace($"pc1 local eoc mid={mid} mline={mline}");
+                        QueueOrForwardToPc2("pc1", mid, mline, string.Empty, endOfCandidates: true);
+                    }
+                },
             }, config);
 
             pc2 = receiverFactory.CreatePeerConnection(new PeerConnectionCallbacks
             {
                 OnIceCandidate = (mid, mline, cand) =>
                 {
-                    Trace($"pc2 local candidate mid={mid} mline={mline}");
-                    QueueOrForwardToPc1(mid, mline, cand);
+                    var candidateType = ExtractCandidateType(cand);
+                    var candidateAddress = ExtractCandidateAddress(cand);
+                    Trace($"pc2 local candidate type={candidateType} addr={candidateAddress} mid={mid} mline={mline}");
+                    lock (iceSync)
+                    {
+                        pc2LastMid = string.IsNullOrWhiteSpace(mid) ? "0" : mid;
+                        pc2LastMline = mline;
+                    }
+                    QueueOrForwardToPc1("pc2", mid, mline, cand);
                 },
                 OnVideoTrack = AttachRemoteTrack,
                 OnPeerConnectionState = state => Console.WriteLine($"pc2 state: {state}"),
                 OnIceConnectionState = state => Console.WriteLine($"pc2 ice: {state}"),
+                OnIceGatheringState = state =>
+                {
+                    Console.WriteLine($"pc2 gathering: {state}");
+                    if (state == IceGatheringState.Complete)
+                    {
+                        string mid;
+                        int mline;
+                        lock (iceSync)
+                        {
+                            mid = pc2LastMid;
+                            mline = pc2LastMline;
+                        }
+                        Trace($"pc2 local eoc mid={mid} mline={mline}");
+                        QueueOrForwardToPc1("pc2", mid, mline, string.Empty, endOfCandidates: true);
+                    }
+                },
             }, config);
 
             using var desktop = senderFactory.GetDesktopDevice();
@@ -289,6 +356,14 @@ internal static class Program
                 Console.WriteLine("Warning: failed to set sender encoding parameters.");
             }
 
+            var candidatePumpTask = CandidateApplyLoopAsync(
+                candidateChannel.Reader,
+                () => pc1,
+                () => pc2,
+                forceLocalLoopback,
+                Trace,
+                candidatePumpCts.Token);
+
             await NegotiateAsync(pc1, pc2, MarkPc2ReadyForRemoteCandidatesAndFlush, MarkPc1ReadyForRemoteCandidatesAndFlush, Trace)
                 .ConfigureAwait(false);
 
@@ -315,9 +390,19 @@ internal static class Program
             finally
             {
                 statsCts.Cancel();
+                candidatePumpCts.Cancel();
+                candidateChannel.Writer.TryComplete();
                 try
                 {
                     await statsTask.ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    // Expected on shutdown.
+                }
+                try
+                {
+                    await candidatePumpTask.ConfigureAwait(false);
                 }
                 catch (OperationCanceledException)
                 {
@@ -462,18 +547,36 @@ internal static class Program
         {
             using var report = await pc.GetStatsReportAsync(token).ConfigureAwait(false);
 
+            var pairCount = 0;
+            var stateCounts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
             var candidateSummary = "none";
             foreach (var pair in report.CandidatePairs)
             {
+                pairCount++;
                 if (pair.TryGetString("state", out var state) &&
-                    string.Equals(state, "succeeded", StringComparison.OrdinalIgnoreCase))
+                    !string.IsNullOrWhiteSpace(state))
                 {
-                    pair.TryGetBool("nominated", out var nominated);
-                    var sent = ReadInt64(pair, "bytesSent");
-                    var recv = ReadInt64(pair, "bytesReceived");
-                    candidateSummary = $"succeeded,nominated={nominated},pairBytes={sent}/{recv}";
-                    break;
+                    stateCounts.TryGetValue(state, out var current);
+                    stateCounts[state] = current + 1;
+
+                    if (string.Equals(state, "succeeded", StringComparison.OrdinalIgnoreCase))
+                    {
+                        pair.TryGetBool("nominated", out var nominated);
+                        var sent = ReadInt64(pair, "bytesSent");
+                        var recv = ReadInt64(pair, "bytesReceived");
+                        candidateSummary = $"succeeded,nominated={nominated},pairBytes={sent}/{recv}";
+                        break;
+                    }
                 }
+            }
+            if (candidateSummary == "none" && pairCount > 0)
+            {
+                var parts = new List<string>();
+                foreach (var kv in stateCounts)
+                {
+                    parts.Add($"{kv.Key}:{kv.Value}");
+                }
+                candidateSummary = $"pairs={pairCount},states={string.Join(",", parts)}";
             }
 
             long outboundVideoBytes = 0;
@@ -504,6 +607,184 @@ internal static class Program
         {
             Console.WriteLine($"[{label} stats] failed: {ex.Message}");
         }
+    }
+
+    private static async Task CandidateApplyLoopAsync(
+        ChannelReader<CandidateForwardItem> reader,
+        Func<PeerConnection?> getPc1,
+        Func<PeerConnection?> getPc2,
+        bool forceLocalLoopback,
+        Action<string> trace,
+        CancellationToken token)
+    {
+        while (await reader.WaitToReadAsync(token).ConfigureAwait(false))
+        {
+            while (reader.TryRead(out var item))
+            {
+                var target = string.Equals(item.TargetPc, "pc1", StringComparison.OrdinalIgnoreCase)
+                    ? getPc1()
+                    : getPc2();
+                if (target == null)
+                {
+                    trace($"drop candidate: target {item.TargetPc} is not available");
+                    continue;
+                }
+
+                if (!item.EndOfCandidates && forceLocalLoopback && !IsLoopbackFriendlyCandidate(item.Candidate))
+                {
+                    trace(
+                        $"drop {item.SourcePc}->{item.TargetPc} candidate type={ExtractCandidateType(item.Candidate)} " +
+                        $"addr={ExtractCandidateAddress(item.Candidate)} (force-local-loopback)");
+                    continue;
+                }
+
+                var candidateValue = item.EndOfCandidates ? string.Empty : item.Candidate;
+                var applied = target.TryAddIceCandidate(item.Mid, item.Mline, candidateValue);
+
+                var candidateKind = item.EndOfCandidates
+                    ? "eoc"
+                    : $"candidate type={ExtractCandidateType(item.Candidate)} addr={ExtractCandidateAddress(item.Candidate)}";
+
+                if (applied)
+                {
+                    trace($"{item.TargetPc} apply {candidateKind} from {item.SourcePc} mid={item.Mid} mline={item.Mline}");
+                }
+                else
+                {
+                    Console.WriteLine($"{item.TargetPc} failed to apply {candidateKind} from {item.SourcePc} mid={item.Mid} mline={item.Mline}");
+                }
+            }
+        }
+    }
+
+    private static bool IsLoopbackFriendlyCandidate(string candidate)
+    {
+        var parsed = TryParseCandidate(candidate);
+        if (parsed == null)
+        {
+            return false;
+        }
+
+        if (!string.Equals(parsed.Value.Type, "host", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        if (!string.Equals(parsed.Value.Protocol, "udp", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        var address = parsed.Value.Address;
+        if (string.IsNullOrWhiteSpace(address))
+        {
+            return false;
+        }
+
+        if (address.EndsWith(".local", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        if (!IPAddress.TryParse(address, out var ip))
+        {
+            return false;
+        }
+
+        if (IPAddress.IsLoopback(ip))
+        {
+            return true;
+        }
+
+        if (ip.AddressFamily == AddressFamily.InterNetwork)
+        {
+            return IsPrivateIpv4(ip);
+        }
+
+        if (ip.AddressFamily == AddressFamily.InterNetworkV6)
+        {
+            return ip.IsIPv6LinkLocal || IsUniqueLocalIpv6(ip);
+        }
+
+        return false;
+    }
+
+    private static bool IsPrivateIpv4(IPAddress ip)
+    {
+        var bytes = ip.GetAddressBytes();
+        if (bytes.Length != 4)
+        {
+            return false;
+        }
+
+        if (bytes[0] == 10)
+        {
+            return true;
+        }
+
+        if (bytes[0] == 172 && bytes[1] >= 16 && bytes[1] <= 31)
+        {
+            return true;
+        }
+
+        if (bytes[0] == 192 && bytes[1] == 168)
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    private static bool IsUniqueLocalIpv6(IPAddress ip)
+    {
+        var bytes = ip.GetAddressBytes();
+        if (bytes.Length != 16)
+        {
+            return false;
+        }
+
+        return (bytes[0] & 0xFE) == 0xFC;
+    }
+
+    private static ParsedCandidate? TryParseCandidate(string candidate)
+    {
+        if (string.IsNullOrWhiteSpace(candidate))
+        {
+            return null;
+        }
+
+        var tokens = candidate.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (tokens.Length < 8)
+        {
+            return null;
+        }
+
+        var protocol = tokens[2];
+        var address = tokens[4];
+        var type = string.Empty;
+
+        for (var i = 6; i < tokens.Length - 1; i++)
+        {
+            if (string.Equals(tokens[i], "typ", StringComparison.OrdinalIgnoreCase))
+            {
+                type = tokens[i + 1];
+                break;
+            }
+        }
+
+        return new ParsedCandidate(protocol, address, type);
+    }
+
+    private static string ExtractCandidateType(string candidate)
+    {
+        var parsed = TryParseCandidate(candidate);
+        return parsed?.Type ?? "<unknown>";
+    }
+
+    private static string ExtractCandidateAddress(string candidate)
+    {
+        var parsed = TryParseCandidate(candidate);
+        return parsed?.Address ?? "<unknown>";
     }
 
     private static bool IsVideoRtpStat(RtcStat stat)

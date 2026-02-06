@@ -118,6 +118,13 @@ internal static partial class NativeMethods
         IntPtr candidate);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern int lrtc_peer_connection_add_ice_candidate_ex(
+        IntPtr pc,
+        IntPtr sdpMid,
+        int sdpMlineIndex,
+        IntPtr candidate);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     internal static extern bool lrtc_peer_connection_add_stream(IntPtr pc, IntPtr stream);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
