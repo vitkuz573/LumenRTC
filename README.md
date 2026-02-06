@@ -37,7 +37,7 @@ clone `depot_tools` into `../depot_tools` automatically.
 Windows (run from Developer PowerShell for VS 2022):
 
 ```powershell
-scripts\\setup.ps1 -BuildType Release
+scripts\\setup.cmd -BuildType Release
 ```
 
 Linux:

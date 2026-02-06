@@ -6,6 +6,9 @@ Param(
   [string]$WebRtcRoot = "",
 
   [Parameter(Mandatory = $false)]
+  [string]$ScriptRoot = "",
+
+  [Parameter(Mandatory = $false)]
   [ValidateSet("m137_release")]
   [string]$WebRtcBranch = "m137_release",
 
@@ -34,6 +37,12 @@ Param(
 $ErrorActionPreference = "Stop"
 
 function Resolve-ScriptRoot {
+  param([string]$OverrideRoot)
+
+  if (-not [string]::IsNullOrWhiteSpace($OverrideRoot)) {
+    return $OverrideRoot
+  }
+
   $candidates = @(
     $PSScriptRoot,
     $PSCommandPath,
@@ -65,7 +74,7 @@ function Resolve-ScriptRoot {
   return "."
 }
 
-$scriptRoot = Resolve-ScriptRoot
+$scriptRoot = Resolve-ScriptRoot -OverrideRoot $ScriptRoot
 
 function Require-Command {
   param([string]$Name)
