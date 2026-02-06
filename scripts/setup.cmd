@@ -1,8 +1,8 @@
 @echo off
 setlocal
 
-set "SCRIPT_DIR=%~dp0"
-for %%I in ("%SCRIPT_DIR%..") do set "REPO_DIR=%%~fI"
+for %%I in ("%~dp0.") do set "SCRIPT_DIR=%%~fI"
+for %%I in ("%SCRIPT_DIR%\\..") do set "REPO_DIR=%%~fI"
 set "DEPOT_DIR=%REPO_DIR%\depot_tools"
 set "WEBRTC_ROOT=%REPO_DIR%\webrtc_build"
 
@@ -12,4 +12,4 @@ if errorlevel 1 (
   exit /b 1
 )
 
-pwsh -NoProfile -ExecutionPolicy Bypass -File "%SCRIPT_DIR%setup.ps1" -ScriptRoot "%SCRIPT_DIR%" -DepotToolsDir "%DEPOT_DIR%" -WebRtcRoot "%WEBRTC_ROOT%" %*
+pwsh -NoProfile -ExecutionPolicy Bypass -File "%SCRIPT_DIR%\\setup.ps1" -DepotToolsDir "%DEPOT_DIR%" -WebRtcRoot "%WEBRTC_ROOT%" %*
