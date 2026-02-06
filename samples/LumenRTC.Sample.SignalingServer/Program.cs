@@ -4,6 +4,7 @@ using System.IO;
 using System.Net;
 using System.Net.WebSockets;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -82,6 +83,7 @@ internal static class Program
         var roomSockets = rooms.GetOrAdd(room, _ => new ConcurrentDictionary<Guid, WebSocket>());
         roomSockets[id] = socket;
         Console.WriteLine($"[{room}] connected {id}");
+        await BroadcastRoomEventAsync(roomSockets, "peer_joined", id, roomSockets.Count, token).ConfigureAwait(false);
 
         try
         {
@@ -90,6 +92,10 @@ internal static class Program
         finally
         {
             roomSockets.TryRemove(id, out _);
+            if (!roomSockets.IsEmpty)
+            {
+                await BroadcastRoomEventAsync(roomSockets, "peer_left", id, roomSockets.Count, token).ConfigureAwait(false);
+            }
             if (roomSockets.IsEmpty)
             {
                 rooms.TryRemove(room, out _);
@@ -106,6 +112,39 @@ internal static class Program
             }
 
             Console.WriteLine($"[{room}] disconnected {id}");
+        }
+    }
+
+    private static async Task BroadcastRoomEventAsync(
+        ConcurrentDictionary<Guid, WebSocket> peers,
+        string type,
+        Guid peerId,
+        int peerCount,
+        CancellationToken token)
+    {
+        var json = JsonSerializer.Serialize(new
+        {
+            type,
+            peerId = peerId.ToString(),
+            peerCount
+        });
+        var bytes = Encoding.UTF8.GetBytes(json);
+
+        foreach (var peer in peers)
+        {
+            if (peer.Value.State != WebSocketState.Open)
+            {
+                continue;
+            }
+
+            try
+            {
+                await peer.Value.SendAsync(bytes, WebSocketMessageType.Text, true, token).ConfigureAwait(false);
+            }
+            catch
+            {
+                // ignore send errors
+            }
         }
     }
 

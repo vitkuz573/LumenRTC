@@ -78,6 +78,31 @@ internal static class Program
             DataChannel? controlChannel = null;
             SdlVideoRenderer? renderer = null;
             var offerSent = false;
+            var remoteVideoTracks = new List<VideoTrack>();
+
+            void AttachRemoteVideoTrack(VideoTrack track)
+            {
+                if (renderer == null)
+                {
+                    track.Dispose();
+                    return;
+                }
+
+                track.AddSink(renderer.Sink);
+                remoteVideoTracks.Add(track);
+
+                string trackId;
+                try
+                {
+                    trackId = track.Id;
+                }
+                catch
+                {
+                    trackId = "<unknown>";
+                }
+
+                Console.WriteLine($"Attached remote video track: {trackId}");
+            }
 
             var callbacks = new PeerConnectionCallbacks
             {
@@ -109,9 +134,13 @@ internal static class Program
                 },
                 OnVideoTrack = track =>
                 {
-                    if (role == "viewer" && renderer != null)
+                    if (role == "viewer")
                     {
-                        track.AddSink(renderer.Sink);
+                        AttachRemoteVideoTrack(track);
+                    }
+                    else
+                    {
+                        track.Dispose();
                     }
                 },
                 OnPeerConnectionState = state => Console.WriteLine($"PC state: {state}"),
@@ -235,6 +264,15 @@ internal static class Program
 
                 switch (message.Type)
                 {
+                    case "peer_joined":
+                        if (role == "sender" && (message.PeerCount ?? 0) > 1)
+                        {
+                            await StartOfferAsync().ConfigureAwait(false);
+                        }
+                        break;
+                    case "peer_left":
+                        Console.WriteLine($"Peer left: {message.PeerId ?? "<unknown>"}");
+                        break;
                     case "ready":
                         if (role == "sender" && message.Role == "viewer")
                         {
@@ -310,6 +348,10 @@ internal static class Program
             mediaList?.Dispose();
             desktopDevice?.Dispose();
             controlChannel?.Dispose();
+            foreach (var remoteTrack in remoteVideoTracks)
+            {
+                remoteTrack.Dispose();
+            }
             renderer?.Dispose();
             pc.Close();
             pc.Dispose();
@@ -453,5 +495,7 @@ internal static class Program
         public string? SdpMid { get; set; }
         public int? SdpMLineIndex { get; set; }
         public string? Candidate { get; set; }
+        public string? PeerId { get; set; }
+        public int? PeerCount { get; set; }
     }
 }
