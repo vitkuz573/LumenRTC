@@ -392,6 +392,7 @@ if ([string]::IsNullOrWhiteSpace($env:GYP_MSVS_OVERRIDE_PATH) -and -not [string]
 if ([string]::IsNullOrWhiteSpace($env:GYP_MSVS_OVERRIDE_PATH)) {
   throw "Visual Studio 2026 with C++ build tools not found. Install VS 2026 (Desktop development with C++) or set GYP_MSVS_OVERRIDE_PATH."
 }
+$vsPathCheck = $env:GYP_MSVS_OVERRIDE_PATH.TrimEnd('\\')
 $detectedVersion = $vsInfo.Version
 if ([string]::IsNullOrWhiteSpace($detectedVersion)) {
   if ($vsPathCheck -match '\\\\(20\\d{2})\\\\') {
@@ -403,7 +404,6 @@ if ([string]::IsNullOrWhiteSpace($detectedVersion)) {
 if ($detectedVersion -ne "2026") {
   throw "Only Visual Studio 2026 is supported. Detected: $detectedVersion. Set LUMENRTC_VS_YEAR=2026 if detection fails."
 }
-$vsPathCheck = $env:GYP_MSVS_OVERRIDE_PATH.TrimEnd('\\')
 if (-not (Test-Path $vsPathCheck)) {
   throw "GYP_MSVS_OVERRIDE_PATH points to a missing folder: $vsPathCheck"
 }

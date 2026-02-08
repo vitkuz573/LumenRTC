@@ -397,7 +397,9 @@ internal static class Program
             var firstFrameLogged = 0;
             var offerSent = false;
             var offerSync = new object();
+            var senderLocalDescriptionSet = false;
             var senderRemoteDescriptionSet = false;
+            var viewerLocalDescriptionSet = false;
             var viewerRemoteDescriptionSet = false;
             var candidateSync = new object();
             var senderQueuedCandidates = new List<(string Mid, int MlineIndex, string Candidate)>();
@@ -468,7 +470,7 @@ internal static class Program
                 var applyNow = false;
                 lock (candidateSync)
                 {
-                    if (senderRemoteDescriptionSet)
+                    if (senderLocalDescriptionSet && senderRemoteDescriptionSet)
                     {
                         applyNow = true;
                     }
@@ -492,7 +494,7 @@ internal static class Program
                 var applyNow = false;
                 lock (candidateSync)
                 {
-                    if (viewerRemoteDescriptionSet)
+                    if (viewerLocalDescriptionSet && viewerRemoteDescriptionSet)
                     {
                         applyNow = true;
                     }
@@ -511,12 +513,16 @@ internal static class Program
                 ApplyCandidate("viewer", viewerPc, mid, mline, candidate, iceMode, dispatchMetrics, traceSignaling, Trace);
             }
 
-            void MarkSenderRemoteDescriptionSetAndFlush()
+            void FlushSenderQueuedCandidatesIfReady()
             {
                 List<(string Mid, int MlineIndex, string Candidate)> pending;
                 lock (candidateSync)
                 {
-                    senderRemoteDescriptionSet = true;
+                    if (!senderLocalDescriptionSet || !senderRemoteDescriptionSet || senderQueuedCandidates.Count == 0)
+                    {
+                        return;
+                    }
+
                     pending = new List<(string Mid, int MlineIndex, string Candidate)>(senderQueuedCandidates);
                     senderQueuedCandidates.Clear();
                 }
@@ -532,12 +538,16 @@ internal static class Program
                 }
             }
 
-            void MarkViewerRemoteDescriptionSetAndFlush()
+            void FlushViewerQueuedCandidatesIfReady()
             {
                 List<(string Mid, int MlineIndex, string Candidate)> pending;
                 lock (candidateSync)
                 {
-                    viewerRemoteDescriptionSet = true;
+                    if (!viewerLocalDescriptionSet || !viewerRemoteDescriptionSet || viewerQueuedCandidates.Count == 0)
+                    {
+                        return;
+                    }
+
                     pending = new List<(string Mid, int MlineIndex, string Candidate)>(viewerQueuedCandidates);
                     viewerQueuedCandidates.Clear();
                 }
@@ -551,6 +561,46 @@ internal static class Program
                 {
                     ApplyCandidate("viewer", viewerPc, candidate.Mid, candidate.MlineIndex, candidate.Candidate, iceMode, dispatchMetrics, traceSignaling, Trace);
                 }
+            }
+
+            void MarkSenderLocalDescriptionSetAndFlush()
+            {
+                lock (candidateSync)
+                {
+                    senderLocalDescriptionSet = true;
+                }
+
+                FlushSenderQueuedCandidatesIfReady();
+            }
+
+            void MarkSenderRemoteDescriptionSetAndFlush()
+            {
+                lock (candidateSync)
+                {
+                    senderRemoteDescriptionSet = true;
+                }
+
+                FlushSenderQueuedCandidatesIfReady();
+            }
+
+            void MarkViewerLocalDescriptionSetAndFlush()
+            {
+                lock (candidateSync)
+                {
+                    viewerLocalDescriptionSet = true;
+                }
+
+                FlushViewerQueuedCandidatesIfReady();
+            }
+
+            void MarkViewerRemoteDescriptionSetAndFlush()
+            {
+                lock (candidateSync)
+                {
+                    viewerRemoteDescriptionSet = true;
+                }
+
+                FlushViewerQueuedCandidatesIfReady();
             }
 
             var config = new RtcConfiguration
@@ -678,6 +728,7 @@ internal static class Program
                             type,
                             () =>
                             {
+                                MarkSenderLocalDescriptionSetAndFlush();
                                 _ = Task.Run(async () =>
                                 {
                                     try
@@ -776,6 +827,7 @@ internal static class Program
                                             answerType,
                                             () =>
                                             {
+                                                MarkViewerLocalDescriptionSetAndFlush();
                                                 _ = Task.Run(async () =>
                                                 {
                                                     try
