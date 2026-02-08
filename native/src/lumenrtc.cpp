@@ -2085,17 +2085,27 @@ LUMENRTC_API int LUMENRTC_CALL lrtc_peer_connection_add_ice_candidate_ex(
     }
     return 0;
   }
-  const bool accepted =
-      pc->ref->AddCandidate(string(sdp_mid), sdp_mline_index,
-                            string(candidate));
-  if (!accepted && trace_ice_native) {
+  libwebrtc::SdpParseError parse_error;
+  scoped_refptr<RTCIceCandidate> parsed = RTCIceCandidate::Create(
+      string(candidate), string(sdp_mid), sdp_mline_index, &parse_error);
+  if (!parsed.get()) {
+    if (trace_ice_native) {
+      std::fprintf(
+          stderr,
+          "[lumenrtc:ice] add candidate parse failed: mid=%s mline=%d err=%s\n",
+          sdp_mid, sdp_mline_index, parse_error.description.c_string());
+    }
+    return 0;
+  }
+
+  pc->ref->AddCandidate(string(sdp_mid), sdp_mline_index, string(candidate));
+  if (trace_ice_native) {
     std::fprintf(
         stderr,
-        "[lumenrtc:ice] add candidate rejected by peer connection: "
-        "mid=%s mline=%d len=%zu\n",
+        "[lumenrtc:ice] add candidate applied: mid=%s mline=%d len=%zu\n",
         sdp_mid, sdp_mline_index, std::strlen(candidate));
   }
-  return accepted ? 1 : 0;
+  return 1;
 }
 
 LUMENRTC_API void LUMENRTC_CALL lrtc_peer_connection_add_ice_candidate(

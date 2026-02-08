@@ -9,8 +9,7 @@ Param(
   [string]$RepoRoot = "",
 
   [Parameter(Mandatory = $false)]
-  [ValidateSet("m137_release")]
-  [string]$WebRtcBranch = "m137_release",
+  [string]$WebRtcBranch = "branch-heads/7151",
 
   [Parameter(Mandatory = $false)]
   [ValidateSet("x64", "x86", "arm", "arm64")]
@@ -26,9 +25,6 @@ Param(
 
   [Parameter(Mandatory = $false)]
   [switch]$SkipSync,
-
-  [Parameter(Mandatory = $false)]
-  [switch]$SkipPatch,
 
   [Parameter(Mandatory = $false)]
   [switch]$SkipBootstrap
@@ -251,15 +247,16 @@ function Ensure-GclientConfig {
   )
 
   $gclientPath = Join-PathSafe $Root ".gclient"
-  if (Test-Path $gclientPath) {
-    return
+  $webrtcUrl = "https://webrtc.googlesource.com/src.git"
+  if (-not [string]::IsNullOrWhiteSpace($Branch)) {
+    $webrtcUrl = "$webrtcUrl@$Branch"
   }
 
-  $content = @'
+  $content = @"
 solutions = [
   {
     "name"        : 'src',
-    "url"         : 'https://github.com/webrtc-sdk/webrtc.git@m137_release',
+    "url"         : '$webrtcUrl',
     "deps_file"   : 'DEPS',
     "managed"     : False,
     "custom_deps" : {},
@@ -268,64 +265,39 @@ solutions = [
 ]
 
 target_os = ['win']
-'@
+"@
 
-  $content = $content.Replace("m137_release", $Branch)
-  Set-Content -Path $gclientPath -Value $content
+  Set-Content -Path $gclientPath -Value $content -Encoding ASCII
 }
 
-function Ensure-LibWebRtcRepo {
-  param([string]$SrcDir)
-
-  $libWebRtcDir = Join-PathSafe $SrcDir "libwebrtc"
-  if (-not (Test-Path $libWebRtcDir)) {
-    git clone https://github.com/webrtc-sdk/libwebrtc $libWebRtcDir
-  }
-  return $libWebRtcDir
-}
-
-function Apply-CustomPatch {
-  param([string]$LibWebRtcDir)
-
-  $patchPath = Join-PathSafe $LibWebRtcDir "patchs\\custom_audio_source_m137.patch"
-  if (-not (Test-Path $patchPath)) {
-    Write-Warning "Patch not found: $patchPath"
-    return
-  }
-
-  & git apply --check $patchPath 2>$null
-  if ($LASTEXITCODE -eq 0) {
-    git apply $patchPath
-    Write-Host "Applied patch: custom_audio_source_m137.patch"
-  } else {
-    Write-Host "Patch already applied or not applicable; skipping."
-  }
-}
-
-function Apply-RepoLibWebRtcPatch {
+function Sync-LibWebRtcWrapper {
   param(
-    [string]$LibWebRtcDir,
-    [string]$PatchPath
+    [string]$SrcDir,
+    [string]$WrapperSourceDir
   )
 
-  if ([string]::IsNullOrWhiteSpace($PatchPath) -or -not (Test-Path $PatchPath)) {
-    Write-Warning "Patch not found: $PatchPath"
-    return
+  if ([string]::IsNullOrWhiteSpace($WrapperSourceDir) -or -not (Test-Path $WrapperSourceDir)) {
+    throw "Wrapper source directory not found: $WrapperSourceDir"
+  }
+  if (-not (Test-Path (Join-PathSafe $WrapperSourceDir "include"))) {
+    throw "Wrapper source is invalid (missing include/): $WrapperSourceDir"
   }
 
-  Push-Location $LibWebRtcDir
-  try {
-    & git apply --check $PatchPath 2>$null
-    if ($LASTEXITCODE -eq 0) {
-      git apply $PatchPath
-      Write-Host "Applied patch: $(Split-Path -Leaf $PatchPath)"
-    } else {
-      Write-Host "Patch already applied or not applicable; skipping: $(Split-Path -Leaf $PatchPath)"
+  $libWebRtcDir = Join-PathSafe $SrcDir "libwebrtc"
+  if (Test-Path $libWebRtcDir) {
+    Remove-Item -LiteralPath $libWebRtcDir -Recurse -Force
+  }
+  New-Item -ItemType Directory -Force -Path $libWebRtcDir | Out-Null
+
+  $exclude = @(".git", "build", "out", ".conan")
+  Get-ChildItem -LiteralPath $WrapperSourceDir -Force | ForEach-Object {
+    if ($exclude -contains $_.Name) {
+      return
     }
+    Copy-Item -LiteralPath $_.FullName -Destination $libWebRtcDir -Recurse -Force
   }
-  finally {
-    Pop-Location
-  }
+
+  return $libWebRtcDir
 }
 
 function Ensure-BuildGnIncludesLibWebRtc {
@@ -477,12 +449,7 @@ if (-not $webRtcRoot) {
 
 Ensure-GclientConfig -Root $webRtcRoot -Branch $WebRtcBranch
 
-$srcDirRoot = Join-PathSafe $webRtcRoot "src"
-if (-not (Test-Path $srcDirRoot)) {
-  throw "Expected src directory at $srcDirRoot. gclient sync may have failed."
-}
-
-Push-Location $srcDirRoot
+Push-Location $webRtcRoot
 try {
   if (-not $SkipSync) {
     gclient sync
@@ -490,14 +457,21 @@ try {
       throw "gclient sync failed. Check depot_tools and network access."
     }
   }
+}
+finally {
+  Pop-Location
+}
 
-  $libWebRtcDir = Ensure-LibWebRtcRepo -SrcDir $srcDirRoot
-  if (-not $SkipPatch) {
-    Apply-CustomPatch -LibWebRtcDir $libWebRtcDir
-    $iceCandidatePatch = Join-PathSafe $lumenRoot "scripts\\patches\\libwebrtc_ice_candidate_status.patch"
-    Apply-RepoLibWebRtcPatch -LibWebRtcDir $libWebRtcDir -PatchPath $iceCandidatePatch
-  }
+$srcDirRoot = Join-PathSafe $webRtcRoot "src"
+if (-not (Test-Path $srcDirRoot)) {
+  throw "Expected src directory at $srcDirRoot. gclient sync may have failed."
+}
 
+$wrapperSourceDir = Join-PathSafe $lumenRoot "vendor\\libwebrtc"
+$libWebRtcDir = Sync-LibWebRtcWrapper -SrcDir $srcDirRoot -WrapperSourceDir $wrapperSourceDir
+
+Push-Location $srcDirRoot
+try {
   $buildGnPath = Join-PathSafe $srcDirRoot "BUILD.gn"
   Ensure-BuildGnIncludesLibWebRtc -BuildGnPath $buildGnPath
 

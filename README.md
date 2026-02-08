@@ -1,7 +1,7 @@
 # LumenRTC
 
-LumenRTC is a C ABI + C# binding layer for the `webrtc-sdk/libwebrtc` wrapper.
-Upstream: `https://github.com/webrtc-sdk/libwebrtc`.
+LumenRTC is a C ABI + C# binding layer for a local `libwebrtc` bridge.
+WebRTC upstream: `https://webrtc.googlesource.com/src`.
 The goal is a stable native ABI for .NET while keeping the heavy lifting in
 `libwebrtc`.
 
@@ -13,28 +13,25 @@ The goal is a stable native ABI for .NET while keeping the heavy lifting in
 
 ## Build prerequisites
 
-1. Fetch the upstream wrapper (submodule):
-
-```bash
-git submodule update --init --recursive
-```
-
-   This populates `external/libwebrtc` and is used by default if
+1. Ensure bridge sources are present in `vendor/libwebrtc`.
+   This is used by default if
    `LIBWEBRTC_ROOT` is not set.
 
-2. Build `libwebrtc` as described in `external/libwebrtc/README.md` (in your WebRTC
-   checkout). You need a `libwebrtc` shared library (`.dll` or `.so`).
+2. Build `libwebrtc` in an official WebRTC checkout (`webrtc.googlesource.com/src`).
+   The setup scripts handle this automatically and sync the local bridge into
+   `src/libwebrtc`.
 3. Note the build output directory (webrtc `out` folder).
 
 ### First clone quickstart (recommended)
 
-The setup scripts will fetch and build `libwebrtc`, then build `lumenrtc` and the
-.NET wrapper. This can take time and disk space.
+The setup scripts sync official WebRTC, copy `vendor/libwebrtc` into the
+checkout, build `libwebrtc`, then build `lumenrtc` and the .NET wrapper. This
+can take time and disk space.
 
 The scripts require `depot_tools`. If `gclient` is missing, the setup scripts will
 clone `depot_tools` into `../depot_tools` automatically.
 
-Windows (run from Developer PowerShell for VS 2022):
+Windows (run from Developer PowerShell for VS 2026):
 
 ```powershell
 scripts\\setup.cmd -BuildType Release
@@ -48,6 +45,8 @@ scripts/setup.sh --build-type Release
 
 If you already have a WebRTC checkout, you can pass `-WebRtcRoot` (PowerShell) or
 `--webrtc-root` (bash) to reuse it.
+Use `-WebRtcBranch` / `--webrtc-branch` to override the default ref
+(`branch-heads/7151`).
 
 ## Build native (C ABI)
 
@@ -60,7 +59,7 @@ cmake -S native -B native/build \
 cmake --build native/build -j
 ```
 
-If you use the submodule at `external/libwebrtc`, you can omit
+If you use the bridge source at `vendor/libwebrtc`, you can omit
 `LIBWEBRTC_ROOT` and only pass `LIBWEBRTC_BUILD_DIR`.
 
 If your `libwebrtc` was built without desktop capture, set

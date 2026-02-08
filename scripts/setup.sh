@@ -8,24 +8,22 @@ Usage: scripts/setup.sh [options]
 Options:
   --depot-tools-dir <path>    Depot_tools directory (default: ../depot_tools)
   --webrtc-root <path>         Root directory for WebRTC checkout (default: ../webrtc_build)
-  --webrtc-branch <branch>     WebRTC branch (default: m137_release)
+  --webrtc-branch <branch>     WebRTC ref (default: branch-heads/7151)
   --target-cpu <cpu>           Target CPU (default: x64)
   --build-type <Release|Debug> Build type (default: Release)
   --desktop-capture <ON|OFF>   Enable desktop capture (default: ON)
   --skip-sync                  Skip gclient sync
-  --skip-patch                 Skip applying custom audio patch
   --skip-bootstrap             Skip building LumenRTC after libwebrtc
   -h, --help                   Show help
 USAGE
 }
 
 webrtc_root=""
-webrtc_branch="m137_release"
+webrtc_branch="branch-heads/7151"
 target_cpu="x64"
 build_type="Release"
 desktop_capture="ON"
 skip_sync=false
-skip_patch=false
 skip_bootstrap=false
 depot_tools_dir=""
 
@@ -34,6 +32,26 @@ require_cmd() {
     echo "Missing '$1' in PATH. Install depot_tools (for gclient/gn/ninja) and ensure it is on PATH." >&2
     exit 1
   fi
+}
+
+sync_libwebrtc_wrapper() {
+  local src_wrapper="${repo_root}/vendor/libwebrtc"
+  local dst_wrapper="$1"
+
+  if [[ ! -d "${src_wrapper}/include" ]]; then
+    echo "Wrapper source not found at ${src_wrapper}." >&2
+    exit 1
+  fi
+
+  mkdir -p "$dst_wrapper"
+  find "$dst_wrapper" -mindepth 1 -maxdepth 1 -exec rm -rf {} +
+  (
+    cd "$src_wrapper"
+    tar --exclude=.git --exclude=build --exclude=out --exclude=.conan -cf - .
+  ) | (
+    cd "$dst_wrapper"
+    tar -xf -
+  )
 }
 
 while [[ $# -gt 0 ]]; do
@@ -66,10 +84,6 @@ while [[ $# -gt 0 ]]; do
       skip_sync=true
       shift
       ;;
-    --skip-patch)
-      skip_patch=true
-      shift
-      ;;
     --skip-bootstrap)
       skip_bootstrap=true
       shift
@@ -97,6 +111,7 @@ fi
 
 require_cmd git
 require_cmd python3
+require_cmd tar
 
 if ! command -v gclient >/dev/null 2>&1; then
   if [[ ! -d "$depot_tools_dir" ]]; then
@@ -111,12 +126,15 @@ require_cmd gn
 require_cmd ninja
 
 mkdir -p "$webrtc_root"
-if [[ ! -f "${webrtc_root}/.gclient" ]]; then
-  cat > "${webrtc_root}/.gclient" <<GCLIENT_EOF
+webrtc_url="https://webrtc.googlesource.com/src.git"
+if [[ -n "$webrtc_branch" ]]; then
+  webrtc_url="${webrtc_url}@${webrtc_branch}"
+fi
+cat > "${webrtc_root}/.gclient" <<GCLIENT_EOF
 solutions = [
   {
     "name"        : 'src',
-    "url"         : 'https://github.com/webrtc-sdk/webrtc.git@${webrtc_branch}',
+    "url"         : '${webrtc_url}',
     "deps_file"   : 'DEPS',
     "managed"     : False,
     "custom_deps" : {},
@@ -126,7 +144,6 @@ solutions = [
 
 target_os = ['linux']
 GCLIENT_EOF
-fi
 
 pushd "$webrtc_root" >/dev/null
 if [[ "$skip_sync" == false ]]; then
@@ -139,37 +156,7 @@ if [[ ! -d "$src_dir" ]]; then
   exit 1
 fi
 
-if [[ ! -d "${src_dir}/libwebrtc" ]]; then
-  git clone https://github.com/webrtc-sdk/libwebrtc "${src_dir}/libwebrtc"
-fi
-
-if [[ "$skip_patch" == false ]]; then
-  patch_path="${src_dir}/libwebrtc/patchs/custom_audio_source_m137.patch"
-  if [[ -f "$patch_path" ]]; then
-    if git apply --check "$patch_path" >/dev/null 2>&1; then
-      git apply "$patch_path"
-      echo "Applied patch: custom_audio_source_m137.patch"
-    else
-      echo "Patch already applied or not applicable; skipping."
-    fi
-  else
-    echo "Patch not found: $patch_path" >&2
-  fi
-
-  repo_patch="${repo_root}/scripts/patches/libwebrtc_ice_candidate_status.patch"
-  if [[ -f "$repo_patch" ]]; then
-    pushd "${src_dir}/libwebrtc" >/dev/null
-    if git apply --check "$repo_patch" >/dev/null 2>&1; then
-      git apply "$repo_patch"
-      echo "Applied patch: libwebrtc_ice_candidate_status.patch"
-    else
-      echo "Patch already applied or not applicable; skipping: libwebrtc_ice_candidate_status.patch"
-    fi
-    popd >/dev/null
-  else
-    echo "Patch not found: $repo_patch" >&2
-  fi
-fi
+sync_libwebrtc_wrapper "${src_dir}/libwebrtc"
 
 build_gn_path="${src_dir}/BUILD.gn"
 python3 - <<PY
