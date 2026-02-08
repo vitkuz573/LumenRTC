@@ -2,8 +2,10 @@
 from __future__ import annotations
 
 import argparse
+import ast
 import datetime as dt
 import glob
+import hashlib
 import json
 import os
 import re
@@ -14,7 +16,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-TOOL_VERSION = "1.0.0"
+TOOL_VERSION = "2.0.0"
 
 
 class AbiGuardError(Exception):
@@ -35,6 +37,28 @@ class AbiVersion:
             "major": self.major,
             "minor": self.minor,
             "patch": self.patch,
+        }
+
+
+@dataclass(frozen=True)
+class TypePolicy:
+    enable_enums: bool
+    enable_structs: bool
+    enum_name_pattern: str
+    struct_name_pattern: str
+    ignore_enums: tuple[str, ...]
+    ignore_structs: tuple[str, ...]
+    struct_tail_addition_is_breaking: bool
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "enable_enums": self.enable_enums,
+            "enable_structs": self.enable_structs,
+            "enum_name_pattern": self.enum_name_pattern,
+            "struct_name_pattern": self.struct_name_pattern,
+            "ignore_enums": list(self.ignore_enums),
+            "ignore_structs": list(self.ignore_structs),
+            "struct_tail_addition_is_breaking": self.struct_tail_addition_is_breaking,
         }
 
 
@@ -123,7 +147,301 @@ def extract_define_int(content: str, macro_name: str) -> int:
     return int(match.group(1))
 
 
-def parse_c_header(header_path: Path, api_macro: str, call_macro: str, symbol_prefix: str, version_macros: dict[str, str]) -> tuple[dict[str, Any], AbiVersion]:
+def normalize_identifier_list(value: Any, key: str) -> tuple[str, ...]:
+    if value is None:
+        return tuple()
+    if not isinstance(value, list):
+        raise AbiGuardError(f"Target field '{key}' must be an array when specified.")
+    out: list[str] = []
+    for idx, item in enumerate(value):
+        if not isinstance(item, str) or not item:
+            raise AbiGuardError(f"Target field '{key}[{idx}]' must be a non-empty string.")
+        out.append(item)
+    return tuple(out)
+
+
+def build_type_policy(header_cfg: dict[str, Any], symbol_prefix: str) -> TypePolicy:
+    raw_policy = header_cfg.get("types")
+    if raw_policy is None:
+        raw_policy = {}
+    if not isinstance(raw_policy, dict):
+        raise AbiGuardError("Target field 'header.types' must be an object when specified.")
+
+    default_pattern = f"^{re.escape(symbol_prefix)}"
+
+    enable_enums = bool(raw_policy.get("enable_enums", True))
+    enable_structs = bool(raw_policy.get("enable_structs", True))
+    enum_name_pattern = str(raw_policy.get("enum_name_pattern", default_pattern))
+    struct_name_pattern = str(raw_policy.get("struct_name_pattern", default_pattern))
+
+    ignore_enums = normalize_identifier_list(raw_policy.get("ignore_enums"), "header.types.ignore_enums")
+    ignore_structs = normalize_identifier_list(raw_policy.get("ignore_structs"), "header.types.ignore_structs")
+
+    struct_tail_addition_is_breaking = bool(raw_policy.get("struct_tail_addition_is_breaking", True))
+
+    try:
+        re.compile(enum_name_pattern)
+    except re.error as exc:
+        raise AbiGuardError(f"Invalid regex in header.types.enum_name_pattern: {exc}") from exc
+
+    try:
+        re.compile(struct_name_pattern)
+    except re.error as exc:
+        raise AbiGuardError(f"Invalid regex in header.types.struct_name_pattern: {exc}") from exc
+
+    return TypePolicy(
+        enable_enums=enable_enums,
+        enable_structs=enable_structs,
+        enum_name_pattern=enum_name_pattern,
+        struct_name_pattern=struct_name_pattern,
+        ignore_enums=ignore_enums,
+        ignore_structs=ignore_structs,
+        struct_tail_addition_is_breaking=struct_tail_addition_is_breaking,
+    )
+
+
+def stable_hash(value: Any) -> str:
+    payload = json.dumps(value, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return hashlib.sha256(payload).hexdigest()
+
+
+def sanitize_c_int_expr(expr: str) -> str:
+    compact = normalize_ws(expr)
+    compact = re.sub(r"\b(0[xX][0-9A-Fa-f]+)([uUlL]+)\b", r"\1", compact)
+    compact = re.sub(r"\b([0-9]+)([uUlL]+)\b", r"\1", compact)
+    return compact
+
+
+def eval_c_int_expr(expr: str) -> int | None:
+    sanitized = sanitize_c_int_expr(expr)
+    try:
+        tree = ast.parse(sanitized, mode="eval")
+    except SyntaxError:
+        return None
+
+    def _eval(node: ast.AST) -> int:
+        if isinstance(node, ast.Expression):
+            return _eval(node.body)
+        if isinstance(node, ast.Constant):
+            if isinstance(node.value, int):
+                return int(node.value)
+            raise ValueError("non-int literal")
+        if isinstance(node, ast.UnaryOp):
+            value = _eval(node.operand)
+            if isinstance(node.op, ast.UAdd):
+                return +value
+            if isinstance(node.op, ast.USub):
+                return -value
+            if isinstance(node.op, ast.Invert):
+                return ~value
+            raise ValueError("unsupported unary op")
+        if isinstance(node, ast.BinOp):
+            left = _eval(node.left)
+            right = _eval(node.right)
+            if isinstance(node.op, ast.Add):
+                return left + right
+            if isinstance(node.op, ast.Sub):
+                return left - right
+            if isinstance(node.op, ast.Mult):
+                return left * right
+            if isinstance(node.op, ast.FloorDiv) or isinstance(node.op, ast.Div):
+                return left // right
+            if isinstance(node.op, ast.Mod):
+                return left % right
+            if isinstance(node.op, ast.LShift):
+                return left << right
+            if isinstance(node.op, ast.RShift):
+                return left >> right
+            if isinstance(node.op, ast.BitOr):
+                return left | right
+            if isinstance(node.op, ast.BitAnd):
+                return left & right
+            if isinstance(node.op, ast.BitXor):
+                return left ^ right
+            raise ValueError("unsupported binary op")
+        raise ValueError("unsupported expression")
+
+    try:
+        return _eval(tree)
+    except Exception:
+        return None
+
+
+def parse_enum_blocks(content: str, policy: TypePolicy) -> dict[str, Any]:
+    if not policy.enable_enums:
+        return {}
+
+    enum_pattern = re.compile(
+        r"typedef\s+enum(?:\s+[A-Za-z_][A-Za-z0-9_]*)?\s*\{(?P<body>.*?)\}\s*(?P<name>[A-Za-z_][A-Za-z0-9_]*)\s*;",
+        flags=re.S,
+    )
+    name_re = re.compile(policy.enum_name_pattern)
+
+    enums: dict[str, Any] = {}
+
+    for match in enum_pattern.finditer(content):
+        enum_name = match.group("name")
+        if enum_name in policy.ignore_enums:
+            continue
+        if not name_re.search(enum_name):
+            continue
+
+        body = match.group("body")
+        raw_items = [normalize_ws(item) for item in body.split(",")]
+
+        members: list[dict[str, Any]] = []
+        last_value: int | None = None
+        next_from_last = True
+
+        for raw_item in raw_items:
+            item = raw_item.strip()
+            if not item:
+                continue
+
+            m = re.match(r"^(?P<name>[A-Za-z_][A-Za-z0-9_]*)(?:\s*=\s*(?P<expr>.+))?$", item)
+            if not m:
+                continue
+
+            member_name = m.group("name")
+            expr = m.group("expr")
+
+            value_expr: str | None = None
+            value: int | None
+            if expr is None:
+                if next_from_last and last_value is not None:
+                    value = last_value + 1
+                elif not members:
+                    value = 0
+                else:
+                    value = None
+                value_expr = None
+            else:
+                value_expr = sanitize_c_int_expr(expr)
+                value = eval_c_int_expr(value_expr)
+
+            if value is not None:
+                last_value = value
+                next_from_last = True
+            else:
+                next_from_last = False
+
+            members.append(
+                {
+                    "name": member_name,
+                    "value": value,
+                    "value_expr": value_expr,
+                }
+            )
+
+        enums[enum_name] = {
+            "member_count": len(members),
+            "members": members,
+            "fingerprint": stable_hash(members),
+        }
+
+    return {name: enums[name] for name in sorted(enums.keys())}
+
+
+def split_struct_declarations(body: str) -> list[str]:
+    declarations: list[str] = []
+    buffer = ""
+
+    for line in body.splitlines():
+        stripped = normalize_ws(line)
+        if not stripped or stripped.startswith("#"):
+            continue
+
+        buffer = f"{buffer} {stripped}".strip() if buffer else stripped
+
+        while ";" in buffer:
+            before, after = buffer.split(";", 1)
+            decl = normalize_ws(before)
+            if decl:
+                declarations.append(decl)
+            buffer = normalize_ws(after)
+
+    return declarations
+
+
+def parse_struct_field(decl: str, index: int) -> dict[str, str]:
+    function_ptr = re.search(r"\(\s*\*\s*(?P<name>[A-Za-z_][A-Za-z0-9_]*)\s*\)\s*\(", decl)
+    if function_ptr:
+        name = function_ptr.group("name")
+        return {
+            "name": name,
+            "declaration": normalize_ws(decl),
+        }
+
+    bitfield = re.match(r"^(?P<left>.+?)\s+(?P<name>[A-Za-z_][A-Za-z0-9_]*)\s*:\s*(?P<bits>.+)$", decl)
+    if bitfield:
+        return {
+            "name": bitfield.group("name"),
+            "declaration": normalize_ws(decl),
+        }
+
+    array_field = re.match(
+        r"^(?P<left>.+?)\s+(?P<name>[A-Za-z_][A-Za-z0-9_]*)(?P<array>(?:\s*\[[^\]]+\])+)\s*$",
+        decl,
+    )
+    if array_field:
+        return {
+            "name": array_field.group("name"),
+            "declaration": normalize_ws(decl),
+        }
+
+    regular = re.match(r"^(?P<left>.+?)\s+(?P<name>[A-Za-z_][A-Za-z0-9_]*)\s*$", decl)
+    if regular:
+        return {
+            "name": regular.group("name"),
+            "declaration": normalize_ws(decl),
+        }
+
+    return {
+        "name": f"__unnamed_{index}",
+        "declaration": normalize_ws(decl),
+    }
+
+
+def parse_struct_blocks(content: str, policy: TypePolicy) -> dict[str, Any]:
+    if not policy.enable_structs:
+        return {}
+
+    struct_pattern = re.compile(
+        r"typedef\s+struct(?:\s+[A-Za-z_][A-Za-z0-9_]*)?\s*\{(?P<body>.*?)\}\s*(?P<name>[A-Za-z_][A-Za-z0-9_]*)\s*;",
+        flags=re.S,
+    )
+    name_re = re.compile(policy.struct_name_pattern)
+
+    structs: dict[str, Any] = {}
+
+    for match in struct_pattern.finditer(content):
+        struct_name = match.group("name")
+        if struct_name in policy.ignore_structs:
+            continue
+        if not name_re.search(struct_name):
+            continue
+
+        body = match.group("body")
+        declarations = split_struct_declarations(body)
+        fields = [parse_struct_field(decl, idx) for idx, decl in enumerate(declarations)]
+
+        structs[struct_name] = {
+            "field_count": len(fields),
+            "fields": fields,
+            "fingerprint": stable_hash(fields),
+        }
+
+    return {name: structs[name] for name in sorted(structs.keys())}
+
+
+def parse_c_header(
+    header_path: Path,
+    api_macro: str,
+    call_macro: str,
+    symbol_prefix: str,
+    version_macros: dict[str, str],
+    type_policy: TypePolicy,
+) -> tuple[dict[str, Any], AbiVersion]:
     try:
         raw = header_path.read_text(encoding="utf-8")
     except OSError as exc:
@@ -158,11 +476,18 @@ def parse_c_header(header_path: Path, api_macro: str, call_macro: str, symbol_pr
     minor = extract_define_int(content, version_macros["minor"])
     patch = extract_define_int(content, version_macros["patch"])
 
+    enums = parse_enum_blocks(content=content, policy=type_policy)
+    structs = parse_struct_blocks(content=content, policy=type_policy)
+
     header_payload = {
         "path": str(header_path),
         "function_count": len(functions),
         "symbols": sorted(functions.keys()),
         "functions": {name: functions[name] for name in sorted(functions.keys())},
+        "enum_count": len(enums),
+        "enums": enums,
+        "struct_count": len(structs),
+        "structs": structs,
     }
     return header_payload, AbiVersion(major=major, minor=minor, patch=patch)
 
@@ -255,7 +580,7 @@ def parse_nm_exports(output: str) -> list[str]:
 
 def parse_dumpbin_exports(output: str) -> list[str]:
     exports: set[str] = set()
-    export_line = re.compile(r"^\\s+\\d+\\s+[0-9A-Fa-f]+\\s+[0-9A-Fa-f]+\\s+(\\S+)$")
+    export_line = re.compile(r"^\s+\d+\s+[0-9A-Fa-f]+\s+[0-9A-Fa-f]+\s+(\S+)$")
     for raw_line in output.splitlines():
         line = raw_line.rstrip()
         match = export_line.match(line)
@@ -354,6 +679,7 @@ def build_snapshot(config: dict[str, Any], target_name: str, repo_root: Path, bi
     api_macro = require_str(header_cfg.get("api_macro"), "header.api_macro")
     call_macro = require_str(header_cfg.get("call_macro"), "header.call_macro")
     symbol_prefix = require_str(header_cfg.get("symbol_prefix"), "header.symbol_prefix")
+    type_policy = build_type_policy(header_cfg=header_cfg, symbol_prefix=symbol_prefix)
 
     version_macros_cfg = require_dict(header_cfg.get("version_macros"), "header.version_macros")
     version_macros = {
@@ -368,6 +694,7 @@ def build_snapshot(config: dict[str, Any], target_name: str, repo_root: Path, bi
         call_macro=call_macro,
         symbol_prefix=symbol_prefix,
         version_macros=version_macros,
+        type_policy=type_policy,
     )
     header_payload["path"] = to_repo_relative(header_path, repo_root)
 
@@ -396,19 +723,45 @@ def build_snapshot(config: dict[str, Any], target_name: str, repo_root: Path, bi
             "non_prefixed_exports": [],
             "allow_non_prefixed_exports": True,
             "skipped": True,
+            "reason": "explicit_skip",
         }
     else:
-        binary_cfg = require_dict(target.get("binary"), "binary")
-        configured_path = binary_override or require_str(binary_cfg.get("path"), "binary.path")
-        allow_non_prefixed = bool(binary_cfg.get("allow_non_prefixed_exports", False))
-        binary_path = ensure_relative_path(repo_root, configured_path).resolve()
-        binary_payload = extract_binary_exports(
-            binary_path=binary_path,
-            symbol_prefix=symbol_prefix,
-            allow_non_prefixed_exports=allow_non_prefixed,
-        )
-        binary_payload["path"] = to_repo_relative(binary_path, repo_root)
-        binary_payload["skipped"] = False
+        binary_cfg_obj = target.get("binary")
+        if binary_override:
+            allow_non_prefixed = False
+            binary_path = ensure_relative_path(repo_root, binary_override).resolve()
+            binary_payload = extract_binary_exports(
+                binary_path=binary_path,
+                symbol_prefix=symbol_prefix,
+                allow_non_prefixed_exports=allow_non_prefixed,
+            )
+            binary_payload["path"] = to_repo_relative(binary_path, repo_root)
+            binary_payload["skipped"] = False
+        elif isinstance(binary_cfg_obj, dict):
+            configured_path = require_str(binary_cfg_obj.get("path"), "binary.path")
+            allow_non_prefixed = bool(binary_cfg_obj.get("allow_non_prefixed_exports", False))
+            binary_path = ensure_relative_path(repo_root, configured_path).resolve()
+            binary_payload = extract_binary_exports(
+                binary_path=binary_path,
+                symbol_prefix=symbol_prefix,
+                allow_non_prefixed_exports=allow_non_prefixed,
+            )
+            binary_payload["path"] = to_repo_relative(binary_path, repo_root)
+            binary_payload["skipped"] = False
+        else:
+            binary_payload = {
+                "available": False,
+                "path": None,
+                "tool": None,
+                "symbol_count": 0,
+                "symbols": [],
+                "raw_export_count": 0,
+                "non_prefixed_export_count": 0,
+                "non_prefixed_exports": [],
+                "allow_non_prefixed_exports": True,
+                "skipped": True,
+                "reason": "not_configured",
+            }
 
     return {
         "tool": {
@@ -417,6 +770,10 @@ def build_snapshot(config: dict[str, Any], target_name: str, repo_root: Path, bi
         },
         "target": target_name,
         "generated_at_utc": dt.datetime.now(tz=dt.timezone.utc).isoformat(),
+        "policy": {
+            "type_policy": type_policy.as_dict(),
+            "strict_semver": True,
+        },
         "abi_version": abi_version.as_dict(),
         "header": header_payload,
         "pinvoke": pinvoke_payload,
@@ -451,6 +808,216 @@ def as_symbol_set(snapshot: dict[str, Any], section: str) -> set[str]:
     return {str(x) for x in symbols}
 
 
+def get_header_types(snapshot: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
+    header = snapshot.get("header")
+    if not isinstance(header, dict):
+        return {}, {}
+
+    enums = header.get("enums")
+    structs = header.get("structs")
+
+    out_enums = enums if isinstance(enums, dict) else {}
+    out_structs = structs if isinstance(structs, dict) else {}
+    return out_enums, out_structs
+
+
+def compare_enum_sets(base_enums: dict[str, Any], curr_enums: dict[str, Any]) -> dict[str, Any]:
+    base_names = set(base_enums.keys())
+    curr_names = set(curr_enums.keys())
+
+    removed_enums = sorted(base_names - curr_names)
+    added_enums = sorted(curr_names - base_names)
+
+    changed_enums: dict[str, Any] = {}
+    breaking_changes: list[str] = []
+    additive_changes: list[str] = []
+
+    for name in sorted(base_names & curr_names):
+        base_members = base_enums[name].get("members")
+        curr_members = curr_enums[name].get("members")
+        if not isinstance(base_members, list) or not isinstance(curr_members, list):
+            changed_enums[name] = {
+                "kind": "unknown",
+                "reason": "enum members payload malformed",
+            }
+            breaking_changes.append(f"enum {name} malformed")
+            continue
+
+        base_map = {str(item.get("name")): item for item in base_members if isinstance(item, dict)}
+        curr_map = {str(item.get("name")): item for item in curr_members if isinstance(item, dict)}
+
+        removed_members = sorted(set(base_map.keys()) - set(curr_map.keys()))
+        added_members = sorted(set(curr_map.keys()) - set(base_map.keys()))
+
+        value_changed: list[str] = []
+        for member_name in sorted(set(base_map.keys()) & set(curr_map.keys())):
+            b = base_map[member_name]
+            c = curr_map[member_name]
+            if (b.get("value"), b.get("value_expr")) != (c.get("value"), c.get("value_expr")):
+                value_changed.append(member_name)
+
+        if removed_members or value_changed:
+            changed_enums[name] = {
+                "kind": "breaking",
+                "removed_members": removed_members,
+                "added_members": added_members,
+                "value_changed": value_changed,
+            }
+            if removed_members:
+                breaking_changes.append(f"enum {name} removed members: {', '.join(removed_members)}")
+            if value_changed:
+                breaking_changes.append(f"enum {name} changed values: {', '.join(value_changed)}")
+            continue
+
+        if added_members:
+            changed_enums[name] = {
+                "kind": "additive",
+                "removed_members": [],
+                "added_members": added_members,
+                "value_changed": [],
+            }
+            additive_changes.append(f"enum {name} added members: {', '.join(added_members)}")
+
+    if removed_enums:
+        breaking_changes.append("removed enums: " + ", ".join(removed_enums))
+    if added_enums:
+        additive_changes.append("added enums: " + ", ".join(added_enums))
+
+    return {
+        "removed_enums": removed_enums,
+        "added_enums": added_enums,
+        "changed_enums": changed_enums,
+        "breaking_changes": breaking_changes,
+        "additive_changes": additive_changes,
+    }
+
+
+def compare_struct_sets(base_structs: dict[str, Any], curr_structs: dict[str, Any], struct_tail_addition_is_breaking: bool) -> dict[str, Any]:
+    base_names = set(base_structs.keys())
+    curr_names = set(curr_structs.keys())
+
+    removed_structs = sorted(base_names - curr_names)
+    added_structs = sorted(curr_names - base_names)
+
+    changed_structs: dict[str, Any] = {}
+    breaking_changes: list[str] = []
+    additive_changes: list[str] = []
+
+    for name in sorted(base_names & curr_names):
+        base_fields = base_structs[name].get("fields")
+        curr_fields = curr_structs[name].get("fields")
+        if not isinstance(base_fields, list) or not isinstance(curr_fields, list):
+            changed_structs[name] = {
+                "kind": "unknown",
+                "reason": "struct fields payload malformed",
+            }
+            breaking_changes.append(f"struct {name} malformed")
+            continue
+
+        base_decls = [normalize_ws(str(item.get("declaration"))) for item in base_fields if isinstance(item, dict)]
+        curr_decls = [normalize_ws(str(item.get("declaration"))) for item in curr_fields if isinstance(item, dict)]
+
+        if base_decls == curr_decls:
+            continue
+
+        base_names_seq = [str(item.get("name")) for item in base_fields if isinstance(item, dict)]
+        curr_names_seq = [str(item.get("name")) for item in curr_fields if isinstance(item, dict)]
+
+        removed_fields = sorted(set(base_names_seq) - set(curr_names_seq))
+        added_fields = sorted(set(curr_names_seq) - set(base_names_seq))
+
+        common = set(base_names_seq) & set(curr_names_seq)
+        changed_fields: list[str] = []
+        for field_name in sorted(common):
+            b_idx = base_names_seq.index(field_name)
+            c_idx = curr_names_seq.index(field_name)
+            if base_decls[b_idx] != curr_decls[c_idx] or b_idx != c_idx:
+                changed_fields.append(field_name)
+
+        base_is_prefix = len(curr_decls) >= len(base_decls) and curr_decls[: len(base_decls)] == base_decls
+        additive_tail = base_is_prefix and not struct_tail_addition_is_breaking
+
+        if additive_tail:
+            changed_structs[name] = {
+                "kind": "additive",
+                "removed_fields": removed_fields,
+                "added_fields": added_fields,
+                "changed_fields": changed_fields,
+                "base_is_prefix": base_is_prefix,
+            }
+            additive_changes.append(f"struct {name} tail extended")
+        else:
+            changed_structs[name] = {
+                "kind": "breaking",
+                "removed_fields": removed_fields,
+                "added_fields": added_fields,
+                "changed_fields": changed_fields,
+                "base_is_prefix": base_is_prefix,
+            }
+            breaking_changes.append(f"struct {name} layout changed")
+
+    if removed_structs:
+        breaking_changes.append("removed structs: " + ", ".join(removed_structs))
+    if added_structs:
+        additive_changes.append("added structs: " + ", ".join(added_structs))
+
+    return {
+        "removed_structs": removed_structs,
+        "added_structs": added_structs,
+        "changed_structs": changed_structs,
+        "breaking_changes": breaking_changes,
+        "additive_changes": additive_changes,
+    }
+
+
+def classify_change(has_breaking: bool, has_additive: bool) -> tuple[str, str]:
+    if has_breaking:
+        return "breaking", "major"
+    if has_additive:
+        return "additive", "minor"
+    return "none", "none"
+
+
+def recommended_version(baseline: AbiVersion, required_bump: str) -> AbiVersion:
+    if required_bump == "major":
+        return AbiVersion(baseline.major + 1, 0, 0)
+    if required_bump == "minor":
+        return AbiVersion(baseline.major, baseline.minor + 1, 0)
+    return AbiVersion(baseline.major, baseline.minor, baseline.patch + 1)
+
+
+def validate_version_policy(
+    baseline_version: AbiVersion,
+    current_version: AbiVersion,
+    required_bump: str,
+) -> tuple[bool, list[str]]:
+    errors: list[str] = []
+
+    if current_version.as_tuple() < baseline_version.as_tuple():
+        errors.append(
+            f"ABI version regressed: baseline {baseline_version.as_tuple()} -> current {current_version.as_tuple()}."
+        )
+        return False, errors
+
+    if required_bump == "major":
+        if current_version.major <= baseline_version.major:
+            errors.append(
+                "Breaking ABI changes detected but ABI major version was not increased "
+                f"(baseline {baseline_version.major}, current {current_version.major})."
+            )
+            return False, errors
+    elif required_bump == "minor":
+        if current_version.major == baseline_version.major and current_version.minor <= baseline_version.minor:
+            errors.append(
+                "Additive ABI changes detected but ABI minor version was not increased "
+                f"(baseline {baseline_version.major}.{baseline_version.minor}, "
+                f"current {current_version.major}.{current_version.minor})."
+            )
+            return False, errors
+
+    return True, errors
+
+
 def compare_snapshots(baseline: dict[str, Any], current: dict[str, Any]) -> dict[str, Any]:
     errors: list[str] = []
     warnings: list[str] = []
@@ -479,18 +1046,6 @@ def compare_snapshots(baseline: dict[str, Any], current: dict[str, Any]) -> dict
 
     baseline_version = parse_snapshot_version(baseline, "baseline")
     current_version = parse_snapshot_version(current, "current")
-
-    if current_version.as_tuple() < baseline_version.as_tuple():
-        errors.append(
-            f"ABI version regressed: baseline {baseline_version.as_tuple()} -> current {current_version.as_tuple()}."
-        )
-
-    breaking = bool(removed or changed)
-    if breaking and current_version.major <= baseline_version.major:
-        errors.append(
-            "Breaking ABI changes detected (removed/changed symbols) but ABI major version was not increased "
-            f"(baseline {baseline_version.major}, current {current_version.major})."
-        )
 
     curr_header_symbols = as_symbol_set(current, "header")
     curr_pinvoke_symbols = as_symbol_set(current, "pinvoke")
@@ -539,14 +1094,72 @@ def compare_snapshots(baseline: dict[str, Any], current: dict[str, Any]) -> dict
             "Binary export checks were not executed because the binary path does not exist yet."
         )
 
+    base_enums, base_structs = get_header_types(baseline)
+    curr_enums, curr_structs = get_header_types(current)
+
+    struct_tail_breaking = True
+    current_policy = current.get("policy")
+    if isinstance(current_policy, dict):
+        type_policy = current_policy.get("type_policy")
+        if isinstance(type_policy, dict):
+            struct_tail_breaking = bool(type_policy.get("struct_tail_addition_is_breaking", True))
+
+    enum_diff = compare_enum_sets(base_enums=base_enums, curr_enums=curr_enums)
+    struct_diff = compare_struct_sets(
+        base_structs=base_structs,
+        curr_structs=curr_structs,
+        struct_tail_addition_is_breaking=struct_tail_breaking,
+    )
+
+    function_breaking = bool(removed or changed)
+    function_additive = bool(added)
+
+    breaking_reasons: list[str] = []
+    additive_reasons: list[str] = []
+
+    if function_breaking:
+        if removed:
+            breaking_reasons.append("removed function symbols")
+        if changed:
+            breaking_reasons.append("changed function signatures")
+    if function_additive:
+        additive_reasons.append("added function symbols")
+
+    breaking_reasons.extend(enum_diff["breaking_changes"])
+    additive_reasons.extend(enum_diff["additive_changes"])
+    breaking_reasons.extend(struct_diff["breaking_changes"])
+    additive_reasons.extend(struct_diff["additive_changes"])
+
+    change_classification, required_bump = classify_change(
+        has_breaking=bool(breaking_reasons),
+        has_additive=bool(additive_reasons),
+    )
+
+    version_ok, version_errors = validate_version_policy(
+        baseline_version=baseline_version,
+        current_version=current_version,
+        required_bump=required_bump,
+    )
+    errors.extend(version_errors)
+
+    recommended = recommended_version(baseline=baseline_version, required_bump=required_bump)
+
     status = "pass" if not errors else "fail"
     return {
         "status": status,
+        "change_classification": change_classification,
+        "required_bump": required_bump,
         "baseline_abi_version": baseline_version.as_dict(),
         "current_abi_version": current_version.as_dict(),
+        "recommended_next_version": recommended.as_dict(),
+        "version_policy_satisfied": version_ok,
         "removed_symbols": removed,
         "added_symbols": added,
         "changed_signatures": changed,
+        "enum_diff": enum_diff,
+        "struct_diff": struct_diff,
+        "breaking_reasons": breaking_reasons,
+        "additive_reasons": additive_reasons,
         "errors": errors,
         "warnings": warnings,
     }
@@ -562,6 +1175,13 @@ def print_report(report: dict[str, Any]) -> None:
     print(f"Removed symbols: {len(removed)}")
     print(f"Added symbols: {len(added)}")
     print(f"Changed signatures: {len(changed)}")
+
+    classification = report.get("change_classification")
+    required_bump = report.get("required_bump")
+    recommended = report.get("recommended_next_version")
+    print(f"Change classification: {classification}")
+    print(f"Required bump: {required_bump}")
+    print(f"Recommended next version: {recommended}")
 
     warnings = report.get("warnings", [])
     errors = report.get("errors", [])
@@ -582,13 +1202,30 @@ def write_markdown_report(path: Path, report: dict[str, Any]) -> None:
     lines.append("")
     lines.append(f"- Baseline ABI version: `{report.get('baseline_abi_version')}`")
     lines.append(f"- Current ABI version: `{report.get('current_abi_version')}`")
+    lines.append(f"- Change classification: `{report.get('change_classification')}`")
+    lines.append(f"- Required bump: `{report.get('required_bump')}`")
+    lines.append(f"- Recommended next version: `{report.get('recommended_next_version')}`")
     lines.append(f"- Removed symbols: `{len(report.get('removed_symbols', []))}`")
     lines.append(f"- Added symbols: `{len(report.get('added_symbols', []))}`")
     lines.append(f"- Changed signatures: `{len(report.get('changed_signatures', []))}`")
     lines.append("")
 
+    breaking_reasons = report.get("breaking_reasons", [])
+    additive_reasons = report.get("additive_reasons", [])
     warnings = report.get("warnings", [])
     errors = report.get("errors", [])
+
+    if breaking_reasons:
+        lines.append("## Breaking Reasons")
+        for reason in breaking_reasons:
+            lines.append(f"- {reason}")
+        lines.append("")
+
+    if additive_reasons:
+        lines.append("## Additive Reasons")
+        for reason in additive_reasons:
+            lines.append(f"- {reason}")
+        lines.append("")
 
     if warnings:
         lines.append("## Warnings")
@@ -624,7 +1261,9 @@ def command_snapshot(args: argparse.Namespace) -> int:
 
     print(
         f"Snapshot created for target '{args.target}' with "
-        f"{snapshot['header']['function_count']} header symbols and "
+        f"{snapshot['header']['function_count']} header symbols, "
+        f"{snapshot['header']['enum_count']} enums, "
+        f"{snapshot['header']['struct_count']} structs, and "
         f"{snapshot['pinvoke']['symbol_count']} P/Invoke symbols.",
         file=sys.stderr,
     )
@@ -671,10 +1310,166 @@ def command_diff(args: argparse.Namespace) -> int:
     return 0 if report.get("status") == "pass" else 1
 
 
+def command_list_targets(args: argparse.Namespace) -> int:
+    config = load_json(Path(args.config).resolve())
+    targets = config.get("targets")
+    if not isinstance(targets, dict):
+        raise AbiGuardError("Config is missing required object: 'targets'.")
+
+    for name in sorted(targets.keys()):
+        print(name)
+    return 0
+
+
+def resolve_baseline_for_target(repo_root: Path, config: dict[str, Any], target_name: str, baseline_root: str | None) -> Path:
+    target = resolve_target(config, target_name)
+    if baseline_root:
+        return ensure_relative_path(repo_root, f"{baseline_root.rstrip('/')}/{target_name}.json").resolve()
+
+    baseline_path = target.get("baseline_path")
+    if isinstance(baseline_path, str) and baseline_path:
+        return ensure_relative_path(repo_root, baseline_path).resolve()
+
+    return ensure_relative_path(repo_root, f"abi/baselines/{target_name}.json").resolve()
+
+
+def command_verify_all(args: argparse.Namespace) -> int:
+    repo_root = Path(args.repo_root).resolve()
+    config = load_json(Path(args.config).resolve())
+
+    targets = config.get("targets")
+    if not isinstance(targets, dict) or not targets:
+        raise AbiGuardError("Config has no targets to verify.")
+
+    output_dir = Path(args.output_dir).resolve() if args.output_dir else None
+    final_status = 0
+    aggregate: dict[str, Any] = {
+        "status": "pass",
+        "generated_at_utc": dt.datetime.now(tz=dt.timezone.utc).isoformat(),
+        "results": {},
+    }
+
+    for target_name in sorted(targets.keys()):
+        baseline_path = resolve_baseline_for_target(
+            repo_root=repo_root,
+            config=config,
+            target_name=target_name,
+            baseline_root=args.baseline_root,
+        )
+        if not baseline_path.exists():
+            raise AbiGuardError(f"Baseline does not exist for target '{target_name}': {baseline_path}")
+
+        current = build_snapshot(
+            config=config,
+            target_name=target_name,
+            repo_root=repo_root,
+            binary_override=args.binary,
+            skip_binary=args.skip_binary,
+        )
+        baseline = load_snapshot(baseline_path)
+        report = compare_snapshots(baseline=baseline, current=current)
+
+        aggregate["results"][target_name] = report
+
+        print(f"[{target_name}] {report.get('status')}")
+        if report.get("status") != "pass":
+            final_status = 1
+
+        if output_dir:
+            output_dir.mkdir(parents=True, exist_ok=True)
+            write_json(output_dir / f"{target_name}.current.json", current)
+            write_json(output_dir / f"{target_name}.report.json", report)
+            write_markdown_report(output_dir / f"{target_name}.report.md", report)
+
+    if final_status != 0:
+        aggregate["status"] = "fail"
+
+    if output_dir:
+        write_json(output_dir / "aggregate.report.json", aggregate)
+
+    return final_status
+
+
+def command_init_target(args: argparse.Namespace) -> int:
+    repo_root = Path(args.repo_root).resolve()
+    config_path = Path(args.config).resolve()
+
+    if config_path.exists():
+        config = load_json(config_path)
+    else:
+        config = {"targets": {}}
+
+    targets = config.get("targets")
+    if not isinstance(targets, dict):
+        raise AbiGuardError("Config root must contain object 'targets'.")
+
+    if args.target in targets and not args.force:
+        raise AbiGuardError(
+            f"Target '{args.target}' already exists in config. Use --force to overwrite."
+        )
+
+    if not args.pinvoke_path:
+        raise AbiGuardError("At least one --pinvoke-path must be provided.")
+
+    baseline_rel = args.baseline_path or f"abi/baselines/{args.target}.json"
+
+    target_entry: dict[str, Any] = {
+        "baseline_path": baseline_rel,
+        "header": {
+            "path": args.header_path,
+            "api_macro": args.api_macro,
+            "call_macro": args.call_macro,
+            "symbol_prefix": args.symbol_prefix,
+            "version_macros": {
+                "major": args.version_major_macro,
+                "minor": args.version_minor_macro,
+                "patch": args.version_patch_macro,
+            },
+            "types": {
+                "enable_enums": True,
+                "enable_structs": True,
+                "enum_name_pattern": f"^{re.escape(args.symbol_prefix)}",
+                "struct_name_pattern": f"^{re.escape(args.symbol_prefix)}",
+                "ignore_enums": [],
+                "ignore_structs": [],
+                "struct_tail_addition_is_breaking": True,
+            },
+        },
+        "pinvoke": {
+            "paths": args.pinvoke_path,
+        },
+    }
+
+    if args.binary_path:
+        target_entry["binary"] = {
+            "path": args.binary_path,
+            "allow_non_prefixed_exports": False,
+        }
+
+    targets[args.target] = target_entry
+    config["targets"] = targets
+    write_json(config_path, config)
+
+    if args.create_baseline:
+        snapshot = build_snapshot(
+            config=config,
+            target_name=args.target,
+            repo_root=repo_root,
+            binary_override=None,
+            skip_binary=True,
+        )
+        baseline_path = ensure_relative_path(repo_root, baseline_rel).resolve()
+        write_json(baseline_path, snapshot)
+        print(f"Created baseline: {baseline_path}")
+
+    print(f"Target '{args.target}' initialized in {config_path}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="abi_guard",
-        description="Config-driven ABI snapshot and compatibility checker.",
+        description="Config-driven ABI governance framework (snapshot/verify/diff/bootstrap).",
     )
 
     sub = parser.add_subparsers(dest="command", required=True)
@@ -708,6 +1503,19 @@ def build_parser() -> argparse.ArgumentParser:
     verify.add_argument("--markdown-report", help="Write verify report as Markdown.")
     verify.set_defaults(func=command_verify)
 
+    verify_all = sub.add_parser("verify-all", help="Verify all targets from config.")
+    verify_all.add_argument(
+        "--repo-root",
+        default=".",
+        help="Repository root used to resolve relative paths (default: current directory).",
+    )
+    verify_all.add_argument("--config", required=True, help="Path to ABI config JSON.")
+    verify_all.add_argument("--baseline-root", help="Baseline directory (default: target baseline_path or abi/baselines).")
+    verify_all.add_argument("--binary", help="Override binary path for export checks (applies to each target).")
+    verify_all.add_argument("--skip-binary", action="store_true", help="Skip binary export extraction for all targets.")
+    verify_all.add_argument("--output-dir", help="Directory to write per-target current/report artifacts.")
+    verify_all.set_defaults(func=command_verify_all)
+
     diff = sub.add_parser("diff", help="Compare two snapshot files.")
     diff.add_argument("--baseline", required=True, help="Path to baseline snapshot JSON.")
     diff.add_argument("--current", required=True, help="Path to current snapshot JSON.")
@@ -715,12 +1523,38 @@ def build_parser() -> argparse.ArgumentParser:
     diff.add_argument("--markdown-report", help="Write diff report as Markdown.")
     diff.set_defaults(func=command_diff)
 
+    list_targets = sub.add_parser("list-targets", help="List target names from config.")
+    list_targets.add_argument("--config", required=True, help="Path to ABI config JSON.")
+    list_targets.set_defaults(func=command_list_targets)
+
+    init_target = sub.add_parser("init-target", help="Bootstrap a new ABI target in config and create baseline.")
+    init_target.add_argument("--repo-root", default=".", help="Repository root for relative path resolution.")
+    init_target.add_argument("--config", required=True, help="Path to ABI config JSON.")
+    init_target.add_argument("--target", required=True, help="Target name to initialize.")
+    init_target.add_argument("--header-path", required=True, help="Header path relative to repo root.")
+    init_target.add_argument("--api-macro", default="LUMENRTC_API", help="Export macro used in ABI declarations.")
+    init_target.add_argument("--call-macro", default="LUMENRTC_CALL", help="Calling convention macro used in ABI declarations.")
+    init_target.add_argument("--symbol-prefix", default="lrtc_", help="ABI symbol prefix (for function export matching).")
+    init_target.add_argument("--version-major-macro", required=True, help="ABI major version macro name.")
+    init_target.add_argument("--version-minor-macro", required=True, help="ABI minor version macro name.")
+    init_target.add_argument("--version-patch-macro", required=True, help="ABI patch version macro name.")
+    init_target.add_argument("--pinvoke-path", action="append", help="P/Invoke root path (repeatable).")
+    init_target.add_argument("--binary-path", help="Optional native binary path.")
+    init_target.add_argument("--baseline-path", help="Baseline path (default abi/baselines/<target>.json).")
+    init_target.add_argument("--no-create-baseline", action="store_true", help="Do not create baseline immediately.")
+    init_target.add_argument("--force", action="store_true", help="Overwrite target if already exists.")
+    init_target.set_defaults(func=command_init_target)
+
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
+
+    if hasattr(args, "no_create_baseline"):
+        args.create_baseline = not bool(args.no_create_baseline)
+
     try:
         return int(args.func(args))
     except AbiGuardError as exc:

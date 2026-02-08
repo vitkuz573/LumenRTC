@@ -1,6 +1,7 @@
 {
   "targets": {
     "lumenrtc": {
+      "baseline_path": "abi/baselines/lumenrtc.json",
       "header": {
         "path": "native/include/lumenrtc.h",
         "api_macro": "LUMENRTC_API",
@@ -10,6 +11,15 @@
           "major": "LUMENRTC_ABI_VERSION_MAJOR",
           "minor": "LUMENRTC_ABI_VERSION_MINOR",
           "patch": "LUMENRTC_ABI_VERSION_PATCH"
+        },
+        "types": {
+          "enable_enums": true,
+          "enable_structs": true,
+          "enum_name_pattern": "^lrtc_",
+          "struct_name_pattern": "^lrtc_",
+          "ignore_enums": [],
+          "ignore_structs": [],
+          "struct_tail_addition_is_breaking": true
         }
       },
       "pinvoke": {

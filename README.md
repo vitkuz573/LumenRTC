@@ -88,7 +88,7 @@ call, so incompatible native binaries fail fast with a clear error.
 Use the config-driven ABI guard framework:
 
 ```bash
-# Create/update baseline from current header + P/Invoke surface.
+# Create/update baseline from current header + type surface + P/Invoke.
 scripts/abi.sh baseline
 
 # Verify current state against baseline (header <-> P/Invoke).
@@ -96,14 +96,22 @@ scripts/abi.sh check --skip-binary
 
 # Verify including native export surface (after native build).
 scripts/abi.sh check --binary native/build/liblumenrtc.so
+
+# Verify all configured ABI targets (multi-target repos).
+scripts/abi.sh check-all --skip-binary
+
+# List/configure targets quickly.
+scripts/abi.sh list-targets
+scripts/abi.sh init-target ...
 ```
 
 PowerShell equivalent:
 
 ```powershell
 scripts\\abi.ps1 baseline
-scripts\\abi.ps1 check -- --skip-binary
-scripts\\abi.ps1 check -- --binary native\\build\\lumenrtc.dll
+scripts\\abi.ps1 check --skip-binary
+scripts\\abi.ps1 check --binary native\\build\\lumenrtc.dll
+scripts\\abi.ps1 check-all --skip-binary
 ```
 
 The generic tooling lives in `tools/abi_guard/` and can be reused for other ABI

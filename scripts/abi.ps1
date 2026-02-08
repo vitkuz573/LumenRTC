@@ -1,6 +1,6 @@
 param(
     [Parameter(Position = 0)]
-    [ValidateSet("snapshot", "baseline", "verify", "check", "diff")]
+    [ValidateSet("snapshot", "baseline", "baseline-all", "verify", "check", "verify-all", "check-all", "list-targets", "init-target", "diff")]
     [string]$Command = "check",
 
     [Parameter(ValueFromRemainingArguments = $true)]
@@ -30,7 +30,16 @@ $python = if ($env:PYTHON_BIN) {
 $config = if ($env:ABI_CONFIG) { $env:ABI_CONFIG } else { Join-Path $repoRoot "abi/config.json" }
 $target = if ($env:ABI_TARGET) { $env:ABI_TARGET } else { "lumenrtc" }
 $baseline = if ($env:ABI_BASELINE) { $env:ABI_BASELINE } else { Join-Path $repoRoot "abi/baselines/lumenrtc.json" }
+$baselineRoot = if ($env:ABI_BASELINE_ROOT) { $env:ABI_BASELINE_ROOT } else { Join-Path $repoRoot "abi/baselines" }
 $guard = Join-Path $repoRoot "tools/abi_guard/abi_guard.py"
+$extraArgs = @()
+if ($Arguments) {
+    foreach ($arg in $Arguments) {
+        if (-not [string]::IsNullOrWhiteSpace($arg)) {
+            $extraArgs += $arg
+        }
+    }
+}
 
 function Invoke-Guard {
     param([string[]]$GuardArgs)
@@ -46,29 +55,80 @@ function Invoke-Guard {
     }
 }
 
+function Invoke-GuardCapture {
+    param([string[]]$GuardArgs)
+
+    if ($python -eq "py") {
+        $output = & $python -3 $guard @GuardArgs
+    } else {
+        $output = & $python $guard @GuardArgs
+    }
+
+    if ($LASTEXITCODE -ne 0) {
+        throw "abi_guard failed with exit code $LASTEXITCODE."
+    }
+
+    return $output
+}
+
 switch ($Command) {
     "snapshot" {
-        $guardArgs = @("snapshot", "--repo-root", $repoRoot, "--config", $config, "--target", $target) + $Arguments
+        $guardArgs = @("snapshot", "--repo-root", $repoRoot, "--config", $config, "--target", $target) + $extraArgs
         Invoke-Guard -GuardArgs $guardArgs
         break
     }
     "baseline" {
-        $guardArgs = @("snapshot", "--repo-root", $repoRoot, "--config", $config, "--target", $target, "--skip-binary", "--output", $baseline) + $Arguments
+        $guardArgs = @("snapshot", "--repo-root", $repoRoot, "--config", $config, "--target", $target, "--skip-binary", "--output", $baseline) + $extraArgs
         Invoke-Guard -GuardArgs $guardArgs
         break
     }
+    "baseline-all" {
+        $targets = Invoke-GuardCapture -GuardArgs @("list-targets", "--config", $config)
+
+        foreach ($line in $targets) {
+            $t = $line.Trim()
+            if ([string]::IsNullOrWhiteSpace($t)) {
+                continue
+            }
+
+            $out = Join-Path $baselineRoot "$t.json"
+            $guardArgs = @("snapshot", "--repo-root", $repoRoot, "--config", $config, "--target", $t, "--skip-binary", "--output", $out) + $extraArgs
+            Invoke-Guard -GuardArgs $guardArgs
+        }
+        break
+    }
     "verify" {
-        $guardArgs = @("verify", "--repo-root", $repoRoot, "--config", $config, "--target", $target, "--baseline", $baseline) + $Arguments
+        $guardArgs = @("verify", "--repo-root", $repoRoot, "--config", $config, "--target", $target, "--baseline", $baseline) + $extraArgs
         Invoke-Guard -GuardArgs $guardArgs
         break
     }
     "check" {
-        $guardArgs = @("verify", "--repo-root", $repoRoot, "--config", $config, "--target", $target, "--baseline", $baseline) + $Arguments
+        $guardArgs = @("verify", "--repo-root", $repoRoot, "--config", $config, "--target", $target, "--baseline", $baseline) + $extraArgs
+        Invoke-Guard -GuardArgs $guardArgs
+        break
+    }
+    "verify-all" {
+        $guardArgs = @("verify-all", "--repo-root", $repoRoot, "--config", $config) + $extraArgs
+        Invoke-Guard -GuardArgs $guardArgs
+        break
+    }
+    "check-all" {
+        $guardArgs = @("verify-all", "--repo-root", $repoRoot, "--config", $config) + $extraArgs
+        Invoke-Guard -GuardArgs $guardArgs
+        break
+    }
+    "list-targets" {
+        $guardArgs = @("list-targets", "--config", $config) + $extraArgs
+        Invoke-Guard -GuardArgs $guardArgs
+        break
+    }
+    "init-target" {
+        $guardArgs = @("init-target", "--repo-root", $repoRoot, "--config", $config) + $extraArgs
         Invoke-Guard -GuardArgs $guardArgs
         break
     }
     "diff" {
-        $guardArgs = @("diff") + $Arguments
+        $guardArgs = @("diff") + $extraArgs
         Invoke-Guard -GuardArgs $guardArgs
         break
     }

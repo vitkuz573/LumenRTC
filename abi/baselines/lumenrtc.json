@@ -11,13 +11,549 @@
     "non_prefixed_exports": [],
     "path": null,
     "raw_export_count": 0,
+    "reason": "explicit_skip",
     "skipped": true,
     "symbol_count": 0,
     "symbols": [],
     "tool": null
   },
-  "generated_at_utc": "2026-02-08T09:25:25.821834+00:00",
+  "generated_at_utc": "2026-02-08T09:42:29.690836+00:00",
   "header": {
+    "enum_count": 22,
+    "enums": {
+      "lrtc_audio_source_type": {
+        "fingerprint": "e9319f359052b37051ec2f441df1233bb089bd533c44d582a8dc8e5de7538433",
+        "member_count": 2,
+        "members": [
+          {
+            "name": "LRTC_AUDIO_SOURCE_MICROPHONE",
+            "value": 0,
+            "value_expr": "0"
+          },
+          {
+            "name": "LRTC_AUDIO_SOURCE_CUSTOM",
+            "value": 1,
+            "value_expr": "1"
+          }
+        ]
+      },
+      "lrtc_bundle_policy": {
+        "fingerprint": "43a585f5e73badc205668e5e47931ca1ea8d6a83ca5d5a10176af5338bda5fcb",
+        "member_count": 3,
+        "members": [
+          {
+            "name": "LRTC_BUNDLE_BALANCED",
+            "value": 0,
+            "value_expr": "0"
+          },
+          {
+            "name": "LRTC_BUNDLE_MAX_BUNDLE",
+            "value": 1,
+            "value_expr": "1"
+          },
+          {
+            "name": "LRTC_BUNDLE_MAX_COMPAT",
+            "value": 2,
+            "value_expr": "2"
+          }
+        ]
+      },
+      "lrtc_candidate_network_policy": {
+        "fingerprint": "8f2c72db2274dae4dd9becd80cb6391186a9a8d76b40293b7fa530676989aa33",
+        "member_count": 2,
+        "members": [
+          {
+            "name": "LRTC_CANDIDATE_NETWORK_ALL",
+            "value": 0,
+            "value_expr": "0"
+          },
+          {
+            "name": "LRTC_CANDIDATE_NETWORK_LOW_COST",
+            "value": 1,
+            "value_expr": "1"
+          }
+        ]
+      },
+      "lrtc_data_channel_state": {
+        "fingerprint": "a9cdaf9c2b3c20b6b77b2c859842516fb17fd8ebdd6b06b1788a7109dcda752c",
+        "member_count": 4,
+        "members": [
+          {
+            "name": "LRTC_DATA_CHANNEL_CONNECTING",
+            "value": 0,
+            "value_expr": "0"
+          },
+          {
+            "name": "LRTC_DATA_CHANNEL_OPEN",
+            "value": 1,
+            "value_expr": "1"
+          },
+          {
+            "name": "LRTC_DATA_CHANNEL_CLOSING",
+            "value": 2,
+            "value_expr": "2"
+          },
+          {
+            "name": "LRTC_DATA_CHANNEL_CLOSED",
+            "value": 3,
+            "value_expr": "3"
+          }
+        ]
+      },
+      "lrtc_degradation_preference": {
+        "fingerprint": "f07839340f8831670914e6e767a5ab95dcdbc885db80083f3557946c86c7e6d2",
+        "member_count": 4,
+        "members": [
+          {
+            "name": "LRTC_DEGRADATION_DISABLED",
+            "value": 0,
+            "value_expr": "0"
+          },
+          {
+            "name": "LRTC_DEGRADATION_MAINTAIN_FRAMERATE",
+            "value": 1,
+            "value_expr": "1"
+          },
+          {
+            "name": "LRTC_DEGRADATION_MAINTAIN_RESOLUTION",
+            "value": 2,
+            "value_expr": "2"
+          },
+          {
+            "name": "LRTC_DEGRADATION_BALANCED",
+            "value": 3,
+            "value_expr": "3"
+          }
+        ]
+      },
+      "lrtc_desktop_capture_state": {
+        "fingerprint": "545bf98475c23db30367968ed198213aec2caf0c5558038b16d8847ca52f67b9",
+        "member_count": 3,
+        "members": [
+          {
+            "name": "LRTC_DESKTOP_CAPTURE_RUNNING",
+            "value": 0,
+            "value_expr": "0"
+          },
+          {
+            "name": "LRTC_DESKTOP_CAPTURE_STOPPED",
+            "value": 1,
+            "value_expr": "1"
+          },
+          {
+            "name": "LRTC_DESKTOP_CAPTURE_FAILED",
+            "value": 2,
+            "value_expr": "2"
+          }
+        ]
+      },
+      "lrtc_desktop_type": {
+        "fingerprint": "d293681659b61d6b9eb0b9d75471d7f716d675cbfdd1d530d1442ef9056ddd4f",
+        "member_count": 2,
+        "members": [
+          {
+            "name": "LRTC_DESKTOP_SCREEN",
+            "value": 0,
+            "value_expr": "0"
+          },
+          {
+            "name": "LRTC_DESKTOP_WINDOW",
+            "value": 1,
+            "value_expr": "1"
+          }
+        ]
+      },
+      "lrtc_dtls_transport_state": {
+        "fingerprint": "75b84b42080a5bcc9123709d1aabece6dd6c7c5f70456f6ee49b57e68eebb675",
+        "member_count": 5,
+        "members": [
+          {
+            "name": "LRTC_DTLS_NEW",
+            "value": 0,
+            "value_expr": "0"
+          },
+          {
+            "name": "LRTC_DTLS_CONNECTING",
+            "value": 1,
+            "value_expr": "1"
+          },
+          {
+            "name": "LRTC_DTLS_CONNECTED",
+            "value": 2,
+            "value_expr": "2"
+          },
+          {
+            "name": "LRTC_DTLS_CLOSED",
+            "value": 3,
+            "value_expr": "3"
+          },
+          {
+            "name": "LRTC_DTLS_FAILED",
+            "value": 4,
+            "value_expr": "4"
+          }
+        ]
+      },
+      "lrtc_ice_connection_state": {
+        "fingerprint": "42e2c3d9bf200e4fd8deb0933ab2fcf485563a46f7e7118081052c04acfb349b",
+        "member_count": 8,
+        "members": [
+          {
+            "name": "LRTC_ICE_CONNECTION_NEW",
+            "value": 0,
+            "value_expr": "0"
+          },
+          {
+            "name": "LRTC_ICE_CONNECTION_CHECKING",
+            "value": 1,
+            "value_expr": "1"
+          },
+          {
+            "name": "LRTC_ICE_CONNECTION_COMPLETED",
+            "value": 2,
+            "value_expr": "2"
+          },
+          {
+            "name": "LRTC_ICE_CONNECTION_CONNECTED",
+            "value": 3,
+            "value_expr": "3"
+          },
+          {
+            "name": "LRTC_ICE_CONNECTION_FAILED",
+            "value": 4,
+            "value_expr": "4"
+          },
+          {
+            "name": "LRTC_ICE_CONNECTION_DISCONNECTED",
+            "value": 5,
+            "value_expr": "5"
+          },
+          {
+            "name": "LRTC_ICE_CONNECTION_CLOSED",
+            "value": 6,
+            "value_expr": "6"
+          },
+          {
+            "name": "LRTC_ICE_CONNECTION_MAX",
+            "value": 7,
+            "value_expr": "7"
+          }
+        ]
+      },
+      "lrtc_ice_gathering_state": {
+        "fingerprint": "a6c612aeacb5010e415c3b40b0321426d897cca2797c9069cba37e346f94f770",
+        "member_count": 3,
+        "members": [
+          {
+            "name": "LRTC_ICE_GATHERING_NEW",
+            "value": 0,
+            "value_expr": "0"
+          },
+          {
+            "name": "LRTC_ICE_GATHERING_GATHERING",
+            "value": 1,
+            "value_expr": "1"
+          },
+          {
+            "name": "LRTC_ICE_GATHERING_COMPLETE",
+            "value": 2,
+            "value_expr": "2"
+          }
+        ]
+      },
+      "lrtc_ice_transports_type": {
+        "fingerprint": "f1a7cefcfef8b0ae85ff07309cee29e9d3aa37e0a37abc8e73bac9a0878fb702",
+        "member_count": 4,
+        "members": [
+          {
+            "name": "LRTC_ICE_TRANSPORTS_NONE",
+            "value": 0,
+            "value_expr": "0"
+          },
+          {
+            "name": "LRTC_ICE_TRANSPORTS_RELAY",
+            "value": 1,
+            "value_expr": "1"
+          },
+          {
+            "name": "LRTC_ICE_TRANSPORTS_NO_HOST",
+            "value": 2,
+            "value_expr": "2"
+          },
+          {
+            "name": "LRTC_ICE_TRANSPORTS_ALL",
+            "value": 3,
+            "value_expr": "3"
+          }
+        ]
+      },
+      "lrtc_log_severity": {
+        "fingerprint": "66b5134306ed1fd7f240c4bc19f0ca6c7e0199b7b1f6c7dec48c5683d70f36c0",
+        "member_count": 5,
+        "members": [
+          {
+            "name": "LRTC_LOG_VERBOSE",
+            "value": 0,
+            "value_expr": "0"
+          },
+          {
+            "name": "LRTC_LOG_INFO",
+            "value": 1,
+            "value_expr": "1"
+          },
+          {
+            "name": "LRTC_LOG_WARNING",
+            "value": 2,
+            "value_expr": "2"
+          },
+          {
+            "name": "LRTC_LOG_ERROR",
+            "value": 3,
+            "value_expr": "3"
+          },
+          {
+            "name": "LRTC_LOG_NONE",
+            "value": 4,
+            "value_expr": "4"
+          }
+        ]
+      },
+      "lrtc_media_security_type": {
+        "fingerprint": "6f707ec305612880c262c27095ce9c0449941902b95c732aac81a17b3997e104",
+        "member_count": 3,
+        "members": [
+          {
+            "name": "LRTC_SRTP_NONE",
+            "value": 0,
+            "value_expr": "0"
+          },
+          {
+            "name": "LRTC_SDES_SRTP",
+            "value": 1,
+            "value_expr": "1"
+          },
+          {
+            "name": "LRTC_DTLS_SRTP",
+            "value": 2,
+            "value_expr": "2"
+          }
+        ]
+      },
+      "lrtc_media_type": {
+        "fingerprint": "dd685dac9e4c7bf57d2e348fcea2e071d8b76daa46d09be5312bfa31f53cd694",
+        "member_count": 3,
+        "members": [
+          {
+            "name": "LRTC_MEDIA_AUDIO",
+            "value": 0,
+            "value_expr": "0"
+          },
+          {
+            "name": "LRTC_MEDIA_VIDEO",
+            "value": 1,
+            "value_expr": "1"
+          },
+          {
+            "name": "LRTC_MEDIA_DATA",
+            "value": 2,
+            "value_expr": "2"
+          }
+        ]
+      },
+      "lrtc_peer_connection_state": {
+        "fingerprint": "ac92e64bb3300bff7637837e7e65a54a71848bf82c96487134f25ab622372c10",
+        "member_count": 6,
+        "members": [
+          {
+            "name": "LRTC_PC_STATE_NEW",
+            "value": 0,
+            "value_expr": "0"
+          },
+          {
+            "name": "LRTC_PC_STATE_CONNECTING",
+            "value": 1,
+            "value_expr": "1"
+          },
+          {
+            "name": "LRTC_PC_STATE_CONNECTED",
+            "value": 2,
+            "value_expr": "2"
+          },
+          {
+            "name": "LRTC_PC_STATE_DISCONNECTED",
+            "value": 3,
+            "value_expr": "3"
+          },
+          {
+            "name": "LRTC_PC_STATE_FAILED",
+            "value": 4,
+            "value_expr": "4"
+          },
+          {
+            "name": "LRTC_PC_STATE_CLOSED",
+            "value": 5,
+            "value_expr": "5"
+          }
+        ]
+      },
+      "lrtc_result_t": {
+        "fingerprint": "4a4140ffb0832b84e0187e83bc7c6dc091e8c6e931d4a364c2451f6b938f3670",
+        "member_count": 4,
+        "members": [
+          {
+            "name": "LRTC_OK",
+            "value": 0,
+            "value_expr": "0"
+          },
+          {
+            "name": "LRTC_ERROR",
+            "value": 1,
+            "value_expr": "1"
+          },
+          {
+            "name": "LRTC_INVALID_ARG",
+            "value": 2,
+            "value_expr": "2"
+          },
+          {
+            "name": "LRTC_NOT_IMPLEMENTED",
+            "value": 3,
+            "value_expr": "3"
+          }
+        ]
+      },
+      "lrtc_rtcp_mux_policy": {
+        "fingerprint": "1fae0664fe3b55c8c720a0a0f2619c86868ca77dc9ba918a0fa3248d3e3832e6",
+        "member_count": 2,
+        "members": [
+          {
+            "name": "LRTC_RTCP_MUX_NEGOTIATE",
+            "value": 0,
+            "value_expr": "0"
+          },
+          {
+            "name": "LRTC_RTCP_MUX_REQUIRE",
+            "value": 1,
+            "value_expr": "1"
+          }
+        ]
+      },
+      "lrtc_rtp_transceiver_direction": {
+        "fingerprint": "acbe0b776a21c825038279d918ca1c6c354e3a46e3ebba6492387f2b47d29c0f",
+        "member_count": 5,
+        "members": [
+          {
+            "name": "LRTC_RTP_TRANSCEIVER_SEND_RECV",
+            "value": 0,
+            "value_expr": "0"
+          },
+          {
+            "name": "LRTC_RTP_TRANSCEIVER_SEND_ONLY",
+            "value": 1,
+            "value_expr": "1"
+          },
+          {
+            "name": "LRTC_RTP_TRANSCEIVER_RECV_ONLY",
+            "value": 2,
+            "value_expr": "2"
+          },
+          {
+            "name": "LRTC_RTP_TRANSCEIVER_INACTIVE",
+            "value": 3,
+            "value_expr": "3"
+          },
+          {
+            "name": "LRTC_RTP_TRANSCEIVER_STOPPED",
+            "value": 4,
+            "value_expr": "4"
+          }
+        ]
+      },
+      "lrtc_sdp_semantics": {
+        "fingerprint": "5d8b53a47095b6589cfce870c14874d9193bb481373628f6418b7859c6d708a9",
+        "member_count": 2,
+        "members": [
+          {
+            "name": "LRTC_SDP_PLAN_B",
+            "value": 0,
+            "value_expr": "0"
+          },
+          {
+            "name": "LRTC_SDP_UNIFIED_PLAN",
+            "value": 1,
+            "value_expr": "1"
+          }
+        ]
+      },
+      "lrtc_signaling_state": {
+        "fingerprint": "28c2a4dd87925fc85147359b31a6acb261a917861a9598342eae025ccfa8444c",
+        "member_count": 6,
+        "members": [
+          {
+            "name": "LRTC_SIGNALING_STABLE",
+            "value": 0,
+            "value_expr": "0"
+          },
+          {
+            "name": "LRTC_SIGNALING_HAVE_LOCAL_OFFER",
+            "value": 1,
+            "value_expr": "1"
+          },
+          {
+            "name": "LRTC_SIGNALING_HAVE_REMOTE_OFFER",
+            "value": 2,
+            "value_expr": "2"
+          },
+          {
+            "name": "LRTC_SIGNALING_HAVE_LOCAL_PRANSWER",
+            "value": 3,
+            "value_expr": "3"
+          },
+          {
+            "name": "LRTC_SIGNALING_HAVE_REMOTE_PRANSWER",
+            "value": 4,
+            "value_expr": "4"
+          },
+          {
+            "name": "LRTC_SIGNALING_CLOSED",
+            "value": 5,
+            "value_expr": "5"
+          }
+        ]
+      },
+      "lrtc_tcp_candidate_policy": {
+        "fingerprint": "beec721c4d93c48eece517a1945af6fcf2971b55dbfac53dda9f492469e7ef2a",
+        "member_count": 2,
+        "members": [
+          {
+            "name": "LRTC_TCP_CANDIDATE_ENABLED",
+            "value": 0,
+            "value_expr": "0"
+          },
+          {
+            "name": "LRTC_TCP_CANDIDATE_DISABLED",
+            "value": 1,
+            "value_expr": "1"
+          }
+        ]
+      },
+      "lrtc_track_state": {
+        "fingerprint": "4b5a7604f75aa1118d41bf48fb3d32a6ca6d981745a229e0d21182268aa9b243",
+        "member_count": 2,
+        "members": [
+          {
+            "name": "LRTC_TRACK_LIVE",
+            "value": 0,
+            "value_expr": "0"
+          },
+          {
+            "name": "LRTC_TRACK_ENDED",
+            "value": 1,
+            "value_expr": "1"
+          }
+        ]
+      }
+    },
     "function_count": 206,
     "functions": {
       "lrtc_abi_version_major": {
@@ -1052,6 +1588,377 @@
       }
     },
     "path": "native/include/lumenrtc.h",
+    "struct_count": 12,
+    "structs": {
+      "lrtc_audio_options_t": {
+        "field_count": 4,
+        "fields": [
+          {
+            "declaration": "bool echo_cancellation",
+            "name": "echo_cancellation"
+          },
+          {
+            "declaration": "bool auto_gain_control",
+            "name": "auto_gain_control"
+          },
+          {
+            "declaration": "bool noise_suppression",
+            "name": "noise_suppression"
+          },
+          {
+            "declaration": "bool highpass_filter",
+            "name": "highpass_filter"
+          }
+        ],
+        "fingerprint": "63c027fc33860e09dc64a154fff8e0a5945b89ad6ef0a06838501b88b5d813c3"
+      },
+      "lrtc_audio_sink_callbacks_t": {
+        "field_count": 1,
+        "fields": [
+          {
+            "declaration": "lrtc_audio_frame_cb on_data",
+            "name": "on_data"
+          }
+        ],
+        "fingerprint": "d00f77030480103dcbfbb119ac355f54f06d7faedbfec6d1820febc82b3c5999"
+      },
+      "lrtc_data_channel_callbacks_t": {
+        "field_count": 2,
+        "fields": [
+          {
+            "declaration": "lrtc_data_channel_state_cb on_state_change",
+            "name": "on_state_change"
+          },
+          {
+            "declaration": "lrtc_data_channel_message_cb on_message",
+            "name": "on_message"
+          }
+        ],
+        "fingerprint": "586bdd2314971b3e2d867fcd1dc2addc2a311efc242a1cb43b6e7d68e0eac99b"
+      },
+      "lrtc_dtls_transport_info_t": {
+        "field_count": 3,
+        "fields": [
+          {
+            "declaration": "int state",
+            "name": "state"
+          },
+          {
+            "declaration": "int ssl_cipher_suite",
+            "name": "ssl_cipher_suite"
+          },
+          {
+            "declaration": "int srtp_cipher_suite",
+            "name": "srtp_cipher_suite"
+          }
+        ],
+        "fingerprint": "6eb7a950b9e256a34ed2f96b2c11453f2943091b0491535966b1c146acebc0fa"
+      },
+      "lrtc_dtmf_sender_callbacks_t": {
+        "field_count": 1,
+        "fields": [
+          {
+            "declaration": "lrtc_dtmf_tone_cb on_tone_change",
+            "name": "on_tone_change"
+          }
+        ],
+        "fingerprint": "a20bc106a3de52e19a614742b60fc751d72fca245d0d27cb83a925ce31959fa5"
+      },
+      "lrtc_ice_server_t": {
+        "field_count": 3,
+        "fields": [
+          {
+            "declaration": "const char* uri",
+            "name": "uri"
+          },
+          {
+            "declaration": "const char* username",
+            "name": "username"
+          },
+          {
+            "declaration": "const char* password",
+            "name": "password"
+          }
+        ],
+        "fingerprint": "ee3aa224a983e1c22b1264480d5716cb3c168d390e9573f4e1232264f3cd09e0"
+      },
+      "lrtc_peer_connection_callbacks_t": {
+        "field_count": 11,
+        "fields": [
+          {
+            "declaration": "lrtc_peer_connection_state_cb on_signaling_state",
+            "name": "on_signaling_state"
+          },
+          {
+            "declaration": "lrtc_peer_connection_state_cb on_peer_connection_state",
+            "name": "on_peer_connection_state"
+          },
+          {
+            "declaration": "lrtc_peer_connection_state_cb on_ice_gathering_state",
+            "name": "on_ice_gathering_state"
+          },
+          {
+            "declaration": "lrtc_peer_connection_state_cb on_ice_connection_state",
+            "name": "on_ice_connection_state"
+          },
+          {
+            "declaration": "lrtc_ice_candidate_cb on_ice_candidate",
+            "name": "on_ice_candidate"
+          },
+          {
+            "declaration": "void (LUMENRTC_CALL *on_data_channel)(void* user_data, lrtc_data_channel_t* channel)",
+            "name": "__unnamed_5"
+          },
+          {
+            "declaration": "void (LUMENRTC_CALL *on_video_track)(void* user_data, lrtc_video_track_t* track)",
+            "name": "__unnamed_6"
+          },
+          {
+            "declaration": "void (LUMENRTC_CALL *on_audio_track)(void* user_data, lrtc_audio_track_t* track)",
+            "name": "__unnamed_7"
+          },
+          {
+            "declaration": "lrtc_track_cb on_track",
+            "name": "on_track"
+          },
+          {
+            "declaration": "lrtc_track_cb on_remove_track",
+            "name": "on_remove_track"
+          },
+          {
+            "declaration": "void (LUMENRTC_CALL *on_renegotiation_needed)(void* user_data)",
+            "name": "__unnamed_10"
+          }
+        ],
+        "fingerprint": "cc1a35a3b170c4925655f047a91ef663aeaf3208b1ecb3dfdd76f3cd9d771593"
+      },
+      "lrtc_rtc_config_t": {
+        "field_count": 21,
+        "fields": [
+          {
+            "declaration": "lrtc_ice_server_t ice_servers[LRTC_MAX_ICE_SERVERS]",
+            "name": "ice_servers"
+          },
+          {
+            "declaration": "uint32_t ice_server_count",
+            "name": "ice_server_count"
+          },
+          {
+            "declaration": "lrtc_ice_transports_type ice_transports_type",
+            "name": "ice_transports_type"
+          },
+          {
+            "declaration": "lrtc_bundle_policy bundle_policy",
+            "name": "bundle_policy"
+          },
+          {
+            "declaration": "lrtc_rtcp_mux_policy rtcp_mux_policy",
+            "name": "rtcp_mux_policy"
+          },
+          {
+            "declaration": "lrtc_candidate_network_policy candidate_network_policy",
+            "name": "candidate_network_policy"
+          },
+          {
+            "declaration": "lrtc_tcp_candidate_policy tcp_candidate_policy",
+            "name": "tcp_candidate_policy"
+          },
+          {
+            "declaration": "int ice_candidate_pool_size",
+            "name": "ice_candidate_pool_size"
+          },
+          {
+            "declaration": "lrtc_media_security_type srtp_type",
+            "name": "srtp_type"
+          },
+          {
+            "declaration": "lrtc_sdp_semantics sdp_semantics",
+            "name": "sdp_semantics"
+          },
+          {
+            "declaration": "bool offer_to_receive_audio",
+            "name": "offer_to_receive_audio"
+          },
+          {
+            "declaration": "bool offer_to_receive_video",
+            "name": "offer_to_receive_video"
+          },
+          {
+            "declaration": "bool disable_ipv6",
+            "name": "disable_ipv6"
+          },
+          {
+            "declaration": "bool disable_ipv6_on_wifi",
+            "name": "disable_ipv6_on_wifi"
+          },
+          {
+            "declaration": "int max_ipv6_networks",
+            "name": "max_ipv6_networks"
+          },
+          {
+            "declaration": "bool disable_link_local_networks",
+            "name": "disable_link_local_networks"
+          },
+          {
+            "declaration": "int screencast_min_bitrate",
+            "name": "screencast_min_bitrate"
+          },
+          {
+            "declaration": "bool enable_dscp",
+            "name": "enable_dscp"
+          },
+          {
+            "declaration": "bool use_rtp_mux",
+            "name": "use_rtp_mux"
+          },
+          {
+            "declaration": "uint32_t local_audio_bandwidth",
+            "name": "local_audio_bandwidth"
+          },
+          {
+            "declaration": "uint32_t local_video_bandwidth",
+            "name": "local_video_bandwidth"
+          }
+        ],
+        "fingerprint": "cb488387de4905b7fec988ce1820235b825ff3860e9b0269f336722f2d9230a4"
+      },
+      "lrtc_rtp_encoding_info_t": {
+        "field_count": 10,
+        "fields": [
+          {
+            "declaration": "uint32_t ssrc",
+            "name": "ssrc"
+          },
+          {
+            "declaration": "int max_bitrate_bps",
+            "name": "max_bitrate_bps"
+          },
+          {
+            "declaration": "int min_bitrate_bps",
+            "name": "min_bitrate_bps"
+          },
+          {
+            "declaration": "double max_framerate",
+            "name": "max_framerate"
+          },
+          {
+            "declaration": "double scale_resolution_down_by",
+            "name": "scale_resolution_down_by"
+          },
+          {
+            "declaration": "int active",
+            "name": "active"
+          },
+          {
+            "declaration": "double bitrate_priority",
+            "name": "bitrate_priority"
+          },
+          {
+            "declaration": "int network_priority",
+            "name": "network_priority"
+          },
+          {
+            "declaration": "int num_temporal_layers",
+            "name": "num_temporal_layers"
+          },
+          {
+            "declaration": "int adaptive_ptime",
+            "name": "adaptive_ptime"
+          }
+        ],
+        "fingerprint": "46f334302cb723fa9abcb3ab6d7af6b0b0145a2e040c98925e712e426bc3fcc4"
+      },
+      "lrtc_rtp_encoding_settings_t": {
+        "field_count": 12,
+        "fields": [
+          {
+            "declaration": "int max_bitrate_bps",
+            "name": "max_bitrate_bps"
+          },
+          {
+            "declaration": "int min_bitrate_bps",
+            "name": "min_bitrate_bps"
+          },
+          {
+            "declaration": "double max_framerate",
+            "name": "max_framerate"
+          },
+          {
+            "declaration": "double scale_resolution_down_by",
+            "name": "scale_resolution_down_by"
+          },
+          {
+            "declaration": "int active",
+            "name": "active"
+          },
+          {
+            "declaration": "int degradation_preference",
+            "name": "degradation_preference"
+          },
+          {
+            "declaration": "double bitrate_priority",
+            "name": "bitrate_priority"
+          },
+          {
+            "declaration": "int network_priority",
+            "name": "network_priority"
+          },
+          {
+            "declaration": "int num_temporal_layers",
+            "name": "num_temporal_layers"
+          },
+          {
+            "declaration": "const char* scalability_mode",
+            "name": "scalability_mode"
+          },
+          {
+            "declaration": "const char* rid",
+            "name": "rid"
+          },
+          {
+            "declaration": "int adaptive_ptime",
+            "name": "adaptive_ptime"
+          }
+        ],
+        "fingerprint": "3a8748373bba1e20e93eac9594fe89c826a1e9d2f5357cfa1cbc718f49e5466b"
+      },
+      "lrtc_rtp_transceiver_init_t": {
+        "field_count": 5,
+        "fields": [
+          {
+            "declaration": "int direction",
+            "name": "direction"
+          },
+          {
+            "declaration": "const char** stream_ids",
+            "name": "stream_ids"
+          },
+          {
+            "declaration": "uint32_t stream_id_count",
+            "name": "stream_id_count"
+          },
+          {
+            "declaration": "const lrtc_rtp_encoding_settings_t* send_encodings",
+            "name": "send_encodings"
+          },
+          {
+            "declaration": "uint32_t send_encoding_count",
+            "name": "send_encoding_count"
+          }
+        ],
+        "fingerprint": "2f579956bed11fffdaf59126db11a69ca468cbee4a59edc9c534871351c45d6a"
+      },
+      "lrtc_video_sink_callbacks_t": {
+        "field_count": 1,
+        "fields": [
+          {
+            "declaration": "lrtc_video_frame_cb on_frame",
+            "name": "on_frame"
+          }
+        ],
+        "fingerprint": "e64ccbecc7daefff08364bce9e4e211d63621bae0bd4f507d99c74aa3e4f2a27"
+      }
+    },
     "symbols": [
       "lrtc_abi_version_major",
       "lrtc_abi_version_minor",
@@ -2106,9 +3013,21 @@
       "lrtc_video_track_set_enabled"
     ]
   },
+  "policy": {
+    "strict_semver": true,
+    "type_policy": {
+      "enable_enums": true,
+      "enable_structs": true,
+      "enum_name_pattern": "^lrtc_",
+      "ignore_enums": [],
+      "ignore_structs": [],
+      "struct_name_pattern": "^lrtc_",
+      "struct_tail_addition_is_breaking": true
+    }
+  },
   "target": "lumenrtc",
   "tool": {
     "name": "abi_guard",
-    "version": "1.0.0"
+    "version": "2.0.0"
   }
 }

@@ -32,16 +32,13 @@ jobs:
         with:
           python-version: "3.x"
 
-      - name: Verify ABI (header + P/Invoke + baseline)
+      - name: Verify ABI Targets
         run: |
-          python3 tools/abi_guard/abi_guard.py verify \
+          python3 tools/abi_guard/abi_guard.py verify-all \
+            --repo-root . \
             --config abi/config.json \
-            --target lumenrtc \
-            --baseline abi/baselines/lumenrtc.json \
             --skip-binary \
-            --current-output artifacts/abi/current.json \
-            --report artifacts/abi/report.json \
-            --markdown-report artifacts/abi/report.md
+            --output-dir artifacts/abi
 
       - name: Upload ABI artifacts
         uses: actions/upload-artifact@v4
