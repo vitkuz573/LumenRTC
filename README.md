@@ -372,16 +372,6 @@ dotnet run --project samples/LumenRTC.Sample.ScreenShare.Core/LumenRTC.Sample.Sc
 dotnet run --project samples/LumenRTC.Sample.ScreenShare.Convenience/LumenRTC.Sample.ScreenShare.Convenience.csproj
 ```
 
-Screen share loopback (offer/answer in-process, codec preferences applied):
-
-```bash
-# Core API
-dotnet run --project samples/LumenRTC.Sample.ScreenShareLoopback.Core/LumenRTC.Sample.ScreenShareLoopback.Core.csproj
-
-# Convenience API
-dotnet run --project samples/LumenRTC.Sample.ScreenShareLoopback.Convenience/LumenRTC.Sample.ScreenShareLoopback.Convenience.csproj
-```
-
 Signaling server (simple WebSocket relay):
 
 ```bash
