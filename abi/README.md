@@ -47,6 +47,11 @@
 - Optional bindings symbol policy (`bindings.expected_symbols`) can enforce parity between ABI IDL and language binding expectations.
 - Policy rules and waivers are supported (`policy.rules`, `policy.waivers`).
 - Waivers should be temporary and include `owner`, `reason`, and `expires_utc`.
+- Header parsing uses `header.parser.backend=clang_preprocess` for LumenRTC
+  with fallback for local environments; CI validates clang parser is active and
+  fallback is not used.
+- `header.parser.compiler_candidates` and environment override `ABI_CLANG`
+  allow deterministic clang selection on Linux/macOS/Windows.
 
 See also:
 

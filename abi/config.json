@@ -7,6 +7,24 @@
         "api_macro": "LUMENRTC_API",
         "call_macro": "LUMENRTC_CALL",
         "symbol_prefix": "lrtc_",
+        "parser": {
+          "backend": "clang_preprocess",
+          "compiler": "clang",
+          "compiler_candidates": [
+            "clang",
+            "clang-20",
+            "clang-19",
+            "clang-18",
+            "clang-17",
+            "clang-16",
+            "clang++",
+            "clang-cl",
+            "clang.exe"
+          ],
+          "args": [],
+          "include_dirs": [],
+          "fallback_to_regex": true
+        },
         "version_macros": {
           "major": "LUMENRTC_ABI_VERSION_MAJOR",
           "minor": "LUMENRTC_ABI_VERSION_MINOR",

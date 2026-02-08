@@ -6564,7 +6564,7 @@
   "idl_schema_version": 2,
   "source": {
     "header_path": "native/include/lumenrtc.h",
-    "parser_backend": "regex"
+    "parser_backend": "clang_preprocess"
   },
   "summary": {
     "enum_count": 22,

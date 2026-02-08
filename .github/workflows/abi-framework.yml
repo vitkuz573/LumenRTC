@@ -42,6 +42,14 @@ jobs:
         with:
           dotnet-version: "10.0.x"
 
+      - name: Ensure clang is available
+        run: |
+          if ! command -v clang >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y clang
+          fi
+          clang --version
+
       - name: Unit tests (abi_framework)
         run: |
           python3 -m unittest discover -s tools/abi_framework/tests -p "test_*.py"
@@ -78,6 +86,37 @@ jobs:
             --config abi/config.json \
             --skip-binary \
             --output-dir artifacts/abi
+
+      - name: Assert clang parser backend active
+        run: |
+          python3 tools/abi_framework/abi_framework.py snapshot \
+            --repo-root . \
+            --config abi/config.json \
+            --target lumenrtc \
+            --skip-binary \
+            --output artifacts/abi/lumenrtc.snapshot.json
+          python3 - <<'PY'
+          import json
+          path = "artifacts/abi/lumenrtc.snapshot.json"
+          with open(path, "r", encoding="utf-8") as fh:
+              snapshot = json.load(fh)
+          parser = ((snapshot.get("header") or {}).get("parser") or {})
+          requested = parser.get("backend_requested")
+          backend = parser.get("backend")
+          fallback_used = bool(parser.get("fallback_used"))
+          details = parser.get("details") or {}
+          compiler_resolved = details.get("compiler_resolved")
+          if requested != "clang_preprocess":
+              raise SystemExit(f"expected backend_requested=clang_preprocess, got: {requested!r}")
+          if backend != "clang_preprocess" or fallback_used:
+              raise SystemExit(
+                  "clang parser backend is not active without fallback: "
+                  f"backend={backend!r}, fallback_used={fallback_used}"
+              )
+          if not isinstance(compiler_resolved, str) or not compiler_resolved.strip():
+              raise SystemExit(f"clang parser metadata is missing compiler_resolved: {details!r}")
+          print("clang parser backend is active and fallback is not used")
+          PY
 
       - name: Benchmark ABI pipeline
         run: |

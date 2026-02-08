@@ -149,6 +149,11 @@ ABI targets through `abi/config.json`. LumenRTC-specific C# code generation is
 implemented separately in `tools/lumenrtc_roslyn_codegen/`.
 The ABI IDL now uses schema v2 and can drive multiple language generators via
 `bindings.generators` plugin entries.
+LumenRTC target is configured to parse headers with `clang_preprocess`
+(`header.parser.backend`), with local fallback to regex enabled. CI enforces
+that clang backend is active without fallback. Parser supports
+`header.parser.compiler_candidates` and `ABI_CLANG` override for deterministic
+clang selection across environments.
 
 ### One-command bootstrap
 
