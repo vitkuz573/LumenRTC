@@ -230,7 +230,7 @@
       "lrtc_video_track_set_enabled"
     ]
   },
-  "generated_at_utc": "2026-02-08T11:11:03.547146+00:00",
+  "generated_at_utc": "2026-02-08T13:17:30.468934+00:00",
   "header": {
     "enum_count": 22,
     "enums": {
@@ -1809,6 +1809,38 @@
       "struct_count": 0,
       "structs": {}
     },
+    "parser": {
+      "backend": "clang_preprocess",
+      "backend_requested": "clang_preprocess",
+      "details": {
+        "backend": "clang_preprocess",
+        "command": "/usr/bin/clang -E -P -x c -std=c11 /home/vitaly/LumenRTC/native/include/lumenrtc.h",
+        "compiler_candidates": [
+          "clang",
+          "clang-20",
+          "clang-19",
+          "clang-18",
+          "clang-17",
+          "clang-16",
+          "clang++",
+          "clang-cl",
+          "clang.exe",
+          "clang-15",
+          "clang-14",
+          "clang++-20",
+          "clang++-19",
+          "clang++-18",
+          "clang++-17",
+          "clang++-16"
+        ],
+        "compiler_requested": "clang",
+        "compiler_resolved": "/usr/bin/clang",
+        "compiler_selected": "clang",
+        "elapsed_ms": 29.915
+      },
+      "fallback_used": false,
+      "parse_mode": "prefix_symbols_from_preprocessed_header"
+    },
     "path": "native/include/lumenrtc.h",
     "struct_count": 12,
     "structs": {
@@ -1928,16 +1960,16 @@
             "name": "on_ice_candidate"
           },
           {
-            "declaration": "void (LUMENRTC_CALL *on_data_channel)(void* user_data, lrtc_data_channel_t* channel)",
-            "name": "__unnamed_5"
+            "declaration": "void ( *on_data_channel)(void* user_data, lrtc_data_channel_t* channel)",
+            "name": "on_data_channel"
           },
           {
-            "declaration": "void (LUMENRTC_CALL *on_video_track)(void* user_data, lrtc_video_track_t* track)",
-            "name": "__unnamed_6"
+            "declaration": "void ( *on_video_track)(void* user_data, lrtc_video_track_t* track)",
+            "name": "on_video_track"
           },
           {
-            "declaration": "void (LUMENRTC_CALL *on_audio_track)(void* user_data, lrtc_audio_track_t* track)",
-            "name": "__unnamed_7"
+            "declaration": "void ( *on_audio_track)(void* user_data, lrtc_audio_track_t* track)",
+            "name": "on_audio_track"
           },
           {
             "declaration": "lrtc_track_cb on_track",
@@ -1948,17 +1980,17 @@
             "name": "on_remove_track"
           },
           {
-            "declaration": "void (LUMENRTC_CALL *on_renegotiation_needed)(void* user_data)",
-            "name": "__unnamed_10"
+            "declaration": "void ( *on_renegotiation_needed)(void* user_data)",
+            "name": "on_renegotiation_needed"
           }
         ],
-        "fingerprint": "cc1a35a3b170c4925655f047a91ef663aeaf3208b1ecb3dfdd76f3cd9d771593"
+        "fingerprint": "36a8b63538305c35fb837025235f74bdf2532f8365824b3912ca995deb4cc11f"
       },
       "lrtc_rtc_config_t": {
         "field_count": 21,
         "fields": [
           {
-            "declaration": "lrtc_ice_server_t ice_servers[LRTC_MAX_ICE_SERVERS]",
+            "declaration": "lrtc_ice_server_t ice_servers[8]",
             "name": "ice_servers"
           },
           {
@@ -2042,7 +2074,7 @@
             "name": "local_video_bandwidth"
           }
         ],
-        "fingerprint": "cb488387de4905b7fec988ce1820235b825ff3860e9b0269f336722f2d9230a4"
+        "fingerprint": "03a86555bea21db98b7f7d2ba38243cdfd0ca03872dd29a2f73b53a5bba31ca6"
       },
       "lrtc_rtp_encoding_info_t": {
         "field_count": 10,
@@ -2405,6 +2437,6 @@
   "target": "lumenrtc",
   "tool": {
     "name": "abi_framework",
-    "version": "3.0.0"
+    "version": "4.0.0"
   }
 }

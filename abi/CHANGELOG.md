@@ -1,6 +1,6 @@
 # ABI Changelog
 
-- Generated at (UTC): `2026-02-08T12:46:38.381975+00:00`
+- Generated at (UTC): `2026-02-08T13:17:42.658095+00:00`
 - Release tag: `vX.Y.Z`
 
 ## Summary
