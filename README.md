@@ -5,6 +5,8 @@ WebRTC upstream: `https://webrtc.googlesource.com/src`.
 The goal is a stable native ABI for .NET while keeping the heavy lifting in
 `libwebrtc`.
 
+Upstream sync runbook: `docs/WEBRTC_UPSTREAM_SYNC.md`.
+
 ## Layout
 
 - `native/` C ABI layer built as `lumenrtc` shared library.

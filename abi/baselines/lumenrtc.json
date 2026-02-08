@@ -230,7 +230,7 @@
       "lrtc_video_track_set_enabled"
     ]
   },
-  "generated_at_utc": "2026-02-08T13:17:30.468934+00:00",
+  "generated_at_utc": "2026-02-08T14:51:23.610332+00:00",
   "header": {
     "enum_count": 22,
     "enums": {
@@ -1836,7 +1836,7 @@
         "compiler_requested": "clang",
         "compiler_resolved": "/usr/bin/clang",
         "compiler_selected": "clang",
-        "elapsed_ms": 29.915
+        "elapsed_ms": 29.006
       },
       "fallback_used": false,
       "parse_mode": "prefix_symbols_from_preprocessed_header"
