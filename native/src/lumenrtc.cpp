@@ -2124,7 +2124,19 @@ LUMENRTC_API int LUMENRTC_CALL lrtc_peer_connection_add_ice_candidate_ex(
     return 0;
   }
 
-  pc->ref->AddCandidate(string(sdp_mid), sdp_mline_index, string(candidate));
+  const bool applied =
+      pc->ref->AddCandidate(string(sdp_mid), sdp_mline_index,
+                            string(candidate));
+  if (!applied) {
+    if (trace_ice_native) {
+      std::fprintf(
+          stderr,
+          "[lumenrtc:ice] add candidate rejected by pc: mid=%s mline=%d\n",
+          sdp_mid, sdp_mline_index);
+    }
+    return 0;
+  }
+
   if (trace_ice_native) {
     std::fprintf(
         stderr,

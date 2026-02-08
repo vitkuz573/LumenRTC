@@ -1003,28 +1003,62 @@ internal static class Program
             return;
         }
 
-        try
+        _ = ApplyCandidateWithRetriesAsync(role, pc, mid, mline, candidate, metrics, traceEnabled, trace);
+    }
+
+    private static async Task ApplyCandidateWithRetriesAsync(
+        string role,
+        PeerConnection pc,
+        string mid,
+        int mline,
+        string candidate,
+        CandidateDispatchMetrics metrics,
+        bool traceEnabled,
+        Action<string, string> trace)
+    {
+        const int maxAttempts = 40;
+        const int retryDelayMs = 25;
+        Exception? lastException = null;
+
+        for (var attempt = 1; attempt <= maxAttempts; attempt++)
         {
-            if (!pc.TryAddIceCandidate(mid, mline, candidate))
+            try
             {
-                Interlocked.Increment(ref metrics.Failed);
-                Console.WriteLine(
-                    $"{role} rejected candidate mid={mid} mline={mline} " +
-                    $"type={ExtractCandidateType(candidate)} addr={ExtractCandidateAddress(candidate)}");
-                return;
+                if (pc.TryAddIceCandidate(mid, mline, candidate))
+                {
+                    Interlocked.Increment(ref metrics.Applied);
+                    if (traceEnabled)
+                    {
+                        var attemptSuffix = attempt > 1 ? $" attempt={attempt}" : string.Empty;
+                        trace(role, $"apply candidate type={ExtractCandidateType(candidate)} addr={ExtractCandidateAddress(candidate)} mid={mid} mline={mline}{attemptSuffix}");
+                    }
+                    return;
+                }
+            }
+            catch (Exception ex)
+            {
+                lastException = ex;
             }
 
-            Interlocked.Increment(ref metrics.Applied);
-            if (traceEnabled)
+            if (attempt < maxAttempts)
             {
-                trace(role, $"apply candidate type={ExtractCandidateType(candidate)} addr={ExtractCandidateAddress(candidate)} mid={mid} mline={mline}");
+                await Task.Delay(retryDelayMs).ConfigureAwait(false);
             }
         }
-        catch (Exception ex)
+
+        Interlocked.Increment(ref metrics.Failed);
+        if (lastException != null)
         {
-            Interlocked.Increment(ref metrics.Failed);
-            Console.WriteLine($"{role} failed to apply candidate mid={mid} mline={mline}: {ex.Message}");
+            Console.WriteLine(
+                $"{role} failed to apply candidate mid={mid} mline={mline} after {maxAttempts} attempts: " +
+                $"{lastException.Message}");
+            return;
         }
+
+        Console.WriteLine(
+            $"{role} rejected candidate mid={mid} mline={mline} " +
+            $"type={ExtractCandidateType(candidate)} addr={ExtractCandidateAddress(candidate)} " +
+            $"after {maxAttempts} attempts");
     }
 
     private static async Task StatsLoopAsync(

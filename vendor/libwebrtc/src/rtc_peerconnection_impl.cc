@@ -336,12 +336,18 @@ void RTCPeerConnectionImpl::OnSignalingChange(
   if (observer_) observer_->OnSignalingState(signaling_state_map[new_state]);
 }
 
-void RTCPeerConnectionImpl::AddCandidate(const string mid, int mid_mline_index,
+bool RTCPeerConnectionImpl::AddCandidate(const string mid, int mid_mline_index,
                                          const string cand_sdp) {
   webrtc::SdpParseError error;
-  webrtc::IceCandidateInterface* candidate = webrtc::CreateIceCandidate(
-      to_std_string(mid), mid_mline_index, to_std_string(cand_sdp), &error);
-  if (candidate != nullptr) rtc_peerconnection_->AddIceCandidate(candidate);
+  std::unique_ptr<webrtc::IceCandidateInterface> candidate(
+      webrtc::CreateIceCandidate(
+          to_std_string(mid), mid_mline_index, to_std_string(cand_sdp),
+          &error));
+  if (!candidate) {
+    return false;
+  }
+
+  return rtc_peerconnection_->AddIceCandidate(candidate.get());
 }
 
 void RTCPeerConnectionImpl::OnIceCandidate(

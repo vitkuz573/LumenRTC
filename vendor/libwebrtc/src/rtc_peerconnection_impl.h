@@ -58,7 +58,7 @@ class RTCPeerConnectionImpl : public RTCPeerConnection,
   virtual void GetRemoteDescription(OnGetSdpSuccess success,
                                     OnGetSdpFailure failure) override;
 
-  virtual void AddCandidate(const string mid, int midx,
+  virtual bool AddCandidate(const string mid, int midx,
                             const string candiate) override;
 
   virtual void RestartIce() override;

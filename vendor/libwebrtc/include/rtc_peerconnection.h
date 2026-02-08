@@ -207,7 +207,7 @@ class RTCPeerConnection : public RefCountInterface {
   virtual void GetRemoteDescription(OnGetSdpSuccess success,
                                     OnGetSdpFailure failure) = 0;
 
-  virtual void AddCandidate(const string mid, int mid_mline_index,
+  virtual bool AddCandidate(const string mid, int mid_mline_index,
                             const string candiate) = 0;
 
   virtual void RegisterRTCPeerConnectionObserver(
