@@ -26,7 +26,7 @@ Param(
 
   [Parameter(Mandatory = $false)]
   [ValidateSet("nontrickle", "trickle")]
-  [string]$IceExchange = "nontrickle",
+  [string]$IceExchange = "trickle",
 
   [Parameter(Mandatory = $false)]
   [string]$Server = "ws://localhost:8080/ws/",
@@ -141,12 +141,17 @@ if (-not $NoBuild) {
 }
 
 $cursorValue = if ($NoCursor) { "false" } else { "true" }
+$effectiveIceExchange = $IceExchange
+if ($effectiveIceExchange -eq "nontrickle") {
+  Write-Warning "nontrickle is temporarily disabled for loopback; forcing trickle."
+  $effectiveIceExchange = "trickle"
+}
 
 $runArgs = @("run", "--configuration", $Configuration, "--project", $projectPath, "--")
 $runArgs += @("--source", "$Source", "--fps", "$Fps", "--cursor", $cursorValue)
 $runArgs += @("--stats-interval-ms", "$StatsIntervalMs")
 $runArgs += @("--signaling-mode", $SignalingMode)
-$runArgs += @("--ice-exchange", $IceExchange)
+$runArgs += @("--ice-exchange", $effectiveIceExchange)
 
 if (-not [string]::IsNullOrWhiteSpace($Stun)) {
   $runArgs += @("--stun", $Stun)
@@ -170,7 +175,7 @@ Write-Host "  Source:    $Source"
 Write-Host "  FPS:       $Fps"
 Write-Host "  Cursor:    $cursorValue"
 Write-Host "  Signaling: $SignalingMode"
-Write-Host "  ICE Xchg:  $IceExchange"
+Write-Host "  ICE Xchg:  $effectiveIceExchange"
 Write-Host "  ICE Trace: $(if ($TraceIceNative) { 'native' } else { 'off' })"
 if ($SignalingMode -eq "ws") {
   Write-Host "  Server:    $Server"
