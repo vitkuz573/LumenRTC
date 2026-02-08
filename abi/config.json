@@ -257,7 +257,12 @@
       "codegen": {
         "enabled": true,
         "idl_schema_version": 2,
-        "idl_output_path": "abi/generated/lumenrtc/lumenrtc.idl.json"
+        "idl_output_path": "abi/generated/lumenrtc/lumenrtc.idl.json",
+        "native_header_output_path": "native/include/lumenrtc.h",
+        "native_export_map_output_path": "native/lumenrtc.map",
+        "native_header_guard": "LUMENRTC_H",
+        "native_api_macro": "LUMENRTC_API",
+        "native_call_macro": "LUMENRTC_CALL"
       }
     }
   }

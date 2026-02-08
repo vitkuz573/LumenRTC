@@ -5655,6 +5655,67 @@
     }
   ],
   "header_types": {
+    "callback_typedefs": [
+      {
+        "declaration": "typedef void (LUMENRTC_CALL *lrtc_sdp_success_cb)(void* user_data, const char* sdp, const char* type);",
+        "name": "lrtc_sdp_success_cb"
+      },
+      {
+        "declaration": "typedef void (LUMENRTC_CALL *lrtc_sdp_error_cb)(void* user_data, const char* error);",
+        "name": "lrtc_sdp_error_cb"
+      },
+      {
+        "declaration": "typedef void (LUMENRTC_CALL *lrtc_void_cb)(void* user_data);",
+        "name": "lrtc_void_cb"
+      },
+      {
+        "declaration": "typedef void (LUMENRTC_CALL *lrtc_peer_connection_state_cb)(void* user_data, int state);",
+        "name": "lrtc_peer_connection_state_cb"
+      },
+      {
+        "declaration": "typedef void (LUMENRTC_CALL *lrtc_ice_candidate_cb)(void* user_data, const char* sdp_mid, int sdp_mline_index, const char* candidate);",
+        "name": "lrtc_ice_candidate_cb"
+      },
+      {
+        "declaration": "typedef void (LUMENRTC_CALL *lrtc_data_channel_state_cb)(void* user_data, int state);",
+        "name": "lrtc_data_channel_state_cb"
+      },
+      {
+        "declaration": "typedef void (LUMENRTC_CALL *lrtc_data_channel_message_cb)(void* user_data, const uint8_t* data, int length, int binary);",
+        "name": "lrtc_data_channel_message_cb"
+      },
+      {
+        "declaration": "typedef void (LUMENRTC_CALL *lrtc_audio_frame_cb)(void* user_data, const void* audio_data, int bits_per_sample, int sample_rate, size_t number_of_channels, size_t number_of_frames);",
+        "name": "lrtc_audio_frame_cb"
+      },
+      {
+        "declaration": "typedef void (LUMENRTC_CALL *lrtc_video_frame_cb)(void* user_data, lrtc_video_frame_t* frame);",
+        "name": "lrtc_video_frame_cb"
+      },
+      {
+        "declaration": "typedef void (LUMENRTC_CALL *lrtc_track_cb)(void* user_data, lrtc_rtp_transceiver_t* transceiver, lrtc_rtp_receiver_t* receiver);",
+        "name": "lrtc_track_cb"
+      },
+      {
+        "declaration": "typedef void (LUMENRTC_CALL *lrtc_stats_success_cb)(void* user_data, const char* json);",
+        "name": "lrtc_stats_success_cb"
+      },
+      {
+        "declaration": "typedef void (LUMENRTC_CALL *lrtc_stats_failure_cb)(void* user_data, const char* error);",
+        "name": "lrtc_stats_failure_cb"
+      },
+      {
+        "declaration": "typedef void (LUMENRTC_CALL *lrtc_log_message_cb)(void* user_data, const char* message);",
+        "name": "lrtc_log_message_cb"
+      },
+      {
+        "declaration": "typedef void (LUMENRTC_CALL *lrtc_dtmf_tone_cb)(void* user_data, const char* tone, const char* tone_buffer);",
+        "name": "lrtc_dtmf_tone_cb"
+      }
+    ],
+    "constants": {
+      "LRTC_MAX_ICE_SERVERS": "8"
+    },
     "enums": {
       "lrtc_audio_source_type": {
         "fingerprint": "e9319f359052b37051ec2f441df1233bb089bd533c44d582a8dc8e5de7538433",
@@ -6189,6 +6250,56 @@
         ]
       }
     },
+    "opaque_type_declarations": [
+      "typedef struct lrtc_factory_t lrtc_factory_t;",
+      "typedef struct lrtc_peer_connection_t lrtc_peer_connection_t;",
+      "typedef struct lrtc_media_constraints_t lrtc_media_constraints_t;",
+      "typedef struct lrtc_data_channel_t lrtc_data_channel_t;",
+      "typedef struct lrtc_audio_device_t lrtc_audio_device_t;",
+      "typedef struct lrtc_video_device_t lrtc_video_device_t;",
+      "typedef struct lrtc_desktop_device_t lrtc_desktop_device_t;",
+      "typedef struct lrtc_desktop_media_list_t lrtc_desktop_media_list_t;",
+      "typedef struct lrtc_media_source_t lrtc_media_source_t;",
+      "typedef struct lrtc_desktop_capturer_t lrtc_desktop_capturer_t;",
+      "typedef struct lrtc_video_capturer_t lrtc_video_capturer_t;",
+      "typedef struct lrtc_video_source_t lrtc_video_source_t;",
+      "typedef struct lrtc_audio_source_t lrtc_audio_source_t;",
+      "typedef struct lrtc_media_stream_t lrtc_media_stream_t;",
+      "typedef struct lrtc_video_track_t lrtc_video_track_t;",
+      "typedef struct lrtc_audio_track_t lrtc_audio_track_t;",
+      "typedef struct lrtc_audio_sink_t lrtc_audio_sink_t;",
+      "typedef struct lrtc_video_sink_t lrtc_video_sink_t;",
+      "typedef struct lrtc_video_frame_t lrtc_video_frame_t;",
+      "typedef struct lrtc_rtp_sender_t lrtc_rtp_sender_t;",
+      "typedef struct lrtc_rtp_receiver_t lrtc_rtp_receiver_t;",
+      "typedef struct lrtc_rtp_transceiver_t lrtc_rtp_transceiver_t;",
+      "typedef struct lrtc_dtmf_sender_t lrtc_dtmf_sender_t;"
+    ],
+    "opaque_types": [
+      "lrtc_factory_t",
+      "lrtc_peer_connection_t",
+      "lrtc_media_constraints_t",
+      "lrtc_data_channel_t",
+      "lrtc_audio_device_t",
+      "lrtc_video_device_t",
+      "lrtc_desktop_device_t",
+      "lrtc_desktop_media_list_t",
+      "lrtc_media_source_t",
+      "lrtc_desktop_capturer_t",
+      "lrtc_video_capturer_t",
+      "lrtc_video_source_t",
+      "lrtc_audio_source_t",
+      "lrtc_media_stream_t",
+      "lrtc_video_track_t",
+      "lrtc_audio_track_t",
+      "lrtc_audio_sink_t",
+      "lrtc_video_sink_t",
+      "lrtc_video_frame_t",
+      "lrtc_rtp_sender_t",
+      "lrtc_rtp_receiver_t",
+      "lrtc_rtp_transceiver_t",
+      "lrtc_dtmf_sender_t"
+    ],
     "structs": {
       "lrtc_audio_options_t": {
         "field_count": 4,

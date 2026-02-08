@@ -151,6 +151,8 @@ The ABI IDL now uses schema v2 and can drive multiple language generators via
 `src/LumenRTC` consumes ABI IDL (`abi/generated/lumenrtc/lumenrtc.idl.json`) as
 an `AdditionalFiles` input and emits `NativeMethods` at compile time; no
 committed `NativeMethods.g.cs` file is required.
+The ABI pipeline also generates native ABI artifacts from IDL:
+`native/include/lumenrtc.h` and `native/lumenrtc.map` (do not edit manually).
 LumenRTC target is configured to parse headers with `clang_preprocess`
 (`header.parser.backend`), with local fallback to regex enabled. CI enforces
 that clang backend is active without fallback. Parser supports
