@@ -2,9 +2,27 @@
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <LumenRtcAbiIdlPath>$(MSBuildProjectDirectory)/../../abi/generated/lumenrtc/lumenrtc.idl.json</LumenRtcAbiIdlPath>
+    <LumenRtcAbiNamespace>LumenRTC.Interop</LumenRtcAbiNamespace>
+    <LumenRtcAbiClassName>NativeMethods</LumenRtcAbiClassName>
+    <LumenRtcAbiAccessModifier>internal</LumenRtcAbiAccessModifier>
+    <LumenRtcAbiCallingConvention>Cdecl</LumenRtcAbiCallingConvention>
+    <LumenRtcAbiLibraryExpression>LibName</LumenRtcAbiLibraryExpression>
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="..\..\abi\generated\lumenrtc\NativeMethods.g.cs" Link="Interop\NativeMethods.g.cs" />
+    <ProjectReference Include="..\..\tools\lumenrtc_roslyn_codegen\LumenRTC.Abi.RoslynGenerator.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
+    <AdditionalFiles Include="$(LumenRtcAbiIdlPath)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <CompilerVisibleProperty Include="LumenRtcAbiIdlPath" />
+    <CompilerVisibleProperty Include="LumenRtcAbiNamespace" />
+    <CompilerVisibleProperty Include="LumenRtcAbiClassName" />
+    <CompilerVisibleProperty Include="LumenRtcAbiAccessModifier" />
+    <CompilerVisibleProperty Include="LumenRtcAbiCallingConvention" />
+    <CompilerVisibleProperty Include="LumenRtcAbiLibraryExpression" />
   </ItemGroup>
 </Project>

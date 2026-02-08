@@ -106,9 +106,6 @@ scripts/abi.sh generate --skip-binary
 # Generate ABI IDL + run configured language generators (plugin host).
 scripts/abi.sh codegen --skip-binary
 
-# Generate LumenRTC C# interop from ABI IDL (Roslyn).
-scripts/abi.sh roslyn
-
 # Migrate IDL payload to schema v2 (with metadata + availability/docs fields).
 scripts/abi.sh idl-migrate --input abi/generated/lumenrtc/lumenrtc.idl.json --to-version 2
 
@@ -145,13 +142,13 @@ scripts\\abi.ps1 release-prepare --skip-binary --release-tag vX.Y.Z
 ```
 
 The generic tooling lives in `tools/abi_framework/` and can be reused for other
-ABI targets through `abi/config.json`. LumenRTC-specific C# code generation is
-implemented separately in `tools/lumenrtc_roslyn_codegen/`.
+ABI targets through `abi/config.json`. LumenRTC-specific C# interop generation is
+implemented as a Roslyn source generator in `tools/lumenrtc_roslyn_codegen/`.
 The ABI IDL now uses schema v2 and can drive multiple language generators via
 `bindings.generators` plugin entries.
-`src/LumenRTC` now consumes generated interop declarations directly from
-`abi/generated/lumenrtc/NativeMethods.g.cs` (linked into the project), and
-manual split `NativeMethods.*.cs` P/Invoke declarations are removed.
+`src/LumenRTC` consumes ABI IDL (`abi/generated/lumenrtc/lumenrtc.idl.json`) as
+an `AdditionalFiles` input and emits `NativeMethods` at compile time; no
+committed `NativeMethods.g.cs` file is required.
 LumenRTC target is configured to parse headers with `clang_preprocess`
 (`header.parser.backend`), with local fallback to regex enabled. CI enforces
 that clang backend is active without fallback. Parser supports

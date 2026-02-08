@@ -9,7 +9,7 @@
 - [ ] `scripts/abi.sh check-all --skip-binary`
 - [ ] `scripts/abi.sh generate --skip-binary --check --fail-on-sync`
 - [ ] `scripts/abi.sh codegen --skip-binary --check --fail-on-sync`
-- [ ] `scripts/abi.sh roslyn --check` (if C# interop is in scope)
+- [ ] `dotnet build src/LumenRTC/LumenRTC.csproj` (if C# interop is in scope)
 - [ ] If ABI changed intentionally: baseline/changelog updated and reviewed
 - [ ] Policy waivers (if any) include owner + reason + `expires_utc`
 - [ ] Added/updated tests for parser/policy/diff behavior

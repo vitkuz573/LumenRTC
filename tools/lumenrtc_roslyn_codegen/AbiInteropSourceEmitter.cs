@@ -1,15 +1,18 @@
+using System.IO;
+using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace LumenRTC.Abi.RoslynGenerator;
 
-internal static class Program
+internal static class AbiInteropSourceEmitter
 {
-    private const string ToolVersion = "1.0.0";
+    internal const string ToolVersion = "2.0.0";
 
     private static readonly HashSet<string> CSharpKeywords = new(StringComparer.Ordinal)
     {
@@ -52,105 +55,7 @@ internal static class Program
         ["double"] = "double",
     };
 
-    private static int Main(string[] args)
-    {
-        try
-        {
-            var options = GeneratorOptions.Parse(args);
-            if (options.ShowHelp)
-            {
-                PrintUsage();
-                return 0;
-            }
-
-            return Run(options);
-        }
-        catch (GeneratorException ex)
-        {
-            Console.Error.WriteLine($"roslyn-codegen error: {ex.Message}");
-            return 2;
-        }
-    }
-
-    private static int Run(GeneratorOptions options)
-    {
-        var idlText = ReadFileUtf8(options.IdlPath);
-        var model = ParseIdl(idlText);
-        var generated = RenderCode(model, options);
-
-        var existing = File.Exists(options.OutputPath) ? ReadFileUtf8(options.OutputPath) : string.Empty;
-        var isUpToDate = NormalizeEol(existing) == NormalizeEol(generated);
-
-        if (options.Check)
-        {
-            if (isUpToDate)
-            {
-                Console.WriteLine($"roslyn-codegen check: up to date ({options.OutputPath})");
-                return 0;
-            }
-
-            Console.Error.WriteLine($"roslyn-codegen check: drift detected ({options.OutputPath})");
-            return 1;
-        }
-
-        if (options.DryRun)
-        {
-            var status = isUpToDate ? "unchanged" : "would_update";
-            Console.WriteLine($"roslyn-codegen dry-run: {status} ({options.OutputPath})");
-            return 0;
-        }
-
-        var outputDir = Path.GetDirectoryName(options.OutputPath);
-        if (!string.IsNullOrWhiteSpace(outputDir))
-        {
-            Directory.CreateDirectory(outputDir);
-        }
-
-        File.WriteAllText(options.OutputPath, generated, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
-        var statusLabel = isUpToDate ? "unchanged" : "updated";
-        Console.WriteLine(
-            $"roslyn-codegen: {statusLabel} {options.OutputPath} " +
-            $"(symbols={model.Functions.Count}, version={model.AbiVersion})"
-        );
-        return 0;
-    }
-
-    private static string ReadFileUtf8(string path)
-    {
-        try
-        {
-            return File.ReadAllText(path, Encoding.UTF8);
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-            throw new GeneratorException($"Unable to read '{path}': {ex.Message}");
-        }
-    }
-
-    private static string NormalizeEol(string value) => value.Replace("\r\n", "\n");
-
-    private static void PrintUsage()
-    {
-        Console.WriteLine(
-            """
-            Usage:
-              dotnet run --project tools/lumenrtc_roslyn_codegen/LumenRTC.Abi.RoslynGenerator.csproj -- \
-                --idl <path> --output <path> [options]
-
-            Options:
-              --namespace <value>           Default: LumenRTC.Interop
-              --class-name <value>          Default: NativeMethods
-              --access-modifier <value>     Default: internal
-              --calling-convention <value>  Default: Cdecl
-              --library-expression <value>  Default: LibName
-              --check                       Fail if generated output differs
-              --dry-run                     Do not write output
-              --help                        Show this help
-            """
-        );
-    }
-
-    private static IdlModel ParseIdl(string text)
+    public static IdlModel ParseIdl(string text)
     {
         JsonDocument document;
         try
@@ -177,6 +82,34 @@ internal static class Program
 
             return new IdlModel(functions, enumNames, structNames, abiVersion);
         }
+    }
+
+    public static string RenderCode(IdlModel model, GeneratorOptions options)
+    {
+        var methods = model.Functions.Select(function => BuildMethod(function, model, options)).ToArray();
+
+        var classDeclaration = SyntaxFactory.ClassDeclaration(options.ClassName)
+            .AddModifiers(ResolveAccessModifierTokens(options.AccessModifier))
+            .AddModifiers(
+                SyntaxFactory.Token(SyntaxKind.StaticKeyword),
+                SyntaxFactory.Token(SyntaxKind.PartialKeyword)
+            )
+            .AddMembers(methods);
+
+        var namespaceDeclaration = SyntaxFactory.FileScopedNamespaceDeclaration(
+            SyntaxFactory.ParseName(options.NamespaceName)
+        ).AddMembers(classDeclaration);
+
+        var compilationUnit = SyntaxFactory.CompilationUnit()
+            .AddUsings(SyntaxFactory.UsingDirective(SyntaxFactory.ParseName("System.Runtime.InteropServices")))
+            .AddMembers(namespaceDeclaration)
+            .NormalizeWhitespace(eol: "\n", indentation: "    ");
+
+        return
+            "// <auto-generated />\n" +
+            $"// Generated by lumenrtc_roslyn_codegen source generator {ToolVersion}\n" +
+            compilationUnit.ToFullString() +
+            "\n";
     }
 
     private static string ParseAbiVersion(JsonElement root)
@@ -283,7 +216,7 @@ internal static class Program
             var text = value.GetString();
             if (!string.IsNullOrWhiteSpace(text))
             {
-                return text;
+                return text!;
             }
         }
 
@@ -297,7 +230,7 @@ internal static class Program
             var text = value.GetString();
             if (!string.IsNullOrWhiteSpace(text))
             {
-                return text;
+                return text!;
             }
         }
 
@@ -312,34 +245,6 @@ internal static class Program
         }
 
         return fallback;
-    }
-
-    private static string RenderCode(IdlModel model, GeneratorOptions options)
-    {
-        var methods = model.Functions.Select(function => BuildMethod(function, model, options)).ToArray();
-
-        var classDeclaration = SyntaxFactory.ClassDeclaration(options.ClassName)
-            .AddModifiers(ResolveAccessModifierTokens(options.AccessModifier))
-            .AddModifiers(
-                SyntaxFactory.Token(SyntaxKind.StaticKeyword),
-                SyntaxFactory.Token(SyntaxKind.PartialKeyword)
-            )
-            .AddMembers(methods);
-
-        var namespaceDeclaration = SyntaxFactory.FileScopedNamespaceDeclaration(
-            SyntaxFactory.ParseName(options.NamespaceName)
-        ).AddMembers(classDeclaration);
-
-        var compilationUnit = SyntaxFactory.CompilationUnit()
-            .AddUsings(SyntaxFactory.UsingDirective(SyntaxFactory.ParseName("System.Runtime.InteropServices")))
-            .AddMembers(namespaceDeclaration)
-            .NormalizeWhitespace(eol: "\n", indentation: "    ");
-
-        return
-            $"// <auto-generated />\n" +
-            $"// Generated by lumenrtc_roslyn_codegen {ToolVersion}\n" +
-            compilationUnit.ToFullString() +
-            "\n";
     }
 
     private static MethodDeclarationSyntax BuildMethod(
@@ -398,10 +303,10 @@ internal static class Program
             parameters.Add(parameterSyntax);
         }
 
-        var libraryExpression = ParseExpression(options.LibraryExpression, "--library-expression");
+        var libraryExpression = ParseExpression(options.LibraryExpression, "LumenRtcAbiLibraryExpression");
         var callingConventionExpression = ParseExpression(
             $"CallingConvention.{options.CallingConvention}",
-            "--calling-convention"
+            "LumenRtcAbiCallingConvention"
         );
 
         var dllImportAttribute = SyntaxFactory.Attribute(SyntaxFactory.IdentifierName("DllImport"))
@@ -480,7 +385,9 @@ internal static class Program
         var expression = SyntaxFactory.ParseExpression(expressionText);
         if (expression.ContainsDiagnostics)
         {
-            throw new GeneratorException($"{optionName} produced invalid expression: {expressionText}");
+            throw new GeneratorException(
+                $"{optionName} produced invalid expression: {expressionText}"
+            );
         }
 
         return expression;
@@ -489,24 +396,35 @@ internal static class Program
     private static SyntaxToken[] ResolveAccessModifierTokens(string value)
     {
         var normalized = value.Trim().ToLowerInvariant();
-        return normalized switch
+        switch (normalized)
         {
-            "public" => [SyntaxFactory.Token(SyntaxKind.PublicKeyword)],
-            "internal" => [SyntaxFactory.Token(SyntaxKind.InternalKeyword)],
-            "private" => [SyntaxFactory.Token(SyntaxKind.PrivateKeyword)],
-            "protected" => [SyntaxFactory.Token(SyntaxKind.ProtectedKeyword)],
-            "protectedinternal" or "protected_internal" or "protected-internal" => new[]
-            {
-                SyntaxFactory.Token(SyntaxKind.ProtectedKeyword),
-                SyntaxFactory.Token(SyntaxKind.InternalKeyword),
-            },
-            "privateprotected" or "private_protected" or "private-protected" => new[]
-            {
-                SyntaxFactory.Token(SyntaxKind.PrivateKeyword),
-                SyntaxFactory.Token(SyntaxKind.ProtectedKeyword),
-            },
-            _ => throw new GeneratorException($"Unsupported access modifier: '{value}'"),
-        };
+            case "public":
+                return new[] { SyntaxFactory.Token(SyntaxKind.PublicKeyword) };
+            case "internal":
+                return new[] { SyntaxFactory.Token(SyntaxKind.InternalKeyword) };
+            case "private":
+                return new[] { SyntaxFactory.Token(SyntaxKind.PrivateKeyword) };
+            case "protected":
+                return new[] { SyntaxFactory.Token(SyntaxKind.ProtectedKeyword) };
+            case "protectedinternal":
+            case "protected_internal":
+            case "protected-internal":
+                return new[]
+                {
+                    SyntaxFactory.Token(SyntaxKind.ProtectedKeyword),
+                    SyntaxFactory.Token(SyntaxKind.InternalKeyword),
+                };
+            case "privateprotected":
+            case "private_protected":
+            case "private-protected":
+                return new[]
+                {
+                    SyntaxFactory.Token(SyntaxKind.PrivateKeyword),
+                    SyntaxFactory.Token(SyntaxKind.ProtectedKeyword),
+                };
+            default:
+                throw new GeneratorException($"Unsupported access modifier: '{value}'");
+        }
     }
 
     private static string SanitizeIdentifier(string value, string fallback)
@@ -518,13 +436,13 @@ internal static class Program
             candidate = Regex.Replace(candidate, "[^A-Za-z0-9_]", "_");
             if (!Regex.IsMatch(candidate, "^[A-Za-z_].*$"))
             {
-                candidate = $"_{candidate}";
+                candidate = "_" + candidate;
             }
         }
 
         if (CSharpKeywords.Contains(candidate))
         {
-            return $"@{candidate}";
+            return "@" + candidate;
         }
 
         return candidate;
@@ -537,7 +455,7 @@ internal static class Program
     {
         if (parameter.Variadic)
         {
-            return new ParameterRenderSpec("IntPtr", Modifier: null, MarshalAsI1: false);
+            return new ParameterRenderSpec("IntPtr", modifier: null, marshalAsI1: false);
         }
 
         var info = ParseCTypeInfo(parameter.CType);
@@ -551,41 +469,41 @@ internal static class Program
 
             return new ParameterRenderSpec(
                 scalarType,
-                Modifier: null,
-                MarshalAsI1: string.Equals(scalarType, "bool", StringComparison.Ordinal)
+                modifier: null,
+                marshalAsI1: string.Equals(scalarType, "bool", StringComparison.Ordinal)
             );
         }
 
         if (info.PointerDepth > 1)
         {
-            return new ParameterRenderSpec("IntPtr", Modifier: null, MarshalAsI1: false);
+            return new ParameterRenderSpec("IntPtr", modifier: null, marshalAsI1: false);
         }
 
         if (IsRawPointerType(info.BaseType, parameter.Name))
         {
-            return new ParameterRenderSpec("IntPtr", Modifier: null, MarshalAsI1: false);
+            return new ParameterRenderSpec("IntPtr", modifier: null, marshalAsI1: false);
         }
 
         if (model.StructNames.Contains(info.BaseType))
         {
             var structType = MapManagedBaseType(info.BaseType, model);
-            var modifier = IsOutStructPointer(function, parameter) ? "out" : "ref";
-            return new ParameterRenderSpec(structType, modifier, MarshalAsI1: false);
+            var modifier = IsOutStructPointer(parameter) ? "out" : "ref";
+            return new ParameterRenderSpec(structType, modifier, marshalAsI1: false);
         }
 
         if (PrimitiveTypeMap.TryGetValue(info.BaseType, out var primitive))
         {
-            if (IsOutPrimitivePointer(function, parameter))
+            if (IsOutPrimitivePointer(parameter))
             {
                 return new ParameterRenderSpec(
                     primitive,
-                    Modifier: "out",
-                    MarshalAsI1: string.Equals(primitive, "bool", StringComparison.Ordinal)
+                    modifier: "out",
+                    marshalAsI1: string.Equals(primitive, "bool", StringComparison.Ordinal)
                 );
             }
         }
 
-        return new ParameterRenderSpec("IntPtr", Modifier: null, MarshalAsI1: false);
+        return new ParameterRenderSpec("IntPtr", modifier: null, marshalAsI1: false);
     }
 
     private static bool IsDirectionEnumParameter(
@@ -602,50 +520,45 @@ internal static class Program
             && string.Equals(parameter.Name, "direction", StringComparison.Ordinal);
     }
 
-    private static bool IsOutPrimitivePointer(FunctionSpec function, ParameterSpec parameter)
+    private static bool IsOutPrimitivePointer(ParameterSpec parameter)
     {
         var paramName = parameter.Name.ToLowerInvariant();
-        if (paramName is "volume" or "value")
-        {
-            return true;
-        }
-
-        return false;
+        return paramName == "volume" || paramName == "value";
     }
 
-    private static bool IsOutStructPointer(FunctionSpec function, ParameterSpec parameter)
+    private static bool IsOutStructPointer(ParameterSpec parameter)
     {
         var paramName = parameter.Name.ToLowerInvariant();
-        if (paramName is "info")
-        {
-            return true;
-        }
-
-        return false;
+        return paramName == "info";
     }
 
     private static bool IsRawPointerType(string baseType, string parameterName)
     {
         var normalizedBase = baseType.ToLowerInvariant();
-        if (normalizedBase is "void" or "char" or "signed char" or "unsigned char" or "uint8_t" or "int8_t")
+        if (normalizedBase == "void"
+            || normalizedBase == "char"
+            || normalizedBase == "signed char"
+            || normalizedBase == "unsigned char"
+            || normalizedBase == "uint8_t"
+            || normalizedBase == "int8_t")
         {
             return true;
         }
 
         var normalizedName = parameterName.ToLowerInvariant();
-        if (normalizedName.Contains("buffer", StringComparison.Ordinal)
-            || normalizedName.Contains("name", StringComparison.Ordinal)
-            || normalizedName.Contains("guid", StringComparison.Ordinal)
-            || normalizedName.Contains("sdp", StringComparison.Ordinal)
-            || normalizedName.Contains("candidate", StringComparison.Ordinal)
-            || normalizedName.Contains("mime", StringComparison.Ordinal)
-            || normalizedName.Contains("stream_ids", StringComparison.Ordinal)
-            || normalizedName.Contains("data", StringComparison.Ordinal)
-            || normalizedName.Contains("label", StringComparison.Ordinal)
-            || normalizedName.Contains("protocol", StringComparison.Ordinal)
-            || normalizedName.Equals("config", StringComparison.Ordinal)
-            || normalizedName.Contains("error", StringComparison.Ordinal)
-            || normalizedName.Contains("tones", StringComparison.Ordinal))
+        if (ContainsOrdinal(normalizedName, "buffer")
+            || ContainsOrdinal(normalizedName, "name")
+            || ContainsOrdinal(normalizedName, "guid")
+            || ContainsOrdinal(normalizedName, "sdp")
+            || ContainsOrdinal(normalizedName, "candidate")
+            || ContainsOrdinal(normalizedName, "mime")
+            || ContainsOrdinal(normalizedName, "stream_ids")
+            || ContainsOrdinal(normalizedName, "data")
+            || ContainsOrdinal(normalizedName, "label")
+            || ContainsOrdinal(normalizedName, "protocol")
+            || string.Equals(normalizedName, "config", StringComparison.Ordinal)
+            || ContainsOrdinal(normalizedName, "error")
+            || ContainsOrdinal(normalizedName, "tones"))
         {
             return true;
         }
@@ -653,14 +566,17 @@ internal static class Program
         return false;
     }
 
+    private static bool ContainsOrdinal(string value, string pattern)
+    {
+        return value.IndexOf(pattern, StringComparison.Ordinal) >= 0;
+    }
+
     private static CTypeInfo ParseCTypeInfo(string cType)
     {
-        var canonical = NormalizeCType(cType);
-        var stripped = StripCTypeQualifiers(canonical);
+        var stripped = StripCTypeQualifiers(cType);
         var pointerDepth = stripped.Count(ch => ch == '*');
-        var baseType = stripped.Replace("*", string.Empty, StringComparison.Ordinal).Trim();
-        var isConst = Regex.IsMatch(canonical, "\\bconst\\b");
-        return new CTypeInfo(canonical, baseType, pointerDepth, isConst);
+        var baseType = stripped.Replace("*", string.Empty).Trim();
+        return new CTypeInfo(baseType, pointerDepth);
     }
 
     private static string MapManagedType(string cType, IdlModel model)
@@ -738,159 +654,237 @@ internal static class Program
         var value = cIdentifier;
         if (stripTypedefSuffix && value.EndsWith("_t", StringComparison.Ordinal))
         {
-            value = value[..^2];
+            value = value.Substring(0, value.Length - 2);
         }
 
-        var parts = value
-            .Split('_', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Where(part => part.Length > 0)
-            .Select(part => char.ToUpperInvariant(part[0]) + part[1..]);
-
-        var joined = string.Concat(parts);
-        return string.IsNullOrWhiteSpace(joined) ? "IntPtr" : joined;
-    }
-
-    private sealed record CTypeInfo(string Canonical, string BaseType, int PointerDepth, bool IsConst);
-
-    private sealed record ParameterRenderSpec(string TypeName, string? Modifier, bool MarshalAsI1);
-}
-
-internal sealed record GeneratorOptions(
-    string IdlPath,
-    string OutputPath,
-    string NamespaceName,
-    string ClassName,
-    string AccessModifier,
-    string CallingConvention,
-    string LibraryExpression,
-    bool Check,
-    bool DryRun,
-    bool ShowHelp
-)
-{
-    public static GeneratorOptions Parse(string[] args)
-    {
-        string? idlPath = null;
-        string? outputPath = null;
-        var namespaceName = "LumenRTC.Interop";
-        var className = "NativeMethods";
-        var accessModifier = "internal";
-        var callingConvention = "Cdecl";
-        var libraryExpression = "LibName";
-        var check = false;
-        var dryRun = false;
-        var showHelp = false;
-
-        for (var idx = 0; idx < args.Length; idx++)
+        var builder = new StringBuilder();
+        var parts = value.Split(new[] { '_' }, StringSplitOptions.RemoveEmptyEntries);
+        foreach (var rawPart in parts)
         {
-            var arg = args[idx];
-            switch (arg)
+            var part = rawPart.Trim();
+            if (part.Length == 0)
             {
-                case "-h":
-                case "--help":
-                    showHelp = true;
-                    break;
-                case "--idl":
-                    idlPath = ReadValue(args, ref idx, arg);
-                    break;
-                case "--output":
-                    outputPath = ReadValue(args, ref idx, arg);
-                    break;
-                case "--namespace":
-                    namespaceName = ReadValue(args, ref idx, arg);
-                    break;
-                case "--class-name":
-                    className = ReadValue(args, ref idx, arg);
-                    break;
-                case "--access-modifier":
-                    accessModifier = ReadValue(args, ref idx, arg);
-                    break;
-                case "--calling-convention":
-                    callingConvention = ReadValue(args, ref idx, arg);
-                    break;
-                case "--library-expression":
-                    libraryExpression = ReadValue(args, ref idx, arg);
-                    break;
-                case "--check":
-                    check = true;
-                    break;
-                case "--dry-run":
-                    dryRun = true;
-                    break;
-                default:
-                    throw new GeneratorException($"Unknown argument: {arg}");
+                continue;
+            }
+
+            builder.Append(char.ToUpperInvariant(part[0]));
+            if (part.Length > 1)
+            {
+                builder.Append(part.Substring(1));
             }
         }
 
-        if (showHelp)
-        {
-            return new GeneratorOptions(
-                idlPath ?? string.Empty,
-                outputPath ?? string.Empty,
-                namespaceName,
-                className,
-                accessModifier,
-                callingConvention,
-                libraryExpression,
-                check,
-                dryRun,
-                ShowHelp: true
-            );
-        }
-
-        if (string.IsNullOrWhiteSpace(idlPath))
-        {
-            throw new GeneratorException("Missing required argument --idl <path>.");
-        }
-
-        if (string.IsNullOrWhiteSpace(outputPath))
-        {
-            throw new GeneratorException("Missing required argument --output <path>.");
-        }
-
-        return new GeneratorOptions(
-            Path.GetFullPath(idlPath),
-            Path.GetFullPath(outputPath),
-            namespaceName,
-            className,
-            accessModifier,
-            callingConvention,
-            libraryExpression,
-            check,
-            dryRun,
-            ShowHelp: false
-        );
-    }
-
-    private static string ReadValue(string[] args, ref int index, string option)
-    {
-        var next = index + 1;
-        if (next >= args.Length || args[next].StartsWith("-", StringComparison.Ordinal))
-        {
-            throw new GeneratorException($"Argument {option} requires a value.");
-        }
-
-        index = next;
-        return args[next];
+        var joined = builder.ToString();
+        return string.IsNullOrWhiteSpace(joined) ? "IntPtr" : joined;
     }
 }
 
-internal sealed record IdlModel(
-    IReadOnlyList<FunctionSpec> Functions,
-    HashSet<string> EnumNames,
-    HashSet<string> StructNames,
-    string AbiVersion
-);
+internal sealed class GeneratorOptions
+{
+    private static readonly StringComparison PathComparison =
+        System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows)
+            ? StringComparison.OrdinalIgnoreCase
+            : StringComparison.Ordinal;
 
-internal sealed record FunctionSpec(
-    string Name,
-    string CReturnType,
-    IReadOnlyList<ParameterSpec> Parameters,
-    string Documentation,
-    bool Deprecated
-);
+    private const string DefaultIdlPath = "abi/generated/lumenrtc/lumenrtc.idl.json";
+    private const string DefaultNamespace = "LumenRTC.Interop";
+    private const string DefaultClassName = "NativeMethods";
+    private const string DefaultAccessModifier = "internal";
+    private const string DefaultCallingConvention = "Cdecl";
+    private const string DefaultLibraryExpression = "LibName";
 
-internal sealed record ParameterSpec(string Name, string CType, bool Variadic);
+    public GeneratorOptions(
+        string idlPath,
+        string namespaceName,
+        string className,
+        string accessModifier,
+        string callingConvention,
+        string libraryExpression)
+    {
+        IdlPath = idlPath;
+        NamespaceName = namespaceName;
+        ClassName = className;
+        AccessModifier = accessModifier;
+        CallingConvention = callingConvention;
+        LibraryExpression = libraryExpression;
+    }
+
+    public string IdlPath { get; }
+
+    public string NamespaceName { get; }
+
+    public string ClassName { get; }
+
+    public string AccessModifier { get; }
+
+    public string CallingConvention { get; }
+
+    public string LibraryExpression { get; }
+
+    public static GeneratorOptions From(AnalyzerConfigOptions options)
+    {
+        return new GeneratorOptions(
+            idlPath: ReadBuildProperty(options, "LumenRtcAbiIdlPath", DefaultIdlPath),
+            namespaceName: ReadBuildProperty(options, "LumenRtcAbiNamespace", DefaultNamespace),
+            className: ReadBuildProperty(options, "LumenRtcAbiClassName", DefaultClassName),
+            accessModifier: ReadBuildProperty(options, "LumenRtcAbiAccessModifier", DefaultAccessModifier),
+            callingConvention: ReadBuildProperty(options, "LumenRtcAbiCallingConvention", DefaultCallingConvention),
+            libraryExpression: ReadBuildProperty(options, "LumenRtcAbiLibraryExpression", DefaultLibraryExpression)
+        );
+    }
+
+    public bool MatchesIdlPath(string candidatePath)
+    {
+        if (string.IsNullOrWhiteSpace(candidatePath))
+        {
+            return false;
+        }
+
+        if (Path.IsPathRooted(IdlPath))
+        {
+            var configuredAbsolute = NormalizePath(SafeGetFullPath(IdlPath));
+            var candidateAbsolute = NormalizePath(SafeGetFullPath(candidatePath));
+            return string.Equals(candidateAbsolute, configuredAbsolute, PathComparison);
+        }
+
+        var candidateNormalized = NormalizePath(candidatePath);
+        var configuredRelative = NormalizePath(IdlPath).TrimStart('/');
+        if (string.IsNullOrWhiteSpace(configuredRelative))
+        {
+            return false;
+        }
+
+        if (string.Equals(candidateNormalized.TrimStart('/'), configuredRelative, PathComparison))
+        {
+            return true;
+        }
+
+        return candidateNormalized.EndsWith("/" + configuredRelative, PathComparison);
+    }
+
+    private static string ReadBuildProperty(AnalyzerConfigOptions options, string propertyName, string fallback)
+    {
+        var key = "build_property." + propertyName;
+        if (options.TryGetValue(key, out var value) && !string.IsNullOrWhiteSpace(value))
+        {
+            return value.Trim();
+        }
+
+        return fallback;
+    }
+
+    private static string NormalizePath(string value)
+    {
+        return value.Replace('\\', '/').Trim();
+    }
+
+    private static string SafeGetFullPath(string path)
+    {
+        try
+        {
+            return Path.GetFullPath(path);
+        }
+        catch
+        {
+            return path;
+        }
+    }
+}
+
+internal sealed class IdlModel
+{
+    public IdlModel(
+        IReadOnlyList<FunctionSpec> functions,
+        HashSet<string> enumNames,
+        HashSet<string> structNames,
+        string abiVersion)
+    {
+        Functions = functions;
+        EnumNames = enumNames;
+        StructNames = structNames;
+        AbiVersion = abiVersion;
+    }
+
+    public IReadOnlyList<FunctionSpec> Functions { get; }
+
+    public HashSet<string> EnumNames { get; }
+
+    public HashSet<string> StructNames { get; }
+
+    public string AbiVersion { get; }
+}
+
+internal sealed class FunctionSpec
+{
+    public FunctionSpec(
+        string name,
+        string cReturnType,
+        IReadOnlyList<ParameterSpec> parameters,
+        string documentation,
+        bool deprecated)
+    {
+        Name = name;
+        CReturnType = cReturnType;
+        Parameters = parameters;
+        Documentation = documentation;
+        Deprecated = deprecated;
+    }
+
+    public string Name { get; }
+
+    public string CReturnType { get; }
+
+    public IReadOnlyList<ParameterSpec> Parameters { get; }
+
+    public string Documentation { get; }
+
+    public bool Deprecated { get; }
+}
+
+internal sealed class ParameterSpec
+{
+    public ParameterSpec(string name, string cType, bool variadic)
+    {
+        Name = name;
+        CType = cType;
+        Variadic = variadic;
+    }
+
+    public string Name { get; }
+
+    public string CType { get; }
+
+    public bool Variadic { get; }
+}
+
+internal sealed class CTypeInfo
+{
+    public CTypeInfo(string baseType, int pointerDepth)
+    {
+        BaseType = baseType;
+        PointerDepth = pointerDepth;
+    }
+
+    public string BaseType { get; }
+
+    public int PointerDepth { get; }
+}
+
+internal sealed class ParameterRenderSpec
+{
+    public ParameterRenderSpec(string typeName, string? modifier, bool marshalAsI1)
+    {
+        TypeName = typeName;
+        Modifier = modifier;
+        MarshalAsI1 = marshalAsI1;
+    }
+
+    public string TypeName { get; }
+
+    public string? Modifier { get; }
+
+    public bool MarshalAsI1 { get; }
+}
 
 internal sealed class GeneratorException : Exception
 {
