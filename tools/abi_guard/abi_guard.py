@@ -4,9 +4,11 @@ from __future__ import annotations
 import argparse
 import ast
 import datetime as dt
+import difflib
 import glob
 import hashlib
 import json
+import tempfile
 import os
 import re
 import shutil
@@ -16,7 +18,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-TOOL_VERSION = "2.0.0"
+TOOL_VERSION = "3.0.0"
 
 
 class AbiGuardError(Exception):
@@ -84,6 +86,209 @@ def load_json(path: Path) -> dict[str, Any]:
 def write_json(path: Path, value: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def get_schema_path(kind: str) -> Path:
+    base = Path(__file__).resolve().parent / "schemas"
+    mapping = {
+        "config": base / "config.schema.json",
+        "snapshot": base / "snapshot.schema.json",
+        "report": base / "report.schema.json",
+    }
+    if kind not in mapping:
+        raise AbiGuardError(f"Unknown schema kind: {kind}")
+    return mapping[kind]
+
+
+def validate_with_jsonschema_if_available(kind: str, payload: dict[str, Any]) -> tuple[bool, str | None]:
+    schema_path = get_schema_path(kind)
+    if not schema_path.exists():
+        return False, f"schema file not found: {schema_path}"
+
+    try:
+        import jsonschema  # type: ignore
+    except Exception:
+        return False, "jsonschema package is not installed"
+
+    schema_payload = load_json(schema_path)
+    try:
+        jsonschema.validate(payload, schema_payload)
+    except Exception as exc:
+        raise AbiGuardError(f"{kind} failed JSON schema validation: {exc}") from exc
+    return True, None
+
+
+def require_keys(obj: dict[str, Any], keys: list[str], label: str) -> None:
+    missing = [key for key in keys if key not in obj]
+    if missing:
+        raise AbiGuardError(f"{label} is missing required keys: {', '.join(missing)}")
+
+
+def validate_config_payload(payload: dict[str, Any]) -> None:
+    if not isinstance(payload, dict):
+        raise AbiGuardError("config root must be an object")
+    root_policy = payload.get("policy")
+    if root_policy is not None and not isinstance(root_policy, dict):
+        raise AbiGuardError("config.policy must be an object when specified")
+    if isinstance(root_policy, dict):
+        classification = root_policy.get("max_allowed_classification")
+        if classification is not None and classification not in {"none", "additive", "breaking"}:
+            raise AbiGuardError("config.policy.max_allowed_classification must be none/additive/breaking")
+        for bool_key in ["fail_on_warnings", "require_layout_probe"]:
+            value = root_policy.get(bool_key)
+            if value is not None and not isinstance(value, bool):
+                raise AbiGuardError(f"config.policy.{bool_key} must be boolean when specified")
+    targets = payload.get("targets")
+    if not isinstance(targets, dict) or not targets:
+        raise AbiGuardError("config must define non-empty 'targets' object")
+    for target_name, target in targets.items():
+        if not isinstance(target_name, str) or not target_name:
+            raise AbiGuardError("config target names must be non-empty strings")
+        if not isinstance(target, dict):
+            raise AbiGuardError(f"target '{target_name}' must be an object")
+        require_keys(target, ["header", "pinvoke"], f"target '{target_name}'")
+        header = target.get("header")
+        pinvoke = target.get("pinvoke")
+        if not isinstance(header, dict):
+            raise AbiGuardError(f"target '{target_name}'.header must be an object")
+        if not isinstance(pinvoke, dict):
+            raise AbiGuardError(f"target '{target_name}'.pinvoke must be an object")
+        require_keys(
+            header,
+            ["path", "api_macro", "call_macro", "symbol_prefix", "version_macros"],
+            f"target '{target_name}'.header",
+        )
+        version_macros = header.get("version_macros")
+        if not isinstance(version_macros, dict):
+            raise AbiGuardError(f"target '{target_name}'.header.version_macros must be an object")
+        require_keys(version_macros, ["major", "minor", "patch"], f"target '{target_name}'.header.version_macros")
+        paths = pinvoke.get("paths")
+        if not isinstance(paths, list) or not paths:
+            raise AbiGuardError(f"target '{target_name}'.pinvoke.paths must be a non-empty array")
+        for path in paths:
+            if not isinstance(path, str) or not path:
+                raise AbiGuardError(f"target '{target_name}'.pinvoke.paths must contain non-empty strings")
+
+        target_policy = target.get("policy")
+        if target_policy is not None:
+            if not isinstance(target_policy, dict):
+                raise AbiGuardError(f"target '{target_name}'.policy must be an object when specified")
+            classification = target_policy.get("max_allowed_classification")
+            if classification is not None and classification not in {"none", "additive", "breaking"}:
+                raise AbiGuardError(
+                    f"target '{target_name}'.policy.max_allowed_classification must be none/additive/breaking"
+                )
+            for bool_key in ["fail_on_warnings", "require_layout_probe"]:
+                value = target_policy.get(bool_key)
+                if value is not None and not isinstance(value, bool):
+                    raise AbiGuardError(f"target '{target_name}'.policy.{bool_key} must be boolean when specified")
+
+        codegen = target.get("codegen")
+        if codegen is not None:
+            if not isinstance(codegen, dict):
+                raise AbiGuardError(f"target '{target_name}'.codegen must be an object when specified")
+            string_fields = [
+                "namespace",
+                "class_name",
+                "access_modifier",
+                "calling_convention",
+                "library_name_expression",
+                "output_path",
+                "idl_output_path",
+            ]
+            for field_name in string_fields:
+                value = codegen.get(field_name)
+                if value is not None and (not isinstance(value, str) or not value):
+                    raise AbiGuardError(
+                        f"target '{target_name}'.codegen.{field_name} must be a non-empty string when specified"
+                    )
+            bool_fields = ["enabled", "emit_entry_point"]
+            for field_name in bool_fields:
+                value = codegen.get(field_name)
+                if value is not None and not isinstance(value, bool):
+                    raise AbiGuardError(f"target '{target_name}'.codegen.{field_name} must be a boolean when specified")
+            using_list = codegen.get("additional_usings")
+            if using_list is not None:
+                if not isinstance(using_list, list):
+                    raise AbiGuardError(f"target '{target_name}'.codegen.additional_usings must be an array")
+                for idx, item in enumerate(using_list):
+                    if not isinstance(item, str) or not item:
+                        raise AbiGuardError(
+                            f"target '{target_name}'.codegen.additional_usings[{idx}] must be a non-empty string"
+                        )
+            include_symbols = codegen.get("include_symbols")
+            if include_symbols is not None:
+                if not isinstance(include_symbols, list):
+                    raise AbiGuardError(f"target '{target_name}'.codegen.include_symbols must be an array")
+                for idx, item in enumerate(include_symbols):
+                    if not isinstance(item, str) or not item:
+                        raise AbiGuardError(
+                            f"target '{target_name}'.codegen.include_symbols[{idx}] must be a non-empty string"
+                        )
+            exclude_symbols = codegen.get("exclude_symbols")
+            if exclude_symbols is not None:
+                if not isinstance(exclude_symbols, list):
+                    raise AbiGuardError(f"target '{target_name}'.codegen.exclude_symbols must be an array")
+                for idx, item in enumerate(exclude_symbols):
+                    if not isinstance(item, str) or not item:
+                        raise AbiGuardError(
+                            f"target '{target_name}'.codegen.exclude_symbols[{idx}] must be a non-empty string"
+                        )
+            regex_lists = ["include_symbols_regex", "exclude_symbols_regex"]
+            for list_name in regex_lists:
+                regex_items = codegen.get(list_name)
+                if regex_items is None:
+                    continue
+                if not isinstance(regex_items, list):
+                    raise AbiGuardError(f"target '{target_name}'.codegen.{list_name} must be an array")
+                for idx, item in enumerate(regex_items):
+                    if not isinstance(item, str) or not item:
+                        raise AbiGuardError(
+                            f"target '{target_name}'.codegen.{list_name}[{idx}] must be a non-empty string"
+                        )
+
+            map_fields = ["type_aliases", "pointer_aliases"]
+            for map_name in map_fields:
+                mapping = codegen.get(map_name)
+                if mapping is None:
+                    continue
+                if not isinstance(mapping, dict):
+                    raise AbiGuardError(f"target '{target_name}'.codegen.{map_name} must be an object")
+                for raw_key, raw_value in mapping.items():
+                    if not isinstance(raw_key, str) or not raw_key:
+                        raise AbiGuardError(f"target '{target_name}'.codegen.{map_name} has invalid key")
+                    if not isinstance(raw_value, str) or not raw_value:
+                        raise AbiGuardError(
+                            f"target '{target_name}'.codegen.{map_name}.{raw_key} must be a non-empty string"
+                        )
+
+    validate_with_jsonschema_if_available("config", payload)
+
+
+def validate_snapshot_payload(payload: dict[str, Any], label: str) -> None:
+    if not isinstance(payload, dict):
+        raise AbiGuardError(f"{label} root must be an object")
+    require_keys(payload, ["tool", "target", "abi_version", "header", "pinvoke", "binary"], label)
+    header = payload.get("header")
+    pinvoke = payload.get("pinvoke")
+    if not isinstance(header, dict) or not isinstance(pinvoke, dict):
+        raise AbiGuardError(f"{label} must contain object sections 'header' and 'pinvoke'")
+    require_keys(header, ["symbols", "functions"], f"{label}.header")
+    require_keys(pinvoke, ["symbols"], f"{label}.pinvoke")
+    validate_with_jsonschema_if_available("snapshot", payload)
+
+
+def validate_report_payload(payload: dict[str, Any], label: str) -> None:
+    if not isinstance(payload, dict):
+        raise AbiGuardError(f"{label} root must be an object")
+    require_keys(payload, ["status", "change_classification", "required_bump", "errors", "warnings"], label)
+    validate_with_jsonschema_if_available("report", payload)
+
+
+def load_config(path: Path) -> dict[str, Any]:
+    config = load_json(path)
+    validate_config_payload(config)
+    return config
 
 
 def resolve_target(config: dict[str, Any], target_name: str) -> dict[str, Any]:
@@ -448,13 +653,14 @@ def parse_c_header(
         raise AbiGuardError(f"Unable to read header '{header_path}': {exc}") from exc
 
     content = strip_c_comments(raw)
+    declaration_content = re.sub(r"^\s*#.*?$", "", content, flags=re.M)
     pattern = re.compile(
         rf"{re.escape(api_macro)}\s+(?P<ret>.*?)\s+{re.escape(call_macro)}\s+(?P<name>[A-Za-z_][A-Za-z0-9_]*)\s*\((?P<params>.*?)\)\s*;",
         flags=re.S,
     )
 
     functions: dict[str, dict[str, str]] = {}
-    for match in pattern.finditer(content):
+    for match in pattern.finditer(declaration_content):
         name = match.group("name")
         if symbol_prefix and not name.startswith(symbol_prefix):
             continue
@@ -476,8 +682,8 @@ def parse_c_header(
     minor = extract_define_int(content, version_macros["minor"])
     patch = extract_define_int(content, version_macros["patch"])
 
-    enums = parse_enum_blocks(content=content, policy=type_policy)
-    structs = parse_struct_blocks(content=content, policy=type_policy)
+    enums = parse_enum_blocks(content=declaration_content, policy=type_policy)
+    structs = parse_struct_blocks(content=declaration_content, policy=type_policy)
 
     header_payload = {
         "path": str(header_path),
@@ -492,6 +698,951 @@ def parse_c_header(
     return header_payload, AbiVersion(major=major, minor=minor, patch=patch)
 
 
+CSHARP_KEYWORDS = {
+    "abstract",
+    "as",
+    "base",
+    "bool",
+    "break",
+    "byte",
+    "case",
+    "catch",
+    "char",
+    "checked",
+    "class",
+    "const",
+    "continue",
+    "decimal",
+    "default",
+    "delegate",
+    "do",
+    "double",
+    "else",
+    "enum",
+    "event",
+    "explicit",
+    "extern",
+    "false",
+    "finally",
+    "fixed",
+    "float",
+    "for",
+    "foreach",
+    "goto",
+    "if",
+    "implicit",
+    "in",
+    "int",
+    "interface",
+    "internal",
+    "is",
+    "lock",
+    "long",
+    "namespace",
+    "new",
+    "null",
+    "object",
+    "operator",
+    "out",
+    "override",
+    "params",
+    "private",
+    "protected",
+    "public",
+    "readonly",
+    "ref",
+    "return",
+    "sbyte",
+    "sealed",
+    "short",
+    "sizeof",
+    "stackalloc",
+    "static",
+    "string",
+    "struct",
+    "switch",
+    "this",
+    "throw",
+    "true",
+    "try",
+    "typeof",
+    "uint",
+    "ulong",
+    "unchecked",
+    "unsafe",
+    "ushort",
+    "using",
+    "virtual",
+    "void",
+    "volatile",
+    "while",
+}
+
+
+def normalize_c_type(value: str) -> str:
+    text = normalize_ws(value)
+    text = re.sub(r"\s*\*\s*", "*", text)
+    text = re.sub(r"\s+", " ", text).strip()
+    return text
+
+
+def strip_c_type_qualifiers(value: str) -> str:
+    text = normalize_c_type(value)
+    text = re.sub(r"\b(const|volatile|restrict)\b", "", text)
+    text = re.sub(r"\b(struct|enum)\s+", "", text)
+    text = normalize_ws(text)
+    text = re.sub(r"\s*\*\s*", "*", text)
+    return text
+
+
+def split_c_parameters(parameters: str) -> list[str]:
+    raw = parameters.strip()
+    if not raw or raw == "void":
+        return []
+
+    parts: list[str] = []
+    token: list[str] = []
+    depth = 0
+
+    for ch in raw:
+        if ch == "," and depth == 0:
+            piece = normalize_ws("".join(token))
+            if piece:
+                parts.append(piece)
+            token = []
+            continue
+
+        token.append(ch)
+        if ch in "([":
+            depth += 1
+        elif ch in ")]":
+            depth = max(0, depth - 1)
+
+    tail = normalize_ws("".join(token))
+    if tail:
+        parts.append(tail)
+
+    return parts
+
+
+def parse_c_parameter_decl(declaration: str, index: int) -> dict[str, Any]:
+    decl = normalize_ws(declaration)
+    if decl == "...":
+        return {
+            "name": f"arg{index}",
+            "c_type": "...",
+            "raw": decl,
+            "variadic": True,
+        }
+
+    function_ptr = re.search(r"\(\s*\*\s*(?P<name>[A-Za-z_][A-Za-z0-9_]*)\s*\)", decl)
+    if function_ptr:
+        name = function_ptr.group("name")
+        c_type = normalize_c_type(decl.replace(name, "", 1))
+        return {
+            "name": name,
+            "c_type": c_type,
+            "raw": decl,
+            "variadic": False,
+        }
+
+    array_decl = re.match(
+        r"^(?P<left>.+?)\s+(?P<name>[A-Za-z_][A-Za-z0-9_]*)(?P<array>(?:\[[^\]]*\])+)\s*$",
+        decl,
+    )
+    if array_decl:
+        left = normalize_c_type(array_decl.group("left"))
+        c_type = normalize_c_type(f"{left}*")
+        return {
+            "name": array_decl.group("name"),
+            "c_type": c_type,
+            "raw": decl,
+            "variadic": False,
+        }
+
+    regular = re.match(r"^(?P<left>.+?)\s+(?P<name>[A-Za-z_][A-Za-z0-9_]*)\s*$", decl)
+    if regular:
+        return {
+            "name": regular.group("name"),
+            "c_type": normalize_c_type(regular.group("left")),
+            "raw": decl,
+            "variadic": False,
+        }
+
+    return {
+        "name": f"arg{index}",
+        "c_type": normalize_c_type(decl),
+        "raw": decl,
+        "variadic": False,
+    }
+
+
+def parse_c_function_parameters(parameters: str) -> list[dict[str, Any]]:
+    chunks = split_c_parameters(parameters)
+    parsed = [parse_c_parameter_decl(chunk, idx) for idx, chunk in enumerate(chunks)]
+    return parsed
+
+
+def sanitize_csharp_identifier(value: str, fallback: str) -> str:
+    if not value:
+        return fallback
+    if not re.match(r"^[A-Za-z_][A-Za-z0-9_]*$", value):
+        value = fallback
+    if value in CSHARP_KEYWORDS:
+        return f"@{value}"
+    return value
+
+
+def snake_to_pascal(value: str) -> str:
+    parts = [part for part in re.split(r"[^A-Za-z0-9]+", value) if part]
+    if not parts:
+        return value
+    return "".join(part[0].upper() + part[1:] for part in parts if part)
+
+
+def normalize_string_dict(value: Any, key: str) -> dict[str, str]:
+    if value is None:
+        return {}
+    if not isinstance(value, dict):
+        raise AbiGuardError(f"Target field '{key}' must be an object when specified.")
+    out: dict[str, str] = {}
+    for raw_key, raw_value in value.items():
+        if not isinstance(raw_key, str) or not raw_key:
+            raise AbiGuardError(f"Target field '{key}' has non-string key.")
+        if not isinstance(raw_value, str) or not raw_value:
+            raise AbiGuardError(f"Target field '{key}.{raw_key}' must be a non-empty string.")
+        out[normalize_c_type(raw_key)] = raw_value
+    return out
+
+
+def normalize_regex_list(value: Any, key: str) -> list[re.Pattern[str]]:
+    patterns = normalize_string_list(value, key)
+    out: list[re.Pattern[str]] = []
+    for pattern in patterns:
+        try:
+            out.append(re.compile(pattern))
+        except re.error as exc:
+            raise AbiGuardError(f"Invalid regex in '{key}': {pattern} ({exc})") from exc
+    return out
+
+
+def resolve_codegen_config(target: dict[str, Any], target_name: str, repo_root: Path) -> dict[str, Any]:
+    raw = target.get("codegen")
+    if raw is None:
+        raw = {}
+    if not isinstance(raw, dict):
+        raise AbiGuardError(f"target '{target_name}'.codegen must be an object when specified.")
+
+    namespace = str(raw.get("namespace") or "AbiGuard.Interop")
+    class_name = str(raw.get("class_name") or "NativeMethods")
+    access_modifier = str(raw.get("access_modifier") or "internal")
+    calling_convention = str(raw.get("calling_convention") or "Cdecl")
+    library_name_expression = str(raw.get("library_name_expression") or '"lumenrtc"')
+    if not namespace or not class_name or not access_modifier or not calling_convention:
+        raise AbiGuardError(f"target '{target_name}'.codegen has invalid empty string fields.")
+
+    include_patterns = normalize_regex_list(raw.get("include_symbols_regex"), "codegen.include_symbols_regex")
+    exclude_patterns = normalize_regex_list(raw.get("exclude_symbols_regex"), "codegen.exclude_symbols_regex")
+
+    include_symbols = set(normalize_string_list(raw.get("include_symbols"), "codegen.include_symbols"))
+    exclude_symbols = set(normalize_string_list(raw.get("exclude_symbols"), "codegen.exclude_symbols"))
+
+    output_path_value = raw.get("output_path")
+    output_path = None
+    if isinstance(output_path_value, str) and output_path_value:
+        output_path = ensure_relative_path(repo_root, output_path_value).resolve()
+
+    idl_output_value = raw.get("idl_output_path")
+    idl_output_path = None
+    if isinstance(idl_output_value, str) and idl_output_value:
+        idl_output_path = ensure_relative_path(repo_root, idl_output_value).resolve()
+
+    additional_usings = normalize_string_list(raw.get("additional_usings"), "codegen.additional_usings")
+    type_aliases = normalize_string_dict(raw.get("type_aliases"), "codegen.type_aliases")
+    pointer_aliases = normalize_string_dict(raw.get("pointer_aliases"), "codegen.pointer_aliases")
+
+    return {
+        "enabled": bool(raw.get("enabled", True)),
+        "namespace": namespace,
+        "class_name": class_name,
+        "access_modifier": access_modifier,
+        "calling_convention": calling_convention,
+        "library_name_expression": library_name_expression,
+        "emit_entry_point": bool(raw.get("emit_entry_point", True)),
+        "output_path": output_path,
+        "idl_output_path": idl_output_path,
+        "additional_usings": additional_usings,
+        "type_aliases": type_aliases,
+        "pointer_aliases": pointer_aliases,
+        "include_symbols": include_symbols,
+        "exclude_symbols": exclude_symbols,
+        "include_patterns": include_patterns,
+        "exclude_patterns": exclude_patterns,
+    }
+
+
+def include_symbol_for_codegen(symbol: str, config: dict[str, Any]) -> bool:
+    include_symbols = config.get("include_symbols", set())
+    if isinstance(include_symbols, set) and include_symbols:
+        if symbol not in include_symbols:
+            return False
+
+    exclude_symbols = config.get("exclude_symbols", set())
+    if isinstance(exclude_symbols, set) and symbol in exclude_symbols:
+        return False
+
+    include_patterns = config.get("include_patterns", [])
+    if isinstance(include_patterns, list) and include_patterns:
+        if not any(pattern.search(symbol) for pattern in include_patterns if isinstance(pattern, re.Pattern)):
+            return False
+
+    exclude_patterns = config.get("exclude_patterns", [])
+    if isinstance(exclude_patterns, list):
+        if any(pattern.search(symbol) for pattern in exclude_patterns if isinstance(pattern, re.Pattern)):
+            return False
+
+    return True
+
+
+def infer_managed_type(
+    c_type: str,
+    *,
+    enums: set[str],
+    structs: set[str],
+    type_aliases: dict[str, str],
+    pointer_aliases: dict[str, str],
+) -> str:
+    canonical = normalize_c_type(c_type)
+    if canonical in type_aliases:
+        return type_aliases[canonical]
+
+    stripped = strip_c_type_qualifiers(canonical)
+    if stripped in type_aliases:
+        return type_aliases[stripped]
+
+    pointer_depth = canonical.count("*")
+    if pointer_depth > 0:
+        if canonical in pointer_aliases:
+            return pointer_aliases[canonical]
+        if stripped in pointer_aliases:
+            return pointer_aliases[stripped]
+        return "IntPtr"
+
+    primitives = {
+        "void": "void",
+        "bool": "bool",
+        "char": "byte",
+        "signed char": "sbyte",
+        "unsigned char": "byte",
+        "short": "short",
+        "unsigned short": "ushort",
+        "int": "int",
+        "unsigned int": "uint",
+        "long": "nint",
+        "unsigned long": "nuint",
+        "long long": "long",
+        "unsigned long long": "ulong",
+        "int8_t": "sbyte",
+        "uint8_t": "byte",
+        "int16_t": "short",
+        "uint16_t": "ushort",
+        "int32_t": "int",
+        "uint32_t": "uint",
+        "int64_t": "long",
+        "uint64_t": "ulong",
+        "size_t": "nuint",
+        "ssize_t": "nint",
+        "float": "float",
+        "double": "double",
+    }
+    if stripped in primitives:
+        return primitives[stripped]
+
+    if stripped in enums or stripped in structs:
+        base = stripped[:-2] if stripped.endswith("_t") else stripped
+        return snake_to_pascal(base)
+
+    if stripped.endswith("_t") or stripped.endswith("_cb"):
+        return snake_to_pascal(stripped[:-2] if stripped.endswith("_t") else stripped)
+
+    if re.match(r"^[A-Za-z_][A-Za-z0-9_]*$", stripped):
+        return snake_to_pascal(stripped)
+
+    return "IntPtr"
+
+
+def build_function_idl_records(
+    target_name: str,
+    snapshot: dict[str, Any],
+    codegen_cfg: dict[str, Any],
+) -> list[dict[str, Any]]:
+    header = snapshot.get("header")
+    if not isinstance(header, dict):
+        raise AbiGuardError(f"Snapshot for target '{target_name}' is missing header section.")
+
+    functions_obj = header.get("functions")
+    if not isinstance(functions_obj, dict):
+        raise AbiGuardError(f"Snapshot for target '{target_name}' is missing header.functions.")
+
+    enums_obj = header.get("enums")
+    structs_obj = header.get("structs")
+    enum_names = set(enums_obj.keys()) if isinstance(enums_obj, dict) else set()
+    struct_names = set(structs_obj.keys()) if isinstance(structs_obj, dict) else set()
+
+    type_aliases = codegen_cfg.get("type_aliases", {})
+    pointer_aliases = codegen_cfg.get("pointer_aliases", {})
+    if not isinstance(type_aliases, dict) or not isinstance(pointer_aliases, dict):
+        raise AbiGuardError(f"target '{target_name}' codegen type alias map is invalid.")
+
+    out: list[dict[str, Any]] = []
+    for symbol in sorted(functions_obj.keys()):
+        if not include_symbol_for_codegen(symbol, codegen_cfg):
+            continue
+
+        payload = functions_obj.get(symbol)
+        if not isinstance(payload, dict):
+            continue
+        return_type = str(payload.get("return_type") or "void")
+        parameters_raw = str(payload.get("parameters") or "")
+        parsed_params = parse_c_function_parameters(parameters_raw)
+
+        param_entries: list[dict[str, Any]] = []
+        managed_signature_parts: list[str] = []
+        for idx, param in enumerate(parsed_params):
+            raw_name = str(param.get("name") or f"arg{idx}")
+            managed_name = sanitize_csharp_identifier(raw_name, fallback=f"arg{idx}")
+            c_param_type = normalize_c_type(str(param.get("c_type") or "void"))
+            managed_type = infer_managed_type(
+                c_param_type,
+                enums=enum_names,
+                structs=struct_names,
+                type_aliases=type_aliases,
+                pointer_aliases=pointer_aliases,
+            )
+
+            entry = {
+                "name": raw_name,
+                "managed_name": managed_name,
+                "c_type": c_param_type,
+                "managed_type": managed_type,
+                "pointer_depth": c_param_type.count("*"),
+                "variadic": bool(param.get("variadic")),
+            }
+            param_entries.append(entry)
+            managed_signature_parts.append(f"{managed_type} {managed_name}")
+
+        managed_return_type = infer_managed_type(
+            normalize_c_type(return_type),
+            enums=enum_names,
+            structs=struct_names,
+            type_aliases=type_aliases,
+            pointer_aliases=pointer_aliases,
+        )
+        managed_signature = f"{managed_return_type} {symbol}({', '.join(managed_signature_parts)})"
+
+        record = {
+            "name": symbol,
+            "c_return_type": normalize_c_type(return_type),
+            "managed_return_type": managed_return_type,
+            "c_parameters_raw": parameters_raw,
+            "parameters": param_entries,
+            "managed_signature": managed_signature,
+            "c_signature": payload.get("signature"),
+            "stable_id": stable_hash(
+                {
+                    "name": symbol,
+                    "return_type": normalize_c_type(return_type),
+                    "parameters": [
+                        (str(item["name"]), str(item["c_type"])) for item in param_entries
+                    ],
+                }
+            ),
+        }
+        out.append(record)
+
+    return out
+
+
+def build_idl_payload(
+    target_name: str,
+    snapshot: dict[str, Any],
+    codegen_cfg: dict[str, Any],
+) -> dict[str, Any]:
+    records = build_function_idl_records(target_name=target_name, snapshot=snapshot, codegen_cfg=codegen_cfg)
+    header = snapshot.get("header")
+    if not isinstance(header, dict):
+        raise AbiGuardError(f"Snapshot for target '{target_name}' is missing header.")
+    content_fingerprint = stable_hash(
+        {
+            "target": target_name,
+            "abi_version": snapshot.get("abi_version"),
+            "functions": [
+                {
+                    "name": record.get("name"),
+                    "c_return_type": record.get("c_return_type"),
+                    "parameters": record.get("parameters"),
+                }
+                for record in records
+            ],
+        }
+    )
+
+    payload = {
+        "tool": {
+            "name": "abi_guard",
+            "version": TOOL_VERSION,
+        },
+        "content_fingerprint": content_fingerprint,
+        "target": target_name,
+        "abi_version": snapshot.get("abi_version"),
+        "summary": {
+            "function_count": len(records),
+            "enum_count": int(header.get("enum_count") or 0),
+            "struct_count": int(header.get("struct_count") or 0),
+        },
+        "functions": records,
+        "header_types": {
+            "enums": header.get("enums", {}),
+            "structs": header.get("structs", {}),
+        },
+        "codegen": {
+            "namespace": codegen_cfg.get("namespace"),
+            "class_name": codegen_cfg.get("class_name"),
+            "calling_convention": codegen_cfg.get("calling_convention"),
+            "emit_entry_point": bool(codegen_cfg.get("emit_entry_point", True)),
+        },
+    }
+    return payload
+
+
+def render_csharp_interop_from_idl(idl_payload: dict[str, Any], codegen_cfg: dict[str, Any]) -> str:
+    functions = idl_payload.get("functions")
+    if not isinstance(functions, list):
+        raise AbiGuardError("IDL payload has invalid functions array.")
+
+    namespace = str(codegen_cfg.get("namespace") or "AbiGuard.Interop")
+    class_name = str(codegen_cfg.get("class_name") or "NativeMethods")
+    access_modifier = str(codegen_cfg.get("access_modifier") or "internal")
+    calling_convention = str(codegen_cfg.get("calling_convention") or "Cdecl")
+    emit_entry_point = bool(codegen_cfg.get("emit_entry_point", True))
+    library_name_expression = str(codegen_cfg.get("library_name_expression") or '"lumenrtc"')
+
+    using_lines = ["using System.Runtime.InteropServices;"]
+    extra_usings = codegen_cfg.get("additional_usings")
+    if isinstance(extra_usings, list):
+        for item in extra_usings:
+            if isinstance(item, str) and item:
+                using_lines.append(f"using {item};")
+    using_lines = sorted(set(using_lines))
+
+    lines: list[str] = []
+    lines.append("// <auto-generated />")
+    lines.append(f"// Generated by abi_guard {TOOL_VERSION}")
+    lines.extend(using_lines)
+    lines.append("")
+    lines.append(f"namespace {namespace};")
+    lines.append("")
+    lines.append(f"{access_modifier} static partial class {class_name}")
+    lines.append("{")
+
+    for function in functions:
+        if not isinstance(function, dict):
+            continue
+        symbol = str(function.get("name") or "")
+        if not symbol:
+            continue
+        managed_return_type = str(function.get("managed_return_type") or "void")
+
+        params_obj = function.get("parameters")
+        param_segments: list[str] = []
+        if isinstance(params_obj, list):
+            for idx, param in enumerate(params_obj):
+                if not isinstance(param, dict):
+                    continue
+                managed_type = str(param.get("managed_type") or "IntPtr")
+                managed_name = sanitize_csharp_identifier(
+                    str(param.get("managed_name") or param.get("name") or f"arg{idx}"),
+                    fallback=f"arg{idx}",
+                )
+                param_segments.append(f"{managed_type} {managed_name}")
+        params_text = ", ".join(param_segments)
+
+        if emit_entry_point:
+            lines.append(
+                f'    [DllImport({library_name_expression}, CallingConvention = CallingConvention.{calling_convention}, EntryPoint = "{symbol}")]'
+            )
+        else:
+            lines.append(f"    [DllImport({library_name_expression}, CallingConvention = CallingConvention.{calling_convention})]")
+        lines.append(f"    {access_modifier} static extern {managed_return_type} {symbol}({params_text});")
+        lines.append("")
+
+    if lines[-1] == "":
+        lines.pop()
+    lines.append("}")
+    lines.append("")
+    return "\n".join(lines)
+
+
+def read_text_if_exists(path: Path) -> str:
+    if not path.exists():
+        return ""
+    try:
+        return path.read_text(encoding="utf-8")
+    except OSError as exc:
+        raise AbiGuardError(f"Unable to read file '{path}': {exc}") from exc
+
+
+def write_text(path: Path, content: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(content, encoding="utf-8")
+
+
+def normalized_lines(value: str) -> list[str]:
+    return value.replace("\r\n", "\n").splitlines()
+
+
+def compute_unified_diff(old_content: str, new_content: str, old_label: str, new_label: str) -> str:
+    diff_lines = difflib.unified_diff(
+        normalized_lines(old_content),
+        normalized_lines(new_content),
+        fromfile=old_label,
+        tofile=new_label,
+        lineterm="",
+    )
+    return "\n".join(diff_lines)
+
+
+def write_artifact_if_changed(
+    *,
+    path: Path,
+    content: str,
+    dry_run: bool,
+    check: bool,
+) -> tuple[str, str]:
+    old_content = read_text_if_exists(path)
+    if old_content == content:
+        return "unchanged", ""
+    if check:
+        return "drift", compute_unified_diff(old_content, content, f"a/{path}", f"b/{path}")
+    if dry_run:
+        return "would_write", compute_unified_diff(old_content, content, f"a/{path}", f"b/{path}")
+    write_text(path, content)
+    return "updated", compute_unified_diff(old_content, content, f"a/{path}", f"b/{path}")
+
+
+def extract_pinvoke_method_signatures(file_paths: list[Path], symbol_prefix: str) -> dict[str, Any]:
+    attribute_method_pattern = re.compile(
+        r"\[(?:DllImport|LibraryImport)\((?P<attr>.*?)\)\]\s*"
+        r"(?P<decl>(?:public|internal|private|protected)\s+static\s+extern\s+[^;]+;)",
+        flags=re.S,
+    )
+    method_pattern = re.compile(
+        r"\bextern\s+(?P<ret>[^\(;]+?)\s+(?P<name>[A-Za-z_][A-Za-z0-9_]*)\s*\((?P<params>.*?)\)\s*;",
+        flags=re.S,
+    )
+
+    out: dict[str, Any] = {}
+    for path in file_paths:
+        try:
+            text = path.read_text(encoding="utf-8")
+        except OSError as exc:
+            raise AbiGuardError(f"Unable to read C# file '{path}': {exc}") from exc
+        for match in attribute_method_pattern.finditer(text):
+            attr = match.group("attr")
+            decl = match.group("decl")
+            method = method_pattern.search(decl)
+            if not method:
+                continue
+            method_name = method.group("name")
+            symbol_name = parse_entry_point(attr) or method_name
+            if symbol_prefix and not symbol_name.startswith(symbol_prefix):
+                continue
+            return_type = normalize_ws(method.group("ret"))
+            parameters = normalize_ws(method.group("params"))
+            signature = f"{return_type} ({parameters})"
+            bucket = out.setdefault(symbol_name, [])
+            if isinstance(bucket, list):
+                bucket.append(
+                    {
+                        "method_name": method_name,
+                        "return_type": return_type,
+                        "parameters": parameters,
+                        "signature": signature,
+                        "file": str(path),
+                    }
+                )
+    normalized: dict[str, Any] = {}
+    for symbol in sorted(out.keys()):
+        entries = out[symbol]
+        if not isinstance(entries, list):
+            continue
+        normalized[symbol] = sorted(
+            entries,
+            key=lambda item: (
+                str(item.get("signature", "")),
+                str(item.get("method_name", "")),
+                str(item.get("file", "")),
+            ),
+        )
+    return normalized
+
+
+def compare_generated_with_existing_pinvoke(
+    generated_idl: dict[str, Any],
+    existing_signatures: dict[str, Any],
+) -> dict[str, Any]:
+    generated_functions = generated_idl.get("functions")
+    if not isinstance(generated_functions, list):
+        raise AbiGuardError("IDL payload has invalid functions for sync comparison.")
+
+    generated_symbols = {
+        str(item.get("name")) for item in generated_functions if isinstance(item, dict) and isinstance(item.get("name"), str)
+    }
+    existing_symbols = set(existing_signatures.keys())
+
+    missing_symbols = sorted(generated_symbols - existing_symbols)
+    extra_symbols = sorted(existing_symbols - generated_symbols)
+
+    signature_mismatches: dict[str, dict[str, Any]] = {}
+    for function in generated_functions:
+        if not isinstance(function, dict):
+            continue
+        symbol = function.get("name")
+        if not isinstance(symbol, str) or symbol not in existing_signatures:
+            continue
+        managed_signature = function.get("managed_signature")
+        if not isinstance(managed_signature, str):
+            continue
+        existing_entries = existing_signatures.get(symbol)
+        if not isinstance(existing_entries, list):
+            continue
+        existing_set = {
+            str(entry.get("signature")) for entry in existing_entries if isinstance(entry, dict) and isinstance(entry.get("signature"), str)
+        }
+        expected = managed_signature.replace(f"{symbol}(", "(")
+        expected_signature = normalize_ws(expected)
+        normalized_existing = {normalize_ws(value) for value in existing_set}
+        if expected_signature not in normalized_existing:
+            signature_mismatches[symbol] = {
+                "generated": managed_signature,
+                "existing": sorted(existing_set),
+            }
+
+    return {
+        "missing_symbols": missing_symbols,
+        "extra_symbols": extra_symbols,
+        "signature_mismatches": signature_mismatches,
+    }
+
+
+def is_valid_layout_name(name: str) -> bool:
+    return bool(re.match(r"^[A-Za-z_][A-Za-z0-9_]*$", name))
+
+
+def is_offsetable_field(field: dict[str, Any]) -> bool:
+    name = str(field.get("name", ""))
+    declaration = str(field.get("declaration", ""))
+    if not is_valid_layout_name(name):
+        return False
+    if name.startswith("__unnamed_"):
+        return False
+    if ":" in declaration:
+        return False
+    return True
+
+
+def normalize_string_list(value: Any, key: str) -> list[str]:
+    if value is None:
+        return []
+    if not isinstance(value, list):
+        raise AbiGuardError(f"Target field '{key}' must be an array when specified.")
+    out: list[str] = []
+    for idx, item in enumerate(value):
+        if not isinstance(item, str) or not item:
+            raise AbiGuardError(f"Target field '{key}[{idx}]' must be a non-empty string.")
+        out.append(item)
+    return out
+
+
+def probe_struct_layouts(
+    header_path: Path,
+    structs: dict[str, Any],
+    layout_cfg_raw: Any,
+    repo_root: Path,
+) -> dict[str, Any]:
+    default_payload = {
+        "enabled": False,
+        "available": False,
+        "reason": "disabled",
+        "compiler": None,
+        "struct_count": 0,
+        "structs": {},
+        "errors": [],
+    }
+
+    if layout_cfg_raw is None:
+        return default_payload
+    if not isinstance(layout_cfg_raw, dict):
+        raise AbiGuardError("Target field 'header.layout' must be an object when specified.")
+    if not bool(layout_cfg_raw.get("enable", False)):
+        return default_payload
+
+    compiler = str(layout_cfg_raw.get("compiler") or os.environ.get("CC") or "cc")
+    cflags = normalize_string_list(layout_cfg_raw.get("cflags"), "header.layout.cflags")
+    include_dirs_raw = normalize_string_list(layout_cfg_raw.get("include_dirs"), "header.layout.include_dirs")
+    include_dirs = [str(ensure_relative_path(repo_root, path).resolve()) for path in include_dirs_raw]
+
+    include_dir_set: set[str] = set(include_dirs)
+    include_dir_set.add(str(header_path.parent.resolve()))
+    include_dirs = sorted(include_dir_set)
+
+    struct_names = [name for name in sorted(structs.keys()) if is_valid_layout_name(name)]
+    if not struct_names:
+        return {
+            "enabled": True,
+            "available": False,
+            "reason": "no_structs",
+            "compiler": compiler,
+            "struct_count": 0,
+            "structs": {},
+            "errors": [],
+        }
+
+    with tempfile.TemporaryDirectory(prefix="abi_layout_probe_") as temp_dir:
+        temp_path = Path(temp_dir)
+        source_path = temp_path / "probe.c"
+        binary_path = temp_path / ("probe.exe" if os.name == "nt" else "probe")
+
+        lines: list[str] = []
+        lines.append("#include <stddef.h>")
+        lines.append("#include <stdio.h>")
+        lines.append(f'#include "{str(header_path)}"')
+        lines.append("int main(void) {")
+        lines.append('  printf("{");')
+
+        for s_idx, struct_name in enumerate(struct_names):
+            prefix = "," if s_idx > 0 else ""
+            lines.append(
+                f'  printf("{prefix}\\"{struct_name}\\":{{\\"size\\":%zu,\\"alignment\\":%zu,\\"offsets\\":{{", '
+                f"sizeof({struct_name}), _Alignof({struct_name}));"
+            )
+            struct_obj = structs.get(struct_name)
+            fields = struct_obj.get("fields") if isinstance(struct_obj, dict) else []
+            offsetable = [field for field in fields if isinstance(field, dict) and is_offsetable_field(field)]
+            for f_idx, field in enumerate(offsetable):
+                field_name = str(field["name"])
+                field_prefix = "," if f_idx > 0 else ""
+                lines.append(
+                    f'  printf("{field_prefix}\\"{field_name}\\":%zu", offsetof({struct_name}, {field_name}));'
+                )
+            lines.append('  printf("}}");')
+
+        lines.append('  printf("}");')
+        lines.append("  return 0;")
+        lines.append("}")
+
+        source_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+        compile_cmd = [compiler, "-std=c11", str(source_path), "-o", str(binary_path)]
+        for include_dir in include_dirs:
+            compile_cmd.extend(["-I", include_dir])
+        compile_cmd.extend(cflags)
+
+        try:
+            compile_proc = subprocess.run(compile_cmd, capture_output=True, text=True, check=True)
+        except subprocess.CalledProcessError as exc:
+            return {
+                "enabled": True,
+                "available": False,
+                "reason": "compile_failed",
+                "compiler": " ".join(compile_cmd),
+                "struct_count": 0,
+                "structs": {},
+                "errors": [exc.stderr.strip() or exc.stdout.strip()],
+            }
+        except OSError as exc:
+            return {
+                "enabled": True,
+                "available": False,
+                "reason": "compiler_not_found",
+                "compiler": " ".join(compile_cmd),
+                "struct_count": 0,
+                "structs": {},
+                "errors": [str(exc)],
+            }
+
+        try:
+            run_proc = subprocess.run([str(binary_path)], capture_output=True, text=True, check=True)
+        except subprocess.CalledProcessError as exc:
+            return {
+                "enabled": True,
+                "available": False,
+                "reason": "probe_execution_failed",
+                "compiler": " ".join(compile_cmd),
+                "struct_count": 0,
+                "structs": {},
+                "errors": [exc.stderr.strip() or exc.stdout.strip()],
+            }
+
+        raw_output = run_proc.stdout.strip()
+        try:
+            layout_data = json.loads(raw_output) if raw_output else {}
+        except json.JSONDecodeError as exc:
+            return {
+                "enabled": True,
+                "available": False,
+                "reason": "probe_output_parse_failed",
+                "compiler": " ".join(compile_cmd),
+                "struct_count": 0,
+                "structs": {},
+                "errors": [f"{exc}: {raw_output[:240]}"],
+            }
+
+        if not isinstance(layout_data, dict):
+            return {
+                "enabled": True,
+                "available": False,
+                "reason": "probe_output_invalid",
+                "compiler": " ".join(compile_cmd),
+                "struct_count": 0,
+                "structs": {},
+                "errors": ["Probe output root is not an object."],
+            }
+
+        normalized_layout: dict[str, Any] = {}
+        for struct_name in struct_names:
+            entry = layout_data.get(struct_name)
+            if not isinstance(entry, dict):
+                continue
+            size = entry.get("size")
+            alignment = entry.get("alignment")
+            offsets = entry.get("offsets")
+            if not isinstance(size, int) or not isinstance(alignment, int):
+                continue
+            if not isinstance(offsets, dict):
+                offsets = {}
+            normalized_offsets: dict[str, int] = {}
+            for field_name, offset_value in offsets.items():
+                if isinstance(field_name, str) and isinstance(offset_value, int):
+                    normalized_offsets[field_name] = offset_value
+            normalized_layout[struct_name] = {
+                "size": size,
+                "alignment": alignment,
+                "offsets": normalized_offsets,
+            }
+
+        return {
+            "enabled": True,
+            "available": True,
+            "reason": "ok",
+            "compiler": " ".join(compile_cmd),
+            "struct_count": len(normalized_layout),
+            "structs": normalized_layout,
+            "errors": [],
+            "compile_stdout": compile_proc.stdout.strip(),
+        }
+
+
 def parse_entry_point(attr_args: str) -> str | None:
     match = re.search(r"\bEntryPoint\s*=\s*\"([^\"]+)\"", attr_args)
     if match:
@@ -500,48 +1651,43 @@ def parse_entry_point(attr_args: str) -> str | None:
 
 
 def parse_csharp_pinvoke(file_paths: list[Path], symbol_prefix: str) -> dict[str, Any]:
-    attribute_method_pattern = re.compile(
-        r"\[(?:DllImport|LibraryImport)\((?P<attr>.*?)\)\]\s*"
-        r"(?P<decl>(?:public|internal|private|protected)\s+static\s+extern\s+[^;]+;)",
-        flags=re.S,
-    )
-    method_name_pattern = re.compile(
-        r"\bextern\s+[^\(;]+\s+(?P<name>[A-Za-z_][A-Za-z0-9_]*)\s*\(",
-        flags=re.S,
-    )
-
-    symbols: set[str] = set()
-    declarations: dict[str, list[str]] = {}
-
     for path in file_paths:
-        try:
-            text = path.read_text(encoding="utf-8")
-        except OSError as exc:
-            raise AbiGuardError(f"Unable to read C# file '{path}': {exc}") from exc
+        if not path.exists():
+            raise AbiGuardError(f"Configured P/Invoke source does not exist: {path}")
 
-        for match in attribute_method_pattern.finditer(text):
-            attr = match.group("attr")
-            decl = match.group("decl")
-            name_match = method_name_pattern.search(decl)
-            if not name_match:
-                continue
-            method_name = name_match.group("name")
-            symbol_name = parse_entry_point(attr) or method_name
-
-            if symbol_prefix and not symbol_name.startswith(symbol_prefix):
-                continue
-
-            symbols.add(symbol_name)
-            declarations.setdefault(symbol_name, []).append(str(path))
-
+    signatures = extract_pinvoke_method_signatures(file_paths=file_paths, symbol_prefix=symbol_prefix)
+    symbols = set(signatures.keys())
     if not symbols:
         raise AbiGuardError("No P/Invoke symbols were found in configured C# sources.")
+
+    declarations: dict[str, list[str]] = {}
+    signature_map: dict[str, list[str]] = {}
+    for symbol_name in sorted(signatures.keys()):
+        entries = signatures[symbol_name]
+        if not isinstance(entries, list):
+            continue
+        files = sorted(
+            {
+                str(entry.get("file"))
+                for entry in entries
+                if isinstance(entry, dict) and isinstance(entry.get("file"), str)
+            }
+        )
+        declarations[symbol_name] = files
+        signature_map[symbol_name] = sorted(
+            {
+                str(entry.get("signature"))
+                for entry in entries
+                if isinstance(entry, dict) and isinstance(entry.get("signature"), str)
+            }
+        )
 
     return {
         "file_count": len(file_paths),
         "symbols": sorted(symbols),
         "symbol_count": len(symbols),
-        "declarations": {k: sorted(set(v)) for k, v in sorted(declarations.items())},
+        "declarations": declarations,
+        "signatures": signature_map,
     }
 
 
@@ -697,6 +1843,12 @@ def build_snapshot(config: dict[str, Any], target_name: str, repo_root: Path, bi
         type_policy=type_policy,
     )
     header_payload["path"] = to_repo_relative(header_path, repo_root)
+    header_payload["layout_probe"] = probe_struct_layouts(
+        header_path=header_path,
+        structs=header_payload.get("structs", {}),
+        layout_cfg_raw=header_cfg.get("layout"),
+        repo_root=repo_root,
+    )
 
     pinvoke_cfg = require_dict(target.get("pinvoke"), "pinvoke")
     pinvoke_entries = pinvoke_cfg.get("paths")
@@ -779,10 +1931,14 @@ def build_snapshot(config: dict[str, Any], target_name: str, repo_root: Path, bi
         "pinvoke": pinvoke_payload,
         "binary": binary_payload,
     }
+    validate_snapshot_payload(snapshot, f"generated snapshot '{target_name}'")
+    return snapshot
 
 
 def load_snapshot(path: Path) -> dict[str, Any]:
-    return load_json(path)
+    snapshot = load_json(path)
+    validate_snapshot_payload(snapshot, f"snapshot '{path}'")
+    return snapshot
 
 
 def parse_snapshot_version(snapshot: dict[str, Any], label: str) -> AbiVersion:
@@ -970,6 +2126,78 @@ def compare_struct_sets(base_structs: dict[str, Any], curr_structs: dict[str, An
     }
 
 
+def compare_layout_probes(base_header: dict[str, Any], curr_header: dict[str, Any]) -> dict[str, Any]:
+    base_layout = base_header.get("layout_probe")
+    curr_layout = curr_header.get("layout_probe")
+
+    out = {
+        "available_in_baseline": False,
+        "available_in_current": False,
+        "checked_structs": 0,
+        "breaking_changes": [],
+        "warnings": [],
+    }
+
+    if isinstance(base_layout, dict) and bool(base_layout.get("available")):
+        out["available_in_baseline"] = True
+    if isinstance(curr_layout, dict) and bool(curr_layout.get("available")):
+        out["available_in_current"] = True
+
+    if out["available_in_baseline"] and not out["available_in_current"]:
+        out["warnings"].append("layout probe unavailable in current snapshot while baseline had layout data")
+        return out
+    if out["available_in_current"] and not out["available_in_baseline"]:
+        out["warnings"].append("layout probe available in current snapshot but baseline has no layout data")
+        return out
+    if not out["available_in_baseline"] and not out["available_in_current"]:
+        return out
+
+    base_structs_obj = base_layout.get("structs") if isinstance(base_layout, dict) else {}
+    curr_structs_obj = curr_layout.get("structs") if isinstance(curr_layout, dict) else {}
+    if not isinstance(base_structs_obj, dict) or not isinstance(curr_structs_obj, dict):
+        out["warnings"].append("layout probe payload malformed")
+        return out
+
+    shared_structs = sorted(set(base_structs_obj.keys()) & set(curr_structs_obj.keys()))
+    out["checked_structs"] = len(shared_structs)
+
+    for struct_name in shared_structs:
+        base_entry = base_structs_obj.get(struct_name)
+        curr_entry = curr_structs_obj.get(struct_name)
+        if not isinstance(base_entry, dict) or not isinstance(curr_entry, dict):
+            out["breaking_changes"].append(f"layout {struct_name}: malformed entry")
+            continue
+
+        base_size = base_entry.get("size")
+        curr_size = curr_entry.get("size")
+        base_alignment = base_entry.get("alignment")
+        curr_alignment = curr_entry.get("alignment")
+        if base_size != curr_size:
+            out["breaking_changes"].append(
+                f"layout {struct_name}: size changed ({base_size} -> {curr_size})"
+            )
+        if base_alignment != curr_alignment:
+            out["breaking_changes"].append(
+                f"layout {struct_name}: alignment changed ({base_alignment} -> {curr_alignment})"
+            )
+
+        base_offsets = base_entry.get("offsets")
+        curr_offsets = curr_entry.get("offsets")
+        if not isinstance(base_offsets, dict) or not isinstance(curr_offsets, dict):
+            out["breaking_changes"].append(f"layout {struct_name}: offsets payload malformed")
+            continue
+
+        for field_name in sorted(set(base_offsets.keys()) & set(curr_offsets.keys())):
+            base_offset = base_offsets.get(field_name)
+            curr_offset = curr_offsets.get(field_name)
+            if base_offset != curr_offset:
+                out["breaking_changes"].append(
+                    f"layout {struct_name}.{field_name}: offset changed ({base_offset} -> {curr_offset})"
+                )
+
+    return out
+
+
 def classify_change(has_breaking: bool, has_additive: bool) -> tuple[str, str]:
     if has_breaking:
         return "breaking", "major"
@@ -1110,6 +2338,7 @@ def compare_snapshots(baseline: dict[str, Any], current: dict[str, Any]) -> dict
         curr_structs=curr_structs,
         struct_tail_addition_is_breaking=struct_tail_breaking,
     )
+    layout_diff = compare_layout_probes(base_header=base_header, curr_header=curr_header)
 
     function_breaking = bool(removed or changed)
     function_additive = bool(added)
@@ -1129,6 +2358,10 @@ def compare_snapshots(baseline: dict[str, Any], current: dict[str, Any]) -> dict
     additive_reasons.extend(enum_diff["additive_changes"])
     breaking_reasons.extend(struct_diff["breaking_changes"])
     additive_reasons.extend(struct_diff["additive_changes"])
+    if layout_diff["breaking_changes"]:
+        breaking_reasons.extend(layout_diff["breaking_changes"])
+    if layout_diff["warnings"]:
+        warnings.extend(layout_diff["warnings"])
 
     change_classification, required_bump = classify_change(
         has_breaking=bool(breaking_reasons),
@@ -1145,7 +2378,7 @@ def compare_snapshots(baseline: dict[str, Any], current: dict[str, Any]) -> dict
     recommended = recommended_version(baseline=baseline_version, required_bump=required_bump)
 
     status = "pass" if not errors else "fail"
-    return {
+    report = {
         "status": status,
         "change_classification": change_classification,
         "required_bump": required_bump,
@@ -1158,11 +2391,14 @@ def compare_snapshots(baseline: dict[str, Any], current: dict[str, Any]) -> dict
         "changed_signatures": changed,
         "enum_diff": enum_diff,
         "struct_diff": struct_diff,
+        "layout_diff": layout_diff,
         "breaking_reasons": breaking_reasons,
         "additive_reasons": additive_reasons,
         "errors": errors,
         "warnings": warnings,
     }
+    validate_report_payload(report, "compare report")
+    return report
 
 
 def print_report(report: dict[str, Any]) -> None:
@@ -1545,9 +2781,488 @@ def build_aggregate_summary(results_by_target: dict[str, dict[str, Any]]) -> dic
     return summary
 
 
+CLASSIFICATION_ORDER = {
+    "none": 0,
+    "additive": 1,
+    "breaking": 2,
+}
+
+
+def resolve_effective_policy(config: dict[str, Any], target_name: str) -> dict[str, Any]:
+    defaults = {
+        "max_allowed_classification": "breaking",
+        "fail_on_warnings": False,
+        "require_layout_probe": False,
+    }
+
+    root_policy = config.get("policy")
+    if isinstance(root_policy, dict):
+        for key in defaults.keys():
+            if key in root_policy:
+                defaults[key] = root_policy[key]
+
+    target = resolve_target(config, target_name)
+    target_policy = target.get("policy")
+    if isinstance(target_policy, dict):
+        for key in defaults.keys():
+            if key in target_policy:
+                defaults[key] = target_policy[key]
+
+    max_allowed = str(defaults.get("max_allowed_classification", "breaking"))
+    if max_allowed not in CLASSIFICATION_ORDER:
+        raise AbiGuardError(
+            f"Invalid policy.max_allowed_classification for target '{target_name}': {max_allowed}"
+        )
+    return {
+        "max_allowed_classification": max_allowed,
+        "fail_on_warnings": bool(defaults.get("fail_on_warnings", False)),
+        "require_layout_probe": bool(defaults.get("require_layout_probe", False)),
+    }
+
+
+def apply_policy_to_report(report: dict[str, Any], policy: dict[str, Any], target_name: str) -> dict[str, Any]:
+    out = json.loads(json.dumps(report))
+
+    errors = get_message_list(out, "errors")
+    warnings = get_message_list(out, "warnings")
+
+    observed = str(out.get("change_classification", "none"))
+    max_allowed = str(policy.get("max_allowed_classification", "breaking"))
+    if observed not in CLASSIFICATION_ORDER:
+        observed = "breaking"
+    if max_allowed not in CLASSIFICATION_ORDER:
+        max_allowed = "breaking"
+    if CLASSIFICATION_ORDER[observed] > CLASSIFICATION_ORDER[max_allowed]:
+        errors.append(
+            f"Policy violation for target '{target_name}': classification '{observed}' exceeds allowed '{max_allowed}'."
+        )
+
+    if bool(policy.get("require_layout_probe", False)):
+        layout_diff = out.get("layout_diff")
+        layout_available = False
+        if isinstance(layout_diff, dict):
+            layout_available = bool(layout_diff.get("available_in_current"))
+        if not layout_available:
+            errors.append(
+                f"Policy violation for target '{target_name}': layout probe is required but unavailable."
+            )
+
+    out["errors"] = errors
+    out["warnings"] = warnings
+    out["status"] = "pass" if not errors else "fail"
+    out["policy"] = policy
+    validate_report_payload(out, f"policy report '{target_name}'")
+    return out
+
+
+def resolve_target_names(config: dict[str, Any], target_name: str | None) -> list[str]:
+    targets = get_targets_map(config)
+    if target_name:
+        if target_name not in targets:
+            known = ", ".join(sorted(targets.keys()))
+            raise AbiGuardError(f"Unknown target '{target_name}'. Known targets: {known}")
+        return [target_name]
+    return sorted(targets.keys())
+
+
+def build_codegen_for_target(
+    *,
+    repo_root: Path,
+    config: dict[str, Any],
+    target_name: str,
+    binary_override: str | None,
+    skip_binary: bool,
+    idl_output_override: str | None,
+    cs_output_override: str | None,
+    dry_run: bool,
+    check: bool,
+    print_diff: bool,
+    strict_signatures: bool,
+) -> dict[str, Any]:
+    target = resolve_target(config, target_name)
+    snapshot = build_snapshot(
+        config=config,
+        target_name=target_name,
+        repo_root=repo_root,
+        binary_override=binary_override,
+        skip_binary=skip_binary,
+    )
+    codegen_cfg = resolve_codegen_config(target=target, target_name=target_name, repo_root=repo_root)
+    idl_payload = build_idl_payload(target_name=target_name, snapshot=snapshot, codegen_cfg=codegen_cfg)
+
+    if idl_output_override:
+        idl_output_path = ensure_relative_path(repo_root, idl_output_override).resolve()
+    else:
+        configured = codegen_cfg.get("idl_output_path")
+        if isinstance(configured, Path):
+            idl_output_path = configured
+        else:
+            idl_output_path = ensure_relative_path(repo_root, f"abi/generated/{target_name}.idl.json").resolve()
+
+    cs_output_path: Path | None = None
+    if cs_output_override:
+        cs_output_path = ensure_relative_path(repo_root, cs_output_override).resolve()
+    else:
+        configured_cs = codegen_cfg.get("output_path")
+        if isinstance(configured_cs, Path):
+            cs_output_path = configured_cs
+
+    idl_text = json.dumps(idl_payload, indent=2, sort_keys=True) + "\n"
+    idl_status, idl_diff = write_artifact_if_changed(
+        path=idl_output_path,
+        content=idl_text,
+        dry_run=dry_run,
+        check=check,
+    )
+
+    cs_status = "skipped"
+    cs_diff = ""
+    cs_text = ""
+    if bool(codegen_cfg.get("enabled", True)) and cs_output_path is not None:
+        cs_text = render_csharp_interop_from_idl(idl_payload=idl_payload, codegen_cfg=codegen_cfg)
+        cs_status, cs_diff = write_artifact_if_changed(
+            path=cs_output_path,
+            content=cs_text,
+            dry_run=dry_run,
+            check=check,
+        )
+    elif cs_output_path is None:
+        cs_status = "skipped_no_output"
+
+    header_cfg = target.get("header")
+    pinvoke_cfg = target.get("pinvoke")
+    existing_signature_map: dict[str, Any] = {}
+    sync_comparison = {
+        "missing_symbols": [],
+        "extra_symbols": [],
+        "signature_mismatches": {},
+    }
+    if isinstance(header_cfg, dict) and isinstance(pinvoke_cfg, dict):
+        prefix = str(header_cfg.get("symbol_prefix") or "")
+        entries = pinvoke_cfg.get("paths")
+        if isinstance(entries, list):
+            pinvoke_files = iter_files_from_entries(repo_root, [str(x) for x in entries], ".cs")
+            existing_signature_map = extract_pinvoke_method_signatures(pinvoke_files, symbol_prefix=prefix)
+            sync_comparison = compare_generated_with_existing_pinvoke(idl_payload, existing_signature_map)
+
+    if print_diff and idl_diff:
+        print(idl_diff)
+    if print_diff and cs_diff:
+        print(cs_diff)
+
+    has_codegen_drift = idl_status in {"drift", "would_write"} or cs_status in {"drift", "would_write"}
+    has_sync_drift = bool(sync_comparison["missing_symbols"]) or bool(sync_comparison["extra_symbols"])
+    if strict_signatures:
+        has_sync_drift = has_sync_drift or bool(sync_comparison["signature_mismatches"])
+
+    return {
+        "target": target_name,
+        "snapshot": snapshot,
+        "idl_payload": idl_payload,
+        "codegen_config": {
+            "namespace": codegen_cfg.get("namespace"),
+            "class_name": codegen_cfg.get("class_name"),
+            "output_path": to_repo_relative(cs_output_path, repo_root) if isinstance(cs_output_path, Path) else None,
+            "idl_output_path": to_repo_relative(idl_output_path, repo_root),
+        },
+        "artifacts": {
+            "idl": {
+                "path": to_repo_relative(idl_output_path, repo_root),
+                "status": idl_status,
+            },
+            "csharp": {
+                "path": to_repo_relative(cs_output_path, repo_root) if isinstance(cs_output_path, Path) else None,
+                "status": cs_status,
+            },
+        },
+        "sync": sync_comparison,
+        "has_codegen_drift": has_codegen_drift,
+        "has_sync_drift": has_sync_drift,
+        "strict_signatures": strict_signatures,
+    }
+
+
+def print_sync_comparison(target_name: str, comparison: dict[str, Any]) -> None:
+    missing = get_message_list(comparison, "missing_symbols")
+    extra = get_message_list(comparison, "extra_symbols")
+    mismatches_obj = comparison.get("signature_mismatches")
+    mismatch_count = len(mismatches_obj) if isinstance(mismatches_obj, dict) else 0
+
+    if not missing and not extra and mismatch_count == 0:
+        print(f"[{target_name}] pinvoke sync: clean")
+        return
+
+    print(f"[{target_name}] pinvoke sync: drift")
+    if missing:
+        print(f"  missing symbols in C#: {', '.join(missing)}")
+    if extra:
+        print(f"  extra symbols in C#: {', '.join(extra)}")
+    if mismatch_count:
+        print(f"  signature mismatches: {mismatch_count}")
+
+
+def command_generate(args: argparse.Namespace) -> int:
+    repo_root = Path(args.repo_root).resolve()
+    config = load_config(Path(args.config).resolve())
+    target_names = resolve_target_names(config=config, target_name=args.target)
+
+    if (args.idl_output or args.cs_output) and len(target_names) != 1:
+        raise AbiGuardError("--idl-output/--cs-output can only be used with a single target via --target.")
+
+    aggregate: dict[str, Any] = {
+        "generated_at_utc": dt.datetime.now(tz=dt.timezone.utc).isoformat(),
+        "results": {},
+    }
+    exit_code = 0
+
+    for target_name in target_names:
+        result = build_codegen_for_target(
+            repo_root=repo_root,
+            config=config,
+            target_name=target_name,
+            binary_override=args.binary,
+            skip_binary=args.skip_binary,
+            idl_output_override=args.idl_output,
+            cs_output_override=args.cs_output,
+            dry_run=args.dry_run,
+            check=args.check,
+            print_diff=args.print_diff,
+            strict_signatures=bool(args.strict_signatures),
+        )
+        aggregate["results"][target_name] = {
+            "artifacts": result["artifacts"],
+            "sync": result["sync"],
+            "has_codegen_drift": result["has_codegen_drift"],
+            "has_sync_drift": result["has_sync_drift"],
+            "abi_version": result["snapshot"].get("abi_version"),
+        }
+
+        artifacts = result["artifacts"]
+        idl_status = ((artifacts.get("idl") or {}).get("status")) or "unknown"
+        cs_status = ((artifacts.get("csharp") or {}).get("status")) or "unknown"
+        print(f"[{target_name}] generate: idl={idl_status}, csharp={cs_status}")
+        print_sync_comparison(target_name, result["sync"])
+
+        if args.check and result["has_codegen_drift"]:
+            exit_code = 1
+        if bool(args.fail_on_sync) and result["has_sync_drift"]:
+            exit_code = 1
+
+    if args.report_json:
+        write_json(Path(args.report_json).resolve(), aggregate)
+    return exit_code
+
+
+def command_sync(args: argparse.Namespace) -> int:
+    repo_root = Path(args.repo_root).resolve()
+    config = load_config(Path(args.config).resolve())
+    target_names = resolve_target_names(config=config, target_name=args.target)
+
+    output_dir = Path(args.output_dir).resolve() if args.output_dir else None
+    if output_dir:
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+    aggregate: dict[str, Any] = {
+        "generated_at_utc": dt.datetime.now(tz=dt.timezone.utc).isoformat(),
+        "results": {},
+    }
+    final_status = 0
+
+    for target_name in target_names:
+        result = build_codegen_for_target(
+            repo_root=repo_root,
+            config=config,
+            target_name=target_name,
+            binary_override=args.binary,
+            skip_binary=args.skip_binary,
+            idl_output_override=None,
+            cs_output_override=None,
+            dry_run=bool(args.check),
+            check=bool(args.check),
+            print_diff=bool(args.print_diff),
+            strict_signatures=bool(args.strict_signatures),
+        )
+
+        baseline_path = resolve_baseline_for_target(
+            repo_root=repo_root,
+            config=config,
+            target_name=target_name,
+            baseline_root=args.baseline_root,
+        )
+        baseline_written = False
+        if bool(args.update_baselines) and not bool(args.check):
+            write_json(baseline_path, result["snapshot"])
+            baseline_written = True
+            print(f"[{target_name}] baseline updated: {baseline_path}")
+
+        report: dict[str, Any] | None = None
+        if not bool(args.no_verify):
+            if not baseline_path.exists():
+                raise AbiGuardError(f"Baseline does not exist for target '{target_name}': {baseline_path}")
+            baseline = load_snapshot(baseline_path)
+            raw_report = compare_snapshots(baseline=baseline, current=result["snapshot"])
+            effective_policy = resolve_effective_policy(config=config, target_name=target_name)
+            report = apply_policy_to_report(
+                report=raw_report,
+                policy=effective_policy,
+                target_name=target_name,
+            )
+            print(
+                f"[{target_name}] verify={report.get('status')} "
+                f"classification={report.get('change_classification')} "
+                f"required_bump={report.get('required_bump')}"
+            )
+            if report.get("status") != "pass":
+                final_status = 1
+            if bool(args.fail_on_warnings) and get_message_list(report, "warnings"):
+                final_status = 1
+
+        if bool(args.check) and bool(result["has_codegen_drift"]):
+            final_status = 1
+        if bool(args.fail_on_sync) and bool(result["has_sync_drift"]):
+            final_status = 1
+
+        aggregate["results"][target_name] = {
+            "artifacts": result["artifacts"],
+            "sync": result["sync"],
+            "has_codegen_drift": result["has_codegen_drift"],
+            "has_sync_drift": result["has_sync_drift"],
+            "baseline_path": to_repo_relative(baseline_path, repo_root),
+            "baseline_updated": baseline_written,
+            "verify_report": report,
+        }
+
+        if output_dir:
+            if report is not None:
+                write_json(output_dir / f"{target_name}.sync.verify.report.json", report)
+                write_markdown_report(output_dir / f"{target_name}.sync.verify.report.md", report)
+            write_json(output_dir / f"{target_name}.sync.codegen.report.json", aggregate["results"][target_name])
+
+    aggregate["summary"] = {
+        "target_count": len(target_names),
+        "codegen_drift_count": sum(
+            1 for item in aggregate["results"].values() if isinstance(item, dict) and bool(item.get("has_codegen_drift"))
+        ),
+        "sync_drift_count": sum(
+            1 for item in aggregate["results"].values() if isinstance(item, dict) and bool(item.get("has_sync_drift"))
+        ),
+    }
+
+    if args.report_json:
+        write_json(Path(args.report_json).resolve(), aggregate)
+    if output_dir:
+        write_json(output_dir / "sync.aggregate.report.json", aggregate)
+
+    return final_status
+
+
+def command_release_prepare(args: argparse.Namespace) -> int:
+    repo_root = Path(args.repo_root).resolve()
+    output_dir = Path(args.output_dir).resolve() if args.output_dir else (repo_root / "artifacts" / "abi" / "release")
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    doctor_args = argparse.Namespace(
+        repo_root=str(repo_root),
+        config=str(Path(args.config).resolve()),
+        baseline_root=args.baseline_root,
+        binary=args.binary,
+        require_baselines=True,
+        require_binaries=bool(args.require_binaries),
+        fail_on_warnings=bool(args.fail_on_warnings),
+    )
+    doctor_exit = command_doctor(doctor_args)
+    if doctor_exit != 0:
+        return doctor_exit
+
+    sync_args = argparse.Namespace(
+        repo_root=str(repo_root),
+        config=str(Path(args.config).resolve()),
+        target=None,
+        baseline_root=args.baseline_root,
+        binary=args.binary,
+        skip_binary=args.skip_binary,
+        update_baselines=bool(args.update_baselines),
+        check=bool(args.check_generated),
+        print_diff=bool(args.print_diff),
+        strict_signatures=bool(args.strict_signatures),
+        no_verify=True,
+        fail_on_warnings=bool(args.fail_on_warnings),
+        fail_on_sync=bool(args.fail_on_sync),
+        output_dir=str(output_dir / "sync"),
+        report_json=str(output_dir / "sync.aggregate.report.json"),
+    )
+    sync_exit = command_sync(sync_args)
+    if sync_exit != 0:
+        return sync_exit
+
+    verify_output_dir = output_dir / "verify"
+    verify_args = argparse.Namespace(
+        repo_root=str(repo_root),
+        config=str(Path(args.config).resolve()),
+        baseline_root=args.baseline_root,
+        binary=args.binary,
+        skip_binary=args.skip_binary,
+        output_dir=str(verify_output_dir),
+        sarif_report=str(output_dir / "verify.aggregate.report.sarif.json"),
+        fail_on_warnings=bool(args.fail_on_warnings),
+    )
+    verify_exit = command_verify_all(verify_args)
+    if verify_exit != 0:
+        return verify_exit
+
+    changelog_output = (
+        Path(args.changelog_output).resolve()
+        if args.changelog_output
+        else (repo_root / "abi" / "CHANGELOG.md")
+    )
+    changelog_args = argparse.Namespace(
+        repo_root=str(repo_root),
+        config=str(Path(args.config).resolve()),
+        target=None,
+        baseline=None,
+        baseline_root=args.baseline_root,
+        binary=args.binary,
+        skip_binary=args.skip_binary,
+        title=args.title,
+        release_tag=args.release_tag,
+        output=str(changelog_output),
+        report_json=str(output_dir / "changelog.aggregate.report.json"),
+        sarif_report=str(output_dir / "changelog.aggregate.report.sarif.json"),
+        fail_on_failing=True,
+        fail_on_warnings=bool(args.fail_on_warnings),
+    )
+    changelog_exit = command_changelog(changelog_args)
+    if changelog_exit != 0:
+        return changelog_exit
+
+    manifest = {
+        "generated_at_utc": dt.datetime.now(tz=dt.timezone.utc).isoformat(),
+        "release_tag": args.release_tag,
+        "artifacts": {
+            "output_dir": to_repo_relative(output_dir, repo_root),
+            "verify_dir": to_repo_relative(verify_output_dir, repo_root),
+            "changelog": to_repo_relative(changelog_output, repo_root),
+            "sync_report": to_repo_relative(output_dir / "sync.aggregate.report.json", repo_root),
+            "verify_sarif": to_repo_relative(output_dir / "verify.aggregate.report.sarif.json", repo_root),
+            "changelog_report": to_repo_relative(output_dir / "changelog.aggregate.report.json", repo_root),
+            "changelog_sarif": to_repo_relative(output_dir / "changelog.aggregate.report.sarif.json", repo_root),
+        },
+        "options": {
+            "update_baselines": bool(args.update_baselines),
+            "check_generated": bool(args.check_generated),
+            "skip_binary": bool(args.skip_binary),
+            "fail_on_warnings": bool(args.fail_on_warnings),
+        },
+        "status": "pass",
+    }
+    write_json(output_dir / "release.prepare.report.json", manifest)
+    print(f"release-prepare completed: {output_dir}")
+    return 0
+
+
 def command_snapshot(args: argparse.Namespace) -> int:
     repo_root = Path(args.repo_root).resolve()
-    config = load_json(Path(args.config).resolve())
+    config = load_config(Path(args.config).resolve())
     snapshot = build_snapshot(
         config=config,
         target_name=args.target,
@@ -1574,7 +3289,7 @@ def command_snapshot(args: argparse.Namespace) -> int:
 
 def command_verify(args: argparse.Namespace) -> int:
     repo_root = Path(args.repo_root).resolve()
-    config = load_json(Path(args.config).resolve())
+    config = load_config(Path(args.config).resolve())
 
     current = build_snapshot(
         config=config,
@@ -1585,7 +3300,13 @@ def command_verify(args: argparse.Namespace) -> int:
     )
     baseline = load_snapshot(Path(args.baseline).resolve())
 
-    report = compare_snapshots(baseline=baseline, current=current)
+    raw_report = compare_snapshots(baseline=baseline, current=current)
+    effective_policy = resolve_effective_policy(config=config, target_name=str(args.target))
+    report = apply_policy_to_report(
+        report=raw_report,
+        policy=effective_policy,
+        target_name=str(args.target),
+    )
 
     if args.current_output:
         write_json(Path(args.current_output).resolve(), current)
@@ -1609,7 +3330,8 @@ def command_verify(args: argparse.Namespace) -> int:
 
     print_report(report)
     status_ok = report.get("status") == "pass"
-    if status_ok and bool(args.fail_on_warnings):
+    effective_fail_on_warnings = bool(args.fail_on_warnings) or bool(effective_policy.get("fail_on_warnings", False))
+    if status_ok and effective_fail_on_warnings:
         status_ok = not bool(get_message_list(report, "warnings"))
     return 0 if status_ok else 1
 
@@ -1652,7 +3374,7 @@ def get_targets_map(config: dict[str, Any]) -> dict[str, dict[str, Any]]:
 
 
 def command_list_targets(args: argparse.Namespace) -> int:
-    config = load_json(Path(args.config).resolve())
+    config = load_config(Path(args.config).resolve())
     targets = get_targets_map(config)
 
     for name in sorted(targets.keys()):
@@ -1686,7 +3408,7 @@ def resolve_binary_for_target(repo_root: Path, config: dict[str, Any], target_na
 
 def command_verify_all(args: argparse.Namespace) -> int:
     repo_root = Path(args.repo_root).resolve()
-    config = load_json(Path(args.config).resolve())
+    config = load_config(Path(args.config).resolve())
 
     targets = get_targets_map(config)
 
@@ -1720,7 +3442,13 @@ def command_verify_all(args: argparse.Namespace) -> int:
             skip_binary=args.skip_binary,
         )
         baseline = load_snapshot(baseline_path)
-        report = compare_snapshots(baseline=baseline, current=current)
+        raw_report = compare_snapshots(baseline=baseline, current=current)
+        effective_policy = resolve_effective_policy(config=config, target_name=target_name)
+        report = apply_policy_to_report(
+            report=raw_report,
+            policy=effective_policy,
+            target_name=target_name,
+        )
 
         aggregate["results"][target_name] = report
 
@@ -1754,7 +3482,18 @@ def command_verify_all(args: argparse.Namespace) -> int:
 
     if final_status != 0:
         aggregate["status"] = "fail"
-    elif bool(args.fail_on_warnings) and aggregate["summary"]["warning_count"] > 0:
+    else:
+        fail_on_warnings_global = bool(args.fail_on_warnings)
+        fail_on_warnings_policy = any(
+            bool((report.get("policy") or {}).get("fail_on_warnings", False))
+            for report in aggregate["results"].values()
+            if isinstance(report, dict)
+        )
+        if (fail_on_warnings_global or fail_on_warnings_policy) and aggregate["summary"]["warning_count"] > 0:
+            final_status = 1
+            aggregate["status"] = "fail"
+
+    if final_status != 0 and aggregate["status"] != "fail":
         final_status = 1
         aggregate["status"] = "fail"
 
@@ -1769,7 +3508,7 @@ def command_verify_all(args: argparse.Namespace) -> int:
 
 def command_regen_baselines(args: argparse.Namespace) -> int:
     repo_root = Path(args.repo_root).resolve()
-    config = load_json(Path(args.config).resolve())
+    config = load_config(Path(args.config).resolve())
     targets = get_targets_map(config)
 
     regenerated: list[str] = []
@@ -1811,10 +3550,13 @@ def command_regen_baselines(args: argparse.Namespace) -> int:
 
 def command_doctor(args: argparse.Namespace) -> int:
     repo_root = Path(args.repo_root).resolve()
-    config = load_json(Path(args.config).resolve())
+    config = load_config(Path(args.config).resolve())
     targets = get_targets_map(config)
 
     issues: list[tuple[str, str, str]] = []
+    schema_ok, schema_note = validate_with_jsonschema_if_available("config", config)
+    if not schema_ok and schema_note:
+        issues.append(("warning", "global", f"jsonschema fallback mode: {schema_note}"))
 
     for target_name in sorted(targets.keys()):
         target = targets[target_name]
@@ -1867,6 +3609,22 @@ def command_doctor(args: argparse.Namespace) -> int:
         elif bool(args.require_binaries):
             issues.append(("error", target_name, "binary path is not configured"))
 
+        try:
+            codegen_cfg = resolve_codegen_config(target=target, target_name=target_name, repo_root=repo_root)
+            idl_output = codegen_cfg.get("idl_output_path")
+            if not isinstance(idl_output, Path):
+                idl_output = ensure_relative_path(repo_root, f"abi/generated/{target_name}.idl.json").resolve()
+            if not idl_output.parent.exists():
+                issues.append(("warning", target_name, f"IDL output parent does not exist yet: {idl_output.parent}"))
+
+            cs_output = codegen_cfg.get("output_path")
+            if cs_output is None:
+                issues.append(("warning", target_name, "codegen.output_path is not set (C# stubs will not be emitted)."))
+            elif isinstance(cs_output, Path) and not cs_output.parent.exists():
+                issues.append(("warning", target_name, f"codegen output parent does not exist yet: {cs_output.parent}"))
+        except AbiGuardError as exc:
+            issues.append(("error", target_name, f"codegen config invalid: {exc}"))
+
     error_count = sum(1 for sev, _, _ in issues if sev == "error")
     warning_count = sum(1 for sev, _, _ in issues if sev == "warning")
 
@@ -1887,7 +3645,7 @@ def command_doctor(args: argparse.Namespace) -> int:
 
 def command_changelog(args: argparse.Namespace) -> int:
     repo_root = Path(args.repo_root).resolve()
-    config = load_json(Path(args.config).resolve())
+    config = load_config(Path(args.config).resolve())
     targets = get_targets_map(config)
 
     if args.baseline and not args.target:
@@ -1925,7 +3683,13 @@ def command_changelog(args: argparse.Namespace) -> int:
             skip_binary=args.skip_binary,
         )
         baseline = load_snapshot(baseline_path)
-        report = compare_snapshots(baseline=baseline, current=current)
+        raw_report = compare_snapshots(baseline=baseline, current=current)
+        effective_policy = resolve_effective_policy(config=config, target_name=target_name)
+        report = apply_policy_to_report(
+            report=raw_report,
+            policy=effective_policy,
+            target_name=target_name,
+        )
         results_by_target[target_name] = report
 
         current_header = current.get("header")
@@ -1983,7 +3747,7 @@ def command_init_target(args: argparse.Namespace) -> int:
     config_path = Path(args.config).resolve()
 
     if config_path.exists():
-        config = load_json(config_path)
+        config = load_config(config_path)
     else:
         config = {"targets": {}}
 
@@ -2026,7 +3790,24 @@ def command_init_target(args: argparse.Namespace) -> int:
         "pinvoke": {
             "paths": args.pinvoke_path,
         },
+        "codegen": {
+            "enabled": True,
+            "namespace": args.codegen_namespace or "AbiGuard.Interop",
+            "class_name": args.codegen_class_name or "NativeMethods",
+            "access_modifier": "internal",
+            "calling_convention": "Cdecl",
+            "library_name_expression": args.codegen_library_expr or '"lumenrtc"',
+            "emit_entry_point": True,
+            "idl_output_path": f"abi/generated/{args.target}.idl.json",
+            "output_path": args.codegen_output_path or "",
+            "additional_usings": [],
+            "type_aliases": {},
+            "pointer_aliases": {},
+        },
     }
+
+    if not target_entry["codegen"]["output_path"]:
+        del target_entry["codegen"]["output_path"]
 
     if args.binary_path:
         target_entry["binary"] = {
@@ -2159,6 +3940,71 @@ def build_parser() -> argparse.ArgumentParser:
     changelog.add_argument("--fail-on-warnings", action="store_true", help="Return non-zero if warnings are present.")
     changelog.set_defaults(func=command_changelog)
 
+    generate = sub.add_parser("generate", help="Generate ABI IDL and optional managed interop stubs.")
+    generate.add_argument(
+        "--repo-root",
+        default=".",
+        help="Repository root used to resolve relative paths (default: current directory).",
+    )
+    generate.add_argument("--config", required=True, help="Path to ABI config JSON.")
+    generate.add_argument("--target", help="Optional target name. If omitted, all targets are processed.")
+    generate.add_argument("--binary", help="Override binary path for export checks.")
+    generate.add_argument("--skip-binary", action="store_true", help="Skip binary export extraction.")
+    generate.add_argument("--idl-output", help="IDL output path (single-target mode only).")
+    generate.add_argument("--cs-output", help="C# output path (single-target mode only).")
+    generate.add_argument("--dry-run", action="store_true", help="Do not write files; only compute outputs.")
+    generate.add_argument("--check", action="store_true", help="Fail when generated artifacts drift from files on disk.")
+    generate.add_argument("--print-diff", action="store_true", help="Print unified diff for changed artifacts.")
+    generate.add_argument("--strict-signatures", action="store_true", help="Include C# signature mismatches in sync drift status.")
+    generate.add_argument("--report-json", help="Write aggregate generation report JSON.")
+    generate.add_argument("--fail-on-sync", action="store_true", help="Fail if generated ABI signatures drift from existing P/Invoke signatures.")
+    generate.set_defaults(func=command_generate)
+
+    sync = sub.add_parser("sync", help="Sync generated ABI artifacts and optionally baselines.")
+    sync.add_argument(
+        "--repo-root",
+        default=".",
+        help="Repository root used to resolve relative paths (default: current directory).",
+    )
+    sync.add_argument("--config", required=True, help="Path to ABI config JSON.")
+    sync.add_argument("--target", help="Optional target name. If omitted, all targets are processed.")
+    sync.add_argument("--baseline-root", help="Baseline directory override.")
+    sync.add_argument("--binary", help="Override binary path for export checks.")
+    sync.add_argument("--skip-binary", action="store_true", help="Skip binary export extraction.")
+    sync.add_argument("--update-baselines", action="store_true", help="Write current snapshots to baseline files.")
+    sync.add_argument("--check", action="store_true", help="Check mode: do not write files and fail on drift.")
+    sync.add_argument("--print-diff", action="store_true", help="Print unified diff for changed artifacts.")
+    sync.add_argument("--strict-signatures", action="store_true", help="Include C# signature mismatches in sync drift status.")
+    sync.add_argument("--no-verify", action="store_true", help="Skip baseline comparison and policy checks.")
+    sync.add_argument("--fail-on-warnings", action="store_true", help="Treat ABI warnings as failures.")
+    sync.add_argument("--fail-on-sync", action="store_true", help="Fail if generated ABI signatures drift from existing P/Invoke signatures.")
+    sync.add_argument("--output-dir", help="Directory for sync reports.")
+    sync.add_argument("--report-json", help="Write aggregate sync report JSON.")
+    sync.set_defaults(func=command_sync)
+
+    release_prepare = sub.add_parser("release-prepare", help="Run end-to-end ABI release preparation pipeline.")
+    release_prepare.add_argument(
+        "--repo-root",
+        default=".",
+        help="Repository root used to resolve relative paths (default: current directory).",
+    )
+    release_prepare.add_argument("--config", required=True, help="Path to ABI config JSON.")
+    release_prepare.add_argument("--baseline-root", help="Baseline directory override.")
+    release_prepare.add_argument("--binary", help="Override binary path for export checks.")
+    release_prepare.add_argument("--skip-binary", action="store_true", help="Skip binary export extraction.")
+    release_prepare.add_argument("--require-binaries", action="store_true", help="Require binaries to be present during doctor checks.")
+    release_prepare.add_argument("--update-baselines", action="store_true", help="Refresh baselines before verification.")
+    release_prepare.add_argument("--check-generated", action="store_true", help="Fail if generated artifacts are out of date.")
+    release_prepare.add_argument("--print-diff", action="store_true", help="Print unified diff for generated artifact drift.")
+    release_prepare.add_argument("--strict-signatures", action="store_true", help="Include C# signature mismatches in sync drift status.")
+    release_prepare.add_argument("--fail-on-sync", action="store_true", help="Fail if generated ABI signatures drift from existing P/Invoke signatures.")
+    release_prepare.add_argument("--fail-on-warnings", action="store_true", help="Treat warnings as failures.")
+    release_prepare.add_argument("--release-tag", help="Release tag displayed in changelog/report.")
+    release_prepare.add_argument("--title", default="ABI Changelog", help="Changelog title.")
+    release_prepare.add_argument("--changelog-output", help="Path for markdown changelog output.")
+    release_prepare.add_argument("--output-dir", help="Directory for release preparation artifacts.")
+    release_prepare.set_defaults(func=command_release_prepare)
+
     diff = sub.add_parser("diff", help="Compare two snapshot files.")
     diff.add_argument("--baseline", required=True, help="Path to baseline snapshot JSON.")
     diff.add_argument("--current", required=True, help="Path to current snapshot JSON.")
@@ -2186,6 +4032,10 @@ def build_parser() -> argparse.ArgumentParser:
     init_target.add_argument("--pinvoke-path", action="append", help="P/Invoke root path (repeatable).")
     init_target.add_argument("--binary-path", help="Optional native binary path.")
     init_target.add_argument("--baseline-path", help="Baseline path (default abi/baselines/<target>.json).")
+    init_target.add_argument("--codegen-output-path", help="Optional generated C# output path for this target.")
+    init_target.add_argument("--codegen-namespace", help="Namespace used by generated C# stubs.")
+    init_target.add_argument("--codegen-class-name", help="Class name used by generated C# stubs.")
+    init_target.add_argument("--codegen-library-expr", help="Library expression used in DllImport, e.g. LibName or \"mydll\".")
     init_target.add_argument("--no-create-baseline", action="store_true", help="Do not create baseline immediately.")
     init_target.add_argument("--force", action="store_true", help="Overwrite target if already exists.")
     init_target.set_defaults(func=command_init_target)

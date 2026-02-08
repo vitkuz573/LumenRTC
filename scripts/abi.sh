@@ -21,6 +21,9 @@ Commands:
   regen         Regenerate baselines for all targets (supports --verify)
   regen-baselines Alias for regen
   doctor        Run ABI config/environment diagnostics
+  generate      Generate ABI IDL + C# stubs for configured targets
+  sync          Sync generated ABI artifacts (and optional baselines)
+  release-prepare Run end-to-end ABI release preparation pipeline
   changelog     Generate ABI changelog markdown
   verify        Verify ABI_TARGET against baseline
   check         Alias for verify
@@ -81,6 +84,24 @@ case "${COMMAND}" in
     ;;
   doctor)
     run_guard doctor \
+      --repo-root "${REPO_ROOT}" \
+      --config "${ABI_CONFIG}" \
+      "$@"
+    ;;
+  generate)
+    run_guard generate \
+      --repo-root "${REPO_ROOT}" \
+      --config "${ABI_CONFIG}" \
+      "$@"
+    ;;
+  sync)
+    run_guard sync \
+      --repo-root "${REPO_ROOT}" \
+      --config "${ABI_CONFIG}" \
+      "$@"
+    ;;
+  release-prepare)
+    run_guard release-prepare \
       --repo-root "${REPO_ROOT}" \
       --config "${ABI_CONFIG}" \
       "$@"

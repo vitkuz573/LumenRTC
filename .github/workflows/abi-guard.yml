@@ -35,6 +35,21 @@ jobs:
         with:
           python-version: "3.x"
 
+      - name: Unit tests (abi_guard)
+        run: |
+          python3 -m unittest discover -s tools/abi_guard/tests -p "test_*.py"
+
+      - name: Check generated ABI artifacts
+        run: |
+          mkdir -p artifacts/abi
+          python3 tools/abi_guard/abi_guard.py generate \
+            --repo-root . \
+            --config abi/config.json \
+            --skip-binary \
+            --check \
+            --fail-on-sync \
+            --report-json artifacts/abi/generate.report.json
+
       - name: Verify ABI Targets
         run: |
           python3 tools/abi_guard/abi_guard.py verify-all \

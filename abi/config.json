@@ -30,6 +30,20 @@
       "binary": {
         "path": "native/build/liblumenrtc.so",
         "allow_non_prefixed_exports": false
+      },
+      "codegen": {
+        "enabled": true,
+        "namespace": "LumenRTC.Interop",
+        "class_name": "NativeMethods",
+        "access_modifier": "internal",
+        "calling_convention": "Cdecl",
+        "library_name_expression": "LibName",
+        "emit_entry_point": true,
+        "idl_output_path": "abi/generated/lumenrtc/lumenrtc.idl.json",
+        "output_path": "abi/generated/lumenrtc/NativeMethods.g.cs",
+        "additional_usings": [],
+        "type_aliases": {},
+        "pointer_aliases": {}
       }
     }
   }

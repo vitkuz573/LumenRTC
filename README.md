@@ -100,12 +100,21 @@ scripts/abi.sh check --binary native/build/liblumenrtc.so
 # Verify all configured ABI targets (multi-target repos).
 scripts/abi.sh check-all --skip-binary
 
+# Generate ABI IDL and optional C# stubs from target config.
+scripts/abi.sh generate --skip-binary
+
+# Sync generated ABI artifacts (and optionally baselines).
+scripts/abi.sh sync --skip-binary
+
 # List/configure targets quickly.
 scripts/abi.sh list-targets
 scripts/abi.sh init-target ...
 
 # Generate release-ready ABI changelog.
 scripts/abi.sh changelog --skip-binary --release-tag vX.Y.Z --output abi/CHANGELOG.md
+
+# One-shot release ABI pipeline (doctor + sync + verify-all + changelog).
+scripts/abi.sh release-prepare --skip-binary --release-tag vX.Y.Z
 ```
 
 PowerShell equivalent:
@@ -115,7 +124,10 @@ scripts\\abi.ps1 baseline
 scripts\\abi.ps1 check --skip-binary
 scripts\\abi.ps1 check --binary native\\build\\lumenrtc.dll
 scripts\\abi.ps1 check-all --skip-binary
+scripts\\abi.ps1 generate --skip-binary
+scripts\\abi.ps1 sync --skip-binary
 scripts\\abi.ps1 changelog --skip-binary --release-tag vX.Y.Z --output abi\\CHANGELOG.md
+scripts\\abi.ps1 release-prepare --skip-binary --release-tag vX.Y.Z
 ```
 
 The generic tooling lives in `tools/abi_guard/` and can be reused for other ABI

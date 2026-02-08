@@ -23,6 +23,9 @@
 - Exports SARIF for GitHub code scanning / enterprise CI tooling.
 - Includes `doctor` diagnostics for config/environment readiness.
 - Generates rich markdown ABI changelog from baseline/current diff.
+- Generates ABI IDL and C# P/Invoke stubs from one target config.
+- Ships `sync` and `release-prepare` orchestration commands for CI/release flows.
+- Supports optional strict signature drift mode (`--strict-signatures`) on top of symbol-level sync checks.
 
 ## Commands
 
@@ -79,6 +82,35 @@ python3 tools/abi_guard/abi_guard.py changelog \
   --release-tag v1.2.3 \
   --output abi/CHANGELOG.md
 
+# Generate ABI IDL + C# stubs (per target)
+python3 tools/abi_guard/abi_guard.py generate \
+  --repo-root . \
+  --config abi/config.json \
+  --target lumenrtc \
+  --skip-binary
+
+# Sync generated artifacts + verify policy
+python3 tools/abi_guard/abi_guard.py sync \
+  --repo-root . \
+  --config abi/config.json \
+  --skip-binary \
+  --output-dir artifacts/abi/sync
+
+# Optional strict signature mode (not only symbol parity)
+python3 tools/abi_guard/abi_guard.py sync \
+  --repo-root . \
+  --config abi/config.json \
+  --skip-binary \
+  --strict-signatures
+
+# End-to-end release preparation (doctor + sync + verify-all + changelog)
+python3 tools/abi_guard/abi_guard.py release-prepare \
+  --repo-root . \
+  --config abi/config.json \
+  --skip-binary \
+  --release-tag v1.2.3 \
+  --output-dir artifacts/abi/release
+
 # Compare two snapshot files
 python3 tools/abi_guard/abi_guard.py diff \
   --baseline abi/baselines/lumenrtc.json \
@@ -133,6 +165,26 @@ python3 tools/abi_guard/abi_guard.py init-target \
       "binary": {
         "path": "native/build/libmyapi.so",
         "allow_non_prefixed_exports": false
+      },
+      "codegen": {
+        "enabled": true,
+        "namespace": "MyProject.Interop",
+        "class_name": "NativeMethods",
+        "access_modifier": "internal",
+        "calling_convention": "Cdecl",
+        "library_name_expression": "LibName",
+        "emit_entry_point": true,
+        "idl_output_path": "abi/generated/my_target/my_target.idl.json",
+        "output_path": "abi/generated/my_target/NativeMethods.g.cs",
+        "include_symbols_regex": ["^my_"],
+        "exclude_symbols": [],
+        "additional_usings": [],
+        "type_aliases": {
+          "my_result_t": "MyResult"
+        },
+        "pointer_aliases": {
+          "const char*": "IntPtr"
+        }
       }
     }
   }
@@ -151,6 +203,9 @@ Both wrappers expose the same high-level commands:
 - `baseline-all`
 - `regen` / `regen-baselines`
 - `doctor`
+- `generate`
+- `sync`
+- `release-prepare`
 - `changelog`
 - `verify` / `check`
 - `verify-all` / `check-all`

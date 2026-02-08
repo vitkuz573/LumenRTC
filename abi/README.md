@@ -18,8 +18,15 @@
    - `scripts/abi.sh baseline`
 5. For multi-target repos, verify all targets at once:
    - `scripts/abi.sh check-all --skip-binary`
-6. Generate changelog for release notes:
+6. Generate/update ABI IDL + managed stubs from config:
+   - `scripts/abi.sh generate --skip-binary`
+   - Outputs (for `lumenrtc`): `abi/generated/lumenrtc/lumenrtc.idl.json` and `abi/generated/lumenrtc/NativeMethods.g.cs`
+7. Sync generated ABI artifacts and optionally refresh baselines:
+   - `scripts/abi.sh sync --skip-binary`
+8. Generate changelog for release notes:
    - `scripts/abi.sh changelog --skip-binary --release-tag vX.Y.Z --output abi/CHANGELOG.md`
+9. Run full release preparation pipeline:
+   - `scripts/abi.sh release-prepare --skip-binary --release-tag vX.Y.Z`
 
 ## Compatibility policy
 
