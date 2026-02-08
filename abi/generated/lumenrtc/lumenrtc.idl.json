@@ -12,33 +12,53 @@
   "content_fingerprint": "c2af15f045bfab2fc7349add166a2f5203f14c5ad7a34e01af489bc883ee750b",
   "functions": [
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "void",
       "c_return_type": "uint32_t",
       "c_signature": "uint32_t (void)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_abi_version_major",
       "parameters": [],
       "stable_id": "27e5a06300f3f700bd3045f3f65fa9d3a99ee2712dcc8e0708cab89fbc5ab88d"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "void",
       "c_return_type": "uint32_t",
       "c_signature": "uint32_t (void)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_abi_version_minor",
       "parameters": [],
       "stable_id": "d98f9e3eea3415dbe6be3a20171d95e48d14a38dba16d1887429e8fe2a1f9fb5"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "void",
       "c_return_type": "uint32_t",
       "c_signature": "uint32_t (void)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_abi_version_patch",
       "parameters": [],
       "stable_id": "ed8fca2c9fea759f89968607fc1dd4248b111d2aa91b07eff2d203ad07f2d1e1"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "char* buffer, uint32_t buffer_len",
       "c_return_type": "int32_t",
       "c_signature": "int32_t (char* buffer, uint32_t buffer_len)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_abi_version_string",
       "parameters": [
         {
@@ -57,9 +77,14 @@
       "stable_id": "00eb744ee3d4a74caa281b6bd40c8e29dc383800b5a8abed792c2c713fadfe70"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_audio_device_t* device, uint32_t* volume",
       "c_return_type": "int32_t",
       "c_signature": "int32_t (lrtc_audio_device_t* device, uint32_t* volume)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_audio_device_microphone_volume",
       "parameters": [
         {
@@ -78,9 +103,14 @@
       "stable_id": "68c5cfe6a77afef9b4e821635fda8fb4aa949e9eb8cfc2f37c7fc4b4f6652d32"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_audio_device_t* device, uint16_t index, char* name, uint32_t name_len, char* guid, uint32_t guid_len",
       "c_return_type": "int32_t",
       "c_signature": "int32_t (lrtc_audio_device_t* device, uint16_t index, char* name, uint32_t name_len, char* guid, uint32_t guid_len)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_audio_device_playout_device_name",
       "parameters": [
         {
@@ -123,9 +153,14 @@
       "stable_id": "6f78fe5edcb00b8ace6563b244181fe15087d2a26244e124505b81ccc5baf686"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_audio_device_t* device",
       "c_return_type": "int16_t",
       "c_signature": "int16_t (lrtc_audio_device_t* device)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_audio_device_playout_devices",
       "parameters": [
         {
@@ -138,9 +173,14 @@
       "stable_id": "0fc1b0cb83ec734176e67676ac5a2564e4239b8c07ab6105e206eba955f198c0"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_audio_device_t* device, uint16_t index, char* name, uint32_t name_len, char* guid, uint32_t guid_len",
       "c_return_type": "int32_t",
       "c_signature": "int32_t (lrtc_audio_device_t* device, uint16_t index, char* name, uint32_t name_len, char* guid, uint32_t guid_len)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_audio_device_recording_device_name",
       "parameters": [
         {
@@ -183,9 +223,14 @@
       "stable_id": "c9f0158ad32be89e00e004524578b5092dce7d0f62e32c9febcfcfa36983e56f"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_audio_device_t* device",
       "c_return_type": "int16_t",
       "c_signature": "int16_t (lrtc_audio_device_t* device)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_audio_device_recording_devices",
       "parameters": [
         {
@@ -198,9 +243,14 @@
       "stable_id": "5f36742eb37061cfeaf2a4f52c5c48e5379ad578eeafc43aef615f5ee4bcb9cb"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_audio_device_t* device",
       "c_return_type": "void",
       "c_signature": "void (lrtc_audio_device_t* device)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_audio_device_release",
       "parameters": [
         {
@@ -213,9 +263,14 @@
       "stable_id": "4794ec033631f857ef64cec70d2e3be87f1f95f469bb0516b7d34d5f4822eff0"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_audio_device_t* device, uint32_t volume",
       "c_return_type": "int32_t",
       "c_signature": "int32_t (lrtc_audio_device_t* device, uint32_t volume)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_audio_device_set_microphone_volume",
       "parameters": [
         {
@@ -234,9 +289,14 @@
       "stable_id": "7215dc5a75b778043195edf115caad1dd52690f8d536de425bbf1512b7b30b6b"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_audio_device_t* device, uint16_t index",
       "c_return_type": "int32_t",
       "c_signature": "int32_t (lrtc_audio_device_t* device, uint16_t index)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_audio_device_set_playout_device",
       "parameters": [
         {
@@ -255,9 +315,14 @@
       "stable_id": "3729628e2d4c49698ffabe8bfd1127199ddceafc4b1310161104d161b9217f86"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_audio_device_t* device, uint16_t index",
       "c_return_type": "int32_t",
       "c_signature": "int32_t (lrtc_audio_device_t* device, uint16_t index)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_audio_device_set_recording_device",
       "parameters": [
         {
@@ -276,9 +341,14 @@
       "stable_id": "35708bf0448711d0c19c3a80bc05102795c43e648291027e2216776171524ca9"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_audio_device_t* device, uint32_t volume",
       "c_return_type": "int32_t",
       "c_signature": "int32_t (lrtc_audio_device_t* device, uint32_t volume)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_audio_device_set_speaker_volume",
       "parameters": [
         {
@@ -297,9 +367,14 @@
       "stable_id": "7e17786264260964a6fabe3423abb6c678778e1627ca6f0d2fda134596eb87a8"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_audio_device_t* device, uint32_t* volume",
       "c_return_type": "int32_t",
       "c_signature": "int32_t (lrtc_audio_device_t* device, uint32_t* volume)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_audio_device_speaker_volume",
       "parameters": [
         {
@@ -318,9 +393,14 @@
       "stable_id": "f81816d3b69b2c81018e6fd6ba8cf7712113373c6680479f5113602d52b1dee6"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "const lrtc_audio_sink_callbacks_t* callbacks, void* user_data",
       "c_return_type": "lrtc_audio_sink_t*",
       "c_signature": "lrtc_audio_sink_t* (const lrtc_audio_sink_callbacks_t* callbacks, void* user_data)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_audio_sink_create",
       "parameters": [
         {
@@ -339,9 +419,14 @@
       "stable_id": "52911426ffb19b0ebbd11d043d7c5e85e9c616cab2b60ef278dfab2f23e360c8"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_audio_sink_t* sink",
       "c_return_type": "void",
       "c_signature": "void (lrtc_audio_sink_t* sink)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_audio_sink_release",
       "parameters": [
         {
@@ -354,9 +439,14 @@
       "stable_id": "d8eb4cf3e55a993072ec862340334a9a35c7b0200ce235fb8b13d9a2f311d366"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_audio_source_t* source, const void* audio_data, int bits_per_sample, int sample_rate, size_t number_of_channels, size_t number_of_frames",
       "c_return_type": "void",
       "c_signature": "void (lrtc_audio_source_t* source, const void* audio_data, int bits_per_sample, int sample_rate, size_t number_of_channels, size_t number_of_frames)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_audio_source_capture_frame",
       "parameters": [
         {
@@ -399,9 +489,14 @@
       "stable_id": "8f6aae5e68cf8287ac9541dbb3637c0883d33607da3a9acc5613a64fb95d57a0"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_audio_source_t* source",
       "c_return_type": "void",
       "c_signature": "void (lrtc_audio_source_t* source)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_audio_source_release",
       "parameters": [
         {
@@ -414,9 +509,14 @@
       "stable_id": "4fb5228a9fc7f963a1cdfa5c3af802616a7fad20837c624fc98a13434ce9c0e0"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_audio_track_t* track, lrtc_audio_sink_t* sink",
       "c_return_type": "void",
       "c_signature": "void (lrtc_audio_track_t* track, lrtc_audio_sink_t* sink)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_audio_track_add_sink",
       "parameters": [
         {
@@ -435,9 +535,14 @@
       "stable_id": "df34ec34314bbced122e6da9c8cf78abb6a3d1c06bc46cfad677bb9500220e6f"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_audio_track_t* track",
       "c_return_type": "int",
       "c_signature": "int (lrtc_audio_track_t* track)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_audio_track_get_enabled",
       "parameters": [
         {
@@ -450,9 +555,14 @@
       "stable_id": "f4b64f61b4e003e73b9dea68b2e5d0e90fe0bbf327f4dcc9ec8a27a4ddc1288b"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_audio_track_t* track, char* buffer, uint32_t buffer_len",
       "c_return_type": "int32_t",
       "c_signature": "int32_t (lrtc_audio_track_t* track, char* buffer, uint32_t buffer_len)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_audio_track_get_id",
       "parameters": [
         {
@@ -477,9 +587,14 @@
       "stable_id": "0bb2bc9b538718024f8906cd0a5fcb4437d2be993735ced06bb2eb404c01066a"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_audio_track_t* track",
       "c_return_type": "int",
       "c_signature": "int (lrtc_audio_track_t* track)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_audio_track_get_state",
       "parameters": [
         {
@@ -492,9 +607,14 @@
       "stable_id": "36d82a8136fdc613bc77a41e9fdf25ed52c7176b07c1946602f12f1e261da00a"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_audio_track_t* track",
       "c_return_type": "void",
       "c_signature": "void (lrtc_audio_track_t* track)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_audio_track_release",
       "parameters": [
         {
@@ -507,9 +627,14 @@
       "stable_id": "c2e7dc4992bf9f3d80368be8c99afcfac6db4981579af898c5ad301089a74002"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_audio_track_t* track, lrtc_audio_sink_t* sink",
       "c_return_type": "void",
       "c_signature": "void (lrtc_audio_track_t* track, lrtc_audio_sink_t* sink)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_audio_track_remove_sink",
       "parameters": [
         {
@@ -528,9 +653,14 @@
       "stable_id": "3ce939be9920098cd1e6087ae42f61ab8ed27958062910974653ef880a6be234"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_audio_track_t* track, int enabled",
       "c_return_type": "int",
       "c_signature": "int (lrtc_audio_track_t* track, int enabled)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_audio_track_set_enabled",
       "parameters": [
         {
@@ -549,9 +679,14 @@
       "stable_id": "68ea6eb89a42cf8e75790466f3cb5149c249f284127ed29536b966f280606da9"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_audio_track_t* track, double volume",
       "c_return_type": "void",
       "c_signature": "void (lrtc_audio_track_t* track, double volume)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_audio_track_set_volume",
       "parameters": [
         {
@@ -570,9 +705,14 @@
       "stable_id": "1faaa9f22b438e954a632042c12db9dc7211454c82f4d56802e8ec7301165da1"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_data_channel_t* channel",
       "c_return_type": "void",
       "c_signature": "void (lrtc_data_channel_t* channel)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_data_channel_close",
       "parameters": [
         {
@@ -585,9 +725,14 @@
       "stable_id": "9891053dc677881fa0a1501ff370acaa727d39f8f4fc10fe5ed74ab1eab197a3"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_data_channel_t* channel",
       "c_return_type": "void",
       "c_signature": "void (lrtc_data_channel_t* channel)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_data_channel_release",
       "parameters": [
         {
@@ -600,9 +745,14 @@
       "stable_id": "073d746ac586dff34f1748d4f7ff9f01e996d3b49b9278237739c7d9809a4a3b"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_data_channel_t* channel, const uint8_t* data, uint32_t size, int binary",
       "c_return_type": "void",
       "c_signature": "void (lrtc_data_channel_t* channel, const uint8_t* data, uint32_t size, int binary)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_data_channel_send",
       "parameters": [
         {
@@ -633,9 +783,14 @@
       "stable_id": "805432ce0cefc6f67eb14d1829aabd270198a81a89b0e68430d5e386f6494b7e"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_data_channel_t* channel, const lrtc_data_channel_callbacks_t* callbacks, void* user_data",
       "c_return_type": "void",
       "c_signature": "void (lrtc_data_channel_t* channel, const lrtc_data_channel_callbacks_t* callbacks, void* user_data)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_data_channel_set_callbacks",
       "parameters": [
         {
@@ -660,9 +815,14 @@
       "stable_id": "878111942d1cd7cf1fc76e52a6ea1d037e79dcc12484f06d68957a809eb07f5b"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_desktop_capturer_t* capturer",
       "c_return_type": "bool",
       "c_signature": "bool (lrtc_desktop_capturer_t* capturer)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_desktop_capturer_is_running",
       "parameters": [
         {
@@ -675,9 +835,14 @@
       "stable_id": "0d5e992e874fa89afb4862f0bf0d18ff8abee9923ffaf0df96223b44ce81396c"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_desktop_capturer_t* capturer",
       "c_return_type": "void",
       "c_signature": "void (lrtc_desktop_capturer_t* capturer)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_desktop_capturer_release",
       "parameters": [
         {
@@ -690,9 +855,14 @@
       "stable_id": "915d9de83f1788bdf3f97c394047a14497963975a1b2cf5c65e5c42fbdf4437a"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_desktop_capturer_t* capturer, uint32_t fps",
       "c_return_type": "lrtc_desktop_capture_state",
       "c_signature": "lrtc_desktop_capture_state (lrtc_desktop_capturer_t* capturer, uint32_t fps)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_desktop_capturer_start",
       "parameters": [
         {
@@ -711,9 +881,14 @@
       "stable_id": "2759a99136bd38a6a64128bc05afbf5a7ba109fc22b05c1c59275d71ac543b5e"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_desktop_capturer_t* capturer, uint32_t fps, uint32_t x, uint32_t y, uint32_t w, uint32_t h",
       "c_return_type": "lrtc_desktop_capture_state",
       "c_signature": "lrtc_desktop_capture_state (lrtc_desktop_capturer_t* capturer, uint32_t fps, uint32_t x, uint32_t y, uint32_t w, uint32_t h)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_desktop_capturer_start_region",
       "parameters": [
         {
@@ -756,9 +931,14 @@
       "stable_id": "bad002c6aa3756e5778268e0997cfe1f514aa8d516e9cf844989013584b8e928"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_desktop_capturer_t* capturer",
       "c_return_type": "void",
       "c_signature": "void (lrtc_desktop_capturer_t* capturer)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_desktop_capturer_stop",
       "parameters": [
         {
@@ -771,9 +951,14 @@
       "stable_id": "7ede9f73c42fcbf8a58acb3b2a13636d91f9438b85e74f92d62965ab9edcd9aa"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_desktop_device_t* device, lrtc_media_source_t* source, bool show_cursor",
       "c_return_type": "lrtc_desktop_capturer_t*",
       "c_signature": "lrtc_desktop_capturer_t* (lrtc_desktop_device_t* device, lrtc_media_source_t* source, bool show_cursor)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_desktop_device_create_capturer",
       "parameters": [
         {
@@ -798,9 +983,14 @@
       "stable_id": "49049170096f2db15b1312ec823c094b40ee790bcee2a346f0133748aec20264"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_desktop_device_t* device, lrtc_desktop_type type",
       "c_return_type": "lrtc_desktop_media_list_t*",
       "c_signature": "lrtc_desktop_media_list_t* (lrtc_desktop_device_t* device, lrtc_desktop_type type)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_desktop_device_get_media_list",
       "parameters": [
         {
@@ -819,9 +1009,14 @@
       "stable_id": "860863459d0322ddf78d171c0c82947d3ca3e21435d767eff469dfe6a4f77388"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_desktop_device_t* device",
       "c_return_type": "void",
       "c_signature": "void (lrtc_desktop_device_t* device)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_desktop_device_release",
       "parameters": [
         {
@@ -834,9 +1029,14 @@
       "stable_id": "58f7404009806a3417d1ae25c9069fe76c9a3790fefaf41113011b600ae2417c"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_desktop_media_list_t* list, int index",
       "c_return_type": "lrtc_media_source_t*",
       "c_signature": "lrtc_media_source_t* (lrtc_desktop_media_list_t* list, int index)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_desktop_media_list_get_source",
       "parameters": [
         {
@@ -855,9 +1055,14 @@
       "stable_id": "c96d2b3ca6536437399c0e52db77ca3220c77867bce2451bee4904dc4b2cbee5"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_desktop_media_list_t* list",
       "c_return_type": "int",
       "c_signature": "int (lrtc_desktop_media_list_t* list)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_desktop_media_list_get_source_count",
       "parameters": [
         {
@@ -870,9 +1075,14 @@
       "stable_id": "abda1830e22fe9c89d119d56a6f1e9644c6d70506c83dfe8f705734aad26270e"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_desktop_media_list_t* list",
       "c_return_type": "void",
       "c_signature": "void (lrtc_desktop_media_list_t* list)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_desktop_media_list_release",
       "parameters": [
         {
@@ -885,9 +1095,14 @@
       "stable_id": "a839f398cac893870ea0fb91ad016a8a5d4bb24a62c833bed97121c4b537d818"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_desktop_media_list_t* list, bool force_reload, bool get_thumbnail",
       "c_return_type": "int32_t",
       "c_signature": "int32_t (lrtc_desktop_media_list_t* list, bool force_reload, bool get_thumbnail)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_desktop_media_list_update",
       "parameters": [
         {
@@ -912,9 +1127,14 @@
       "stable_id": "5ce713d7f538a2bce951c15768a6a5e21fdd5539677b132d3bb64680d2e852f4"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_dtmf_sender_t* sender",
       "c_return_type": "int",
       "c_signature": "int (lrtc_dtmf_sender_t* sender)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_dtmf_sender_can_insert",
       "parameters": [
         {
@@ -927,9 +1147,14 @@
       "stable_id": "9671b0ef1c5588938499789fb5b5628b1c1aa7632360ccc09b3f8007d405beaf"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_dtmf_sender_t* sender",
       "c_return_type": "int",
       "c_signature": "int (lrtc_dtmf_sender_t* sender)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_dtmf_sender_comma_delay",
       "parameters": [
         {
@@ -942,9 +1167,14 @@
       "stable_id": "9714284f7e9881171eb1ffaf983188fbb5cb8648d80993926a7221c360d313f0"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_dtmf_sender_t* sender",
       "c_return_type": "int",
       "c_signature": "int (lrtc_dtmf_sender_t* sender)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_dtmf_sender_duration",
       "parameters": [
         {
@@ -957,9 +1187,14 @@
       "stable_id": "24798c8b96a7cf3eacca3903d2e529a9187bc8e97b9621b36cc189b66bbcc00f"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_dtmf_sender_t* sender, const char* tones, int duration, int inter_tone_gap, int comma_delay",
       "c_return_type": "int",
       "c_signature": "int (lrtc_dtmf_sender_t* sender, const char* tones, int duration, int inter_tone_gap, int comma_delay)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_dtmf_sender_insert",
       "parameters": [
         {
@@ -996,9 +1231,14 @@
       "stable_id": "b97199346f996a94d83fe51edc2aac3003a3b631dc3d8521073ebe8f6864df75"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_dtmf_sender_t* sender",
       "c_return_type": "int",
       "c_signature": "int (lrtc_dtmf_sender_t* sender)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_dtmf_sender_inter_tone_gap",
       "parameters": [
         {
@@ -1011,9 +1251,14 @@
       "stable_id": "28ccbdbff24fe117d07dce059fe32dd6f6a95c9a917ec602c615c40584a6dbac"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_dtmf_sender_t* sender",
       "c_return_type": "void",
       "c_signature": "void (lrtc_dtmf_sender_t* sender)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_dtmf_sender_release",
       "parameters": [
         {
@@ -1026,9 +1271,14 @@
       "stable_id": "df0ad4f7de2d93b044e57a65ec658ff0f421de90fa380b8f5689e18294d53c3d"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_dtmf_sender_t* sender, const lrtc_dtmf_sender_callbacks_t* callbacks, void* user_data",
       "c_return_type": "void",
       "c_signature": "void (lrtc_dtmf_sender_t* sender, const lrtc_dtmf_sender_callbacks_t* callbacks, void* user_data)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_dtmf_sender_set_callbacks",
       "parameters": [
         {
@@ -1053,9 +1303,14 @@
       "stable_id": "356fa08d7eed295f7990482bc87bd8621a171fcbb28892c0fc616b67938b2556"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_dtmf_sender_t* sender, char* buffer, uint32_t buffer_len",
       "c_return_type": "int32_t",
       "c_signature": "int32_t (lrtc_dtmf_sender_t* sender, char* buffer, uint32_t buffer_len)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_dtmf_sender_tones",
       "parameters": [
         {
@@ -1080,17 +1335,27 @@
       "stable_id": "9ba212a3ce6535c3ee1e2985a08c5263bd4197a834c4667c9c1253cf8955f3c6"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "void",
       "c_return_type": "lrtc_factory_t*",
       "c_signature": "lrtc_factory_t* (void)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_factory_create",
       "parameters": [],
       "stable_id": "6995f4abe4d790638c720ca1b48d0684aa83fe358dd916c1c9609b62e54a6e8b"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_factory_t* factory, const char* label, lrtc_audio_source_type source_type, const lrtc_audio_options_t* options",
       "c_return_type": "lrtc_audio_source_t*",
       "c_signature": "lrtc_audio_source_t* (lrtc_factory_t* factory, const char* label, lrtc_audio_source_type source_type, const lrtc_audio_options_t* options)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_factory_create_audio_source",
       "parameters": [
         {
@@ -1121,9 +1386,14 @@
       "stable_id": "3305f5385ce1ae7b5390ce898752ded36b9aba48498006e272f8a11bf7779b14"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_factory_t* factory, lrtc_audio_source_t* source, const char* track_id",
       "c_return_type": "lrtc_audio_track_t*",
       "c_signature": "lrtc_audio_track_t* (lrtc_factory_t* factory, lrtc_audio_source_t* source, const char* track_id)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_factory_create_audio_track",
       "parameters": [
         {
@@ -1148,9 +1418,14 @@
       "stable_id": "91480f1bac5bd02273866bc2d901e6d83d86dbde07a04f9c27d2bd6fa6488c0e"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_factory_t* factory, lrtc_desktop_capturer_t* capturer, const char* label, lrtc_media_constraints_t* constraints",
       "c_return_type": "lrtc_video_source_t*",
       "c_signature": "lrtc_video_source_t* (lrtc_factory_t* factory, lrtc_desktop_capturer_t* capturer, const char* label, lrtc_media_constraints_t* constraints)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_factory_create_desktop_source",
       "parameters": [
         {
@@ -1181,9 +1456,14 @@
       "stable_id": "8949d5f52c8b9dcb81495957a6f98ba5803cabfb2ed80bed7faf121618f2d3b1"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_factory_t* factory, const char* stream_id",
       "c_return_type": "lrtc_media_stream_t*",
       "c_signature": "lrtc_media_stream_t* (lrtc_factory_t* factory, const char* stream_id)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_factory_create_stream",
       "parameters": [
         {
@@ -1202,9 +1482,14 @@
       "stable_id": "1e7678e6cb1de3fc2ac1b1db6d4a62df82ac2ab74536d4729ef747fb50e1d368"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_factory_t* factory, lrtc_video_capturer_t* capturer, const char* label, lrtc_media_constraints_t* constraints",
       "c_return_type": "lrtc_video_source_t*",
       "c_signature": "lrtc_video_source_t* (lrtc_factory_t* factory, lrtc_video_capturer_t* capturer, const char* label, lrtc_media_constraints_t* constraints)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_factory_create_video_source",
       "parameters": [
         {
@@ -1235,9 +1520,14 @@
       "stable_id": "2d5257a5eccc3ae82ac26692e679da75175b69fd155e2385064ed00a459aa8ae"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_factory_t* factory, lrtc_video_source_t* source, const char* track_id",
       "c_return_type": "lrtc_video_track_t*",
       "c_signature": "lrtc_video_track_t* (lrtc_factory_t* factory, lrtc_video_source_t* source, const char* track_id)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_factory_create_video_track",
       "parameters": [
         {
@@ -1262,9 +1552,14 @@
       "stable_id": "dac337cec02cde2ca63206ac91ccd44586cd9d066322c4ed198f69d9f964de77"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_factory_t* factory",
       "c_return_type": "lrtc_audio_device_t*",
       "c_signature": "lrtc_audio_device_t* (lrtc_factory_t* factory)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_factory_get_audio_device",
       "parameters": [
         {
@@ -1277,9 +1572,14 @@
       "stable_id": "4b4e56bef38bf1d3e49134ee5c5f65d46994da8476bd3b11d5a51f7c26de1543"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_factory_t* factory",
       "c_return_type": "lrtc_desktop_device_t*",
       "c_signature": "lrtc_desktop_device_t* (lrtc_factory_t* factory)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_factory_get_desktop_device",
       "parameters": [
         {
@@ -1292,9 +1592,14 @@
       "stable_id": "0adecefa8f4de9f601735ebd373170b49437f492c41eeb1a1f8373de3793e85a"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_factory_t* factory, lrtc_media_type media_type, lrtc_stats_success_cb success, lrtc_stats_failure_cb failure, void* user_data",
       "c_return_type": "void",
       "c_signature": "void (lrtc_factory_t* factory, lrtc_media_type media_type, lrtc_stats_success_cb success, lrtc_stats_failure_cb failure, void* user_data)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_factory_get_rtp_receiver_capabilities",
       "parameters": [
         {
@@ -1331,9 +1636,14 @@
       "stable_id": "e9998fdb301087a998b56b8707a51255cf20f5c4573deba53ef4a05910fb8616"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_factory_t* factory, lrtc_media_type media_type, lrtc_stats_success_cb success, lrtc_stats_failure_cb failure, void* user_data",
       "c_return_type": "void",
       "c_signature": "void (lrtc_factory_t* factory, lrtc_media_type media_type, lrtc_stats_success_cb success, lrtc_stats_failure_cb failure, void* user_data)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_factory_get_rtp_sender_capabilities",
       "parameters": [
         {
@@ -1370,9 +1680,14 @@
       "stable_id": "c51c3cf2895b2e071170b543a14c03d4f7a61507a0a5ea97fa6061929b74586e"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_factory_t* factory, lrtc_media_type media_type, lrtc_stats_success_cb success, lrtc_stats_failure_cb failure, void* user_data",
       "c_return_type": "void",
       "c_signature": "void (lrtc_factory_t* factory, lrtc_media_type media_type, lrtc_stats_success_cb success, lrtc_stats_failure_cb failure, void* user_data)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_factory_get_rtp_sender_codec_mime_types",
       "parameters": [
         {
@@ -1409,9 +1724,14 @@
       "stable_id": "45485b0573d0a09c39af1bb46cd3d90de6dd229160300ec19b60ce0bb141ae2d"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_factory_t* factory",
       "c_return_type": "lrtc_video_device_t*",
       "c_signature": "lrtc_video_device_t* (lrtc_factory_t* factory)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_factory_get_video_device",
       "parameters": [
         {
@@ -1424,9 +1744,14 @@
       "stable_id": "236c30d529037e764028325d7800f4ab816f3186bc9ab4d34d5f78bd09d1134f"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_factory_t* factory",
       "c_return_type": "lrtc_result_t",
       "c_signature": "lrtc_result_t (lrtc_factory_t* factory)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_factory_initialize",
       "parameters": [
         {
@@ -1439,9 +1764,14 @@
       "stable_id": "39b69007f48ce724d6c93e2f9fa5934689ed1f367123c96fc27a3cb0e5b3b004"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_factory_t* factory",
       "c_return_type": "void",
       "c_signature": "void (lrtc_factory_t* factory)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_factory_release",
       "parameters": [
         {
@@ -1454,9 +1784,14 @@
       "stable_id": "e87ec4b8c6c571340e543100e1b89ba3b35203769e6570fdbc0352ed07d3f76d"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_factory_t* factory",
       "c_return_type": "void",
       "c_signature": "void (lrtc_factory_t* factory)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_factory_terminate",
       "parameters": [
         {
@@ -1469,25 +1804,40 @@
       "stable_id": "49a580d2365ce9e28e0e0e7f8ed7b21ebd9db566df84aaefd4936526369b79a6"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "void",
       "c_return_type": "lrtc_result_t",
       "c_signature": "lrtc_result_t (void)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_initialize",
       "parameters": [],
       "stable_id": "f9bd5abd12810d467eb10db43d19699a9539e41dd44a678fc8b24250102c46da"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "void",
       "c_return_type": "void",
       "c_signature": "void (void)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_logging_remove_callback",
       "parameters": [],
       "stable_id": "832de6297d766f5a0893a7919cb33365b4ee48ccfd2ec707852b06da7f75a6f9"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "int severity, lrtc_log_message_cb callback, void* user_data",
       "c_return_type": "void",
       "c_signature": "void (int severity, lrtc_log_message_cb callback, void* user_data)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_logging_set_callback",
       "parameters": [
         {
@@ -1512,9 +1862,14 @@
       "stable_id": "d7c4936a58f3f6811822bd3055383f35b4c6e29afb2136b0355da0a8370deb0e"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "int severity",
       "c_return_type": "void",
       "c_signature": "void (int severity)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_logging_set_min_level",
       "parameters": [
         {
@@ -1527,9 +1882,14 @@
       "stable_id": "e266b1f2f55b52bba7a24aad804fe8607b21a0ef30b787c77ba689ca32883d8b"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_media_constraints_t* constraints, const char* key, const char* value",
       "c_return_type": "void",
       "c_signature": "void (lrtc_media_constraints_t* constraints, const char* key, const char* value)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_media_constraints_add_mandatory",
       "parameters": [
         {
@@ -1554,9 +1914,14 @@
       "stable_id": "df57e4e7fd391f396caefc8e642aca2d863bd76ff7ae561b7ce67f1ef2078c8a"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_media_constraints_t* constraints, const char* key, const char* value",
       "c_return_type": "void",
       "c_signature": "void (lrtc_media_constraints_t* constraints, const char* key, const char* value)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_media_constraints_add_optional",
       "parameters": [
         {
@@ -1581,17 +1946,27 @@
       "stable_id": "980d682900d4ab742396ba91b3d302045aa47bd8e6f29b04de68b71b1b9edc1c"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "void",
       "c_return_type": "lrtc_media_constraints_t*",
       "c_signature": "lrtc_media_constraints_t* (void)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_media_constraints_create",
       "parameters": [],
       "stable_id": "ed4fbe9c34e2ee02f64e8157a2a2baf0e8d57256fbc3155009726f5df8a16167"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_media_constraints_t* constraints",
       "c_return_type": "void",
       "c_signature": "void (lrtc_media_constraints_t* constraints)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_media_constraints_release",
       "parameters": [
         {
@@ -1604,9 +1979,14 @@
       "stable_id": "4ff4990362b355bd00e1424405ae0478ef27095c3b2669cf130f42bdb9566173"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_media_source_t* source, char* buffer, uint32_t buffer_len",
       "c_return_type": "int32_t",
       "c_signature": "int32_t (lrtc_media_source_t* source, char* buffer, uint32_t buffer_len)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_media_source_get_id",
       "parameters": [
         {
@@ -1631,9 +2011,14 @@
       "stable_id": "61b121f5aa0d1680edb89a1bed83eda5aac11afa17fae1b9459af8ff68ef0161"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_media_source_t* source, char* buffer, uint32_t buffer_len",
       "c_return_type": "int32_t",
       "c_signature": "int32_t (lrtc_media_source_t* source, char* buffer, uint32_t buffer_len)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_media_source_get_name",
       "parameters": [
         {
@@ -1658,9 +2043,14 @@
       "stable_id": "e1acdd7e77342d443066c0a8b3435c803e222c7720ab66f06250c9381f0f2332"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_media_source_t* source",
       "c_return_type": "int",
       "c_signature": "int (lrtc_media_source_t* source)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_media_source_get_type",
       "parameters": [
         {
@@ -1673,9 +2063,14 @@
       "stable_id": "548f530739e7b11c57d530d353174e42754b4efd1d408b6b72bdf679a36798b4"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_media_source_t* source",
       "c_return_type": "void",
       "c_signature": "void (lrtc_media_source_t* source)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_media_source_release",
       "parameters": [
         {
@@ -1688,9 +2083,14 @@
       "stable_id": "41ca2406fae1d9e43ef3e51fdf7b99f2ff74d8f86fa336da322a282fa9e7a3ef"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_media_stream_t* stream, lrtc_audio_track_t* track",
       "c_return_type": "bool",
       "c_signature": "bool (lrtc_media_stream_t* stream, lrtc_audio_track_t* track)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_media_stream_add_audio_track",
       "parameters": [
         {
@@ -1709,9 +2109,14 @@
       "stable_id": "92076254463830a1b65851ae289ab81ba2f47e137e3bb87347a1622302b5ef6d"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_media_stream_t* stream, lrtc_video_track_t* track",
       "c_return_type": "bool",
       "c_signature": "bool (lrtc_media_stream_t* stream, lrtc_video_track_t* track)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_media_stream_add_video_track",
       "parameters": [
         {
@@ -1730,9 +2135,14 @@
       "stable_id": "d33a5673b4f90631e83c3fa99eec9d977e3f317a5c4e357b0a04f2eded3a8eac"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_media_stream_t* stream, char* buffer, uint32_t buffer_len",
       "c_return_type": "int32_t",
       "c_signature": "int32_t (lrtc_media_stream_t* stream, char* buffer, uint32_t buffer_len)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_media_stream_get_id",
       "parameters": [
         {
@@ -1757,9 +2167,14 @@
       "stable_id": "d82cf7a3a55e33eaa80124d9bda05eba2e87ae787c65fbbad80f868d856c0176"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_media_stream_t* stream, char* buffer, uint32_t buffer_len",
       "c_return_type": "int32_t",
       "c_signature": "int32_t (lrtc_media_stream_t* stream, char* buffer, uint32_t buffer_len)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_media_stream_get_label",
       "parameters": [
         {
@@ -1784,9 +2199,14 @@
       "stable_id": "ad8c9336a5de7d02db67034e34183b6a27d2337d5d36c1b216bc23060a5f9e42"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_media_stream_t* stream",
       "c_return_type": "void",
       "c_signature": "void (lrtc_media_stream_t* stream)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_media_stream_release",
       "parameters": [
         {
@@ -1799,9 +2219,14 @@
       "stable_id": "7eb50821e2f105c3d4131011f79c64fe08bbb2db29223487b5eef1bc5e80e4c2"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_media_stream_t* stream, lrtc_audio_track_t* track",
       "c_return_type": "bool",
       "c_signature": "bool (lrtc_media_stream_t* stream, lrtc_audio_track_t* track)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_media_stream_remove_audio_track",
       "parameters": [
         {
@@ -1820,9 +2245,14 @@
       "stable_id": "75fea26f4e396882b0f214f01d1989125f3552341875bd0e3b3500cbb6132651"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_media_stream_t* stream, lrtc_video_track_t* track",
       "c_return_type": "bool",
       "c_signature": "bool (lrtc_media_stream_t* stream, lrtc_video_track_t* track)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_media_stream_remove_video_track",
       "parameters": [
         {
@@ -1841,9 +2271,14 @@
       "stable_id": "1de0d4fd73f4b65da0aff358d3b50d9cb2491f02f4e934514d06c8e11ad8a406"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_peer_connection_t* pc, lrtc_audio_track_t* track, const char** stream_ids, uint32_t stream_id_count",
       "c_return_type": "int",
       "c_signature": "int (lrtc_peer_connection_t* pc, lrtc_audio_track_t* track, const char** stream_ids, uint32_t stream_id_count)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_peer_connection_add_audio_track",
       "parameters": [
         {
@@ -1874,9 +2309,14 @@
       "stable_id": "d758d37f6024270cf43758acda52a0cc857e7f9ced38edcd476115d8ae59dc8b"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_peer_connection_t* pc, lrtc_audio_track_t* track, const char** stream_ids, uint32_t stream_id_count",
       "c_return_type": "lrtc_rtp_sender_t*",
       "c_signature": "lrtc_rtp_sender_t* (lrtc_peer_connection_t* pc, lrtc_audio_track_t* track, const char** stream_ids, uint32_t stream_id_count)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_peer_connection_add_audio_track_sender",
       "parameters": [
         {
@@ -1907,9 +2347,14 @@
       "stable_id": "763db4c5b77492e403ee295e8127c2e6e2cd208e9f5cf3c8e0bc786942ee9ae0"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_peer_connection_t* pc, lrtc_audio_track_t* track",
       "c_return_type": "lrtc_rtp_transceiver_t*",
       "c_signature": "lrtc_rtp_transceiver_t* (lrtc_peer_connection_t* pc, lrtc_audio_track_t* track)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_peer_connection_add_audio_track_transceiver",
       "parameters": [
         {
@@ -1928,9 +2373,14 @@
       "stable_id": "04e15536c4e27f7931a635cb065d8c8fb0c001fc89dff96c6389f3d254186586"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_peer_connection_t* pc, lrtc_audio_track_t* track, const lrtc_rtp_transceiver_init_t* init",
       "c_return_type": "lrtc_rtp_transceiver_t*",
       "c_signature": "lrtc_rtp_transceiver_t* (lrtc_peer_connection_t* pc, lrtc_audio_track_t* track, const lrtc_rtp_transceiver_init_t* init)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_peer_connection_add_audio_track_transceiver_with_init",
       "parameters": [
         {
@@ -1955,9 +2405,14 @@
       "stable_id": "85bf69cb897fe36bed3b2b29b6571ef0bfa4e384a7048f8da1c58afc9a70704f"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_peer_connection_t* pc, const char* sdp_mid, int sdp_mline_index, const char* candidate",
       "c_return_type": "void",
       "c_signature": "void (lrtc_peer_connection_t* pc, const char* sdp_mid, int sdp_mline_index, const char* candidate)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_peer_connection_add_ice_candidate",
       "parameters": [
         {
@@ -1988,9 +2443,14 @@
       "stable_id": "200d2a318ea415d547b71c4f889ef323652d6e50127a4759b5269165c4762165"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_peer_connection_t* pc, const char* sdp_mid, int sdp_mline_index, const char* candidate",
       "c_return_type": "int",
       "c_signature": "int (lrtc_peer_connection_t* pc, const char* sdp_mid, int sdp_mline_index, const char* candidate)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_peer_connection_add_ice_candidate_ex",
       "parameters": [
         {
@@ -2021,9 +2481,14 @@
       "stable_id": "92e2438c6c6aad54c24cb426b017e79caaba233044819f893a6f3900cc0ede16"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_peer_connection_t* pc, lrtc_media_stream_t* stream",
       "c_return_type": "bool",
       "c_signature": "bool (lrtc_peer_connection_t* pc, lrtc_media_stream_t* stream)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_peer_connection_add_stream",
       "parameters": [
         {
@@ -2042,9 +2507,14 @@
       "stable_id": "3fc0e5d2411d6f2e7585c3c748151488098b82a8fa250ea1e32da8706ab7c01b"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_peer_connection_t* pc, lrtc_media_type media_type",
       "c_return_type": "lrtc_rtp_transceiver_t*",
       "c_signature": "lrtc_rtp_transceiver_t* (lrtc_peer_connection_t* pc, lrtc_media_type media_type)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_peer_connection_add_transceiver",
       "parameters": [
         {
@@ -2063,9 +2533,14 @@
       "stable_id": "dbff3b14ae3da64f007ff92836eebd9da248f7eba081d973d49504f3a843c9e9"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_peer_connection_t* pc, lrtc_media_type media_type, const lrtc_rtp_transceiver_init_t* init",
       "c_return_type": "lrtc_rtp_transceiver_t*",
       "c_signature": "lrtc_rtp_transceiver_t* (lrtc_peer_connection_t* pc, lrtc_media_type media_type, const lrtc_rtp_transceiver_init_t* init)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_peer_connection_add_transceiver_with_init",
       "parameters": [
         {
@@ -2090,9 +2565,14 @@
       "stable_id": "e24cc80ef78bb8b697f228a5db2a411cfe7752a120b79fdb0e8362d617bf4b54"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_peer_connection_t* pc, lrtc_video_track_t* track, const char** stream_ids, uint32_t stream_id_count",
       "c_return_type": "int",
       "c_signature": "int (lrtc_peer_connection_t* pc, lrtc_video_track_t* track, const char** stream_ids, uint32_t stream_id_count)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_peer_connection_add_video_track",
       "parameters": [
         {
@@ -2123,9 +2603,14 @@
       "stable_id": "9767b292ec427457a14babb79064b6ae8b072e8e2b4fe5b315e7bb26babc8d35"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_peer_connection_t* pc, lrtc_video_track_t* track, const char** stream_ids, uint32_t stream_id_count",
       "c_return_type": "lrtc_rtp_sender_t*",
       "c_signature": "lrtc_rtp_sender_t* (lrtc_peer_connection_t* pc, lrtc_video_track_t* track, const char** stream_ids, uint32_t stream_id_count)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_peer_connection_add_video_track_sender",
       "parameters": [
         {
@@ -2156,9 +2641,14 @@
       "stable_id": "79fb253d00ff2a201d7b0c7bedc3427e9da286a6714e114cfc8ecd7b3d255d55"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_peer_connection_t* pc, lrtc_video_track_t* track",
       "c_return_type": "lrtc_rtp_transceiver_t*",
       "c_signature": "lrtc_rtp_transceiver_t* (lrtc_peer_connection_t* pc, lrtc_video_track_t* track)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_peer_connection_add_video_track_transceiver",
       "parameters": [
         {
@@ -2177,9 +2667,14 @@
       "stable_id": "2cf5e6da5f0e54fa53a9c4afdbdb3293b29ff628330bd40e5101a276c39b0373"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_peer_connection_t* pc, lrtc_video_track_t* track, const lrtc_rtp_transceiver_init_t* init",
       "c_return_type": "lrtc_rtp_transceiver_t*",
       "c_signature": "lrtc_rtp_transceiver_t* (lrtc_peer_connection_t* pc, lrtc_video_track_t* track, const lrtc_rtp_transceiver_init_t* init)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_peer_connection_add_video_track_transceiver_with_init",
       "parameters": [
         {
@@ -2204,9 +2699,14 @@
       "stable_id": "2129146db92945680bc943166be906aed50a5d45623c140498e96e15776e4c9f"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_peer_connection_t* pc",
       "c_return_type": "void",
       "c_signature": "void (lrtc_peer_connection_t* pc)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_peer_connection_close",
       "parameters": [
         {
@@ -2219,9 +2719,14 @@
       "stable_id": "26268a7eb4e9a1070301be6147224817363ab8586cbb78306f99d5e7c1cbfc4d"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_factory_t* factory, const lrtc_rtc_config_t* config, lrtc_media_constraints_t* constraints, const lrtc_peer_connection_callbacks_t* callbacks, void* user_data",
       "c_return_type": "lrtc_peer_connection_t*",
       "c_signature": "lrtc_peer_connection_t* (lrtc_factory_t* factory, const lrtc_rtc_config_t* config, lrtc_media_constraints_t* constraints, const lrtc_peer_connection_callbacks_t* callbacks, void* user_data)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_peer_connection_create",
       "parameters": [
         {
@@ -2258,9 +2763,14 @@
       "stable_id": "d73fa5385bc68e9eb39e99d7abe1d60e794458f4078e9fae170371bbd600202b"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_peer_connection_t* pc, lrtc_sdp_success_cb success, lrtc_sdp_error_cb failure, void* user_data, lrtc_media_constraints_t* constraints",
       "c_return_type": "void",
       "c_signature": "void (lrtc_peer_connection_t* pc, lrtc_sdp_success_cb success, lrtc_sdp_error_cb failure, void* user_data, lrtc_media_constraints_t* constraints)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_peer_connection_create_answer",
       "parameters": [
         {
@@ -2297,9 +2807,14 @@
       "stable_id": "24aeb6eca667c6fdb67cd76199f244622777f888ee62ac1d9477f8878127c14d"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_peer_connection_t* pc, const char* label, int ordered, int reliable, int max_retransmit_time, int max_retransmits, const char* protocol, int negotiated, int id",
       "c_return_type": "lrtc_data_channel_t*",
       "c_signature": "lrtc_data_channel_t* (lrtc_peer_connection_t* pc, const char* label, int ordered, int reliable, int max_retransmit_time, int max_retransmits, const char* protocol, int negotiated, int id)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_peer_connection_create_data_channel",
       "parameters": [
         {
@@ -2360,9 +2875,14 @@
       "stable_id": "b04ffb2d27e3a93040163c39b1d55b7dcf99164cf2866b519778c0e755fac9d6"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_peer_connection_t* pc, lrtc_sdp_success_cb success, lrtc_sdp_error_cb failure, void* user_data, lrtc_media_constraints_t* constraints",
       "c_return_type": "void",
       "c_signature": "void (lrtc_peer_connection_t* pc, lrtc_sdp_success_cb success, lrtc_sdp_error_cb failure, void* user_data, lrtc_media_constraints_t* constraints)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_peer_connection_create_offer",
       "parameters": [
         {
@@ -2399,9 +2919,14 @@
       "stable_id": "fdc9363f40f02ed5ef47284c92347abe505660e64f658eb6c64fd16fae3a7df0"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_peer_connection_t* pc, lrtc_sdp_success_cb success, lrtc_sdp_error_cb failure, void* user_data",
       "c_return_type": "void",
       "c_signature": "void (lrtc_peer_connection_t* pc, lrtc_sdp_success_cb success, lrtc_sdp_error_cb failure, void* user_data)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_peer_connection_get_local_description",
       "parameters": [
         {
@@ -2432,9 +2957,14 @@
       "stable_id": "ce0eae5e608fb647cdd036b50164e875e53c298fef6fb02b4f93e61def8927a1"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_peer_connection_t* pc, uint32_t index",
       "c_return_type": "lrtc_rtp_receiver_t*",
       "c_signature": "lrtc_rtp_receiver_t* (lrtc_peer_connection_t* pc, uint32_t index)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_peer_connection_get_receiver",
       "parameters": [
         {
@@ -2453,9 +2983,14 @@
       "stable_id": "447a8fb5698471745268fb15437c4f8ba0f8c52eabc6681e0b900fff424f0c70"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_peer_connection_t* pc, lrtc_rtp_receiver_t* receiver, lrtc_stats_success_cb success, lrtc_stats_failure_cb failure, void* user_data",
       "c_return_type": "void",
       "c_signature": "void (lrtc_peer_connection_t* pc, lrtc_rtp_receiver_t* receiver, lrtc_stats_success_cb success, lrtc_stats_failure_cb failure, void* user_data)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_peer_connection_get_receiver_stats",
       "parameters": [
         {
@@ -2492,9 +3027,14 @@
       "stable_id": "76475daf2051ebbf2d103d82964b4ae84339d80546a6ff0b24f1cdc6034a2a09"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_peer_connection_t* pc, lrtc_sdp_success_cb success, lrtc_sdp_error_cb failure, void* user_data",
       "c_return_type": "void",
       "c_signature": "void (lrtc_peer_connection_t* pc, lrtc_sdp_success_cb success, lrtc_sdp_error_cb failure, void* user_data)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_peer_connection_get_remote_description",
       "parameters": [
         {
@@ -2525,9 +3065,14 @@
       "stable_id": "85967a534fd79d24682237e9d97acad04a6c18fab5eba262c6344cbccc8e11f4"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_peer_connection_t* pc, uint32_t index",
       "c_return_type": "lrtc_rtp_sender_t*",
       "c_signature": "lrtc_rtp_sender_t* (lrtc_peer_connection_t* pc, uint32_t index)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_peer_connection_get_sender",
       "parameters": [
         {
@@ -2546,9 +3091,14 @@
       "stable_id": "05a3ba1457fcbfef9cabe8d311dcb0d9189bc83cbdfbfe1ecb4ad0ced5981a62"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_peer_connection_t* pc, lrtc_rtp_sender_t* sender, lrtc_stats_success_cb success, lrtc_stats_failure_cb failure, void* user_data",
       "c_return_type": "void",
       "c_signature": "void (lrtc_peer_connection_t* pc, lrtc_rtp_sender_t* sender, lrtc_stats_success_cb success, lrtc_stats_failure_cb failure, void* user_data)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_peer_connection_get_sender_stats",
       "parameters": [
         {
@@ -2585,9 +3135,14 @@
       "stable_id": "737b58d83a3ba520a65eeac6d43f85b0ae59c0f2422c4434e44f21dd6154fbdd"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_peer_connection_t* pc, lrtc_stats_success_cb success, lrtc_stats_failure_cb failure, void* user_data",
       "c_return_type": "void",
       "c_signature": "void (lrtc_peer_connection_t* pc, lrtc_stats_success_cb success, lrtc_stats_failure_cb failure, void* user_data)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_peer_connection_get_stats",
       "parameters": [
         {
@@ -2618,9 +3173,14 @@
       "stable_id": "f4735e57383441b6a038e43c882dfcb88bc9de5d26da74e9107da8f23b1e1514"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_peer_connection_t* pc, uint32_t index",
       "c_return_type": "lrtc_rtp_transceiver_t*",
       "c_signature": "lrtc_rtp_transceiver_t* (lrtc_peer_connection_t* pc, uint32_t index)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_peer_connection_get_transceiver",
       "parameters": [
         {
@@ -2639,9 +3199,14 @@
       "stable_id": "eba2f2ea8174f123d96500ff2d128ecb3c09888691873296f01611d2bd1dbdbc"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_peer_connection_t* pc",
       "c_return_type": "uint32_t",
       "c_signature": "uint32_t (lrtc_peer_connection_t* pc)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_peer_connection_receiver_count",
       "parameters": [
         {
@@ -2654,9 +3219,14 @@
       "stable_id": "98532400a8e0cde3bb3108f4448d94afc3bd3a536a1539ed1cfddcee08247bd1"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_peer_connection_t* pc",
       "c_return_type": "void",
       "c_signature": "void (lrtc_peer_connection_t* pc)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_peer_connection_release",
       "parameters": [
         {
@@ -2669,9 +3239,14 @@
       "stable_id": "f155a5ece6814997b021dca14bb95d75d71ca70cbfe2da6d293df96914d94f3a"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_peer_connection_t* pc, lrtc_media_stream_t* stream",
       "c_return_type": "bool",
       "c_signature": "bool (lrtc_peer_connection_t* pc, lrtc_media_stream_t* stream)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_peer_connection_remove_stream",
       "parameters": [
         {
@@ -2690,9 +3265,14 @@
       "stable_id": "7b564cb27553e98d07879069a0f91b1f8ec0ef38555b8008b020afa6f24ab2c1"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_peer_connection_t* pc, lrtc_rtp_sender_t* sender",
       "c_return_type": "int",
       "c_signature": "int (lrtc_peer_connection_t* pc, lrtc_rtp_sender_t* sender)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_peer_connection_remove_track",
       "parameters": [
         {
@@ -2711,9 +3291,14 @@
       "stable_id": "52d7bc47bd6a248a98097e247b55056f754aa168b7156057293caaf21458ddbe"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_peer_connection_t* pc",
       "c_return_type": "void",
       "c_signature": "void (lrtc_peer_connection_t* pc)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_peer_connection_restart_ice",
       "parameters": [
         {
@@ -2726,9 +3311,14 @@
       "stable_id": "14b9536866bac585923bae6bb39c794ec6c64764e6270a5d7bca69a6ee26e899"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_peer_connection_t* pc",
       "c_return_type": "uint32_t",
       "c_signature": "uint32_t (lrtc_peer_connection_t* pc)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_peer_connection_sender_count",
       "parameters": [
         {
@@ -2741,9 +3331,14 @@
       "stable_id": "e1eb5d347ffed877de3fcc1e0537c35b2dcf7708854b64187799c13a679c980c"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_peer_connection_t* pc, const lrtc_peer_connection_callbacks_t* callbacks, void* user_data",
       "c_return_type": "void",
       "c_signature": "void (lrtc_peer_connection_t* pc, const lrtc_peer_connection_callbacks_t* callbacks, void* user_data)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_peer_connection_set_callbacks",
       "parameters": [
         {
@@ -2768,9 +3363,14 @@
       "stable_id": "6ece248b7e3a78306a7654df2f57998946d9e6125f332dba6255d99dc75f8597"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_peer_connection_t* pc, lrtc_media_type media_type, const char** mime_types, uint32_t mime_type_count",
       "c_return_type": "int",
       "c_signature": "int (lrtc_peer_connection_t* pc, lrtc_media_type media_type, const char** mime_types, uint32_t mime_type_count)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_peer_connection_set_codec_preferences",
       "parameters": [
         {
@@ -2801,9 +3401,14 @@
       "stable_id": "e586666f23e9a7ed8b36e8175ee1ae4d946ca5283dd14fa573445343cb504e85"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_peer_connection_t* pc, const char* sdp, const char* type, lrtc_void_cb success, lrtc_sdp_error_cb failure, void* user_data",
       "c_return_type": "void",
       "c_signature": "void (lrtc_peer_connection_t* pc, const char* sdp, const char* type, lrtc_void_cb success, lrtc_sdp_error_cb failure, void* user_data)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_peer_connection_set_local_description",
       "parameters": [
         {
@@ -2846,9 +3451,14 @@
       "stable_id": "c8cb16dca14bba86e8ed0560c4de07d82b1cd7f67550476527446f6edcdcc5af"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_peer_connection_t* pc, const char* sdp, const char* type, lrtc_void_cb success, lrtc_sdp_error_cb failure, void* user_data",
       "c_return_type": "void",
       "c_signature": "void (lrtc_peer_connection_t* pc, const char* sdp, const char* type, lrtc_void_cb success, lrtc_sdp_error_cb failure, void* user_data)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_peer_connection_set_remote_description",
       "parameters": [
         {
@@ -2891,9 +3501,14 @@
       "stable_id": "b8cec2424ea3f23e66db44c38260e290e2dfc88079de094f636ada853c1ce0e5"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_peer_connection_t* pc, lrtc_rtp_transceiver_t* transceiver, const char** mime_types, uint32_t mime_type_count",
       "c_return_type": "int",
       "c_signature": "int (lrtc_peer_connection_t* pc, lrtc_rtp_transceiver_t* transceiver, const char** mime_types, uint32_t mime_type_count)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_peer_connection_set_transceiver_codec_preferences",
       "parameters": [
         {
@@ -2924,9 +3539,14 @@
       "stable_id": "f6bbc887f3bd1c8fc5fd97e9695be7d9cad9221b08322b3e73a064efc7980c0a"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_peer_connection_t* pc",
       "c_return_type": "uint32_t",
       "c_signature": "uint32_t (lrtc_peer_connection_t* pc)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_peer_connection_transceiver_count",
       "parameters": [
         {
@@ -2939,9 +3559,14 @@
       "stable_id": "80efece3302224c49041e8b047952b22ff572f81435be01342f0b70ba663c20f"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_rtp_receiver_t* receiver",
       "c_return_type": "uint32_t",
       "c_signature": "uint32_t (lrtc_rtp_receiver_t* receiver)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_rtp_receiver_encoding_count",
       "parameters": [
         {
@@ -2954,9 +3579,14 @@
       "stable_id": "d2905fa4690e3080ac91402f6985389813665caf871ca05df02d782d1178915e"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_rtp_receiver_t* receiver",
       "c_return_type": "lrtc_audio_track_t*",
       "c_signature": "lrtc_audio_track_t* (lrtc_rtp_receiver_t* receiver)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_rtp_receiver_get_audio_track",
       "parameters": [
         {
@@ -2969,9 +3599,14 @@
       "stable_id": "eac5baf535a3dce5850587dab552f613ccefedbb3e43d6f3d80e48069836d25b"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_rtp_receiver_t* receiver",
       "c_return_type": "int",
       "c_signature": "int (lrtc_rtp_receiver_t* receiver)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_rtp_receiver_get_degradation_preference",
       "parameters": [
         {
@@ -2984,9 +3619,14 @@
       "stable_id": "064de23356d152fd22fff42d85f42f00bbfb4e267cfa0294bb462d24b82be396"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_rtp_receiver_t* receiver, lrtc_dtls_transport_info_t* info",
       "c_return_type": "int",
       "c_signature": "int (lrtc_rtp_receiver_t* receiver, lrtc_dtls_transport_info_t* info)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_rtp_receiver_get_dtls_info",
       "parameters": [
         {
@@ -3005,9 +3645,14 @@
       "stable_id": "a185ed7c16d63de2689348b17f818fb10bdd4948ef2817e6e57c030084124b83"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_rtp_receiver_t* receiver, uint32_t index, lrtc_rtp_encoding_info_t* info",
       "c_return_type": "int",
       "c_signature": "int (lrtc_rtp_receiver_t* receiver, uint32_t index, lrtc_rtp_encoding_info_t* info)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_rtp_receiver_get_encoding_info",
       "parameters": [
         {
@@ -3032,9 +3677,14 @@
       "stable_id": "66cc6ca0dc70408194ab67b28882a7442d9d78555c5a22b70153fa2d70ab304e"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_rtp_receiver_t* receiver, uint32_t index, char* buffer, uint32_t buffer_len",
       "c_return_type": "int32_t",
       "c_signature": "int32_t (lrtc_rtp_receiver_t* receiver, uint32_t index, char* buffer, uint32_t buffer_len)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_rtp_receiver_get_encoding_rid",
       "parameters": [
         {
@@ -3065,9 +3715,14 @@
       "stable_id": "ee96d492439e67818007c6d49b9d24928be2376a3d379a8368545b5c4a9247ae"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_rtp_receiver_t* receiver, uint32_t index, char* buffer, uint32_t buffer_len",
       "c_return_type": "int32_t",
       "c_signature": "int32_t (lrtc_rtp_receiver_t* receiver, uint32_t index, char* buffer, uint32_t buffer_len)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_rtp_receiver_get_encoding_scalability_mode",
       "parameters": [
         {
@@ -3098,9 +3753,14 @@
       "stable_id": "cd572d9bbb85f7b81e81d57e59109107ddbc2d7356335384fe00ebbbb82aa891"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_rtp_receiver_t* receiver, char* buffer, uint32_t buffer_len",
       "c_return_type": "int32_t",
       "c_signature": "int32_t (lrtc_rtp_receiver_t* receiver, char* buffer, uint32_t buffer_len)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_rtp_receiver_get_id",
       "parameters": [
         {
@@ -3125,9 +3785,14 @@
       "stable_id": "2de7d8268af14d871ea0161c04232bbbf5ade5ff03349aff48c347e4cd84009e"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_rtp_receiver_t* receiver",
       "c_return_type": "int",
       "c_signature": "int (lrtc_rtp_receiver_t* receiver)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_rtp_receiver_get_media_type",
       "parameters": [
         {
@@ -3140,9 +3805,14 @@
       "stable_id": "2234f053ca67b0c0ed63ae23c6847d4d60162b7efc370163711dd85b33acf4be"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_rtp_receiver_t* receiver, char* buffer, uint32_t buffer_len",
       "c_return_type": "int32_t",
       "c_signature": "int32_t (lrtc_rtp_receiver_t* receiver, char* buffer, uint32_t buffer_len)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_rtp_receiver_get_parameters_mid",
       "parameters": [
         {
@@ -3167,9 +3837,14 @@
       "stable_id": "3c102107a91ecb91abe2ff1531548107f76178bbc7d51d0786b3a0400b6d0bb7"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_rtp_receiver_t* receiver, uint32_t index",
       "c_return_type": "lrtc_media_stream_t*",
       "c_signature": "lrtc_media_stream_t* (lrtc_rtp_receiver_t* receiver, uint32_t index)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_rtp_receiver_get_stream",
       "parameters": [
         {
@@ -3188,9 +3863,14 @@
       "stable_id": "b76e350b3d5a127e20dd29754be8d1cef75e80b790ca792e2e9e8b83773080c0"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_rtp_receiver_t* receiver, uint32_t index, char* buffer, uint32_t buffer_len",
       "c_return_type": "int32_t",
       "c_signature": "int32_t (lrtc_rtp_receiver_t* receiver, uint32_t index, char* buffer, uint32_t buffer_len)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_rtp_receiver_get_stream_id",
       "parameters": [
         {
@@ -3221,9 +3901,14 @@
       "stable_id": "464b1dc61252e5947d5cd964aa03c6e543efa0808f8a20330a97a0511023ab72"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_rtp_receiver_t* receiver",
       "c_return_type": "lrtc_video_track_t*",
       "c_signature": "lrtc_video_track_t* (lrtc_rtp_receiver_t* receiver)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_rtp_receiver_get_video_track",
       "parameters": [
         {
@@ -3236,9 +3921,14 @@
       "stable_id": "5e6e7d3ce14fdfaf58148c8092db2bb4d53df1cda5ced0021f4fc8d665a23a9b"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_rtp_receiver_t* receiver",
       "c_return_type": "void",
       "c_signature": "void (lrtc_rtp_receiver_t* receiver)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_rtp_receiver_release",
       "parameters": [
         {
@@ -3251,9 +3941,14 @@
       "stable_id": "227ab68d7970e2c1ddca8d399d35badde3e8b2f19bf6eb6a4addeab529a544f5"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_rtp_receiver_t* receiver, double delay_seconds",
       "c_return_type": "int",
       "c_signature": "int (lrtc_rtp_receiver_t* receiver, double delay_seconds)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_rtp_receiver_set_jitter_buffer_min_delay",
       "parameters": [
         {
@@ -3272,9 +3967,14 @@
       "stable_id": "b5029d82208b5416a0a83c3d691404480d3e9d95e10c262b9a2d4de8699f08ba"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_rtp_receiver_t* receiver",
       "c_return_type": "uint32_t",
       "c_signature": "uint32_t (lrtc_rtp_receiver_t* receiver)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_rtp_receiver_stream_count",
       "parameters": [
         {
@@ -3287,9 +3987,14 @@
       "stable_id": "84218cc6ce4664a6bd7eee4f52d591d7a2eb13f6ac8cc90d401167ed6e93e1ee"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_rtp_receiver_t* receiver",
       "c_return_type": "uint32_t",
       "c_signature": "uint32_t (lrtc_rtp_receiver_t* receiver)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_rtp_receiver_stream_id_count",
       "parameters": [
         {
@@ -3302,9 +4007,14 @@
       "stable_id": "68d526845fcef67be11330df68f6722cf84d2cbd17473684cef3c32dbc41c26d"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_rtp_sender_t* sender",
       "c_return_type": "uint32_t",
       "c_signature": "uint32_t (lrtc_rtp_sender_t* sender)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_rtp_sender_encoding_count",
       "parameters": [
         {
@@ -3317,9 +4027,14 @@
       "stable_id": "d6ddf346b233bbd1e8b174ca68f663858bc89e96ef1bfd363a24e32650acb9a3"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_rtp_sender_t* sender",
       "c_return_type": "lrtc_audio_track_t*",
       "c_signature": "lrtc_audio_track_t* (lrtc_rtp_sender_t* sender)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_rtp_sender_get_audio_track",
       "parameters": [
         {
@@ -3332,9 +4047,14 @@
       "stable_id": "c7057dbb9eaea4cea6463efd98a2c2fe304961218905bb1acb6080971eba2000"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_rtp_sender_t* sender",
       "c_return_type": "int",
       "c_signature": "int (lrtc_rtp_sender_t* sender)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_rtp_sender_get_degradation_preference",
       "parameters": [
         {
@@ -3347,9 +4067,14 @@
       "stable_id": "87621f12b7c24a17795193bd68a285efbe11cc8e8ae50d7e025c4afc4d42c7c0"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_rtp_sender_t* sender, lrtc_dtls_transport_info_t* info",
       "c_return_type": "int",
       "c_signature": "int (lrtc_rtp_sender_t* sender, lrtc_dtls_transport_info_t* info)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_rtp_sender_get_dtls_info",
       "parameters": [
         {
@@ -3368,9 +4093,14 @@
       "stable_id": "6305d370940ee3420bdf2b3a66317cf6694993f695eedacbc87e32ceab87abd1"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_rtp_sender_t* sender",
       "c_return_type": "lrtc_dtmf_sender_t*",
       "c_signature": "lrtc_dtmf_sender_t* (lrtc_rtp_sender_t* sender)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_rtp_sender_get_dtmf_sender",
       "parameters": [
         {
@@ -3383,9 +4113,14 @@
       "stable_id": "6ed46559fe763aeb1557a74540538698664cff99dd69cfcf34b04a14fafb636a"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_rtp_sender_t* sender, uint32_t index, lrtc_rtp_encoding_info_t* info",
       "c_return_type": "int",
       "c_signature": "int (lrtc_rtp_sender_t* sender, uint32_t index, lrtc_rtp_encoding_info_t* info)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_rtp_sender_get_encoding_info",
       "parameters": [
         {
@@ -3410,9 +4145,14 @@
       "stable_id": "5f51beb0bf5eb1868daf050263106d1a918c9426593d179cf81ac48201dc6303"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_rtp_sender_t* sender, uint32_t index, char* buffer, uint32_t buffer_len",
       "c_return_type": "int32_t",
       "c_signature": "int32_t (lrtc_rtp_sender_t* sender, uint32_t index, char* buffer, uint32_t buffer_len)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_rtp_sender_get_encoding_rid",
       "parameters": [
         {
@@ -3443,9 +4183,14 @@
       "stable_id": "d2b8ca7c63f807678879a88da7210d54c8f08023488452023c4a5a46fc91e09b"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_rtp_sender_t* sender, uint32_t index, char* buffer, uint32_t buffer_len",
       "c_return_type": "int32_t",
       "c_signature": "int32_t (lrtc_rtp_sender_t* sender, uint32_t index, char* buffer, uint32_t buffer_len)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_rtp_sender_get_encoding_scalability_mode",
       "parameters": [
         {
@@ -3476,9 +4221,14 @@
       "stable_id": "016f8ed02b6a48d8838399b5bf352f75765e3cba2e3b9e7530c107c50a48a866"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_rtp_sender_t* sender, char* buffer, uint32_t buffer_len",
       "c_return_type": "int32_t",
       "c_signature": "int32_t (lrtc_rtp_sender_t* sender, char* buffer, uint32_t buffer_len)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_rtp_sender_get_id",
       "parameters": [
         {
@@ -3503,9 +4253,14 @@
       "stable_id": "96a3703d7b8cfdff834d631baba534545896feeb18ffdcdad76fdcf4ad2993fc"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_rtp_sender_t* sender",
       "c_return_type": "int",
       "c_signature": "int (lrtc_rtp_sender_t* sender)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_rtp_sender_get_media_type",
       "parameters": [
         {
@@ -3518,9 +4273,14 @@
       "stable_id": "619aeb110c8cbd939802de234bbc1e714e6ad33974204927a4f81b3fa38db1e6"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_rtp_sender_t* sender, char* buffer, uint32_t buffer_len",
       "c_return_type": "int32_t",
       "c_signature": "int32_t (lrtc_rtp_sender_t* sender, char* buffer, uint32_t buffer_len)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_rtp_sender_get_parameters_mid",
       "parameters": [
         {
@@ -3545,9 +4305,14 @@
       "stable_id": "70d2768823856130ce12971def80d0b47732096ff24f67b8b73682e95d86456c"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_rtp_sender_t* sender",
       "c_return_type": "uint32_t",
       "c_signature": "uint32_t (lrtc_rtp_sender_t* sender)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_rtp_sender_get_ssrc",
       "parameters": [
         {
@@ -3560,9 +4325,14 @@
       "stable_id": "c522c7b1828542f31471e6ff2365c45c4b168e4f3ed4a36884881e89813751d9"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_rtp_sender_t* sender, uint32_t index, char* buffer, uint32_t buffer_len",
       "c_return_type": "int32_t",
       "c_signature": "int32_t (lrtc_rtp_sender_t* sender, uint32_t index, char* buffer, uint32_t buffer_len)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_rtp_sender_get_stream_id",
       "parameters": [
         {
@@ -3593,9 +4363,14 @@
       "stable_id": "ac5de0e77b2b260e82a2b9e8e0d3c0bd2901afca5699c63e80c194999e7133c0"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_rtp_sender_t* sender",
       "c_return_type": "lrtc_video_track_t*",
       "c_signature": "lrtc_video_track_t* (lrtc_rtp_sender_t* sender)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_rtp_sender_get_video_track",
       "parameters": [
         {
@@ -3608,9 +4383,14 @@
       "stable_id": "b494b40181932b07dd2dc70ba4406fa1645207819b299b82209c2ede460f9ce8"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_rtp_sender_t* sender",
       "c_return_type": "void",
       "c_signature": "void (lrtc_rtp_sender_t* sender)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_rtp_sender_release",
       "parameters": [
         {
@@ -3623,9 +4403,14 @@
       "stable_id": "1e2c60c7909f6010c414c9655b6a94453375782d25fa521424e6ea416e59b8c8"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_rtp_sender_t* sender, lrtc_audio_track_t* track",
       "c_return_type": "int",
       "c_signature": "int (lrtc_rtp_sender_t* sender, lrtc_audio_track_t* track)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_rtp_sender_replace_audio_track",
       "parameters": [
         {
@@ -3644,9 +4429,14 @@
       "stable_id": "fe0ff4b7b5b53849653e365afea79f91e6158dfb17ca96d9ac9517b106b21abf"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_rtp_sender_t* sender, lrtc_video_track_t* track",
       "c_return_type": "int",
       "c_signature": "int (lrtc_rtp_sender_t* sender, lrtc_video_track_t* track)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_rtp_sender_replace_video_track",
       "parameters": [
         {
@@ -3665,9 +4455,14 @@
       "stable_id": "973b657205f61da12f8c9741349fe9316f43d5a242617f0aa661839faa8ec5d7"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_rtp_sender_t* sender, const lrtc_rtp_encoding_settings_t* settings",
       "c_return_type": "int",
       "c_signature": "int (lrtc_rtp_sender_t* sender, const lrtc_rtp_encoding_settings_t* settings)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_rtp_sender_set_encoding_parameters",
       "parameters": [
         {
@@ -3686,9 +4481,14 @@
       "stable_id": "d68ab81a08b01ef788689e76d9ee2672de35fa979b2a3cee664f089766f73358"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_rtp_sender_t* sender, uint32_t index, const lrtc_rtp_encoding_settings_t* settings",
       "c_return_type": "int",
       "c_signature": "int (lrtc_rtp_sender_t* sender, uint32_t index, const lrtc_rtp_encoding_settings_t* settings)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_rtp_sender_set_encoding_parameters_at",
       "parameters": [
         {
@@ -3713,9 +4513,14 @@
       "stable_id": "73770f2dfa189d15cce24b8a160712b620857d45c0813100c9406f38f55f6055"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_rtp_sender_t* sender, const char** stream_ids, uint32_t stream_id_count",
       "c_return_type": "int",
       "c_signature": "int (lrtc_rtp_sender_t* sender, const char** stream_ids, uint32_t stream_id_count)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_rtp_sender_set_stream_ids",
       "parameters": [
         {
@@ -3740,9 +4545,14 @@
       "stable_id": "e01df2175e722db753c9bb06f84491a2138c394e7b4ee8b73969d0c1003834e0"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_rtp_sender_t* sender",
       "c_return_type": "uint32_t",
       "c_signature": "uint32_t (lrtc_rtp_sender_t* sender)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_rtp_sender_stream_id_count",
       "parameters": [
         {
@@ -3755,9 +4565,14 @@
       "stable_id": "fee2914f3a36578ac9e482310039dfa10b833ad44a502ed08d0b8155a5fb9c13"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_rtp_transceiver_t* transceiver",
       "c_return_type": "int",
       "c_signature": "int (lrtc_rtp_transceiver_t* transceiver)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_rtp_transceiver_get_current_direction",
       "parameters": [
         {
@@ -3770,9 +4585,14 @@
       "stable_id": "bcf79e25714b1e8fc7ea503ea78e97778ed40af2b3348ee639873679e385eea2"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_rtp_transceiver_t* transceiver",
       "c_return_type": "int",
       "c_signature": "int (lrtc_rtp_transceiver_t* transceiver)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_rtp_transceiver_get_direction",
       "parameters": [
         {
@@ -3785,9 +4605,14 @@
       "stable_id": "32df4ed65a5a52e1633ad3ed40af7099ea4fb64e09a8c80dae138bc901ebdde4"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_rtp_transceiver_t* transceiver",
       "c_return_type": "int",
       "c_signature": "int (lrtc_rtp_transceiver_t* transceiver)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_rtp_transceiver_get_fired_direction",
       "parameters": [
         {
@@ -3800,9 +4625,14 @@
       "stable_id": "87049d1cb384dadb8aef1dfbce05cb284e073e3f46b84b137a2d49df2a5de8b6"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_rtp_transceiver_t* transceiver, char* buffer, uint32_t buffer_len",
       "c_return_type": "int32_t",
       "c_signature": "int32_t (lrtc_rtp_transceiver_t* transceiver, char* buffer, uint32_t buffer_len)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_rtp_transceiver_get_id",
       "parameters": [
         {
@@ -3827,9 +4657,14 @@
       "stable_id": "72e948f094ad90f532ca396e6d4eb81c4f4c166d8b327786333098fe19c6ba27"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_rtp_transceiver_t* transceiver",
       "c_return_type": "int",
       "c_signature": "int (lrtc_rtp_transceiver_t* transceiver)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_rtp_transceiver_get_media_type",
       "parameters": [
         {
@@ -3842,9 +4677,14 @@
       "stable_id": "5b45357e44903f590e484a250775695cc0ed170b1f35832726e2d38886266a85"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_rtp_transceiver_t* transceiver, char* buffer, uint32_t buffer_len",
       "c_return_type": "int32_t",
       "c_signature": "int32_t (lrtc_rtp_transceiver_t* transceiver, char* buffer, uint32_t buffer_len)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_rtp_transceiver_get_mid",
       "parameters": [
         {
@@ -3869,9 +4709,14 @@
       "stable_id": "cef667a3868b4d0019d05b9d7dd9d19ea8127b1fc09c832ffbddd10dfecb9766"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_rtp_transceiver_t* transceiver",
       "c_return_type": "lrtc_rtp_receiver_t*",
       "c_signature": "lrtc_rtp_receiver_t* (lrtc_rtp_transceiver_t* transceiver)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_rtp_transceiver_get_receiver",
       "parameters": [
         {
@@ -3884,9 +4729,14 @@
       "stable_id": "2cf8a3786525b70d6c7d7f79513092fc1448e5c471aa623b5e831ce2b56dea2b"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_rtp_transceiver_t* transceiver",
       "c_return_type": "lrtc_rtp_sender_t*",
       "c_signature": "lrtc_rtp_sender_t* (lrtc_rtp_transceiver_t* transceiver)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_rtp_transceiver_get_sender",
       "parameters": [
         {
@@ -3899,9 +4749,14 @@
       "stable_id": "650999a6ef39f2a73852559c58b53be44e4176acdced02cb59bca8219faaf9b7"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_rtp_transceiver_t* transceiver",
       "c_return_type": "int",
       "c_signature": "int (lrtc_rtp_transceiver_t* transceiver)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_rtp_transceiver_get_stopped",
       "parameters": [
         {
@@ -3914,9 +4769,14 @@
       "stable_id": "3ed0715a3bd327117380634715aaf55aeb219839dae09361d58de1abff1e3ec5"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_rtp_transceiver_t* transceiver",
       "c_return_type": "int",
       "c_signature": "int (lrtc_rtp_transceiver_t* transceiver)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_rtp_transceiver_get_stopping",
       "parameters": [
         {
@@ -3929,9 +4789,14 @@
       "stable_id": "495d28ab7a3784b8fdb8d625bd54d4b8e8ad1fc7bcf4e3c90f4c69cec337d553"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_rtp_transceiver_t* transceiver",
       "c_return_type": "void",
       "c_signature": "void (lrtc_rtp_transceiver_t* transceiver)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_rtp_transceiver_release",
       "parameters": [
         {
@@ -3944,9 +4809,14 @@
       "stable_id": "af976f71392d271e4b4efb22fa9fc9f7fd7e6eb77d40fa1609e2eda0bad5f46e"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_rtp_transceiver_t* transceiver, int direction, char* error, uint32_t error_len",
       "c_return_type": "int",
       "c_signature": "int (lrtc_rtp_transceiver_t* transceiver, int direction, char* error, uint32_t error_len)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_rtp_transceiver_set_direction",
       "parameters": [
         {
@@ -3977,9 +4847,14 @@
       "stable_id": "1cd5aea33cb7d5e4b2ead09e9113ab281d4b31f689444a4d8f582830a2fc06da"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_rtp_transceiver_t* transceiver, char* error, uint32_t error_len",
       "c_return_type": "int",
       "c_signature": "int (lrtc_rtp_transceiver_t* transceiver, char* error, uint32_t error_len)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_rtp_transceiver_stop",
       "parameters": [
         {
@@ -4004,17 +4879,27 @@
       "stable_id": "9b8438ed4fa0a6f8e78081eebc5070c10dfb1cff5f0884a6adb5fee7d2020ef0"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "void",
       "c_return_type": "void",
       "c_signature": "void (void)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_terminate",
       "parameters": [],
       "stable_id": "e2016b6180997abd98804a3ce9f033e2144dc9b40e16341b31e8b434d8c15405"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_video_capturer_t* capturer",
       "c_return_type": "bool",
       "c_signature": "bool (lrtc_video_capturer_t* capturer)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_video_capturer_capture_started",
       "parameters": [
         {
@@ -4027,9 +4912,14 @@
       "stable_id": "e34440b1e27382459d5a70abf32a3052e5a5b0257037df832616daaae1ee4d59"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_video_capturer_t* capturer",
       "c_return_type": "void",
       "c_signature": "void (lrtc_video_capturer_t* capturer)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_video_capturer_release",
       "parameters": [
         {
@@ -4042,9 +4932,14 @@
       "stable_id": "077e8fb65920ac67c7a32d998c3be83c52e14c315a522db115a5909fd5422902"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_video_capturer_t* capturer",
       "c_return_type": "bool",
       "c_signature": "bool (lrtc_video_capturer_t* capturer)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_video_capturer_start",
       "parameters": [
         {
@@ -4057,9 +4952,14 @@
       "stable_id": "748075a762c22dc5bc32b81de915f952797cb6f53199df5f28d0759cca1c4700"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_video_capturer_t* capturer",
       "c_return_type": "void",
       "c_signature": "void (lrtc_video_capturer_t* capturer)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_video_capturer_stop",
       "parameters": [
         {
@@ -4072,9 +4972,14 @@
       "stable_id": "ce000505ba3acb087bb4f097b3f13cb9144df5eb251b0cfaf1eb4e77c7cd8bd8"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_video_device_t* device, const char* name, uint32_t index, size_t width, size_t height, size_t target_fps",
       "c_return_type": "lrtc_video_capturer_t*",
       "c_signature": "lrtc_video_capturer_t* (lrtc_video_device_t* device, const char* name, uint32_t index, size_t width, size_t height, size_t target_fps)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_video_device_create_capturer",
       "parameters": [
         {
@@ -4117,9 +5022,14 @@
       "stable_id": "e891505e7d9032e1ed14e41a00ec496f68b06653a0c8549e2eb6df721d8b94ac"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_video_device_t* device, uint32_t index, char* name, uint32_t name_length, char* unique_id, uint32_t unique_id_length",
       "c_return_type": "int32_t",
       "c_signature": "int32_t (lrtc_video_device_t* device, uint32_t index, char* name, uint32_t name_length, char* unique_id, uint32_t unique_id_length)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_video_device_get_device_name",
       "parameters": [
         {
@@ -4162,9 +5072,14 @@
       "stable_id": "d3038800ff9035a393ac594b6deacf892fc46976c29b66d8929b0b0f2e076349"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_video_device_t* device",
       "c_return_type": "uint32_t",
       "c_signature": "uint32_t (lrtc_video_device_t* device)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_video_device_number_of_devices",
       "parameters": [
         {
@@ -4177,9 +5092,14 @@
       "stable_id": "a4955b8ce5d62c39abafc293ba0cb34462c5537c624ba88953c48ab0c45dd790"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_video_device_t* device",
       "c_return_type": "void",
       "c_signature": "void (lrtc_video_device_t* device)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_video_device_release",
       "parameters": [
         {
@@ -4192,9 +5112,14 @@
       "stable_id": "9ba82261d494bde71f8b249911995431b987612450423d03118fbcef84c4dbb2"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_video_frame_t* frame, uint8_t* dst_y, int dst_stride_y, uint8_t* dst_u, int dst_stride_u, uint8_t* dst_v, int dst_stride_v",
       "c_return_type": "int",
       "c_signature": "int (lrtc_video_frame_t* frame, uint8_t* dst_y, int dst_stride_y, uint8_t* dst_u, int dst_stride_u, uint8_t* dst_v, int dst_stride_v)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_video_frame_copy_i420",
       "parameters": [
         {
@@ -4243,9 +5168,14 @@
       "stable_id": "1cd8f9c790e880f759fbb50f19094694d87ab69ce10b778462c76f5c1b102f3e"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_video_frame_t* frame",
       "c_return_type": "const uint8_t*",
       "c_signature": "const uint8_t* (lrtc_video_frame_t* frame)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_video_frame_data_u",
       "parameters": [
         {
@@ -4258,9 +5188,14 @@
       "stable_id": "3a8c66fcd52f6e8ec23eabf1f68198230dc0a2a3a43df4e102e6392ba890fbb5"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_video_frame_t* frame",
       "c_return_type": "const uint8_t*",
       "c_signature": "const uint8_t* (lrtc_video_frame_t* frame)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_video_frame_data_v",
       "parameters": [
         {
@@ -4273,9 +5208,14 @@
       "stable_id": "d2aad8e7ac8f4e6c1264524956c15d10e8c28942f9809f029a1de8d20e9e45e0"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_video_frame_t* frame",
       "c_return_type": "const uint8_t*",
       "c_signature": "const uint8_t* (lrtc_video_frame_t* frame)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_video_frame_data_y",
       "parameters": [
         {
@@ -4288,9 +5228,14 @@
       "stable_id": "cc8ae2aa7847b91e0488033746bb50e699910d0078a94896144f30b4b6a77800"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_video_frame_t* frame",
       "c_return_type": "int",
       "c_signature": "int (lrtc_video_frame_t* frame)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_video_frame_height",
       "parameters": [
         {
@@ -4303,9 +5248,14 @@
       "stable_id": "557d8d73f26776febfed0da333bbec4b11ab46d3ac595cd7ca25b485b4c085fd"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_video_frame_t* frame",
       "c_return_type": "void",
       "c_signature": "void (lrtc_video_frame_t* frame)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_video_frame_release",
       "parameters": [
         {
@@ -4318,9 +5268,14 @@
       "stable_id": "3b4dea79519d8a14e3c5649a2b0a9351096b3fb0d07f5f2d3eab6ff01c1c11cb"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_video_frame_t* frame",
       "c_return_type": "lrtc_video_frame_t*",
       "c_signature": "lrtc_video_frame_t* (lrtc_video_frame_t* frame)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_video_frame_retain",
       "parameters": [
         {
@@ -4333,9 +5288,14 @@
       "stable_id": "e3f1a5fe3584ab120aa31a89914ae6f72380109aa589520855c325f83f3c7db0"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_video_frame_t* frame",
       "c_return_type": "int",
       "c_signature": "int (lrtc_video_frame_t* frame)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_video_frame_stride_u",
       "parameters": [
         {
@@ -4348,9 +5308,14 @@
       "stable_id": "26c3065895c240860c7a2a5167f6049c861480a1c942f1ca9f965f2c604271bd"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_video_frame_t* frame",
       "c_return_type": "int",
       "c_signature": "int (lrtc_video_frame_t* frame)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_video_frame_stride_v",
       "parameters": [
         {
@@ -4363,9 +5328,14 @@
       "stable_id": "a808ef32e91300593dc7ab088c41077da41e77a7e8fc9c4b0dd2c1a403c3937e"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_video_frame_t* frame",
       "c_return_type": "int",
       "c_signature": "int (lrtc_video_frame_t* frame)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_video_frame_stride_y",
       "parameters": [
         {
@@ -4378,9 +5348,14 @@
       "stable_id": "f4eb781fe03997b7fac9ae3460595519b3d24105300716f413bc1d86efc40b80"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_video_frame_t* frame, uint8_t* dst_argb, int dst_stride_argb, int dest_width, int dest_height, int format",
       "c_return_type": "int",
       "c_signature": "int (lrtc_video_frame_t* frame, uint8_t* dst_argb, int dst_stride_argb, int dest_width, int dest_height, int format)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_video_frame_to_argb",
       "parameters": [
         {
@@ -4423,9 +5398,14 @@
       "stable_id": "5f3c563f306b2bd8336e928e6b87dee0bb1f16358f9fb3b0203bd5efb9d1ec40"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_video_frame_t* frame",
       "c_return_type": "int",
       "c_signature": "int (lrtc_video_frame_t* frame)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_video_frame_width",
       "parameters": [
         {
@@ -4438,9 +5418,14 @@
       "stable_id": "af7e8209300f0273dfda440425276ef93d41e9096760e77f6139fb734f741924"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "const lrtc_video_sink_callbacks_t* callbacks, void* user_data",
       "c_return_type": "lrtc_video_sink_t*",
       "c_signature": "lrtc_video_sink_t* (const lrtc_video_sink_callbacks_t* callbacks, void* user_data)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_video_sink_create",
       "parameters": [
         {
@@ -4459,9 +5444,14 @@
       "stable_id": "6991221a7eee5454e395db5c905d2fb5013702c6e97d02f6e74fd02c73b19d89"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_video_sink_t* sink",
       "c_return_type": "void",
       "c_signature": "void (lrtc_video_sink_t* sink)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_video_sink_release",
       "parameters": [
         {
@@ -4474,9 +5464,14 @@
       "stable_id": "03283b106d2384e2831b0e55a42d02e0be0b52a76bd2039703d9f7e085c56a90"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_video_source_t* source",
       "c_return_type": "void",
       "c_signature": "void (lrtc_video_source_t* source)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_video_source_release",
       "parameters": [
         {
@@ -4489,9 +5484,14 @@
       "stable_id": "3bbe5acd37fc01daa4e175241461518245d8c7e8c4a855f7860b301ef7025cfb"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_video_track_t* track, lrtc_video_sink_t* sink",
       "c_return_type": "void",
       "c_signature": "void (lrtc_video_track_t* track, lrtc_video_sink_t* sink)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_video_track_add_sink",
       "parameters": [
         {
@@ -4510,9 +5510,14 @@
       "stable_id": "6c5cdb955f65ab7436f934d31c937452c6d698fb4d048a5907caf897f5c9b897"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_video_track_t* track",
       "c_return_type": "int",
       "c_signature": "int (lrtc_video_track_t* track)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_video_track_get_enabled",
       "parameters": [
         {
@@ -4525,9 +5530,14 @@
       "stable_id": "d70d368940efb3c378ccfd27e7466252b43723cfae3015d02a1acacb62e4267d"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_video_track_t* track, char* buffer, uint32_t buffer_len",
       "c_return_type": "int32_t",
       "c_signature": "int32_t (lrtc_video_track_t* track, char* buffer, uint32_t buffer_len)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_video_track_get_id",
       "parameters": [
         {
@@ -4552,9 +5562,14 @@
       "stable_id": "3947b2b71d84d3668f6aa54be16fc1ee786110e9d6a37b0b1611ae4cb1953bec"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_video_track_t* track",
       "c_return_type": "int",
       "c_signature": "int (lrtc_video_track_t* track)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_video_track_get_state",
       "parameters": [
         {
@@ -4567,9 +5582,14 @@
       "stable_id": "061e25ff266e4f559012f2765c142ca0d43aa23ad11b1b825f4787daad67cd1d"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_video_track_t* track",
       "c_return_type": "void",
       "c_signature": "void (lrtc_video_track_t* track)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_video_track_release",
       "parameters": [
         {
@@ -4582,9 +5602,14 @@
       "stable_id": "54ac43f08364b40b304ea89bf659cf7709cfdccd83c88b6bb7c16a6692679822"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_video_track_t* track, lrtc_video_sink_t* sink",
       "c_return_type": "void",
       "c_signature": "void (lrtc_video_track_t* track, lrtc_video_sink_t* sink)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_video_track_remove_sink",
       "parameters": [
         {
@@ -4603,9 +5628,14 @@
       "stable_id": "f2c59a1284a184a77cf2fcef17af80a41c6cf66c7b16649ceb5a8452272bd371"
     },
     {
+      "availability": {
+        "since_abi": "1.0.0"
+      },
       "c_parameters_raw": "lrtc_video_track_t* track, int enabled",
       "c_return_type": "int",
       "c_signature": "int (lrtc_video_track_t* track, int enabled)",
+      "deprecated": false,
+      "documentation": "",
       "name": "lrtc_video_track_set_enabled",
       "parameters": [
         {
@@ -5530,6 +6560,12 @@
       }
     }
   },
+  "idl_schema": "https://lumenrtc.dev/abi_framework/idl.schema.v2.json",
+  "idl_schema_version": 2,
+  "source": {
+    "header_path": "native/include/lumenrtc.h",
+    "parser_backend": "regex"
+  },
   "summary": {
     "enum_count": 22,
     "function_count": 206,
@@ -5538,6 +6574,6 @@
   "target": "lumenrtc",
   "tool": {
     "name": "abi_framework",
-    "version": "3.0.0"
+    "version": "4.0.0"
   }
 }

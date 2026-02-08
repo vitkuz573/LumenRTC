@@ -80,7 +80,10 @@ Commands:
   regen         Regenerate baselines for all targets (supports --verify)
   regen-baselines Alias for regen
   doctor        Run ABI config/environment diagnostics
+  benchmark     Benchmark ABI pipeline timings
   generate      Generate ABI IDL for configured targets
+  codegen       Generate ABI IDL and run configured language generators
+  idl-migrate   Migrate ABI IDL payload to schema v2
   roslyn        Generate LumenRTC C# interop from ABI IDL via Roslyn
   sync          Sync generated ABI artifacts (and optional baselines)
   release-prepare Run end-to-end ABI release preparation pipeline
@@ -160,11 +163,26 @@ case "${COMMAND}" in
       --config "${ABI_CONFIG}" \
       "$@"
     ;;
+  benchmark)
+    run_guard benchmark \
+      --repo-root "${REPO_ROOT}" \
+      --config "${ABI_CONFIG}" \
+      "$@"
+    ;;
   generate)
     run_guard generate \
       --repo-root "${REPO_ROOT}" \
       --config "${ABI_CONFIG}" \
       "$@"
+    ;;
+  codegen)
+    run_guard codegen \
+      --repo-root "${REPO_ROOT}" \
+      --config "${ABI_CONFIG}" \
+      "$@"
+    ;;
+  idl-migrate)
+    run_guard idl-migrate "$@"
     ;;
   roslyn)
     run_roslyn "$@"

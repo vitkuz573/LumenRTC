@@ -23,14 +23,18 @@
 6. Generate ABI IDL from config:
    - `scripts/abi.sh generate --skip-binary`
    - Output: `abi/generated/lumenrtc/lumenrtc.idl.json`
-7. Generate C# interop from IDL (Roslyn tool):
+7. Run language generators from ABI IDL (plugin host):
+   - `scripts/abi.sh codegen --skip-binary`
+8. Generate C# interop from IDL (Roslyn tool, direct):
    - `scripts/abi.sh roslyn`
    - Output: `abi/generated/lumenrtc/NativeMethods.g.cs`
-8. Sync generated artifacts and optionally baselines:
+9. Sync generated artifacts and optionally baselines:
    - `scripts/abi.sh sync --skip-binary`
-9. Generate ABI changelog:
+10. Benchmark ABI pipeline:
+   - `scripts/abi.sh benchmark --skip-binary --iterations 3 --output artifacts/abi/benchmark.report.json`
+11. Generate ABI changelog:
    - `scripts/abi.sh changelog --skip-binary --release-tag vX.Y.Z --output abi/CHANGELOG.md`
-10. Run full release preparation pipeline:
+12. Run full release preparation pipeline:
    - `scripts/abi.sh release-prepare --skip-binary --release-tag vX.Y.Z`
 
 ## Compatibility policy
@@ -41,6 +45,13 @@
 - Struct layout changes are breaking by default (`struct_tail_addition_is_breaking`).
 - Binary exports must match header ABI symbols.
 - Optional bindings symbol policy (`bindings.expected_symbols`) can enforce parity between ABI IDL and language binding expectations.
+- Policy rules and waivers are supported (`policy.rules`, `policy.waivers`).
+- Waivers should be temporary and include `owner`, `reason`, and `expires_utc`.
+
+See also:
+
+- `abi/GOVERNANCE.md`
+- `abi/RFC_TEMPLATE.md`
 
 ## Reusing for another ABI
 

@@ -103,8 +103,14 @@ scripts/abi.sh check-all --skip-binary
 # Generate ABI IDL from target config.
 scripts/abi.sh generate --skip-binary
 
+# Generate ABI IDL + run configured language generators (plugin host).
+scripts/abi.sh codegen --skip-binary
+
 # Generate LumenRTC C# interop from ABI IDL (Roslyn).
 scripts/abi.sh roslyn
+
+# Migrate IDL payload to schema v2 (with metadata + availability/docs fields).
+scripts/abi.sh idl-migrate --input abi/generated/lumenrtc/lumenrtc.idl.json --to-version 2
 
 # Sync generated ABI artifacts (and optionally baselines).
 scripts/abi.sh sync --skip-binary
@@ -113,10 +119,13 @@ scripts/abi.sh sync --skip-binary
 scripts/abi.sh list-targets
 scripts/abi.sh init-target ...
 
+# Benchmark ABI pipeline latency and output JSON metrics.
+scripts/abi.sh benchmark --skip-binary --iterations 3 --output artifacts/abi/benchmark.report.json
+
 # Generate release-ready ABI changelog.
 scripts/abi.sh changelog --skip-binary --release-tag vX.Y.Z --output abi/CHANGELOG.md
 
-# One-shot release ABI pipeline (doctor + sync + verify-all + changelog).
+# One-shot release ABI pipeline (doctor + sync + codegen + verify-all + changelog + benchmark + HTML report).
 scripts/abi.sh release-prepare --skip-binary --release-tag vX.Y.Z
 ```
 
@@ -128,7 +137,9 @@ scripts\\abi.ps1 check --skip-binary
 scripts\\abi.ps1 check --binary native\\build\\lumenrtc.dll
 scripts\\abi.ps1 check-all --skip-binary
 scripts\\abi.ps1 generate --skip-binary
+scripts\\abi.ps1 codegen --skip-binary
 scripts\\abi.ps1 sync --skip-binary
+scripts\\abi.ps1 benchmark --skip-binary --iterations 3 --output artifacts\\abi\\benchmark.report.json
 scripts\\abi.ps1 changelog --skip-binary --release-tag vX.Y.Z --output abi\\CHANGELOG.md
 scripts\\abi.ps1 release-prepare --skip-binary --release-tag vX.Y.Z
 ```
@@ -136,6 +147,8 @@ scripts\\abi.ps1 release-prepare --skip-binary --release-tag vX.Y.Z
 The generic tooling lives in `tools/abi_framework/` and can be reused for other
 ABI targets through `abi/config.json`. LumenRTC-specific C# code generation is
 implemented separately in `tools/lumenrtc_roslyn_codegen/`.
+The ABI IDL now uses schema v2 and can drive multiple language generators via
+`bindings.generators` plugin entries.
 
 ### One-command bootstrap
 

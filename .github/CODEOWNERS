@@ -1,0 +1,8 @@
+# ABI governance ownership
+/abi/ @vitkuz573
+/native/include/lumenrtc.h @vitkuz573
+/tools/abi_framework/ @vitkuz573
+/tools/lumenrtc_roslyn_codegen/ @vitkuz573
+/src/LumenRTC/Interop/ @vitkuz573
+/scripts/abi.sh @vitkuz573
+/scripts/abi.ps1 @vitkuz573

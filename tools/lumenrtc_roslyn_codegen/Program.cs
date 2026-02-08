@@ -246,6 +246,8 @@ internal static class Program
 
             var name = GetRequiredString(item, "name");
             var cReturnType = GetOptionalString(item, "c_return_type", "void");
+            var documentation = GetOptionalString(item, "documentation", string.Empty);
+            var deprecated = GetOptionalBool(item, "deprecated", false);
 
             var parameters = new List<ParameterSpec>();
             if (item.TryGetProperty("parameters", out var paramsObj) && paramsObj.ValueKind == JsonValueKind.Array)
@@ -267,7 +269,7 @@ internal static class Program
                 }
             }
 
-            functions.Add(new FunctionSpec(name, cReturnType, parameters));
+            functions.Add(new FunctionSpec(name, cReturnType, parameters, documentation, deprecated));
         }
 
         functions.Sort((left, right) => string.CompareOrdinal(left.Name, right.Name));
@@ -391,8 +393,30 @@ internal static class Program
                 )
             );
 
+        var attributes = new List<AttributeSyntax> { dllImportAttribute };
+        if (function.Deprecated)
+        {
+            var obsoleteMessage = string.IsNullOrWhiteSpace(function.Documentation)
+                ? $"{function.Name} is deprecated in ABI metadata."
+                : $"{function.Name} is marked deprecated. {function.Documentation}";
+            var obsoleteAttribute = SyntaxFactory.Attribute(SyntaxFactory.ParseName("global::System.Obsolete"))
+                .WithArgumentList(
+                    SyntaxFactory.AttributeArgumentList(
+                        SyntaxFactory.SingletonSeparatedList(
+                            SyntaxFactory.AttributeArgument(
+                                SyntaxFactory.LiteralExpression(
+                                    SyntaxKind.StringLiteralExpression,
+                                    SyntaxFactory.Literal(obsoleteMessage)
+                                )
+                            )
+                        )
+                    )
+                );
+            attributes.Add(obsoleteAttribute);
+        }
+
         var attributeList = SyntaxFactory.AttributeList(
-            SyntaxFactory.SingletonSeparatedList(dllImportAttribute)
+            SyntaxFactory.SeparatedList(attributes)
         );
 
         return SyntaxFactory.MethodDeclaration(
@@ -676,7 +700,13 @@ internal sealed record IdlModel(
     string AbiVersion
 );
 
-internal sealed record FunctionSpec(string Name, string CReturnType, IReadOnlyList<ParameterSpec> Parameters);
+internal sealed record FunctionSpec(
+    string Name,
+    string CReturnType,
+    IReadOnlyList<ParameterSpec> Parameters,
+    string Documentation,
+    bool Deprecated
+);
 
 internal sealed record ParameterSpec(string Name, string CType, bool Variadic);
 

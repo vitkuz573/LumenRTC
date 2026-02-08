@@ -243,10 +243,28 @@
           "access_modifier": "internal",
           "calling_convention": "Cdecl",
           "library_expression": "LibName"
-        }
+        },
+        "generators": [
+          {
+            "name": "csharp",
+            "kind": "builtin",
+            "builtin": "csharp-roslyn",
+            "enabled": true,
+            "options": {
+              "project": "tools/lumenrtc_roslyn_codegen/LumenRTC.Abi.RoslynGenerator.csproj",
+              "output_path": "abi/generated/lumenrtc/NativeMethods.g.cs",
+              "namespace": "LumenRTC.Interop",
+              "class_name": "NativeMethods",
+              "access_modifier": "internal",
+              "calling_convention": "Cdecl",
+              "library_expression": "LibName"
+            }
+          }
+        ]
       },
       "codegen": {
         "enabled": true,
+        "idl_schema_version": 2,
         "idl_output_path": "abi/generated/lumenrtc/lumenrtc.idl.json"
       }
     }
