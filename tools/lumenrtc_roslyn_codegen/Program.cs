@@ -354,13 +354,48 @@ internal static class Program
         for (var idx = 0; idx < function.Parameters.Count; idx++)
         {
             var parameter = function.Parameters[idx];
-            var managedType = parameter.Variadic ? "IntPtr" : MapManagedType(parameter.CType, model);
+            var spec = MapManagedParameter(function, parameter, model);
             var managedName = SanitizeIdentifier(parameter.Name, $"arg{idx}");
+            var parameterSyntax = SyntaxFactory.Parameter(SyntaxFactory.Identifier(managedName))
+                .WithType(SyntaxFactory.ParseTypeName(spec.TypeName));
 
-            parameters.Add(
-                SyntaxFactory.Parameter(SyntaxFactory.Identifier(managedName))
-                    .WithType(SyntaxFactory.ParseTypeName(managedType))
-            );
+            if (!string.IsNullOrWhiteSpace(spec.Modifier))
+            {
+                var modifierToken = spec.Modifier switch
+                {
+                    "ref" => SyntaxFactory.Token(SyntaxKind.RefKeyword),
+                    "out" => SyntaxFactory.Token(SyntaxKind.OutKeyword),
+                    "in" => SyntaxFactory.Token(SyntaxKind.InKeyword),
+                    _ => throw new GeneratorException($"Unsupported parameter modifier '{spec.Modifier}'"),
+                };
+                parameterSyntax = parameterSyntax.WithModifiers(
+                    SyntaxFactory.TokenList(modifierToken)
+                );
+            }
+
+            if (spec.MarshalAsI1)
+            {
+                var marshalAsAttribute = SyntaxFactory.Attribute(SyntaxFactory.IdentifierName("MarshalAs"))
+                    .WithArgumentList(
+                        SyntaxFactory.AttributeArgumentList(
+                            SyntaxFactory.SingletonSeparatedList(
+                                SyntaxFactory.AttributeArgument(
+                                    SyntaxFactory.ParseExpression("UnmanagedType.I1")
+                                )
+                            )
+                        )
+                    );
+
+                parameterSyntax = parameterSyntax.WithAttributeLists(
+                    SyntaxFactory.SingletonList(
+                        SyntaxFactory.AttributeList(
+                            SyntaxFactory.SingletonSeparatedList(marshalAsAttribute)
+                        )
+                    )
+                );
+            }
+
+            parameters.Add(parameterSyntax);
         }
 
         var libraryExpression = ParseExpression(options.LibraryExpression, "--library-expression");
@@ -495,6 +530,139 @@ internal static class Program
         return candidate;
     }
 
+    private static ParameterRenderSpec MapManagedParameter(
+        FunctionSpec function,
+        ParameterSpec parameter,
+        IdlModel model)
+    {
+        if (parameter.Variadic)
+        {
+            return new ParameterRenderSpec("IntPtr", Modifier: null, MarshalAsI1: false);
+        }
+
+        var info = ParseCTypeInfo(parameter.CType);
+        if (info.PointerDepth == 0)
+        {
+            var scalarType = MapManagedBaseType(info.BaseType, model);
+            if (IsDirectionEnumParameter(function, parameter, scalarType))
+            {
+                scalarType = "LrtcRtpTransceiverDirection";
+            }
+
+            return new ParameterRenderSpec(
+                scalarType,
+                Modifier: null,
+                MarshalAsI1: string.Equals(scalarType, "bool", StringComparison.Ordinal)
+            );
+        }
+
+        if (info.PointerDepth > 1)
+        {
+            return new ParameterRenderSpec("IntPtr", Modifier: null, MarshalAsI1: false);
+        }
+
+        if (IsRawPointerType(info.BaseType, parameter.Name))
+        {
+            return new ParameterRenderSpec("IntPtr", Modifier: null, MarshalAsI1: false);
+        }
+
+        if (model.StructNames.Contains(info.BaseType))
+        {
+            var structType = MapManagedBaseType(info.BaseType, model);
+            var modifier = IsOutStructPointer(function, parameter) ? "out" : "ref";
+            return new ParameterRenderSpec(structType, modifier, MarshalAsI1: false);
+        }
+
+        if (PrimitiveTypeMap.TryGetValue(info.BaseType, out var primitive))
+        {
+            if (IsOutPrimitivePointer(function, parameter))
+            {
+                return new ParameterRenderSpec(
+                    primitive,
+                    Modifier: "out",
+                    MarshalAsI1: string.Equals(primitive, "bool", StringComparison.Ordinal)
+                );
+            }
+        }
+
+        return new ParameterRenderSpec("IntPtr", Modifier: null, MarshalAsI1: false);
+    }
+
+    private static bool IsDirectionEnumParameter(
+        FunctionSpec function,
+        ParameterSpec parameter,
+        string managedType)
+    {
+        if (!string.Equals(managedType, "int", StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        return string.Equals(function.Name, "lrtc_rtp_transceiver_set_direction", StringComparison.Ordinal)
+            && string.Equals(parameter.Name, "direction", StringComparison.Ordinal);
+    }
+
+    private static bool IsOutPrimitivePointer(FunctionSpec function, ParameterSpec parameter)
+    {
+        var paramName = parameter.Name.ToLowerInvariant();
+        if (paramName is "volume" or "value")
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    private static bool IsOutStructPointer(FunctionSpec function, ParameterSpec parameter)
+    {
+        var paramName = parameter.Name.ToLowerInvariant();
+        if (paramName is "info")
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    private static bool IsRawPointerType(string baseType, string parameterName)
+    {
+        var normalizedBase = baseType.ToLowerInvariant();
+        if (normalizedBase is "void" or "char" or "signed char" or "unsigned char" or "uint8_t" or "int8_t")
+        {
+            return true;
+        }
+
+        var normalizedName = parameterName.ToLowerInvariant();
+        if (normalizedName.Contains("buffer", StringComparison.Ordinal)
+            || normalizedName.Contains("name", StringComparison.Ordinal)
+            || normalizedName.Contains("guid", StringComparison.Ordinal)
+            || normalizedName.Contains("sdp", StringComparison.Ordinal)
+            || normalizedName.Contains("candidate", StringComparison.Ordinal)
+            || normalizedName.Contains("mime", StringComparison.Ordinal)
+            || normalizedName.Contains("stream_ids", StringComparison.Ordinal)
+            || normalizedName.Contains("data", StringComparison.Ordinal)
+            || normalizedName.Contains("label", StringComparison.Ordinal)
+            || normalizedName.Contains("protocol", StringComparison.Ordinal)
+            || normalizedName.Equals("config", StringComparison.Ordinal)
+            || normalizedName.Contains("error", StringComparison.Ordinal)
+            || normalizedName.Contains("tones", StringComparison.Ordinal))
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    private static CTypeInfo ParseCTypeInfo(string cType)
+    {
+        var canonical = NormalizeCType(cType);
+        var stripped = StripCTypeQualifiers(canonical);
+        var pointerDepth = stripped.Count(ch => ch == '*');
+        var baseType = stripped.Replace("*", string.Empty, StringComparison.Ordinal).Trim();
+        var isConst = Regex.IsMatch(canonical, "\\bconst\\b");
+        return new CTypeInfo(canonical, baseType, pointerDepth, isConst);
+    }
+
     private static string MapManagedType(string cType, IdlModel model)
     {
         if (cType == "...")
@@ -502,17 +670,27 @@ internal static class Program
             return "IntPtr";
         }
 
-        var canonical = NormalizeCType(cType);
-        var stripped = StripCTypeQualifiers(canonical);
-
-        if (canonical.Count(ch => ch == '*') > 0)
+        var info = ParseCTypeInfo(cType);
+        if (info.PointerDepth > 0)
         {
             return "IntPtr";
         }
 
+        return MapManagedBaseType(info.BaseType, model);
+    }
+
+    private static string MapManagedBaseType(string cTypeBase, IdlModel model)
+    {
+        var stripped = StripCTypeQualifiers(cTypeBase);
+
         if (PrimitiveTypeMap.TryGetValue(stripped, out var primitive))
         {
             return primitive;
+        }
+
+        if (string.Equals(stripped, "lrtc_stats_failure_cb", StringComparison.Ordinal))
+        {
+            return "LrtcStatsFailureCb";
         }
 
         if (model.EnumNames.Contains(stripped) || model.StructNames.Contains(stripped))
@@ -571,6 +749,10 @@ internal static class Program
         var joined = string.Concat(parts);
         return string.IsNullOrWhiteSpace(joined) ? "IntPtr" : joined;
     }
+
+    private sealed record CTypeInfo(string Canonical, string BaseType, int PointerDepth, bool IsConst);
+
+    private sealed record ParameterRenderSpec(string TypeName, string? Modifier, bool MarshalAsI1);
 }
 
 internal sealed record GeneratorOptions(

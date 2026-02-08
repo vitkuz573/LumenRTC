@@ -174,7 +174,7 @@ public sealed class PeerConnectionFactory : SafeHandle
         string? json = null;
         string? error = null;
         LrtcStatsSuccessCb success = (_, jsonPtr) => json = Utf8String.Read(jsonPtr);
-        LrtcStatsErrorCb failure = (_, errPtr) => error = Utf8String.Read(errPtr);
+        LrtcStatsFailureCb failure = (_, errPtr) => error = Utf8String.Read(errPtr);
 
         NativeMethods.lrtc_factory_get_rtp_sender_codec_mime_types(handle, (LrtcMediaType)mediaType, success, failure, IntPtr.Zero);
 
@@ -196,7 +196,7 @@ public sealed class PeerConnectionFactory : SafeHandle
         string? json = null;
         string? error = null;
         LrtcStatsSuccessCb success = (_, jsonPtr) => json = Utf8String.Read(jsonPtr);
-        LrtcStatsErrorCb failure = (_, errPtr) => error = Utf8String.Read(errPtr);
+        LrtcStatsFailureCb failure = (_, errPtr) => error = Utf8String.Read(errPtr);
 
         NativeMethods.lrtc_factory_get_rtp_sender_capabilities(
             handle,
@@ -218,7 +218,7 @@ public sealed class PeerConnectionFactory : SafeHandle
         string? json = null;
         string? error = null;
         LrtcStatsSuccessCb success = (_, jsonPtr) => json = Utf8String.Read(jsonPtr);
-        LrtcStatsErrorCb failure = (_, errPtr) => error = Utf8String.Read(errPtr);
+        LrtcStatsFailureCb failure = (_, errPtr) => error = Utf8String.Read(errPtr);
 
         NativeMethods.lrtc_factory_get_rtp_receiver_capabilities(
             handle,

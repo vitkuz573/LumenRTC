@@ -7,7 +7,10 @@
   - `LUMENRTC_ABI_VERSION_MAJOR`
   - `LUMENRTC_ABI_VERSION_MINOR`
   - `LUMENRTC_ABI_VERSION_PATCH`
-- Managed interop surface source files: `src/LumenRTC/Interop/*.cs`
+- Managed interop declarations generated from ABI IDL:
+  `abi/generated/lumenrtc/NativeMethods.g.cs`
+- Runtime resolver and ABI guard logic:
+  `src/LumenRTC/Interop/NativeMethods.Core.cs`
 
 ## Pipeline
 
@@ -28,6 +31,7 @@
 8. Generate C# interop from IDL (Roslyn tool, direct):
    - `scripts/abi.sh roslyn`
    - Output: `abi/generated/lumenrtc/NativeMethods.g.cs`
+   - `src/LumenRTC/LumenRTC.csproj` links this generated file directly.
 9. Sync generated artifacts and optionally baselines:
    - `scripts/abi.sh sync --skip-binary`
 10. Benchmark ABI pipeline:

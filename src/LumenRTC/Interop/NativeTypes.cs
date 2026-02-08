@@ -266,7 +266,7 @@ internal delegate void LrtcTrackCb(IntPtr userData, IntPtr transceiver, IntPtr r
 internal delegate void LrtcStatsSuccessCb(IntPtr userData, IntPtr json);
 
 [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-internal delegate void LrtcStatsErrorCb(IntPtr userData, IntPtr error);
+internal delegate void LrtcStatsFailureCb(IntPtr userData, IntPtr error);
 
 [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 internal delegate void LrtcLogMessageCb(IntPtr userData, IntPtr message);
@@ -314,4 +314,3 @@ internal struct LrtcAudioSinkCallbacks
 {
     public LrtcAudioFrameCb? on_data;
 }
-

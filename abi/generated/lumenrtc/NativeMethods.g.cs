@@ -14,7 +14,7 @@ internal static partial class NativeMethods
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_abi_version_string")]
     internal static extern int lrtc_abi_version_string(IntPtr buffer, uint buffer_len);
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_audio_device_microphone_volume")]
-    internal static extern int lrtc_audio_device_microphone_volume(IntPtr device, IntPtr volume);
+    internal static extern int lrtc_audio_device_microphone_volume(IntPtr device, out uint volume);
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_audio_device_playout_device_name")]
     internal static extern int lrtc_audio_device_playout_device_name(IntPtr device, ushort index, IntPtr name, uint name_len, IntPtr guid, uint guid_len);
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_audio_device_playout_devices")]
@@ -34,9 +34,9 @@ internal static partial class NativeMethods
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_audio_device_set_speaker_volume")]
     internal static extern int lrtc_audio_device_set_speaker_volume(IntPtr device, uint volume);
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_audio_device_speaker_volume")]
-    internal static extern int lrtc_audio_device_speaker_volume(IntPtr device, IntPtr volume);
+    internal static extern int lrtc_audio_device_speaker_volume(IntPtr device, out uint volume);
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_audio_sink_create")]
-    internal static extern IntPtr lrtc_audio_sink_create(IntPtr callbacks, IntPtr user_data);
+    internal static extern IntPtr lrtc_audio_sink_create(ref LrtcAudioSinkCallbacks callbacks, IntPtr user_data);
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_audio_sink_release")]
     internal static extern void lrtc_audio_sink_release(IntPtr sink);
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_audio_source_capture_frame")]
@@ -66,7 +66,7 @@ internal static partial class NativeMethods
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_data_channel_send")]
     internal static extern void lrtc_data_channel_send(IntPtr channel, IntPtr data, uint size, int binary);
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_data_channel_set_callbacks")]
-    internal static extern void lrtc_data_channel_set_callbacks(IntPtr channel, IntPtr callbacks, IntPtr user_data);
+    internal static extern void lrtc_data_channel_set_callbacks(IntPtr channel, ref LrtcDataChannelCallbacks callbacks, IntPtr user_data);
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_desktop_capturer_is_running")]
     internal static extern bool lrtc_desktop_capturer_is_running(IntPtr capturer);
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_desktop_capturer_release")]
@@ -78,7 +78,7 @@ internal static partial class NativeMethods
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_desktop_capturer_stop")]
     internal static extern void lrtc_desktop_capturer_stop(IntPtr capturer);
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_desktop_device_create_capturer")]
-    internal static extern IntPtr lrtc_desktop_device_create_capturer(IntPtr device, IntPtr source, bool show_cursor);
+    internal static extern IntPtr lrtc_desktop_device_create_capturer(IntPtr device, IntPtr source, [MarshalAs(UnmanagedType.I1)] bool show_cursor);
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_desktop_device_get_media_list")]
     internal static extern IntPtr lrtc_desktop_device_get_media_list(IntPtr device, LrtcDesktopType type);
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_desktop_device_release")]
@@ -90,7 +90,7 @@ internal static partial class NativeMethods
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_desktop_media_list_release")]
     internal static extern void lrtc_desktop_media_list_release(IntPtr list);
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_desktop_media_list_update")]
-    internal static extern int lrtc_desktop_media_list_update(IntPtr list, bool force_reload, bool get_thumbnail);
+    internal static extern int lrtc_desktop_media_list_update(IntPtr list, [MarshalAs(UnmanagedType.I1)] bool force_reload, [MarshalAs(UnmanagedType.I1)] bool get_thumbnail);
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_dtmf_sender_can_insert")]
     internal static extern int lrtc_dtmf_sender_can_insert(IntPtr sender);
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_dtmf_sender_comma_delay")]
@@ -104,13 +104,13 @@ internal static partial class NativeMethods
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_dtmf_sender_release")]
     internal static extern void lrtc_dtmf_sender_release(IntPtr sender);
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_dtmf_sender_set_callbacks")]
-    internal static extern void lrtc_dtmf_sender_set_callbacks(IntPtr sender, IntPtr callbacks, IntPtr user_data);
+    internal static extern void lrtc_dtmf_sender_set_callbacks(IntPtr sender, ref LrtcDtmfSenderCallbacks callbacks, IntPtr user_data);
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_dtmf_sender_tones")]
     internal static extern int lrtc_dtmf_sender_tones(IntPtr sender, IntPtr buffer, uint buffer_len);
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_factory_create")]
     internal static extern IntPtr lrtc_factory_create();
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_factory_create_audio_source")]
-    internal static extern IntPtr lrtc_factory_create_audio_source(IntPtr factory, IntPtr label, LrtcAudioSourceType source_type, IntPtr options);
+    internal static extern IntPtr lrtc_factory_create_audio_source(IntPtr factory, IntPtr label, LrtcAudioSourceType source_type, ref LrtcAudioOptions options);
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_factory_create_audio_track")]
     internal static extern IntPtr lrtc_factory_create_audio_track(IntPtr factory, IntPtr source, IntPtr track_id);
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_factory_create_desktop_source")]
@@ -184,7 +184,7 @@ internal static partial class NativeMethods
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_peer_connection_add_audio_track_transceiver")]
     internal static extern IntPtr lrtc_peer_connection_add_audio_track_transceiver(IntPtr pc, IntPtr track);
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_peer_connection_add_audio_track_transceiver_with_init")]
-    internal static extern IntPtr lrtc_peer_connection_add_audio_track_transceiver_with_init(IntPtr pc, IntPtr track, IntPtr init);
+    internal static extern IntPtr lrtc_peer_connection_add_audio_track_transceiver_with_init(IntPtr pc, IntPtr track, ref LrtcRtpTransceiverInit init);
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_peer_connection_add_ice_candidate")]
     internal static extern void lrtc_peer_connection_add_ice_candidate(IntPtr pc, IntPtr sdp_mid, int sdp_mline_index, IntPtr candidate);
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_peer_connection_add_ice_candidate_ex")]
@@ -194,7 +194,7 @@ internal static partial class NativeMethods
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_peer_connection_add_transceiver")]
     internal static extern IntPtr lrtc_peer_connection_add_transceiver(IntPtr pc, LrtcMediaType media_type);
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_peer_connection_add_transceiver_with_init")]
-    internal static extern IntPtr lrtc_peer_connection_add_transceiver_with_init(IntPtr pc, LrtcMediaType media_type, IntPtr init);
+    internal static extern IntPtr lrtc_peer_connection_add_transceiver_with_init(IntPtr pc, LrtcMediaType media_type, ref LrtcRtpTransceiverInit init);
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_peer_connection_add_video_track")]
     internal static extern int lrtc_peer_connection_add_video_track(IntPtr pc, IntPtr track, IntPtr stream_ids, uint stream_id_count);
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_peer_connection_add_video_track_sender")]
@@ -202,11 +202,11 @@ internal static partial class NativeMethods
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_peer_connection_add_video_track_transceiver")]
     internal static extern IntPtr lrtc_peer_connection_add_video_track_transceiver(IntPtr pc, IntPtr track);
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_peer_connection_add_video_track_transceiver_with_init")]
-    internal static extern IntPtr lrtc_peer_connection_add_video_track_transceiver_with_init(IntPtr pc, IntPtr track, IntPtr init);
+    internal static extern IntPtr lrtc_peer_connection_add_video_track_transceiver_with_init(IntPtr pc, IntPtr track, ref LrtcRtpTransceiverInit init);
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_peer_connection_close")]
     internal static extern void lrtc_peer_connection_close(IntPtr pc);
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_peer_connection_create")]
-    internal static extern IntPtr lrtc_peer_connection_create(IntPtr factory, IntPtr config, IntPtr constraints, IntPtr callbacks, IntPtr user_data);
+    internal static extern IntPtr lrtc_peer_connection_create(IntPtr factory, IntPtr config, IntPtr constraints, ref LrtcPeerConnectionCallbacks callbacks, IntPtr user_data);
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_peer_connection_create_answer")]
     internal static extern void lrtc_peer_connection_create_answer(IntPtr pc, LrtcSdpSuccessCb success, LrtcSdpErrorCb failure, IntPtr user_data, IntPtr constraints);
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_peer_connection_create_data_channel")]
@@ -242,7 +242,7 @@ internal static partial class NativeMethods
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_peer_connection_sender_count")]
     internal static extern uint lrtc_peer_connection_sender_count(IntPtr pc);
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_peer_connection_set_callbacks")]
-    internal static extern void lrtc_peer_connection_set_callbacks(IntPtr pc, IntPtr callbacks, IntPtr user_data);
+    internal static extern void lrtc_peer_connection_set_callbacks(IntPtr pc, ref LrtcPeerConnectionCallbacks callbacks, IntPtr user_data);
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_peer_connection_set_codec_preferences")]
     internal static extern int lrtc_peer_connection_set_codec_preferences(IntPtr pc, LrtcMediaType media_type, IntPtr mime_types, uint mime_type_count);
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_peer_connection_set_local_description")]
@@ -260,9 +260,9 @@ internal static partial class NativeMethods
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_rtp_receiver_get_degradation_preference")]
     internal static extern int lrtc_rtp_receiver_get_degradation_preference(IntPtr receiver);
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_rtp_receiver_get_dtls_info")]
-    internal static extern int lrtc_rtp_receiver_get_dtls_info(IntPtr receiver, IntPtr info);
+    internal static extern int lrtc_rtp_receiver_get_dtls_info(IntPtr receiver, out LrtcDtlsTransportInfo info);
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_rtp_receiver_get_encoding_info")]
-    internal static extern int lrtc_rtp_receiver_get_encoding_info(IntPtr receiver, uint index, IntPtr info);
+    internal static extern int lrtc_rtp_receiver_get_encoding_info(IntPtr receiver, uint index, out LrtcRtpEncodingInfo info);
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_rtp_receiver_get_encoding_rid")]
     internal static extern int lrtc_rtp_receiver_get_encoding_rid(IntPtr receiver, uint index, IntPtr buffer, uint buffer_len);
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_rtp_receiver_get_encoding_scalability_mode")]
@@ -294,11 +294,11 @@ internal static partial class NativeMethods
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_rtp_sender_get_degradation_preference")]
     internal static extern int lrtc_rtp_sender_get_degradation_preference(IntPtr sender);
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_rtp_sender_get_dtls_info")]
-    internal static extern int lrtc_rtp_sender_get_dtls_info(IntPtr sender, IntPtr info);
+    internal static extern int lrtc_rtp_sender_get_dtls_info(IntPtr sender, out LrtcDtlsTransportInfo info);
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_rtp_sender_get_dtmf_sender")]
     internal static extern IntPtr lrtc_rtp_sender_get_dtmf_sender(IntPtr sender);
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_rtp_sender_get_encoding_info")]
-    internal static extern int lrtc_rtp_sender_get_encoding_info(IntPtr sender, uint index, IntPtr info);
+    internal static extern int lrtc_rtp_sender_get_encoding_info(IntPtr sender, uint index, out LrtcRtpEncodingInfo info);
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_rtp_sender_get_encoding_rid")]
     internal static extern int lrtc_rtp_sender_get_encoding_rid(IntPtr sender, uint index, IntPtr buffer, uint buffer_len);
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_rtp_sender_get_encoding_scalability_mode")]
@@ -322,9 +322,9 @@ internal static partial class NativeMethods
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_rtp_sender_replace_video_track")]
     internal static extern int lrtc_rtp_sender_replace_video_track(IntPtr sender, IntPtr track);
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_rtp_sender_set_encoding_parameters")]
-    internal static extern int lrtc_rtp_sender_set_encoding_parameters(IntPtr sender, IntPtr settings);
+    internal static extern int lrtc_rtp_sender_set_encoding_parameters(IntPtr sender, ref LrtcRtpEncodingSettings settings);
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_rtp_sender_set_encoding_parameters_at")]
-    internal static extern int lrtc_rtp_sender_set_encoding_parameters_at(IntPtr sender, uint index, IntPtr settings);
+    internal static extern int lrtc_rtp_sender_set_encoding_parameters_at(IntPtr sender, uint index, ref LrtcRtpEncodingSettings settings);
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_rtp_sender_set_stream_ids")]
     internal static extern int lrtc_rtp_sender_set_stream_ids(IntPtr sender, IntPtr stream_ids, uint stream_id_count);
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_rtp_sender_stream_id_count")]
@@ -352,7 +352,7 @@ internal static partial class NativeMethods
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_rtp_transceiver_release")]
     internal static extern void lrtc_rtp_transceiver_release(IntPtr transceiver);
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_rtp_transceiver_set_direction")]
-    internal static extern int lrtc_rtp_transceiver_set_direction(IntPtr transceiver, int direction, IntPtr error, uint error_len);
+    internal static extern int lrtc_rtp_transceiver_set_direction(IntPtr transceiver, LrtcRtpTransceiverDirection direction, IntPtr error, uint error_len);
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_rtp_transceiver_stop")]
     internal static extern int lrtc_rtp_transceiver_stop(IntPtr transceiver, IntPtr error, uint error_len);
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_terminate")]
@@ -398,7 +398,7 @@ internal static partial class NativeMethods
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_video_frame_width")]
     internal static extern int lrtc_video_frame_width(IntPtr frame);
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_video_sink_create")]
-    internal static extern IntPtr lrtc_video_sink_create(IntPtr callbacks, IntPtr user_data);
+    internal static extern IntPtr lrtc_video_sink_create(ref LrtcVideoSinkCallbacks callbacks, IntPtr user_data);
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_video_sink_release")]
     internal static extern void lrtc_video_sink_release(IntPtr sink);
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "lrtc_video_source_release")]

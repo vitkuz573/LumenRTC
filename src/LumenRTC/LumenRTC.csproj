@@ -3,4 +3,8 @@
     <TargetFramework>net10.0</TargetFramework>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\abi\generated\lumenrtc\NativeMethods.g.cs" Link="Interop\NativeMethods.g.cs" />
+  </ItemGroup>
 </Project>

@@ -372,7 +372,7 @@ public sealed class PeerConnection : SafeHandle
         if (onFailure == null) throw new ArgumentNullException(nameof(onFailure));
 
         LrtcStatsSuccessCb successCb = (_, jsonPtr) => onSuccess(Utf8String.Read(jsonPtr));
-        LrtcStatsErrorCb errorCb = (_, errPtr) => onFailure(Utf8String.Read(errPtr));
+        LrtcStatsFailureCb errorCb = (_, errPtr) => onFailure(Utf8String.Read(errPtr));
 
         _keepAlive.Add(successCb);
         _keepAlive.Add(errorCb);
@@ -417,7 +417,7 @@ public sealed class PeerConnection : SafeHandle
         if (onFailure == null) throw new ArgumentNullException(nameof(onFailure));
 
         LrtcStatsSuccessCb successCb = (_, jsonPtr) => onSuccess(Utf8String.Read(jsonPtr));
-        LrtcStatsErrorCb errorCb = (_, errPtr) => onFailure(Utf8String.Read(errPtr));
+        LrtcStatsFailureCb errorCb = (_, errPtr) => onFailure(Utf8String.Read(errPtr));
 
         _keepAlive.Add(successCb);
         _keepAlive.Add(errorCb);
@@ -470,7 +470,7 @@ public sealed class PeerConnection : SafeHandle
         if (onFailure == null) throw new ArgumentNullException(nameof(onFailure));
 
         LrtcStatsSuccessCb successCb = (_, jsonPtr) => onSuccess(Utf8String.Read(jsonPtr));
-        LrtcStatsErrorCb errorCb = (_, errPtr) => onFailure(Utf8String.Read(errPtr));
+        LrtcStatsFailureCb errorCb = (_, errPtr) => onFailure(Utf8String.Read(errPtr));
 
         _keepAlive.Add(successCb);
         _keepAlive.Add(errorCb);
