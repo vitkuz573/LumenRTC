@@ -18,6 +18,10 @@ Commands:
   snapshot      Snapshot ABI for ABI_TARGET
   baseline      Write baseline snapshot for ABI_TARGET
   baseline-all  Write baseline snapshots for all configured targets
+  regen         Regenerate baselines for all targets (supports --verify)
+  regen-baselines Alias for regen
+  doctor        Run ABI config/environment diagnostics
+  changelog     Generate ABI changelog markdown
   verify        Verify ABI_TARGET against baseline
   check         Alias for verify
   verify-all    Verify all configured targets
@@ -68,6 +72,24 @@ case "${COMMAND}" in
         --output "${ABI_BASELINE_ROOT}/${target}.json" \
         "$@"
     done < <(run_guard list-targets --config "${ABI_CONFIG}")
+    ;;
+  regen|regen-baselines)
+    run_guard regen-baselines \
+      --repo-root "${REPO_ROOT}" \
+      --config "${ABI_CONFIG}" \
+      "$@"
+    ;;
+  doctor)
+    run_guard doctor \
+      --repo-root "${REPO_ROOT}" \
+      --config "${ABI_CONFIG}" \
+      "$@"
+    ;;
+  changelog)
+    run_guard changelog \
+      --repo-root "${REPO_ROOT}" \
+      --config "${ABI_CONFIG}" \
+      "$@"
     ;;
   verify|check)
     run_guard verify \

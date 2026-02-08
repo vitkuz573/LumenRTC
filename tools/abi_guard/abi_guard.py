@@ -1243,6 +1243,308 @@ def write_markdown_report(path: Path, report: dict[str, Any]) -> None:
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
+def version_dict_to_str(value: Any) -> str:
+    if isinstance(value, dict):
+        major = value.get("major")
+        minor = value.get("minor")
+        patch = value.get("patch")
+        if isinstance(major, int) and isinstance(minor, int) and isinstance(patch, int):
+            return f"{major}.{minor}.{patch}"
+    return "n/a"
+
+
+def append_markdown_list(lines: list[str], items: list[str], indent: str = "") -> None:
+    for item in items:
+        lines.append(f"{indent}- {item}")
+
+
+def render_target_changelog_section(target_name: str, report: dict[str, Any]) -> list[str]:
+    lines: list[str] = []
+    lines.append(f"## {target_name}")
+    lines.append("")
+    lines.append(f"- Status: `{report.get('status', 'unknown')}`")
+    lines.append(f"- Change classification: `{report.get('change_classification', 'unknown')}`")
+    lines.append(f"- Required bump: `{report.get('required_bump', 'none')}`")
+    lines.append(f"- Baseline ABI version: `{version_dict_to_str(report.get('baseline_abi_version'))}`")
+    lines.append(f"- Current ABI version: `{version_dict_to_str(report.get('current_abi_version'))}`")
+    lines.append(f"- Recommended next version: `{version_dict_to_str(report.get('recommended_next_version'))}`")
+    lines.append("")
+
+    breaking_reasons = get_message_list(report, "breaking_reasons")
+    additive_reasons = get_message_list(report, "additive_reasons")
+    removed_symbols = get_message_list(report, "removed_symbols")
+    added_symbols = get_message_list(report, "added_symbols")
+    changed_signatures = get_message_list(report, "changed_signatures")
+
+    enum_diff = report.get("enum_diff")
+    struct_diff = report.get("struct_diff")
+    enum_diff_obj = enum_diff if isinstance(enum_diff, dict) else {}
+    struct_diff_obj = struct_diff if isinstance(struct_diff, dict) else {}
+
+    lines.append("### Breaking")
+    if not breaking_reasons and not removed_symbols and not changed_signatures:
+        lines.append("- None.")
+    else:
+        if breaking_reasons:
+            lines.append("- Reasons:")
+            append_markdown_list(lines, breaking_reasons, indent="  ")
+        if removed_symbols:
+            lines.append("- Removed function symbols:")
+            append_markdown_list(lines, removed_symbols, indent="  ")
+        if changed_signatures:
+            lines.append("- Changed function signatures:")
+            append_markdown_list(lines, changed_signatures, indent="  ")
+
+    removed_enums = get_message_list(enum_diff_obj, "removed_enums")
+    if removed_enums:
+        lines.append("- Removed enums:")
+        append_markdown_list(lines, removed_enums, indent="  ")
+
+    changed_enums = enum_diff_obj.get("changed_enums")
+    if isinstance(changed_enums, dict):
+        for enum_name in sorted(changed_enums.keys()):
+            detail = changed_enums[enum_name]
+            if not isinstance(detail, dict):
+                continue
+            if str(detail.get("kind")) != "breaking":
+                continue
+            lines.append(f"- Enum `{enum_name}` changed (breaking):")
+            removed_members = get_message_list(detail, "removed_members")
+            changed_members = get_message_list(detail, "value_changed")
+            if removed_members:
+                lines.append("  - Removed members:")
+                append_markdown_list(lines, removed_members, indent="    ")
+            if changed_members:
+                lines.append("  - Members with changed values:")
+                append_markdown_list(lines, changed_members, indent="    ")
+
+    removed_structs = get_message_list(struct_diff_obj, "removed_structs")
+    if removed_structs:
+        lines.append("- Removed structs:")
+        append_markdown_list(lines, removed_structs, indent="  ")
+
+    changed_structs = struct_diff_obj.get("changed_structs")
+    if isinstance(changed_structs, dict):
+        for struct_name in sorted(changed_structs.keys()):
+            detail = changed_structs[struct_name]
+            if not isinstance(detail, dict):
+                continue
+            if str(detail.get("kind")) != "breaking":
+                continue
+            lines.append(f"- Struct `{struct_name}` layout changed (breaking).")
+
+    lines.append("")
+    lines.append("### Additive")
+    if not additive_reasons and not added_symbols:
+        lines.append("- None.")
+    else:
+        if additive_reasons:
+            lines.append("- Reasons:")
+            append_markdown_list(lines, additive_reasons, indent="  ")
+        if added_symbols:
+            lines.append("- Added function symbols:")
+            append_markdown_list(lines, added_symbols, indent="  ")
+
+    added_enums = get_message_list(enum_diff_obj, "added_enums")
+    if added_enums:
+        lines.append("- Added enums:")
+        append_markdown_list(lines, added_enums, indent="  ")
+
+    if isinstance(changed_enums, dict):
+        for enum_name in sorted(changed_enums.keys()):
+            detail = changed_enums[enum_name]
+            if not isinstance(detail, dict):
+                continue
+            if str(detail.get("kind")) != "additive":
+                continue
+            added_members = get_message_list(detail, "added_members")
+            if added_members:
+                lines.append(f"- Enum `{enum_name}` added members:")
+                append_markdown_list(lines, added_members, indent="  ")
+
+    added_structs = get_message_list(struct_diff_obj, "added_structs")
+    if added_structs:
+        lines.append("- Added structs:")
+        append_markdown_list(lines, added_structs, indent="  ")
+
+    if isinstance(changed_structs, dict):
+        for struct_name in sorted(changed_structs.keys()):
+            detail = changed_structs[struct_name]
+            if not isinstance(detail, dict):
+                continue
+            if str(detail.get("kind")) != "additive":
+                continue
+            lines.append(f"- Struct `{struct_name}` was extended (additive tail).")
+
+    warnings = get_message_list(report, "warnings")
+    errors = get_message_list(report, "errors")
+    if warnings:
+        lines.append("")
+        lines.append("### Warnings")
+        append_markdown_list(lines, warnings)
+    if errors:
+        lines.append("")
+        lines.append("### Errors")
+        append_markdown_list(lines, errors)
+
+    lines.append("")
+    return lines
+
+
+def render_changelog_document(
+    title: str,
+    release_tag: str | None,
+    generated_at_utc: str,
+    results_by_target: dict[str, dict[str, Any]],
+) -> str:
+    lines: list[str] = []
+    lines.append(f"# {title}")
+    lines.append("")
+    lines.append(f"- Generated at (UTC): `{generated_at_utc}`")
+    if release_tag:
+        lines.append(f"- Release tag: `{release_tag}`")
+    lines.append("")
+    lines.append("## Summary")
+    lines.append("")
+    lines.append("| Target | Status | Classification | Required bump | Baseline | Current | Recommended |")
+    lines.append("| --- | --- | --- | --- | --- | --- | --- |")
+    for target_name in sorted(results_by_target.keys()):
+        report = results_by_target[target_name]
+        lines.append(
+            f"| {target_name} | {report.get('status', 'unknown')} | "
+            f"{report.get('change_classification', 'unknown')} | "
+            f"{report.get('required_bump', 'none')} | "
+            f"{version_dict_to_str(report.get('baseline_abi_version'))} | "
+            f"{version_dict_to_str(report.get('current_abi_version'))} | "
+            f"{version_dict_to_str(report.get('recommended_next_version'))} |"
+        )
+    lines.append("")
+
+    for target_name in sorted(results_by_target.keys()):
+        lines.extend(render_target_changelog_section(target_name, results_by_target[target_name]))
+
+    return "\n".join(lines) + "\n"
+
+
+def get_message_list(payload: dict[str, Any], key: str) -> list[str]:
+    value = payload.get(key)
+    if isinstance(value, list):
+        return [str(item) for item in value]
+    return []
+
+
+def build_sarif_results_for_target(target_name: str, report: dict[str, Any], source_path: str | None) -> list[dict[str, Any]]:
+    results: list[dict[str, Any]] = []
+    location = None
+    if source_path:
+        location = {
+            "physicalLocation": {
+                "artifactLocation": {
+                    "uri": source_path,
+                },
+                "region": {
+                    "startLine": 1,
+                },
+            }
+        }
+
+    for message in get_message_list(report, "errors"):
+        result: dict[str, Any] = {
+            "ruleId": "ABI001",
+            "level": "error",
+            "message": {
+                "text": f"[{target_name}] {message}",
+            },
+        }
+        if location:
+            result["locations"] = [location]
+        results.append(result)
+
+    for message in get_message_list(report, "warnings"):
+        result = {
+            "ruleId": "ABI002",
+            "level": "warning",
+            "message": {
+                "text": f"[{target_name}] {message}",
+            },
+        }
+        if location:
+            result["locations"] = [location]
+        results.append(result)
+
+    return results
+
+
+def write_sarif_report(path: Path, results: list[dict[str, Any]]) -> None:
+    payload = {
+        "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+        "version": "2.1.0",
+        "runs": [
+            {
+                "tool": {
+                    "driver": {
+                        "name": "abi_guard",
+                        "version": TOOL_VERSION,
+                        "rules": [
+                            {
+                                "id": "ABI001",
+                                "name": "AbiGuardError",
+                                "shortDescription": {
+                                    "text": "ABI compatibility error",
+                                },
+                                "defaultConfiguration": {
+                                    "level": "error",
+                                },
+                            },
+                            {
+                                "id": "ABI002",
+                                "name": "AbiGuardWarning",
+                                "shortDescription": {
+                                    "text": "ABI compatibility warning",
+                                },
+                                "defaultConfiguration": {
+                                    "level": "warning",
+                                },
+                            },
+                        ],
+                    }
+                },
+                "results": results,
+            }
+        ],
+    }
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def build_aggregate_summary(results_by_target: dict[str, dict[str, Any]]) -> dict[str, Any]:
+    summary = {
+        "target_count": len(results_by_target),
+        "pass_count": 0,
+        "fail_count": 0,
+        "error_count": 0,
+        "warning_count": 0,
+        "classification": {
+            "none": 0,
+            "additive": 0,
+            "breaking": 0,
+        },
+    }
+
+    for report in results_by_target.values():
+        if report.get("status") == "pass":
+            summary["pass_count"] += 1
+        else:
+            summary["fail_count"] += 1
+        summary["error_count"] += len(get_message_list(report, "errors"))
+        summary["warning_count"] += len(get_message_list(report, "warnings"))
+        classification = str(report.get("change_classification", "none"))
+        if classification in summary["classification"]:
+            summary["classification"][classification] += 1
+
+    return summary
+
+
 def command_snapshot(args: argparse.Namespace) -> int:
     repo_root = Path(args.repo_root).resolve()
     config = load_json(Path(args.config).resolve())
@@ -1291,9 +1593,25 @@ def command_verify(args: argparse.Namespace) -> int:
         write_json(Path(args.report).resolve(), report)
     if args.markdown_report:
         write_markdown_report(Path(args.markdown_report).resolve(), report)
+    if args.sarif_report:
+        current_header = current.get("header")
+        source_path = None
+        if isinstance(current_header, dict):
+            path_value = current_header.get("path")
+            if isinstance(path_value, str):
+                source_path = path_value
+        sarif_results = build_sarif_results_for_target(
+            target_name=str(args.target),
+            report=report,
+            source_path=source_path,
+        )
+        write_sarif_report(Path(args.sarif_report).resolve(), sarif_results)
 
     print_report(report)
-    return 0 if report.get("status") == "pass" else 1
+    status_ok = report.get("status") == "pass"
+    if status_ok and bool(args.fail_on_warnings):
+        status_ok = not bool(get_message_list(report, "warnings"))
+    return 0 if status_ok else 1
 
 
 def command_diff(args: argparse.Namespace) -> int:
@@ -1305,16 +1623,37 @@ def command_diff(args: argparse.Namespace) -> int:
         write_json(Path(args.report).resolve(), report)
     if args.markdown_report:
         write_markdown_report(Path(args.markdown_report).resolve(), report)
+    if args.sarif_report:
+        sarif_results = build_sarif_results_for_target(
+            target_name="diff",
+            report=report,
+            source_path=None,
+        )
+        write_sarif_report(Path(args.sarif_report).resolve(), sarif_results)
 
     print_report(report)
-    return 0 if report.get("status") == "pass" else 1
+    status_ok = report.get("status") == "pass"
+    if status_ok and bool(args.fail_on_warnings):
+        status_ok = not bool(get_message_list(report, "warnings"))
+    return 0 if status_ok else 1
+
+
+def get_targets_map(config: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    targets = config.get("targets")
+    if not isinstance(targets, dict):
+        raise AbiGuardError("Config is missing required object: 'targets'.")
+    out: dict[str, dict[str, Any]] = {}
+    for name, payload in targets.items():
+        if isinstance(name, str) and isinstance(payload, dict):
+            out[name] = payload
+    if not out:
+        raise AbiGuardError("Config has no valid targets.")
+    return out
 
 
 def command_list_targets(args: argparse.Namespace) -> int:
     config = load_json(Path(args.config).resolve())
-    targets = config.get("targets")
-    if not isinstance(targets, dict):
-        raise AbiGuardError("Config is missing required object: 'targets'.")
+    targets = get_targets_map(config)
 
     for name in sorted(targets.keys()):
         print(name)
@@ -1333,21 +1672,35 @@ def resolve_baseline_for_target(repo_root: Path, config: dict[str, Any], target_
     return ensure_relative_path(repo_root, f"abi/baselines/{target_name}.json").resolve()
 
 
+def resolve_binary_for_target(repo_root: Path, config: dict[str, Any], target_name: str, binary_override: str | None) -> tuple[str | None, bool]:
+    if binary_override:
+        return binary_override, False
+    target = resolve_target(config, target_name)
+    binary_cfg = target.get("binary")
+    if isinstance(binary_cfg, dict):
+        path_value = binary_cfg.get("path")
+        if isinstance(path_value, str) and path_value:
+            return str(ensure_relative_path(repo_root, path_value).resolve()), False
+    return None, True
+
+
 def command_verify_all(args: argparse.Namespace) -> int:
     repo_root = Path(args.repo_root).resolve()
     config = load_json(Path(args.config).resolve())
 
-    targets = config.get("targets")
-    if not isinstance(targets, dict) or not targets:
-        raise AbiGuardError("Config has no targets to verify.")
+    targets = get_targets_map(config)
 
     output_dir = Path(args.output_dir).resolve() if args.output_dir else None
+    if output_dir:
+        output_dir.mkdir(parents=True, exist_ok=True)
+
     final_status = 0
     aggregate: dict[str, Any] = {
         "status": "pass",
         "generated_at_utc": dt.datetime.now(tz=dt.timezone.utc).isoformat(),
         "results": {},
     }
+    sarif_results: list[dict[str, Any]] = []
 
     for target_name in sorted(targets.keys()):
         baseline_path = resolve_baseline_for_target(
@@ -1371,23 +1724,258 @@ def command_verify_all(args: argparse.Namespace) -> int:
 
         aggregate["results"][target_name] = report
 
-        print(f"[{target_name}] {report.get('status')}")
+        print(
+            f"[{target_name}] {report.get('status')} "
+            f"(classification={report.get('change_classification')}, required_bump={report.get('required_bump')})"
+        )
         if report.get("status") != "pass":
             final_status = 1
 
         if output_dir:
-            output_dir.mkdir(parents=True, exist_ok=True)
             write_json(output_dir / f"{target_name}.current.json", current)
             write_json(output_dir / f"{target_name}.report.json", report)
             write_markdown_report(output_dir / f"{target_name}.report.md", report)
 
+        current_header = current.get("header")
+        source_path = None
+        if isinstance(current_header, dict):
+            path_value = current_header.get("path")
+            if isinstance(path_value, str):
+                source_path = path_value
+        sarif_results.extend(
+            build_sarif_results_for_target(
+                target_name=target_name,
+                report=report,
+                source_path=source_path,
+            )
+        )
+
+    aggregate["summary"] = build_aggregate_summary(aggregate["results"])
+
     if final_status != 0:
+        aggregate["status"] = "fail"
+    elif bool(args.fail_on_warnings) and aggregate["summary"]["warning_count"] > 0:
+        final_status = 1
         aggregate["status"] = "fail"
 
     if output_dir:
         write_json(output_dir / "aggregate.report.json", aggregate)
+        write_sarif_report(output_dir / "aggregate.report.sarif.json", sarif_results)
+    if args.sarif_report:
+        write_sarif_report(Path(args.sarif_report).resolve(), sarif_results)
 
     return final_status
+
+
+def command_regen_baselines(args: argparse.Namespace) -> int:
+    repo_root = Path(args.repo_root).resolve()
+    config = load_json(Path(args.config).resolve())
+    targets = get_targets_map(config)
+
+    regenerated: list[str] = []
+    for target_name in sorted(targets.keys()):
+        baseline_path = resolve_baseline_for_target(
+            repo_root=repo_root,
+            config=config,
+            target_name=target_name,
+            baseline_root=args.baseline_root,
+        )
+        snapshot = build_snapshot(
+            config=config,
+            target_name=target_name,
+            repo_root=repo_root,
+            binary_override=args.binary,
+            skip_binary=args.skip_binary,
+        )
+        write_json(baseline_path, snapshot)
+        regenerated.append(f"{target_name} -> {baseline_path}")
+
+    for line in regenerated:
+        print(f"Regenerated baseline: {line}")
+
+    if bool(args.verify):
+        verify_args = argparse.Namespace(
+            repo_root=str(repo_root),
+            config=str(Path(args.config).resolve()),
+            baseline_root=args.baseline_root,
+            binary=args.binary,
+            skip_binary=args.skip_binary,
+            output_dir=args.output_dir,
+            sarif_report=args.sarif_report,
+            fail_on_warnings=args.fail_on_warnings,
+        )
+        return command_verify_all(verify_args)
+
+    return 0
+
+
+def command_doctor(args: argparse.Namespace) -> int:
+    repo_root = Path(args.repo_root).resolve()
+    config = load_json(Path(args.config).resolve())
+    targets = get_targets_map(config)
+
+    issues: list[tuple[str, str, str]] = []
+
+    for target_name in sorted(targets.keys()):
+        target = targets[target_name]
+        header_cfg = target.get("header")
+        if not isinstance(header_cfg, dict):
+            issues.append(("error", target_name, "missing header config"))
+            continue
+
+        header_path_value = header_cfg.get("path")
+        if not isinstance(header_path_value, str) or not header_path_value:
+            issues.append(("error", target_name, "header.path is missing"))
+        else:
+            header_path = ensure_relative_path(repo_root, header_path_value).resolve()
+            if not header_path.exists():
+                issues.append(("error", target_name, f"header file not found: {header_path}"))
+
+        pinvoke_cfg = target.get("pinvoke")
+        if not isinstance(pinvoke_cfg, dict):
+            issues.append(("error", target_name, "missing pinvoke config"))
+        else:
+            entries = pinvoke_cfg.get("paths")
+            if not isinstance(entries, list) or not entries:
+                issues.append(("error", target_name, "pinvoke.paths is empty"))
+            else:
+                files = iter_files_from_entries(repo_root, [str(x) for x in entries], ".cs")
+                if not files:
+                    issues.append(("error", target_name, "pinvoke paths resolved to zero .cs files"))
+
+        baseline_path = resolve_baseline_for_target(
+            repo_root=repo_root,
+            config=config,
+            target_name=target_name,
+            baseline_root=args.baseline_root,
+        )
+        if not baseline_path.exists():
+            severity = "error" if bool(args.require_baselines) else "warning"
+            issues.append((severity, target_name, f"baseline missing: {baseline_path}"))
+
+        binary_value, unresolved = resolve_binary_for_target(
+            repo_root=repo_root,
+            config=config,
+            target_name=target_name,
+            binary_override=args.binary,
+        )
+        if not unresolved and binary_value:
+            binary_path = Path(binary_value)
+            if not binary_path.exists():
+                severity = "error" if bool(args.require_binaries) else "warning"
+                issues.append((severity, target_name, f"binary missing: {binary_path}"))
+        elif bool(args.require_binaries):
+            issues.append(("error", target_name, "binary path is not configured"))
+
+    error_count = sum(1 for sev, _, _ in issues if sev == "error")
+    warning_count = sum(1 for sev, _, _ in issues if sev == "warning")
+
+    if not issues:
+        print("abi_guard doctor: healthy")
+        return 0
+
+    print("abi_guard doctor: issues found")
+    for severity, target_name, message in issues:
+        print(f"  [{severity}] {target_name}: {message}")
+
+    if error_count > 0:
+        return 1
+    if bool(args.fail_on_warnings) and warning_count > 0:
+        return 1
+    return 0
+
+
+def command_changelog(args: argparse.Namespace) -> int:
+    repo_root = Path(args.repo_root).resolve()
+    config = load_json(Path(args.config).resolve())
+    targets = get_targets_map(config)
+
+    if args.baseline and not args.target:
+        raise AbiGuardError("--baseline can only be used together with --target.")
+
+    if args.target:
+        if args.target not in targets:
+            known = ", ".join(sorted(targets.keys()))
+            raise AbiGuardError(f"Unknown target '{args.target}'. Known targets: {known}")
+        target_names = [args.target]
+    else:
+        target_names = sorted(targets.keys())
+
+    results_by_target: dict[str, dict[str, Any]] = {}
+    sarif_results: list[dict[str, Any]] = []
+
+    for target_name in target_names:
+        if args.baseline and args.target:
+            baseline_path = Path(args.baseline).resolve()
+        else:
+            baseline_path = resolve_baseline_for_target(
+                repo_root=repo_root,
+                config=config,
+                target_name=target_name,
+                baseline_root=args.baseline_root,
+            )
+        if not baseline_path.exists():
+            raise AbiGuardError(f"Baseline does not exist for target '{target_name}': {baseline_path}")
+
+        current = build_snapshot(
+            config=config,
+            target_name=target_name,
+            repo_root=repo_root,
+            binary_override=args.binary,
+            skip_binary=args.skip_binary,
+        )
+        baseline = load_snapshot(baseline_path)
+        report = compare_snapshots(baseline=baseline, current=current)
+        results_by_target[target_name] = report
+
+        current_header = current.get("header")
+        source_path = None
+        if isinstance(current_header, dict):
+            path_value = current_header.get("path")
+            if isinstance(path_value, str):
+                source_path = path_value
+        sarif_results.extend(
+            build_sarif_results_for_target(
+                target_name=target_name,
+                report=report,
+                source_path=source_path,
+            )
+        )
+
+    generated_at_utc = dt.datetime.now(tz=dt.timezone.utc).isoformat()
+    changelog = render_changelog_document(
+        title=str(args.title),
+        release_tag=args.release_tag,
+        generated_at_utc=generated_at_utc,
+        results_by_target=results_by_target,
+    )
+
+    if args.output:
+        output_path = Path(args.output).resolve()
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(changelog, encoding="utf-8")
+        print(f"Wrote changelog: {output_path}")
+    else:
+        print(changelog, end="")
+
+    aggregate = {
+        "generated_at_utc": generated_at_utc,
+        "results": results_by_target,
+        "summary": build_aggregate_summary(results_by_target),
+    }
+
+    if args.report_json:
+        write_json(Path(args.report_json).resolve(), aggregate)
+    if args.sarif_report:
+        write_sarif_report(Path(args.sarif_report).resolve(), sarif_results)
+
+    has_failing = any(report.get("status") != "pass" for report in results_by_target.values())
+    has_warnings = aggregate["summary"]["warning_count"] > 0
+    if bool(args.fail_on_failing) and has_failing:
+        return 1
+    if bool(args.fail_on_warnings) and has_warnings:
+        return 1
+    return 0
 
 
 def command_init_target(args: argparse.Namespace) -> int:
@@ -1469,7 +2057,7 @@ def command_init_target(args: argparse.Namespace) -> int:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="abi_guard",
-        description="Config-driven ABI governance framework (snapshot/verify/diff/bootstrap).",
+        description="Config-driven ABI governance framework (snapshot/verify/diff/bootstrap/release).",
     )
 
     sub = parser.add_subparsers(dest="command", required=True)
@@ -1501,6 +2089,8 @@ def build_parser() -> argparse.ArgumentParser:
     verify.add_argument("--current-output", help="Write current snapshot JSON to path.")
     verify.add_argument("--report", help="Write verify report JSON to path.")
     verify.add_argument("--markdown-report", help="Write verify report as Markdown.")
+    verify.add_argument("--sarif-report", help="Write verify report as SARIF (for CI/code scanning).")
+    verify.add_argument("--fail-on-warnings", action="store_true", help="Treat warnings as failures.")
     verify.set_defaults(func=command_verify)
 
     verify_all = sub.add_parser("verify-all", help="Verify all targets from config.")
@@ -1514,13 +2104,68 @@ def build_parser() -> argparse.ArgumentParser:
     verify_all.add_argument("--binary", help="Override binary path for export checks (applies to each target).")
     verify_all.add_argument("--skip-binary", action="store_true", help="Skip binary export extraction for all targets.")
     verify_all.add_argument("--output-dir", help="Directory to write per-target current/report artifacts.")
+    verify_all.add_argument("--sarif-report", help="Write aggregate SARIF report.")
+    verify_all.add_argument("--fail-on-warnings", action="store_true", help="Treat warnings as failures.")
     verify_all.set_defaults(func=command_verify_all)
+
+    regen = sub.add_parser("regen-baselines", help="Regenerate baseline snapshots for all targets.")
+    regen.add_argument(
+        "--repo-root",
+        default=".",
+        help="Repository root used to resolve relative paths (default: current directory).",
+    )
+    regen.add_argument("--config", required=True, help="Path to ABI config JSON.")
+    regen.add_argument("--baseline-root", help="Baseline directory override (otherwise target baseline_path is used).")
+    regen.add_argument("--binary", help="Override binary path for export checks.")
+    regen.add_argument("--skip-binary", action="store_true", help="Skip binary export extraction while regenerating.")
+    regen.add_argument("--verify", action="store_true", help="Run verify-all after regeneration.")
+    regen.add_argument("--output-dir", help="Verification output dir (effective with --verify).")
+    regen.add_argument("--sarif-report", help="Verification SARIF output (effective with --verify).")
+    regen.add_argument("--fail-on-warnings", action="store_true", help="Treat warnings as failures during --verify.")
+    regen.set_defaults(func=command_regen_baselines)
+
+    doctor = sub.add_parser("doctor", help="Run ABI environment/config diagnostics.")
+    doctor.add_argument(
+        "--repo-root",
+        default=".",
+        help="Repository root used to resolve relative paths (default: current directory).",
+    )
+    doctor.add_argument("--config", required=True, help="Path to ABI config JSON.")
+    doctor.add_argument("--baseline-root", help="Baseline directory override.")
+    doctor.add_argument("--binary", help="Override binary path for checks.")
+    doctor.add_argument("--require-baselines", action="store_true", help="Fail if any baseline is missing.")
+    doctor.add_argument("--require-binaries", action="store_true", help="Fail if any binary is missing/unconfigured.")
+    doctor.add_argument("--fail-on-warnings", action="store_true", help="Treat warnings as failures.")
+    doctor.set_defaults(func=command_doctor)
+
+    changelog = sub.add_parser("changelog", help="Generate markdown ABI changelog from baseline vs current.")
+    changelog.add_argument(
+        "--repo-root",
+        default=".",
+        help="Repository root used to resolve relative paths (default: current directory).",
+    )
+    changelog.add_argument("--config", required=True, help="Path to ABI config JSON.")
+    changelog.add_argument("--target", help="Optional target name. If omitted, all targets are included.")
+    changelog.add_argument("--baseline", help="Explicit baseline path (only valid with --target).")
+    changelog.add_argument("--baseline-root", help="Baseline directory override.")
+    changelog.add_argument("--binary", help="Override binary path for export checks.")
+    changelog.add_argument("--skip-binary", action="store_true", help="Skip binary export extraction.")
+    changelog.add_argument("--title", default="ABI Changelog", help="Changelog title.")
+    changelog.add_argument("--release-tag", help="Optional release tag (display only).")
+    changelog.add_argument("--output", help="Write markdown changelog to file.")
+    changelog.add_argument("--report-json", help="Write aggregate changelog data as JSON.")
+    changelog.add_argument("--sarif-report", help="Write SARIF for changelog diagnostics.")
+    changelog.add_argument("--fail-on-failing", action="store_true", help="Return non-zero if any target report failed.")
+    changelog.add_argument("--fail-on-warnings", action="store_true", help="Return non-zero if warnings are present.")
+    changelog.set_defaults(func=command_changelog)
 
     diff = sub.add_parser("diff", help="Compare two snapshot files.")
     diff.add_argument("--baseline", required=True, help="Path to baseline snapshot JSON.")
     diff.add_argument("--current", required=True, help="Path to current snapshot JSON.")
     diff.add_argument("--report", help="Write diff report JSON to path.")
     diff.add_argument("--markdown-report", help="Write diff report as Markdown.")
+    diff.add_argument("--sarif-report", help="Write diff report as SARIF.")
+    diff.add_argument("--fail-on-warnings", action="store_true", help="Treat warnings as failures.")
     diff.set_defaults(func=command_diff)
 
     list_targets = sub.add_parser("list-targets", help="List target names from config.")

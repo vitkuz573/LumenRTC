@@ -18,6 +18,8 @@
    - `scripts/abi.sh baseline`
 5. For multi-target repos, verify all targets at once:
    - `scripts/abi.sh check-all --skip-binary`
+6. Generate changelog for release notes:
+   - `scripts/abi.sh changelog --skip-binary --release-tag vX.Y.Z --output abi/CHANGELOG.md`
 
 ## Compatibility policy
 

@@ -103,6 +103,9 @@ scripts/abi.sh check-all --skip-binary
 # List/configure targets quickly.
 scripts/abi.sh list-targets
 scripts/abi.sh init-target ...
+
+# Generate release-ready ABI changelog.
+scripts/abi.sh changelog --skip-binary --release-tag vX.Y.Z --output abi/CHANGELOG.md
 ```
 
 PowerShell equivalent:
@@ -112,6 +115,7 @@ scripts\\abi.ps1 baseline
 scripts\\abi.ps1 check --skip-binary
 scripts\\abi.ps1 check --binary native\\build\\lumenrtc.dll
 scripts\\abi.ps1 check-all --skip-binary
+scripts\\abi.ps1 changelog --skip-binary --release-tag vX.Y.Z --output abi\\CHANGELOG.md
 ```
 
 The generic tooling lives in `tools/abi_guard/` and can be reused for other ABI

@@ -19,6 +19,10 @@
   - recommended next version
 - Supports multi-target verification in one config.
 - Bootstraps new targets with generated config + baseline.
+- Regenerates baselines for all targets in one command.
+- Exports SARIF for GitHub code scanning / enterprise CI tooling.
+- Includes `doctor` diagnostics for config/environment readiness.
+- Generates rich markdown ABI changelog from baseline/current diff.
 
 ## Commands
 
@@ -45,6 +49,35 @@ python3 tools/abi_guard/abi_guard.py verify-all \
   --config abi/config.json \
   --skip-binary \
   --output-dir artifacts/abi
+
+# Regenerate baselines for all targets and verify
+python3 tools/abi_guard/abi_guard.py regen-baselines \
+  --repo-root . \
+  --config abi/config.json \
+  --skip-binary \
+  --verify \
+  --output-dir artifacts/abi
+
+# Emit SARIF directly
+python3 tools/abi_guard/abi_guard.py verify-all \
+  --repo-root . \
+  --config abi/config.json \
+  --skip-binary \
+  --sarif-report artifacts/abi/aggregate.report.sarif.json
+
+# Diagnostics
+python3 tools/abi_guard/abi_guard.py doctor \
+  --repo-root . \
+  --config abi/config.json \
+  --require-baselines
+
+# Generate changelog for all targets
+python3 tools/abi_guard/abi_guard.py changelog \
+  --repo-root . \
+  --config abi/config.json \
+  --skip-binary \
+  --release-tag v1.2.3 \
+  --output abi/CHANGELOG.md
 
 # Compare two snapshot files
 python3 tools/abi_guard/abi_guard.py diff \
@@ -116,6 +149,9 @@ Both wrappers expose the same high-level commands:
 - `snapshot`
 - `baseline`
 - `baseline-all`
+- `regen` / `regen-baselines`
+- `doctor`
+- `changelog`
 - `verify` / `check`
 - `verify-all` / `check-all`
 - `list-targets`

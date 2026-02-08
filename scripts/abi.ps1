@@ -1,6 +1,6 @@
 param(
     [Parameter(Position = 0)]
-    [ValidateSet("snapshot", "baseline", "baseline-all", "verify", "check", "verify-all", "check-all", "list-targets", "init-target", "diff")]
+    [ValidateSet("snapshot", "baseline", "baseline-all", "regen", "regen-baselines", "doctor", "changelog", "verify", "check", "verify-all", "check-all", "list-targets", "init-target", "diff")]
     [string]$Command = "check",
 
     [Parameter(ValueFromRemainingArguments = $true)]
@@ -95,6 +95,26 @@ switch ($Command) {
             $guardArgs = @("snapshot", "--repo-root", $repoRoot, "--config", $config, "--target", $t, "--skip-binary", "--output", $out) + $extraArgs
             Invoke-Guard -GuardArgs $guardArgs
         }
+        break
+    }
+    "regen" {
+        $guardArgs = @("regen-baselines", "--repo-root", $repoRoot, "--config", $config) + $extraArgs
+        Invoke-Guard -GuardArgs $guardArgs
+        break
+    }
+    "regen-baselines" {
+        $guardArgs = @("regen-baselines", "--repo-root", $repoRoot, "--config", $config) + $extraArgs
+        Invoke-Guard -GuardArgs $guardArgs
+        break
+    }
+    "doctor" {
+        $guardArgs = @("doctor", "--repo-root", $repoRoot, "--config", $config) + $extraArgs
+        Invoke-Guard -GuardArgs $guardArgs
+        break
+    }
+    "changelog" {
+        $guardArgs = @("changelog", "--repo-root", $repoRoot, "--config", $config) + $extraArgs
+        Invoke-Guard -GuardArgs $guardArgs
         break
     }
     "verify" {
