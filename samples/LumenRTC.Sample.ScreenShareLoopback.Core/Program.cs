@@ -368,7 +368,7 @@ internal static class Program
         }
 
         var signalingMode = ParseSignalingMode(GetArg(args, "--signaling-mode", "inproc"));
-        var iceExchangeMode = ParseIceExchangeMode(GetArg(args, "--ice-exchange", "trickle"));
+        var iceExchangeMode = ParseIceExchangeMode(GetArg(args, "--ice-exchange", "nontrickle"));
         var signalingServer = GetArg(args, "--server", "ws://localhost:8080/ws/");
         var signalingRoom = GetArg(args, "--room", "demo");
 
@@ -410,6 +410,8 @@ internal static class Program
             var senderQueuedCandidates = new List<(string Mid, int MlineIndex, string Candidate)>();
             var viewerQueuedCandidates = new List<(string Mid, int MlineIndex, string Candidate)>();
             var dispatchMetrics = new CandidateDispatchMetrics();
+            var senderGatheringCompleteTcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+            var viewerGatheringCompleteTcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 
             PeerConnection? senderPc = null;
             PeerConnection? viewerPc = null;
@@ -622,6 +624,11 @@ internal static class Program
             {
                 OnIceCandidate = (mid, mline, cand) =>
                 {
+                    if (iceExchangeMode == IceExchangeMode.NonTrickle)
+                    {
+                        return;
+                    }
+
                     Trace("sender", $"local candidate type={ExtractCandidateType(cand)} addr={ExtractCandidateAddress(cand)} mid={mid} mline={mline}");
                     _ = signaling.SendAsync("sender", new SignalMessage
                     {
@@ -636,6 +643,10 @@ internal static class Program
                 OnIceGatheringState = state =>
                 {
                     Console.WriteLine($"sender gathering: {state}");
+                    if (state == IceGatheringState.Complete)
+                    {
+                        senderGatheringCompleteTcs.TrySetResult(true);
+                    }
                 },
             }, config);
 
@@ -643,6 +654,11 @@ internal static class Program
             {
                 OnIceCandidate = (mid, mline, cand) =>
                 {
+                    if (iceExchangeMode == IceExchangeMode.NonTrickle)
+                    {
+                        return;
+                    }
+
                     Trace("viewer", $"local candidate type={ExtractCandidateType(cand)} addr={ExtractCandidateAddress(cand)} mid={mid} mline={mline}");
                     _ = signaling.SendAsync("viewer", new SignalMessage
                     {
@@ -658,6 +674,10 @@ internal static class Program
                 OnIceGatheringState = state =>
                 {
                     Console.WriteLine($"viewer gathering: {state}");
+                    if (state == IceGatheringState.Complete)
+                    {
+                        viewerGatheringCompleteTcs.TrySetResult(true);
+                    }
                 },
             }, config);
 
@@ -738,6 +758,30 @@ internal static class Program
                                 {
                                     try
                                     {
+                                        if (iceExchangeMode == IceExchangeMode.NonTrickle)
+                                        {
+                                            await WaitForGatheringCompleteAsync(
+                                                "sender",
+                                                senderGatheringCompleteTcs.Task,
+                                                timeoutMs: 8000,
+                                                traceEnabled: traceSignaling,
+                                                trace: Trace).ConfigureAwait(false);
+
+                                            var localOffer = await senderPc.GetLocalDescriptionAsync().ConfigureAwait(false);
+                                            if (dumpSdp)
+                                            {
+                                                DumpSdpSummary("sender offer", localOffer.Sdp);
+                                            }
+
+                                            await signaling.SendAsync("sender", new SignalMessage
+                                            {
+                                                Type = "offer",
+                                                Sdp = localOffer.Sdp,
+                                                SdpType = localOffer.Type,
+                                            }, CancellationToken.None).ConfigureAwait(false);
+                                            return;
+                                        }
+
                                         await signaling.SendAsync("sender", new SignalMessage
                                         {
                                             Type = "offer",
@@ -837,6 +881,30 @@ internal static class Program
                                                 {
                                                     try
                                                     {
+                                                        if (iceExchangeMode == IceExchangeMode.NonTrickle)
+                                                        {
+                                                            await WaitForGatheringCompleteAsync(
+                                                                "viewer",
+                                                                viewerGatheringCompleteTcs.Task,
+                                                                timeoutMs: 8000,
+                                                                traceEnabled: traceSignaling,
+                                                                trace: Trace).ConfigureAwait(false);
+
+                                                            var localAnswer = await viewerPc.GetLocalDescriptionAsync().ConfigureAwait(false);
+                                                            if (dumpSdp)
+                                                            {
+                                                                DumpSdpSummary("viewer answer", localAnswer.Sdp);
+                                                            }
+
+                                                            await signaling.SendAsync("viewer", new SignalMessage
+                                                            {
+                                                                Type = "answer",
+                                                                Sdp = localAnswer.Sdp,
+                                                                SdpType = localAnswer.Type,
+                                                            }, CancellationToken.None).ConfigureAwait(false);
+                                                            return;
+                                                        }
+
                                                         await signaling.SendAsync("viewer", new SignalMessage
                                                         {
                                                             Type = "answer",
@@ -874,6 +942,11 @@ internal static class Program
                             error => Console.WriteLine($"SetRemoteDescription(answer) failed: {error}"));
                         break;
                     case "candidate":
+                        if (iceExchangeMode == IceExchangeMode.NonTrickle)
+                        {
+                            break;
+                        }
+
                         if (string.IsNullOrWhiteSpace(message.Candidate) || string.IsNullOrWhiteSpace(message.SdpMid))
                         {
                             break;
@@ -1071,6 +1144,29 @@ internal static class Program
             $"{role} rejected candidate mid={mid} mline={mline} " +
             $"type={ExtractCandidateType(candidate)} addr={ExtractCandidateAddress(candidate)} " +
             $"after {maxAttempts} attempts");
+    }
+
+    private static async Task WaitForGatheringCompleteAsync(
+        string role,
+        Task completion,
+        int timeoutMs,
+        bool traceEnabled,
+        Action<string, string> trace)
+    {
+        using var timeoutCts = new CancellationTokenSource();
+        timeoutCts.CancelAfter(timeoutMs);
+        try
+        {
+            await completion.WaitAsync(timeoutCts.Token).ConfigureAwait(false);
+            if (traceEnabled)
+            {
+                trace(role, "gathering complete for nontrickle exchange");
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            Console.WriteLine($"{role} gathering did not complete within {timeoutMs}ms; sending current SDP.");
+        }
     }
 
     private static async Task StatsLoopAsync(
@@ -1524,13 +1620,12 @@ internal static class Program
     {
         if (string.IsNullOrWhiteSpace(raw))
         {
-            return IceExchangeMode.Trickle;
+            return IceExchangeMode.NonTrickle;
         }
 
         if (raw.Equals("nontrickle", StringComparison.OrdinalIgnoreCase))
         {
-            Console.WriteLine("Warning: --ice-exchange=nontrickle is temporarily disabled; forcing trickle.");
-            return IceExchangeMode.Trickle;
+            return IceExchangeMode.NonTrickle;
         }
 
         if (raw.Equals("trickle", StringComparison.OrdinalIgnoreCase))
@@ -1538,8 +1633,8 @@ internal static class Program
             return IceExchangeMode.Trickle;
         }
 
-        Console.WriteLine($"Unknown --ice-exchange '{raw}', using trickle.");
-        return IceExchangeMode.Trickle;
+        Console.WriteLine($"Unknown --ice-exchange '{raw}', using nontrickle.");
+        return IceExchangeMode.NonTrickle;
     }
 
     private static string ToIceExchangeModeArg(IceExchangeMode mode)

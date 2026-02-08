@@ -26,7 +26,7 @@ Param(
 
   [Parameter(Mandatory = $false)]
   [ValidateSet("nontrickle", "trickle")]
-  [string]$IceExchange = "trickle",
+  [string]$IceExchange = "nontrickle",
 
   [Parameter(Mandatory = $false)]
   [string]$Server = "ws://localhost:8080/ws/",
@@ -142,10 +142,6 @@ if (-not $NoBuild) {
 
 $cursorValue = if ($NoCursor) { "false" } else { "true" }
 $effectiveIceExchange = $IceExchange
-if ($effectiveIceExchange -eq "nontrickle") {
-  Write-Warning "nontrickle is temporarily disabled for loopback; forcing trickle."
-  $effectiveIceExchange = "trickle"
-}
 
 $runArgs = @("run", "--configuration", $Configuration, "--project", $projectPath, "--")
 $runArgs += @("--source", "$Source", "--fps", "$Fps", "--cursor", $cursorValue)
