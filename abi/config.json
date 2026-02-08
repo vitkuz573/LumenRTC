@@ -1,0 +1,26 @@
+{
+  "targets": {
+    "lumenrtc": {
+      "header": {
+        "path": "native/include/lumenrtc.h",
+        "api_macro": "LUMENRTC_API",
+        "call_macro": "LUMENRTC_CALL",
+        "symbol_prefix": "lrtc_",
+        "version_macros": {
+          "major": "LUMENRTC_ABI_VERSION_MAJOR",
+          "minor": "LUMENRTC_ABI_VERSION_MINOR",
+          "patch": "LUMENRTC_ABI_VERSION_PATCH"
+        }
+      },
+      "pinvoke": {
+        "paths": [
+          "src/LumenRTC/Interop"
+        ]
+      },
+      "binary": {
+        "path": "native/build/liblumenrtc.so",
+        "allow_non_prefixed_exports": false
+      }
+    }
+  }
+}

@@ -1,0 +1,2114 @@
+{
+  "abi_version": {
+    "major": 1,
+    "minor": 0,
+    "patch": 0
+  },
+  "binary": {
+    "allow_non_prefixed_exports": true,
+    "available": false,
+    "non_prefixed_export_count": 0,
+    "non_prefixed_exports": [],
+    "path": null,
+    "raw_export_count": 0,
+    "skipped": true,
+    "symbol_count": 0,
+    "symbols": [],
+    "tool": null
+  },
+  "generated_at_utc": "2026-02-08T09:25:25.821834+00:00",
+  "header": {
+    "function_count": 206,
+    "functions": {
+      "lrtc_abi_version_major": {
+        "parameters": "void",
+        "return_type": "uint32_t",
+        "signature": "uint32_t (void)"
+      },
+      "lrtc_abi_version_minor": {
+        "parameters": "void",
+        "return_type": "uint32_t",
+        "signature": "uint32_t (void)"
+      },
+      "lrtc_abi_version_patch": {
+        "parameters": "void",
+        "return_type": "uint32_t",
+        "signature": "uint32_t (void)"
+      },
+      "lrtc_abi_version_string": {
+        "parameters": "char* buffer, uint32_t buffer_len",
+        "return_type": "int32_t",
+        "signature": "int32_t (char* buffer, uint32_t buffer_len)"
+      },
+      "lrtc_audio_device_microphone_volume": {
+        "parameters": "lrtc_audio_device_t* device, uint32_t* volume",
+        "return_type": "int32_t",
+        "signature": "int32_t (lrtc_audio_device_t* device, uint32_t* volume)"
+      },
+      "lrtc_audio_device_playout_device_name": {
+        "parameters": "lrtc_audio_device_t* device, uint16_t index, char* name, uint32_t name_len, char* guid, uint32_t guid_len",
+        "return_type": "int32_t",
+        "signature": "int32_t (lrtc_audio_device_t* device, uint16_t index, char* name, uint32_t name_len, char* guid, uint32_t guid_len)"
+      },
+      "lrtc_audio_device_playout_devices": {
+        "parameters": "lrtc_audio_device_t* device",
+        "return_type": "int16_t",
+        "signature": "int16_t (lrtc_audio_device_t* device)"
+      },
+      "lrtc_audio_device_recording_device_name": {
+        "parameters": "lrtc_audio_device_t* device, uint16_t index, char* name, uint32_t name_len, char* guid, uint32_t guid_len",
+        "return_type": "int32_t",
+        "signature": "int32_t (lrtc_audio_device_t* device, uint16_t index, char* name, uint32_t name_len, char* guid, uint32_t guid_len)"
+      },
+      "lrtc_audio_device_recording_devices": {
+        "parameters": "lrtc_audio_device_t* device",
+        "return_type": "int16_t",
+        "signature": "int16_t (lrtc_audio_device_t* device)"
+      },
+      "lrtc_audio_device_release": {
+        "parameters": "lrtc_audio_device_t* device",
+        "return_type": "void",
+        "signature": "void (lrtc_audio_device_t* device)"
+      },
+      "lrtc_audio_device_set_microphone_volume": {
+        "parameters": "lrtc_audio_device_t* device, uint32_t volume",
+        "return_type": "int32_t",
+        "signature": "int32_t (lrtc_audio_device_t* device, uint32_t volume)"
+      },
+      "lrtc_audio_device_set_playout_device": {
+        "parameters": "lrtc_audio_device_t* device, uint16_t index",
+        "return_type": "int32_t",
+        "signature": "int32_t (lrtc_audio_device_t* device, uint16_t index)"
+      },
+      "lrtc_audio_device_set_recording_device": {
+        "parameters": "lrtc_audio_device_t* device, uint16_t index",
+        "return_type": "int32_t",
+        "signature": "int32_t (lrtc_audio_device_t* device, uint16_t index)"
+      },
+      "lrtc_audio_device_set_speaker_volume": {
+        "parameters": "lrtc_audio_device_t* device, uint32_t volume",
+        "return_type": "int32_t",
+        "signature": "int32_t (lrtc_audio_device_t* device, uint32_t volume)"
+      },
+      "lrtc_audio_device_speaker_volume": {
+        "parameters": "lrtc_audio_device_t* device, uint32_t* volume",
+        "return_type": "int32_t",
+        "signature": "int32_t (lrtc_audio_device_t* device, uint32_t* volume)"
+      },
+      "lrtc_audio_sink_create": {
+        "parameters": "const lrtc_audio_sink_callbacks_t* callbacks, void* user_data",
+        "return_type": "lrtc_audio_sink_t*",
+        "signature": "lrtc_audio_sink_t* (const lrtc_audio_sink_callbacks_t* callbacks, void* user_data)"
+      },
+      "lrtc_audio_sink_release": {
+        "parameters": "lrtc_audio_sink_t* sink",
+        "return_type": "void",
+        "signature": "void (lrtc_audio_sink_t* sink)"
+      },
+      "lrtc_audio_source_capture_frame": {
+        "parameters": "lrtc_audio_source_t* source, const void* audio_data, int bits_per_sample, int sample_rate, size_t number_of_channels, size_t number_of_frames",
+        "return_type": "void",
+        "signature": "void (lrtc_audio_source_t* source, const void* audio_data, int bits_per_sample, int sample_rate, size_t number_of_channels, size_t number_of_frames)"
+      },
+      "lrtc_audio_source_release": {
+        "parameters": "lrtc_audio_source_t* source",
+        "return_type": "void",
+        "signature": "void (lrtc_audio_source_t* source)"
+      },
+      "lrtc_audio_track_add_sink": {
+        "parameters": "lrtc_audio_track_t* track, lrtc_audio_sink_t* sink",
+        "return_type": "void",
+        "signature": "void (lrtc_audio_track_t* track, lrtc_audio_sink_t* sink)"
+      },
+      "lrtc_audio_track_get_enabled": {
+        "parameters": "lrtc_audio_track_t* track",
+        "return_type": "int",
+        "signature": "int (lrtc_audio_track_t* track)"
+      },
+      "lrtc_audio_track_get_id": {
+        "parameters": "lrtc_audio_track_t* track, char* buffer, uint32_t buffer_len",
+        "return_type": "int32_t",
+        "signature": "int32_t (lrtc_audio_track_t* track, char* buffer, uint32_t buffer_len)"
+      },
+      "lrtc_audio_track_get_state": {
+        "parameters": "lrtc_audio_track_t* track",
+        "return_type": "int",
+        "signature": "int (lrtc_audio_track_t* track)"
+      },
+      "lrtc_audio_track_release": {
+        "parameters": "lrtc_audio_track_t* track",
+        "return_type": "void",
+        "signature": "void (lrtc_audio_track_t* track)"
+      },
+      "lrtc_audio_track_remove_sink": {
+        "parameters": "lrtc_audio_track_t* track, lrtc_audio_sink_t* sink",
+        "return_type": "void",
+        "signature": "void (lrtc_audio_track_t* track, lrtc_audio_sink_t* sink)"
+      },
+      "lrtc_audio_track_set_enabled": {
+        "parameters": "lrtc_audio_track_t* track, int enabled",
+        "return_type": "int",
+        "signature": "int (lrtc_audio_track_t* track, int enabled)"
+      },
+      "lrtc_audio_track_set_volume": {
+        "parameters": "lrtc_audio_track_t* track, double volume",
+        "return_type": "void",
+        "signature": "void (lrtc_audio_track_t* track, double volume)"
+      },
+      "lrtc_data_channel_close": {
+        "parameters": "lrtc_data_channel_t* channel",
+        "return_type": "void",
+        "signature": "void (lrtc_data_channel_t* channel)"
+      },
+      "lrtc_data_channel_release": {
+        "parameters": "lrtc_data_channel_t* channel",
+        "return_type": "void",
+        "signature": "void (lrtc_data_channel_t* channel)"
+      },
+      "lrtc_data_channel_send": {
+        "parameters": "lrtc_data_channel_t* channel, const uint8_t* data, uint32_t size, int binary",
+        "return_type": "void",
+        "signature": "void (lrtc_data_channel_t* channel, const uint8_t* data, uint32_t size, int binary)"
+      },
+      "lrtc_data_channel_set_callbacks": {
+        "parameters": "lrtc_data_channel_t* channel, const lrtc_data_channel_callbacks_t* callbacks, void* user_data",
+        "return_type": "void",
+        "signature": "void (lrtc_data_channel_t* channel, const lrtc_data_channel_callbacks_t* callbacks, void* user_data)"
+      },
+      "lrtc_desktop_capturer_is_running": {
+        "parameters": "lrtc_desktop_capturer_t* capturer",
+        "return_type": "bool",
+        "signature": "bool (lrtc_desktop_capturer_t* capturer)"
+      },
+      "lrtc_desktop_capturer_release": {
+        "parameters": "lrtc_desktop_capturer_t* capturer",
+        "return_type": "void",
+        "signature": "void (lrtc_desktop_capturer_t* capturer)"
+      },
+      "lrtc_desktop_capturer_start": {
+        "parameters": "lrtc_desktop_capturer_t* capturer, uint32_t fps",
+        "return_type": "lrtc_desktop_capture_state",
+        "signature": "lrtc_desktop_capture_state (lrtc_desktop_capturer_t* capturer, uint32_t fps)"
+      },
+      "lrtc_desktop_capturer_start_region": {
+        "parameters": "lrtc_desktop_capturer_t* capturer, uint32_t fps, uint32_t x, uint32_t y, uint32_t w, uint32_t h",
+        "return_type": "lrtc_desktop_capture_state",
+        "signature": "lrtc_desktop_capture_state (lrtc_desktop_capturer_t* capturer, uint32_t fps, uint32_t x, uint32_t y, uint32_t w, uint32_t h)"
+      },
+      "lrtc_desktop_capturer_stop": {
+        "parameters": "lrtc_desktop_capturer_t* capturer",
+        "return_type": "void",
+        "signature": "void (lrtc_desktop_capturer_t* capturer)"
+      },
+      "lrtc_desktop_device_create_capturer": {
+        "parameters": "lrtc_desktop_device_t* device, lrtc_media_source_t* source, bool show_cursor",
+        "return_type": "lrtc_desktop_capturer_t*",
+        "signature": "lrtc_desktop_capturer_t* (lrtc_desktop_device_t* device, lrtc_media_source_t* source, bool show_cursor)"
+      },
+      "lrtc_desktop_device_get_media_list": {
+        "parameters": "lrtc_desktop_device_t* device, lrtc_desktop_type type",
+        "return_type": "lrtc_desktop_media_list_t*",
+        "signature": "lrtc_desktop_media_list_t* (lrtc_desktop_device_t* device, lrtc_desktop_type type)"
+      },
+      "lrtc_desktop_device_release": {
+        "parameters": "lrtc_desktop_device_t* device",
+        "return_type": "void",
+        "signature": "void (lrtc_desktop_device_t* device)"
+      },
+      "lrtc_desktop_media_list_get_source": {
+        "parameters": "lrtc_desktop_media_list_t* list, int index",
+        "return_type": "lrtc_media_source_t*",
+        "signature": "lrtc_media_source_t* (lrtc_desktop_media_list_t* list, int index)"
+      },
+      "lrtc_desktop_media_list_get_source_count": {
+        "parameters": "lrtc_desktop_media_list_t* list",
+        "return_type": "int",
+        "signature": "int (lrtc_desktop_media_list_t* list)"
+      },
+      "lrtc_desktop_media_list_release": {
+        "parameters": "lrtc_desktop_media_list_t* list",
+        "return_type": "void",
+        "signature": "void (lrtc_desktop_media_list_t* list)"
+      },
+      "lrtc_desktop_media_list_update": {
+        "parameters": "lrtc_desktop_media_list_t* list, bool force_reload, bool get_thumbnail",
+        "return_type": "int32_t",
+        "signature": "int32_t (lrtc_desktop_media_list_t* list, bool force_reload, bool get_thumbnail)"
+      },
+      "lrtc_dtmf_sender_can_insert": {
+        "parameters": "lrtc_dtmf_sender_t* sender",
+        "return_type": "int",
+        "signature": "int (lrtc_dtmf_sender_t* sender)"
+      },
+      "lrtc_dtmf_sender_comma_delay": {
+        "parameters": "lrtc_dtmf_sender_t* sender",
+        "return_type": "int",
+        "signature": "int (lrtc_dtmf_sender_t* sender)"
+      },
+      "lrtc_dtmf_sender_duration": {
+        "parameters": "lrtc_dtmf_sender_t* sender",
+        "return_type": "int",
+        "signature": "int (lrtc_dtmf_sender_t* sender)"
+      },
+      "lrtc_dtmf_sender_insert": {
+        "parameters": "lrtc_dtmf_sender_t* sender, const char* tones, int duration, int inter_tone_gap, int comma_delay",
+        "return_type": "int",
+        "signature": "int (lrtc_dtmf_sender_t* sender, const char* tones, int duration, int inter_tone_gap, int comma_delay)"
+      },
+      "lrtc_dtmf_sender_inter_tone_gap": {
+        "parameters": "lrtc_dtmf_sender_t* sender",
+        "return_type": "int",
+        "signature": "int (lrtc_dtmf_sender_t* sender)"
+      },
+      "lrtc_dtmf_sender_release": {
+        "parameters": "lrtc_dtmf_sender_t* sender",
+        "return_type": "void",
+        "signature": "void (lrtc_dtmf_sender_t* sender)"
+      },
+      "lrtc_dtmf_sender_set_callbacks": {
+        "parameters": "lrtc_dtmf_sender_t* sender, const lrtc_dtmf_sender_callbacks_t* callbacks, void* user_data",
+        "return_type": "void",
+        "signature": "void (lrtc_dtmf_sender_t* sender, const lrtc_dtmf_sender_callbacks_t* callbacks, void* user_data)"
+      },
+      "lrtc_dtmf_sender_tones": {
+        "parameters": "lrtc_dtmf_sender_t* sender, char* buffer, uint32_t buffer_len",
+        "return_type": "int32_t",
+        "signature": "int32_t (lrtc_dtmf_sender_t* sender, char* buffer, uint32_t buffer_len)"
+      },
+      "lrtc_factory_create": {
+        "parameters": "void",
+        "return_type": "lrtc_factory_t*",
+        "signature": "lrtc_factory_t* (void)"
+      },
+      "lrtc_factory_create_audio_source": {
+        "parameters": "lrtc_factory_t* factory, const char* label, lrtc_audio_source_type source_type, const lrtc_audio_options_t* options",
+        "return_type": "lrtc_audio_source_t*",
+        "signature": "lrtc_audio_source_t* (lrtc_factory_t* factory, const char* label, lrtc_audio_source_type source_type, const lrtc_audio_options_t* options)"
+      },
+      "lrtc_factory_create_audio_track": {
+        "parameters": "lrtc_factory_t* factory, lrtc_audio_source_t* source, const char* track_id",
+        "return_type": "lrtc_audio_track_t*",
+        "signature": "lrtc_audio_track_t* (lrtc_factory_t* factory, lrtc_audio_source_t* source, const char* track_id)"
+      },
+      "lrtc_factory_create_desktop_source": {
+        "parameters": "lrtc_factory_t* factory, lrtc_desktop_capturer_t* capturer, const char* label, lrtc_media_constraints_t* constraints",
+        "return_type": "lrtc_video_source_t*",
+        "signature": "lrtc_video_source_t* (lrtc_factory_t* factory, lrtc_desktop_capturer_t* capturer, const char* label, lrtc_media_constraints_t* constraints)"
+      },
+      "lrtc_factory_create_stream": {
+        "parameters": "lrtc_factory_t* factory, const char* stream_id",
+        "return_type": "lrtc_media_stream_t*",
+        "signature": "lrtc_media_stream_t* (lrtc_factory_t* factory, const char* stream_id)"
+      },
+      "lrtc_factory_create_video_source": {
+        "parameters": "lrtc_factory_t* factory, lrtc_video_capturer_t* capturer, const char* label, lrtc_media_constraints_t* constraints",
+        "return_type": "lrtc_video_source_t*",
+        "signature": "lrtc_video_source_t* (lrtc_factory_t* factory, lrtc_video_capturer_t* capturer, const char* label, lrtc_media_constraints_t* constraints)"
+      },
+      "lrtc_factory_create_video_track": {
+        "parameters": "lrtc_factory_t* factory, lrtc_video_source_t* source, const char* track_id",
+        "return_type": "lrtc_video_track_t*",
+        "signature": "lrtc_video_track_t* (lrtc_factory_t* factory, lrtc_video_source_t* source, const char* track_id)"
+      },
+      "lrtc_factory_get_audio_device": {
+        "parameters": "lrtc_factory_t* factory",
+        "return_type": "lrtc_audio_device_t*",
+        "signature": "lrtc_audio_device_t* (lrtc_factory_t* factory)"
+      },
+      "lrtc_factory_get_desktop_device": {
+        "parameters": "lrtc_factory_t* factory",
+        "return_type": "lrtc_desktop_device_t*",
+        "signature": "lrtc_desktop_device_t* (lrtc_factory_t* factory)"
+      },
+      "lrtc_factory_get_rtp_receiver_capabilities": {
+        "parameters": "lrtc_factory_t* factory, lrtc_media_type media_type, lrtc_stats_success_cb success, lrtc_stats_failure_cb failure, void* user_data",
+        "return_type": "void",
+        "signature": "void (lrtc_factory_t* factory, lrtc_media_type media_type, lrtc_stats_success_cb success, lrtc_stats_failure_cb failure, void* user_data)"
+      },
+      "lrtc_factory_get_rtp_sender_capabilities": {
+        "parameters": "lrtc_factory_t* factory, lrtc_media_type media_type, lrtc_stats_success_cb success, lrtc_stats_failure_cb failure, void* user_data",
+        "return_type": "void",
+        "signature": "void (lrtc_factory_t* factory, lrtc_media_type media_type, lrtc_stats_success_cb success, lrtc_stats_failure_cb failure, void* user_data)"
+      },
+      "lrtc_factory_get_rtp_sender_codec_mime_types": {
+        "parameters": "lrtc_factory_t* factory, lrtc_media_type media_type, lrtc_stats_success_cb success, lrtc_stats_failure_cb failure, void* user_data",
+        "return_type": "void",
+        "signature": "void (lrtc_factory_t* factory, lrtc_media_type media_type, lrtc_stats_success_cb success, lrtc_stats_failure_cb failure, void* user_data)"
+      },
+      "lrtc_factory_get_video_device": {
+        "parameters": "lrtc_factory_t* factory",
+        "return_type": "lrtc_video_device_t*",
+        "signature": "lrtc_video_device_t* (lrtc_factory_t* factory)"
+      },
+      "lrtc_factory_initialize": {
+        "parameters": "lrtc_factory_t* factory",
+        "return_type": "lrtc_result_t",
+        "signature": "lrtc_result_t (lrtc_factory_t* factory)"
+      },
+      "lrtc_factory_release": {
+        "parameters": "lrtc_factory_t* factory",
+        "return_type": "void",
+        "signature": "void (lrtc_factory_t* factory)"
+      },
+      "lrtc_factory_terminate": {
+        "parameters": "lrtc_factory_t* factory",
+        "return_type": "void",
+        "signature": "void (lrtc_factory_t* factory)"
+      },
+      "lrtc_initialize": {
+        "parameters": "void",
+        "return_type": "__declspec(dllexport) #elif defined(LUMENRTC_DLL) #define LUMENRTC_API __declspec(dllimport) #else #define LUMENRTC_API #endif #define LUMENRTC_CALL __cdecl #else #define LUMENRTC_API __attribute__((visibility(\"default\"))) #define LUMENRTC_CALL #endif #define LRTC_MAX_ICE_SERVERS 8 #define LUMENRTC_ABI_VERSION_MAJOR 1 #define LUMENRTC_ABI_VERSION_MINOR 0 #define LUMENRTC_ABI_VERSION_PATCH 0 typedef struct lrtc_factory_t lrtc_factory_t; typedef struct lrtc_peer_connection_t lrtc_peer_connection_t; typedef struct lrtc_media_constraints_t lrtc_media_constraints_t; typedef struct lrtc_data_channel_t lrtc_data_channel_t; typedef struct lrtc_audio_device_t lrtc_audio_device_t; typedef struct lrtc_video_device_t lrtc_video_device_t; typedef struct lrtc_desktop_device_t lrtc_desktop_device_t; typedef struct lrtc_desktop_media_list_t lrtc_desktop_media_list_t; typedef struct lrtc_media_source_t lrtc_media_source_t; typedef struct lrtc_desktop_capturer_t lrtc_desktop_capturer_t; typedef struct lrtc_video_capturer_t lrtc_video_capturer_t; typedef struct lrtc_video_source_t lrtc_video_source_t; typedef struct lrtc_audio_source_t lrtc_audio_source_t; typedef struct lrtc_media_stream_t lrtc_media_stream_t; typedef struct lrtc_video_track_t lrtc_video_track_t; typedef struct lrtc_audio_track_t lrtc_audio_track_t; typedef struct lrtc_audio_sink_t lrtc_audio_sink_t; typedef struct lrtc_video_sink_t lrtc_video_sink_t; typedef struct lrtc_video_frame_t lrtc_video_frame_t; typedef struct lrtc_rtp_sender_t lrtc_rtp_sender_t; typedef struct lrtc_rtp_receiver_t lrtc_rtp_receiver_t; typedef struct lrtc_rtp_transceiver_t lrtc_rtp_transceiver_t; typedef struct lrtc_dtmf_sender_t lrtc_dtmf_sender_t; typedef enum lrtc_result_t { LRTC_OK = 0, LRTC_ERROR = 1, LRTC_INVALID_ARG = 2, LRTC_NOT_IMPLEMENTED = 3, } lrtc_result_t; typedef enum lrtc_log_severity { LRTC_LOG_VERBOSE = 0, LRTC_LOG_INFO = 1, LRTC_LOG_WARNING = 2, LRTC_LOG_ERROR = 3, LRTC_LOG_NONE = 4, } lrtc_log_severity; typedef enum lrtc_media_security_type { LRTC_SRTP_NONE = 0, LRTC_SDES_SRTP = 1, LRTC_DTLS_SRTP = 2, } lrtc_media_security_type; typedef enum lrtc_media_type { LRTC_MEDIA_AUDIO = 0, LRTC_MEDIA_VIDEO = 1, LRTC_MEDIA_DATA = 2, } lrtc_media_type; typedef enum lrtc_desktop_type { LRTC_DESKTOP_SCREEN = 0, LRTC_DESKTOP_WINDOW = 1, } lrtc_desktop_type; typedef enum lrtc_desktop_capture_state { LRTC_DESKTOP_CAPTURE_RUNNING = 0, LRTC_DESKTOP_CAPTURE_STOPPED = 1, LRTC_DESKTOP_CAPTURE_FAILED = 2, } lrtc_desktop_capture_state; typedef enum lrtc_track_state { LRTC_TRACK_LIVE = 0, LRTC_TRACK_ENDED = 1, } lrtc_track_state; typedef enum lrtc_rtp_transceiver_direction { LRTC_RTP_TRANSCEIVER_SEND_RECV = 0, LRTC_RTP_TRANSCEIVER_SEND_ONLY = 1, LRTC_RTP_TRANSCEIVER_RECV_ONLY = 2, LRTC_RTP_TRANSCEIVER_INACTIVE = 3, LRTC_RTP_TRANSCEIVER_STOPPED = 4, } lrtc_rtp_transceiver_direction; typedef enum lrtc_dtls_transport_state { LRTC_DTLS_NEW = 0, LRTC_DTLS_CONNECTING = 1, LRTC_DTLS_CONNECTED = 2, LRTC_DTLS_CLOSED = 3, LRTC_DTLS_FAILED = 4, } lrtc_dtls_transport_state; typedef enum lrtc_audio_source_type { LRTC_AUDIO_SOURCE_MICROPHONE = 0, LRTC_AUDIO_SOURCE_CUSTOM = 1, } lrtc_audio_source_type; typedef enum lrtc_ice_transports_type { LRTC_ICE_TRANSPORTS_NONE = 0, LRTC_ICE_TRANSPORTS_RELAY = 1, LRTC_ICE_TRANSPORTS_NO_HOST = 2, LRTC_ICE_TRANSPORTS_ALL = 3, } lrtc_ice_transports_type; typedef enum lrtc_tcp_candidate_policy { LRTC_TCP_CANDIDATE_ENABLED = 0, LRTC_TCP_CANDIDATE_DISABLED = 1, } lrtc_tcp_candidate_policy; typedef enum lrtc_candidate_network_policy { LRTC_CANDIDATE_NETWORK_ALL = 0, LRTC_CANDIDATE_NETWORK_LOW_COST = 1, } lrtc_candidate_network_policy; typedef enum lrtc_rtcp_mux_policy { LRTC_RTCP_MUX_NEGOTIATE = 0, LRTC_RTCP_MUX_REQUIRE = 1, } lrtc_rtcp_mux_policy; typedef enum lrtc_bundle_policy { LRTC_BUNDLE_BALANCED = 0, LRTC_BUNDLE_MAX_BUNDLE = 1, LRTC_BUNDLE_MAX_COMPAT = 2, } lrtc_bundle_policy; typedef enum lrtc_sdp_semantics { LRTC_SDP_PLAN_B = 0, LRTC_SDP_UNIFIED_PLAN = 1, } lrtc_sdp_semantics; typedef enum lrtc_degradation_preference { LRTC_DEGRADATION_DISABLED = 0, LRTC_DEGRADATION_MAINTAIN_FRAMERATE = 1, LRTC_DEGRADATION_MAINTAIN_RESOLUTION = 2, LRTC_DEGRADATION_BALANCED = 3, } lrtc_degradation_preference; typedef enum lrtc_peer_connection_state { LRTC_PC_STATE_NEW = 0, LRTC_PC_STATE_CONNECTING = 1, LRTC_PC_STATE_CONNECTED = 2, LRTC_PC_STATE_DISCONNECTED = 3, LRTC_PC_STATE_FAILED = 4, LRTC_PC_STATE_CLOSED = 5, } lrtc_peer_connection_state; typedef enum lrtc_signaling_state { LRTC_SIGNALING_STABLE = 0, LRTC_SIGNALING_HAVE_LOCAL_OFFER = 1, LRTC_SIGNALING_HAVE_REMOTE_OFFER = 2, LRTC_SIGNALING_HAVE_LOCAL_PRANSWER = 3, LRTC_SIGNALING_HAVE_REMOTE_PRANSWER = 4, LRTC_SIGNALING_CLOSED = 5, } lrtc_signaling_state; typedef enum lrtc_ice_gathering_state { LRTC_ICE_GATHERING_NEW = 0, LRTC_ICE_GATHERING_GATHERING = 1, LRTC_ICE_GATHERING_COMPLETE = 2, } lrtc_ice_gathering_state; typedef enum lrtc_ice_connection_state { LRTC_ICE_CONNECTION_NEW = 0, LRTC_ICE_CONNECTION_CHECKING = 1, LRTC_ICE_CONNECTION_COMPLETED = 2, LRTC_ICE_CONNECTION_CONNECTED = 3, LRTC_ICE_CONNECTION_FAILED = 4, LRTC_ICE_CONNECTION_DISCONNECTED = 5, LRTC_ICE_CONNECTION_CLOSED = 6, LRTC_ICE_CONNECTION_MAX = 7, } lrtc_ice_connection_state; typedef enum lrtc_data_channel_state { LRTC_DATA_CHANNEL_CONNECTING = 0, LRTC_DATA_CHANNEL_OPEN = 1, LRTC_DATA_CHANNEL_CLOSING = 2, LRTC_DATA_CHANNEL_CLOSED = 3, } lrtc_data_channel_state; typedef struct lrtc_ice_server_t { const char* uri; const char* username; const char* password; } lrtc_ice_server_t; typedef struct lrtc_rtc_config_t { lrtc_ice_server_t ice_servers[LRTC_MAX_ICE_SERVERS]; uint32_t ice_server_count; lrtc_ice_transports_type ice_transports_type; lrtc_bundle_policy bundle_policy; lrtc_rtcp_mux_policy rtcp_mux_policy; lrtc_candidate_network_policy candidate_network_policy; lrtc_tcp_candidate_policy tcp_candidate_policy; int ice_candidate_pool_size; lrtc_media_security_type srtp_type; lrtc_sdp_semantics sdp_semantics; bool offer_to_receive_audio; bool offer_to_receive_video; bool disable_ipv6; bool disable_ipv6_on_wifi; int max_ipv6_networks; bool disable_link_local_networks; int screencast_min_bitrate; bool enable_dscp; bool use_rtp_mux; uint32_t local_audio_bandwidth; uint32_t local_video_bandwidth; } lrtc_rtc_config_t; typedef struct lrtc_audio_options_t { bool echo_cancellation; bool auto_gain_control; bool noise_suppression; bool highpass_filter; } lrtc_audio_options_t; typedef struct lrtc_rtp_encoding_settings_t { int max_bitrate_bps; int min_bitrate_bps; double max_framerate; double scale_resolution_down_by; int active; int degradation_preference; double bitrate_priority; int network_priority; int num_temporal_layers; const char* scalability_mode; const char* rid; int adaptive_ptime; } lrtc_rtp_encoding_settings_t; typedef struct lrtc_rtp_encoding_info_t { uint32_t ssrc; int max_bitrate_bps; int min_bitrate_bps; double max_framerate; double scale_resolution_down_by; int active; double bitrate_priority; int network_priority; int num_temporal_layers; int adaptive_ptime; } lrtc_rtp_encoding_info_t; typedef struct lrtc_dtls_transport_info_t { int state; int ssl_cipher_suite; int srtp_cipher_suite; } lrtc_dtls_transport_info_t; typedef struct lrtc_rtp_transceiver_init_t { int direction; const char** stream_ids; uint32_t stream_id_count; const lrtc_rtp_encoding_settings_t* send_encodings; uint32_t send_encoding_count; } lrtc_rtp_transceiver_init_t; typedef void (LUMENRTC_CALL *lrtc_sdp_success_cb)(void* user_data, const char* sdp, const char* type); typedef void (LUMENRTC_CALL *lrtc_sdp_error_cb)(void* user_data, const char* error); typedef void (LUMENRTC_CALL *lrtc_void_cb)(void* user_data); typedef void (LUMENRTC_CALL *lrtc_peer_connection_state_cb)(void* user_data, int state); typedef void (LUMENRTC_CALL *lrtc_ice_candidate_cb)(void* user_data, const char* sdp_mid, int sdp_mline_index, const char* candidate); typedef void (LUMENRTC_CALL *lrtc_data_channel_state_cb)(void* user_data, int state); typedef void (LUMENRTC_CALL *lrtc_data_channel_message_cb)(void* user_data, const uint8_t* data, int length, int binary); typedef void (LUMENRTC_CALL *lrtc_audio_frame_cb)(void* user_data, const void* audio_data, int bits_per_sample, int sample_rate, size_t number_of_channels, size_t number_of_frames); typedef void (LUMENRTC_CALL *lrtc_video_frame_cb)(void* user_data, lrtc_video_frame_t* frame); typedef void (LUMENRTC_CALL *lrtc_track_cb)( void* user_data, lrtc_rtp_transceiver_t* transceiver, lrtc_rtp_receiver_t* receiver); typedef void (LUMENRTC_CALL *lrtc_stats_success_cb)(void* user_data, const char* json); typedef void (LUMENRTC_CALL *lrtc_stats_failure_cb)(void* user_data, const char* error); typedef void (LUMENRTC_CALL *lrtc_log_message_cb)(void* user_data, const char* message); typedef void (LUMENRTC_CALL *lrtc_dtmf_tone_cb)(void* user_data, const char* tone, const char* tone_buffer); typedef struct lrtc_peer_connection_callbacks_t { lrtc_peer_connection_state_cb on_signaling_state; lrtc_peer_connection_state_cb on_peer_connection_state; lrtc_peer_connection_state_cb on_ice_gathering_state; lrtc_peer_connection_state_cb on_ice_connection_state; lrtc_ice_candidate_cb on_ice_candidate; void (LUMENRTC_CALL *on_data_channel)(void* user_data, lrtc_data_channel_t* channel); void (LUMENRTC_CALL *on_video_track)(void* user_data, lrtc_video_track_t* track); void (LUMENRTC_CALL *on_audio_track)(void* user_data, lrtc_audio_track_t* track); lrtc_track_cb on_track; lrtc_track_cb on_remove_track; void (LUMENRTC_CALL *on_renegotiation_needed)(void* user_data); } lrtc_peer_connection_callbacks_t; typedef struct lrtc_data_channel_callbacks_t { lrtc_data_channel_state_cb on_state_change; lrtc_data_channel_message_cb on_message; } lrtc_data_channel_callbacks_t; typedef struct lrtc_dtmf_sender_callbacks_t { lrtc_dtmf_tone_cb on_tone_change; } lrtc_dtmf_sender_callbacks_t; typedef struct lrtc_video_sink_callbacks_t { lrtc_video_frame_cb on_frame; } lrtc_video_sink_callbacks_t; typedef struct lrtc_audio_sink_callbacks_t { lrtc_audio_frame_cb on_data; } lrtc_audio_sink_callbacks_t; LUMENRTC_API lrtc_result_t",
+        "signature": "__declspec(dllexport) #elif defined(LUMENRTC_DLL) #define LUMENRTC_API __declspec(dllimport) #else #define LUMENRTC_API #endif #define LUMENRTC_CALL __cdecl #else #define LUMENRTC_API __attribute__((visibility(\"default\"))) #define LUMENRTC_CALL #endif #define LRTC_MAX_ICE_SERVERS 8 #define LUMENRTC_ABI_VERSION_MAJOR 1 #define LUMENRTC_ABI_VERSION_MINOR 0 #define LUMENRTC_ABI_VERSION_PATCH 0 typedef struct lrtc_factory_t lrtc_factory_t; typedef struct lrtc_peer_connection_t lrtc_peer_connection_t; typedef struct lrtc_media_constraints_t lrtc_media_constraints_t; typedef struct lrtc_data_channel_t lrtc_data_channel_t; typedef struct lrtc_audio_device_t lrtc_audio_device_t; typedef struct lrtc_video_device_t lrtc_video_device_t; typedef struct lrtc_desktop_device_t lrtc_desktop_device_t; typedef struct lrtc_desktop_media_list_t lrtc_desktop_media_list_t; typedef struct lrtc_media_source_t lrtc_media_source_t; typedef struct lrtc_desktop_capturer_t lrtc_desktop_capturer_t; typedef struct lrtc_video_capturer_t lrtc_video_capturer_t; typedef struct lrtc_video_source_t lrtc_video_source_t; typedef struct lrtc_audio_source_t lrtc_audio_source_t; typedef struct lrtc_media_stream_t lrtc_media_stream_t; typedef struct lrtc_video_track_t lrtc_video_track_t; typedef struct lrtc_audio_track_t lrtc_audio_track_t; typedef struct lrtc_audio_sink_t lrtc_audio_sink_t; typedef struct lrtc_video_sink_t lrtc_video_sink_t; typedef struct lrtc_video_frame_t lrtc_video_frame_t; typedef struct lrtc_rtp_sender_t lrtc_rtp_sender_t; typedef struct lrtc_rtp_receiver_t lrtc_rtp_receiver_t; typedef struct lrtc_rtp_transceiver_t lrtc_rtp_transceiver_t; typedef struct lrtc_dtmf_sender_t lrtc_dtmf_sender_t; typedef enum lrtc_result_t { LRTC_OK = 0, LRTC_ERROR = 1, LRTC_INVALID_ARG = 2, LRTC_NOT_IMPLEMENTED = 3, } lrtc_result_t; typedef enum lrtc_log_severity { LRTC_LOG_VERBOSE = 0, LRTC_LOG_INFO = 1, LRTC_LOG_WARNING = 2, LRTC_LOG_ERROR = 3, LRTC_LOG_NONE = 4, } lrtc_log_severity; typedef enum lrtc_media_security_type { LRTC_SRTP_NONE = 0, LRTC_SDES_SRTP = 1, LRTC_DTLS_SRTP = 2, } lrtc_media_security_type; typedef enum lrtc_media_type { LRTC_MEDIA_AUDIO = 0, LRTC_MEDIA_VIDEO = 1, LRTC_MEDIA_DATA = 2, } lrtc_media_type; typedef enum lrtc_desktop_type { LRTC_DESKTOP_SCREEN = 0, LRTC_DESKTOP_WINDOW = 1, } lrtc_desktop_type; typedef enum lrtc_desktop_capture_state { LRTC_DESKTOP_CAPTURE_RUNNING = 0, LRTC_DESKTOP_CAPTURE_STOPPED = 1, LRTC_DESKTOP_CAPTURE_FAILED = 2, } lrtc_desktop_capture_state; typedef enum lrtc_track_state { LRTC_TRACK_LIVE = 0, LRTC_TRACK_ENDED = 1, } lrtc_track_state; typedef enum lrtc_rtp_transceiver_direction { LRTC_RTP_TRANSCEIVER_SEND_RECV = 0, LRTC_RTP_TRANSCEIVER_SEND_ONLY = 1, LRTC_RTP_TRANSCEIVER_RECV_ONLY = 2, LRTC_RTP_TRANSCEIVER_INACTIVE = 3, LRTC_RTP_TRANSCEIVER_STOPPED = 4, } lrtc_rtp_transceiver_direction; typedef enum lrtc_dtls_transport_state { LRTC_DTLS_NEW = 0, LRTC_DTLS_CONNECTING = 1, LRTC_DTLS_CONNECTED = 2, LRTC_DTLS_CLOSED = 3, LRTC_DTLS_FAILED = 4, } lrtc_dtls_transport_state; typedef enum lrtc_audio_source_type { LRTC_AUDIO_SOURCE_MICROPHONE = 0, LRTC_AUDIO_SOURCE_CUSTOM = 1, } lrtc_audio_source_type; typedef enum lrtc_ice_transports_type { LRTC_ICE_TRANSPORTS_NONE = 0, LRTC_ICE_TRANSPORTS_RELAY = 1, LRTC_ICE_TRANSPORTS_NO_HOST = 2, LRTC_ICE_TRANSPORTS_ALL = 3, } lrtc_ice_transports_type; typedef enum lrtc_tcp_candidate_policy { LRTC_TCP_CANDIDATE_ENABLED = 0, LRTC_TCP_CANDIDATE_DISABLED = 1, } lrtc_tcp_candidate_policy; typedef enum lrtc_candidate_network_policy { LRTC_CANDIDATE_NETWORK_ALL = 0, LRTC_CANDIDATE_NETWORK_LOW_COST = 1, } lrtc_candidate_network_policy; typedef enum lrtc_rtcp_mux_policy { LRTC_RTCP_MUX_NEGOTIATE = 0, LRTC_RTCP_MUX_REQUIRE = 1, } lrtc_rtcp_mux_policy; typedef enum lrtc_bundle_policy { LRTC_BUNDLE_BALANCED = 0, LRTC_BUNDLE_MAX_BUNDLE = 1, LRTC_BUNDLE_MAX_COMPAT = 2, } lrtc_bundle_policy; typedef enum lrtc_sdp_semantics { LRTC_SDP_PLAN_B = 0, LRTC_SDP_UNIFIED_PLAN = 1, } lrtc_sdp_semantics; typedef enum lrtc_degradation_preference { LRTC_DEGRADATION_DISABLED = 0, LRTC_DEGRADATION_MAINTAIN_FRAMERATE = 1, LRTC_DEGRADATION_MAINTAIN_RESOLUTION = 2, LRTC_DEGRADATION_BALANCED = 3, } lrtc_degradation_preference; typedef enum lrtc_peer_connection_state { LRTC_PC_STATE_NEW = 0, LRTC_PC_STATE_CONNECTING = 1, LRTC_PC_STATE_CONNECTED = 2, LRTC_PC_STATE_DISCONNECTED = 3, LRTC_PC_STATE_FAILED = 4, LRTC_PC_STATE_CLOSED = 5, } lrtc_peer_connection_state; typedef enum lrtc_signaling_state { LRTC_SIGNALING_STABLE = 0, LRTC_SIGNALING_HAVE_LOCAL_OFFER = 1, LRTC_SIGNALING_HAVE_REMOTE_OFFER = 2, LRTC_SIGNALING_HAVE_LOCAL_PRANSWER = 3, LRTC_SIGNALING_HAVE_REMOTE_PRANSWER = 4, LRTC_SIGNALING_CLOSED = 5, } lrtc_signaling_state; typedef enum lrtc_ice_gathering_state { LRTC_ICE_GATHERING_NEW = 0, LRTC_ICE_GATHERING_GATHERING = 1, LRTC_ICE_GATHERING_COMPLETE = 2, } lrtc_ice_gathering_state; typedef enum lrtc_ice_connection_state { LRTC_ICE_CONNECTION_NEW = 0, LRTC_ICE_CONNECTION_CHECKING = 1, LRTC_ICE_CONNECTION_COMPLETED = 2, LRTC_ICE_CONNECTION_CONNECTED = 3, LRTC_ICE_CONNECTION_FAILED = 4, LRTC_ICE_CONNECTION_DISCONNECTED = 5, LRTC_ICE_CONNECTION_CLOSED = 6, LRTC_ICE_CONNECTION_MAX = 7, } lrtc_ice_connection_state; typedef enum lrtc_data_channel_state { LRTC_DATA_CHANNEL_CONNECTING = 0, LRTC_DATA_CHANNEL_OPEN = 1, LRTC_DATA_CHANNEL_CLOSING = 2, LRTC_DATA_CHANNEL_CLOSED = 3, } lrtc_data_channel_state; typedef struct lrtc_ice_server_t { const char* uri; const char* username; const char* password; } lrtc_ice_server_t; typedef struct lrtc_rtc_config_t { lrtc_ice_server_t ice_servers[LRTC_MAX_ICE_SERVERS]; uint32_t ice_server_count; lrtc_ice_transports_type ice_transports_type; lrtc_bundle_policy bundle_policy; lrtc_rtcp_mux_policy rtcp_mux_policy; lrtc_candidate_network_policy candidate_network_policy; lrtc_tcp_candidate_policy tcp_candidate_policy; int ice_candidate_pool_size; lrtc_media_security_type srtp_type; lrtc_sdp_semantics sdp_semantics; bool offer_to_receive_audio; bool offer_to_receive_video; bool disable_ipv6; bool disable_ipv6_on_wifi; int max_ipv6_networks; bool disable_link_local_networks; int screencast_min_bitrate; bool enable_dscp; bool use_rtp_mux; uint32_t local_audio_bandwidth; uint32_t local_video_bandwidth; } lrtc_rtc_config_t; typedef struct lrtc_audio_options_t { bool echo_cancellation; bool auto_gain_control; bool noise_suppression; bool highpass_filter; } lrtc_audio_options_t; typedef struct lrtc_rtp_encoding_settings_t { int max_bitrate_bps; int min_bitrate_bps; double max_framerate; double scale_resolution_down_by; int active; int degradation_preference; double bitrate_priority; int network_priority; int num_temporal_layers; const char* scalability_mode; const char* rid; int adaptive_ptime; } lrtc_rtp_encoding_settings_t; typedef struct lrtc_rtp_encoding_info_t { uint32_t ssrc; int max_bitrate_bps; int min_bitrate_bps; double max_framerate; double scale_resolution_down_by; int active; double bitrate_priority; int network_priority; int num_temporal_layers; int adaptive_ptime; } lrtc_rtp_encoding_info_t; typedef struct lrtc_dtls_transport_info_t { int state; int ssl_cipher_suite; int srtp_cipher_suite; } lrtc_dtls_transport_info_t; typedef struct lrtc_rtp_transceiver_init_t { int direction; const char** stream_ids; uint32_t stream_id_count; const lrtc_rtp_encoding_settings_t* send_encodings; uint32_t send_encoding_count; } lrtc_rtp_transceiver_init_t; typedef void (LUMENRTC_CALL *lrtc_sdp_success_cb)(void* user_data, const char* sdp, const char* type); typedef void (LUMENRTC_CALL *lrtc_sdp_error_cb)(void* user_data, const char* error); typedef void (LUMENRTC_CALL *lrtc_void_cb)(void* user_data); typedef void (LUMENRTC_CALL *lrtc_peer_connection_state_cb)(void* user_data, int state); typedef void (LUMENRTC_CALL *lrtc_ice_candidate_cb)(void* user_data, const char* sdp_mid, int sdp_mline_index, const char* candidate); typedef void (LUMENRTC_CALL *lrtc_data_channel_state_cb)(void* user_data, int state); typedef void (LUMENRTC_CALL *lrtc_data_channel_message_cb)(void* user_data, const uint8_t* data, int length, int binary); typedef void (LUMENRTC_CALL *lrtc_audio_frame_cb)(void* user_data, const void* audio_data, int bits_per_sample, int sample_rate, size_t number_of_channels, size_t number_of_frames); typedef void (LUMENRTC_CALL *lrtc_video_frame_cb)(void* user_data, lrtc_video_frame_t* frame); typedef void (LUMENRTC_CALL *lrtc_track_cb)( void* user_data, lrtc_rtp_transceiver_t* transceiver, lrtc_rtp_receiver_t* receiver); typedef void (LUMENRTC_CALL *lrtc_stats_success_cb)(void* user_data, const char* json); typedef void (LUMENRTC_CALL *lrtc_stats_failure_cb)(void* user_data, const char* error); typedef void (LUMENRTC_CALL *lrtc_log_message_cb)(void* user_data, const char* message); typedef void (LUMENRTC_CALL *lrtc_dtmf_tone_cb)(void* user_data, const char* tone, const char* tone_buffer); typedef struct lrtc_peer_connection_callbacks_t { lrtc_peer_connection_state_cb on_signaling_state; lrtc_peer_connection_state_cb on_peer_connection_state; lrtc_peer_connection_state_cb on_ice_gathering_state; lrtc_peer_connection_state_cb on_ice_connection_state; lrtc_ice_candidate_cb on_ice_candidate; void (LUMENRTC_CALL *on_data_channel)(void* user_data, lrtc_data_channel_t* channel); void (LUMENRTC_CALL *on_video_track)(void* user_data, lrtc_video_track_t* track); void (LUMENRTC_CALL *on_audio_track)(void* user_data, lrtc_audio_track_t* track); lrtc_track_cb on_track; lrtc_track_cb on_remove_track; void (LUMENRTC_CALL *on_renegotiation_needed)(void* user_data); } lrtc_peer_connection_callbacks_t; typedef struct lrtc_data_channel_callbacks_t { lrtc_data_channel_state_cb on_state_change; lrtc_data_channel_message_cb on_message; } lrtc_data_channel_callbacks_t; typedef struct lrtc_dtmf_sender_callbacks_t { lrtc_dtmf_tone_cb on_tone_change; } lrtc_dtmf_sender_callbacks_t; typedef struct lrtc_video_sink_callbacks_t { lrtc_video_frame_cb on_frame; } lrtc_video_sink_callbacks_t; typedef struct lrtc_audio_sink_callbacks_t { lrtc_audio_frame_cb on_data; } lrtc_audio_sink_callbacks_t; LUMENRTC_API lrtc_result_t (void)"
+      },
+      "lrtc_logging_remove_callback": {
+        "parameters": "void",
+        "return_type": "void",
+        "signature": "void (void)"
+      },
+      "lrtc_logging_set_callback": {
+        "parameters": "int severity, lrtc_log_message_cb callback, void* user_data",
+        "return_type": "void",
+        "signature": "void (int severity, lrtc_log_message_cb callback, void* user_data)"
+      },
+      "lrtc_logging_set_min_level": {
+        "parameters": "int severity",
+        "return_type": "void",
+        "signature": "void (int severity)"
+      },
+      "lrtc_media_constraints_add_mandatory": {
+        "parameters": "lrtc_media_constraints_t* constraints, const char* key, const char* value",
+        "return_type": "void",
+        "signature": "void (lrtc_media_constraints_t* constraints, const char* key, const char* value)"
+      },
+      "lrtc_media_constraints_add_optional": {
+        "parameters": "lrtc_media_constraints_t* constraints, const char* key, const char* value",
+        "return_type": "void",
+        "signature": "void (lrtc_media_constraints_t* constraints, const char* key, const char* value)"
+      },
+      "lrtc_media_constraints_create": {
+        "parameters": "void",
+        "return_type": "lrtc_media_constraints_t*",
+        "signature": "lrtc_media_constraints_t* (void)"
+      },
+      "lrtc_media_constraints_release": {
+        "parameters": "lrtc_media_constraints_t* constraints",
+        "return_type": "void",
+        "signature": "void (lrtc_media_constraints_t* constraints)"
+      },
+      "lrtc_media_source_get_id": {
+        "parameters": "lrtc_media_source_t* source, char* buffer, uint32_t buffer_len",
+        "return_type": "int32_t",
+        "signature": "int32_t (lrtc_media_source_t* source, char* buffer, uint32_t buffer_len)"
+      },
+      "lrtc_media_source_get_name": {
+        "parameters": "lrtc_media_source_t* source, char* buffer, uint32_t buffer_len",
+        "return_type": "int32_t",
+        "signature": "int32_t (lrtc_media_source_t* source, char* buffer, uint32_t buffer_len)"
+      },
+      "lrtc_media_source_get_type": {
+        "parameters": "lrtc_media_source_t* source",
+        "return_type": "int",
+        "signature": "int (lrtc_media_source_t* source)"
+      },
+      "lrtc_media_source_release": {
+        "parameters": "lrtc_media_source_t* source",
+        "return_type": "void",
+        "signature": "void (lrtc_media_source_t* source)"
+      },
+      "lrtc_media_stream_add_audio_track": {
+        "parameters": "lrtc_media_stream_t* stream, lrtc_audio_track_t* track",
+        "return_type": "bool",
+        "signature": "bool (lrtc_media_stream_t* stream, lrtc_audio_track_t* track)"
+      },
+      "lrtc_media_stream_add_video_track": {
+        "parameters": "lrtc_media_stream_t* stream, lrtc_video_track_t* track",
+        "return_type": "bool",
+        "signature": "bool (lrtc_media_stream_t* stream, lrtc_video_track_t* track)"
+      },
+      "lrtc_media_stream_get_id": {
+        "parameters": "lrtc_media_stream_t* stream, char* buffer, uint32_t buffer_len",
+        "return_type": "int32_t",
+        "signature": "int32_t (lrtc_media_stream_t* stream, char* buffer, uint32_t buffer_len)"
+      },
+      "lrtc_media_stream_get_label": {
+        "parameters": "lrtc_media_stream_t* stream, char* buffer, uint32_t buffer_len",
+        "return_type": "int32_t",
+        "signature": "int32_t (lrtc_media_stream_t* stream, char* buffer, uint32_t buffer_len)"
+      },
+      "lrtc_media_stream_release": {
+        "parameters": "lrtc_media_stream_t* stream",
+        "return_type": "void",
+        "signature": "void (lrtc_media_stream_t* stream)"
+      },
+      "lrtc_media_stream_remove_audio_track": {
+        "parameters": "lrtc_media_stream_t* stream, lrtc_audio_track_t* track",
+        "return_type": "bool",
+        "signature": "bool (lrtc_media_stream_t* stream, lrtc_audio_track_t* track)"
+      },
+      "lrtc_media_stream_remove_video_track": {
+        "parameters": "lrtc_media_stream_t* stream, lrtc_video_track_t* track",
+        "return_type": "bool",
+        "signature": "bool (lrtc_media_stream_t* stream, lrtc_video_track_t* track)"
+      },
+      "lrtc_peer_connection_add_audio_track": {
+        "parameters": "lrtc_peer_connection_t* pc, lrtc_audio_track_t* track, const char** stream_ids, uint32_t stream_id_count",
+        "return_type": "int",
+        "signature": "int (lrtc_peer_connection_t* pc, lrtc_audio_track_t* track, const char** stream_ids, uint32_t stream_id_count)"
+      },
+      "lrtc_peer_connection_add_audio_track_sender": {
+        "parameters": "lrtc_peer_connection_t* pc, lrtc_audio_track_t* track, const char** stream_ids, uint32_t stream_id_count",
+        "return_type": "lrtc_rtp_sender_t*",
+        "signature": "lrtc_rtp_sender_t* (lrtc_peer_connection_t* pc, lrtc_audio_track_t* track, const char** stream_ids, uint32_t stream_id_count)"
+      },
+      "lrtc_peer_connection_add_audio_track_transceiver": {
+        "parameters": "lrtc_peer_connection_t* pc, lrtc_audio_track_t* track",
+        "return_type": "lrtc_rtp_transceiver_t*",
+        "signature": "lrtc_rtp_transceiver_t* (lrtc_peer_connection_t* pc, lrtc_audio_track_t* track)"
+      },
+      "lrtc_peer_connection_add_audio_track_transceiver_with_init": {
+        "parameters": "lrtc_peer_connection_t* pc, lrtc_audio_track_t* track, const lrtc_rtp_transceiver_init_t* init",
+        "return_type": "lrtc_rtp_transceiver_t*",
+        "signature": "lrtc_rtp_transceiver_t* (lrtc_peer_connection_t* pc, lrtc_audio_track_t* track, const lrtc_rtp_transceiver_init_t* init)"
+      },
+      "lrtc_peer_connection_add_ice_candidate": {
+        "parameters": "lrtc_peer_connection_t* pc, const char* sdp_mid, int sdp_mline_index, const char* candidate",
+        "return_type": "void",
+        "signature": "void (lrtc_peer_connection_t* pc, const char* sdp_mid, int sdp_mline_index, const char* candidate)"
+      },
+      "lrtc_peer_connection_add_ice_candidate_ex": {
+        "parameters": "lrtc_peer_connection_t* pc, const char* sdp_mid, int sdp_mline_index, const char* candidate",
+        "return_type": "int",
+        "signature": "int (lrtc_peer_connection_t* pc, const char* sdp_mid, int sdp_mline_index, const char* candidate)"
+      },
+      "lrtc_peer_connection_add_stream": {
+        "parameters": "lrtc_peer_connection_t* pc, lrtc_media_stream_t* stream",
+        "return_type": "bool",
+        "signature": "bool (lrtc_peer_connection_t* pc, lrtc_media_stream_t* stream)"
+      },
+      "lrtc_peer_connection_add_transceiver": {
+        "parameters": "lrtc_peer_connection_t* pc, lrtc_media_type media_type",
+        "return_type": "lrtc_rtp_transceiver_t*",
+        "signature": "lrtc_rtp_transceiver_t* (lrtc_peer_connection_t* pc, lrtc_media_type media_type)"
+      },
+      "lrtc_peer_connection_add_transceiver_with_init": {
+        "parameters": "lrtc_peer_connection_t* pc, lrtc_media_type media_type, const lrtc_rtp_transceiver_init_t* init",
+        "return_type": "lrtc_rtp_transceiver_t*",
+        "signature": "lrtc_rtp_transceiver_t* (lrtc_peer_connection_t* pc, lrtc_media_type media_type, const lrtc_rtp_transceiver_init_t* init)"
+      },
+      "lrtc_peer_connection_add_video_track": {
+        "parameters": "lrtc_peer_connection_t* pc, lrtc_video_track_t* track, const char** stream_ids, uint32_t stream_id_count",
+        "return_type": "int",
+        "signature": "int (lrtc_peer_connection_t* pc, lrtc_video_track_t* track, const char** stream_ids, uint32_t stream_id_count)"
+      },
+      "lrtc_peer_connection_add_video_track_sender": {
+        "parameters": "lrtc_peer_connection_t* pc, lrtc_video_track_t* track, const char** stream_ids, uint32_t stream_id_count",
+        "return_type": "lrtc_rtp_sender_t*",
+        "signature": "lrtc_rtp_sender_t* (lrtc_peer_connection_t* pc, lrtc_video_track_t* track, const char** stream_ids, uint32_t stream_id_count)"
+      },
+      "lrtc_peer_connection_add_video_track_transceiver": {
+        "parameters": "lrtc_peer_connection_t* pc, lrtc_video_track_t* track",
+        "return_type": "lrtc_rtp_transceiver_t*",
+        "signature": "lrtc_rtp_transceiver_t* (lrtc_peer_connection_t* pc, lrtc_video_track_t* track)"
+      },
+      "lrtc_peer_connection_add_video_track_transceiver_with_init": {
+        "parameters": "lrtc_peer_connection_t* pc, lrtc_video_track_t* track, const lrtc_rtp_transceiver_init_t* init",
+        "return_type": "lrtc_rtp_transceiver_t*",
+        "signature": "lrtc_rtp_transceiver_t* (lrtc_peer_connection_t* pc, lrtc_video_track_t* track, const lrtc_rtp_transceiver_init_t* init)"
+      },
+      "lrtc_peer_connection_close": {
+        "parameters": "lrtc_peer_connection_t* pc",
+        "return_type": "void",
+        "signature": "void (lrtc_peer_connection_t* pc)"
+      },
+      "lrtc_peer_connection_create": {
+        "parameters": "lrtc_factory_t* factory, const lrtc_rtc_config_t* config, lrtc_media_constraints_t* constraints, const lrtc_peer_connection_callbacks_t* callbacks, void* user_data",
+        "return_type": "lrtc_peer_connection_t*",
+        "signature": "lrtc_peer_connection_t* (lrtc_factory_t* factory, const lrtc_rtc_config_t* config, lrtc_media_constraints_t* constraints, const lrtc_peer_connection_callbacks_t* callbacks, void* user_data)"
+      },
+      "lrtc_peer_connection_create_answer": {
+        "parameters": "lrtc_peer_connection_t* pc, lrtc_sdp_success_cb success, lrtc_sdp_error_cb failure, void* user_data, lrtc_media_constraints_t* constraints",
+        "return_type": "void",
+        "signature": "void (lrtc_peer_connection_t* pc, lrtc_sdp_success_cb success, lrtc_sdp_error_cb failure, void* user_data, lrtc_media_constraints_t* constraints)"
+      },
+      "lrtc_peer_connection_create_data_channel": {
+        "parameters": "lrtc_peer_connection_t* pc, const char* label, int ordered, int reliable, int max_retransmit_time, int max_retransmits, const char* protocol, int negotiated, int id",
+        "return_type": "lrtc_data_channel_t*",
+        "signature": "lrtc_data_channel_t* (lrtc_peer_connection_t* pc, const char* label, int ordered, int reliable, int max_retransmit_time, int max_retransmits, const char* protocol, int negotiated, int id)"
+      },
+      "lrtc_peer_connection_create_offer": {
+        "parameters": "lrtc_peer_connection_t* pc, lrtc_sdp_success_cb success, lrtc_sdp_error_cb failure, void* user_data, lrtc_media_constraints_t* constraints",
+        "return_type": "void",
+        "signature": "void (lrtc_peer_connection_t* pc, lrtc_sdp_success_cb success, lrtc_sdp_error_cb failure, void* user_data, lrtc_media_constraints_t* constraints)"
+      },
+      "lrtc_peer_connection_get_local_description": {
+        "parameters": "lrtc_peer_connection_t* pc, lrtc_sdp_success_cb success, lrtc_sdp_error_cb failure, void* user_data",
+        "return_type": "void",
+        "signature": "void (lrtc_peer_connection_t* pc, lrtc_sdp_success_cb success, lrtc_sdp_error_cb failure, void* user_data)"
+      },
+      "lrtc_peer_connection_get_receiver": {
+        "parameters": "lrtc_peer_connection_t* pc, uint32_t index",
+        "return_type": "lrtc_rtp_receiver_t*",
+        "signature": "lrtc_rtp_receiver_t* (lrtc_peer_connection_t* pc, uint32_t index)"
+      },
+      "lrtc_peer_connection_get_receiver_stats": {
+        "parameters": "lrtc_peer_connection_t* pc, lrtc_rtp_receiver_t* receiver, lrtc_stats_success_cb success, lrtc_stats_failure_cb failure, void* user_data",
+        "return_type": "void",
+        "signature": "void (lrtc_peer_connection_t* pc, lrtc_rtp_receiver_t* receiver, lrtc_stats_success_cb success, lrtc_stats_failure_cb failure, void* user_data)"
+      },
+      "lrtc_peer_connection_get_remote_description": {
+        "parameters": "lrtc_peer_connection_t* pc, lrtc_sdp_success_cb success, lrtc_sdp_error_cb failure, void* user_data",
+        "return_type": "void",
+        "signature": "void (lrtc_peer_connection_t* pc, lrtc_sdp_success_cb success, lrtc_sdp_error_cb failure, void* user_data)"
+      },
+      "lrtc_peer_connection_get_sender": {
+        "parameters": "lrtc_peer_connection_t* pc, uint32_t index",
+        "return_type": "lrtc_rtp_sender_t*",
+        "signature": "lrtc_rtp_sender_t* (lrtc_peer_connection_t* pc, uint32_t index)"
+      },
+      "lrtc_peer_connection_get_sender_stats": {
+        "parameters": "lrtc_peer_connection_t* pc, lrtc_rtp_sender_t* sender, lrtc_stats_success_cb success, lrtc_stats_failure_cb failure, void* user_data",
+        "return_type": "void",
+        "signature": "void (lrtc_peer_connection_t* pc, lrtc_rtp_sender_t* sender, lrtc_stats_success_cb success, lrtc_stats_failure_cb failure, void* user_data)"
+      },
+      "lrtc_peer_connection_get_stats": {
+        "parameters": "lrtc_peer_connection_t* pc, lrtc_stats_success_cb success, lrtc_stats_failure_cb failure, void* user_data",
+        "return_type": "void",
+        "signature": "void (lrtc_peer_connection_t* pc, lrtc_stats_success_cb success, lrtc_stats_failure_cb failure, void* user_data)"
+      },
+      "lrtc_peer_connection_get_transceiver": {
+        "parameters": "lrtc_peer_connection_t* pc, uint32_t index",
+        "return_type": "lrtc_rtp_transceiver_t*",
+        "signature": "lrtc_rtp_transceiver_t* (lrtc_peer_connection_t* pc, uint32_t index)"
+      },
+      "lrtc_peer_connection_receiver_count": {
+        "parameters": "lrtc_peer_connection_t* pc",
+        "return_type": "uint32_t",
+        "signature": "uint32_t (lrtc_peer_connection_t* pc)"
+      },
+      "lrtc_peer_connection_release": {
+        "parameters": "lrtc_peer_connection_t* pc",
+        "return_type": "void",
+        "signature": "void (lrtc_peer_connection_t* pc)"
+      },
+      "lrtc_peer_connection_remove_stream": {
+        "parameters": "lrtc_peer_connection_t* pc, lrtc_media_stream_t* stream",
+        "return_type": "bool",
+        "signature": "bool (lrtc_peer_connection_t* pc, lrtc_media_stream_t* stream)"
+      },
+      "lrtc_peer_connection_remove_track": {
+        "parameters": "lrtc_peer_connection_t* pc, lrtc_rtp_sender_t* sender",
+        "return_type": "int",
+        "signature": "int (lrtc_peer_connection_t* pc, lrtc_rtp_sender_t* sender)"
+      },
+      "lrtc_peer_connection_restart_ice": {
+        "parameters": "lrtc_peer_connection_t* pc",
+        "return_type": "void",
+        "signature": "void (lrtc_peer_connection_t* pc)"
+      },
+      "lrtc_peer_connection_sender_count": {
+        "parameters": "lrtc_peer_connection_t* pc",
+        "return_type": "uint32_t",
+        "signature": "uint32_t (lrtc_peer_connection_t* pc)"
+      },
+      "lrtc_peer_connection_set_callbacks": {
+        "parameters": "lrtc_peer_connection_t* pc, const lrtc_peer_connection_callbacks_t* callbacks, void* user_data",
+        "return_type": "void",
+        "signature": "void (lrtc_peer_connection_t* pc, const lrtc_peer_connection_callbacks_t* callbacks, void* user_data)"
+      },
+      "lrtc_peer_connection_set_codec_preferences": {
+        "parameters": "lrtc_peer_connection_t* pc, lrtc_media_type media_type, const char** mime_types, uint32_t mime_type_count",
+        "return_type": "int",
+        "signature": "int (lrtc_peer_connection_t* pc, lrtc_media_type media_type, const char** mime_types, uint32_t mime_type_count)"
+      },
+      "lrtc_peer_connection_set_local_description": {
+        "parameters": "lrtc_peer_connection_t* pc, const char* sdp, const char* type, lrtc_void_cb success, lrtc_sdp_error_cb failure, void* user_data",
+        "return_type": "void",
+        "signature": "void (lrtc_peer_connection_t* pc, const char* sdp, const char* type, lrtc_void_cb success, lrtc_sdp_error_cb failure, void* user_data)"
+      },
+      "lrtc_peer_connection_set_remote_description": {
+        "parameters": "lrtc_peer_connection_t* pc, const char* sdp, const char* type, lrtc_void_cb success, lrtc_sdp_error_cb failure, void* user_data",
+        "return_type": "void",
+        "signature": "void (lrtc_peer_connection_t* pc, const char* sdp, const char* type, lrtc_void_cb success, lrtc_sdp_error_cb failure, void* user_data)"
+      },
+      "lrtc_peer_connection_set_transceiver_codec_preferences": {
+        "parameters": "lrtc_peer_connection_t* pc, lrtc_rtp_transceiver_t* transceiver, const char** mime_types, uint32_t mime_type_count",
+        "return_type": "int",
+        "signature": "int (lrtc_peer_connection_t* pc, lrtc_rtp_transceiver_t* transceiver, const char** mime_types, uint32_t mime_type_count)"
+      },
+      "lrtc_peer_connection_transceiver_count": {
+        "parameters": "lrtc_peer_connection_t* pc",
+        "return_type": "uint32_t",
+        "signature": "uint32_t (lrtc_peer_connection_t* pc)"
+      },
+      "lrtc_rtp_receiver_encoding_count": {
+        "parameters": "lrtc_rtp_receiver_t* receiver",
+        "return_type": "uint32_t",
+        "signature": "uint32_t (lrtc_rtp_receiver_t* receiver)"
+      },
+      "lrtc_rtp_receiver_get_audio_track": {
+        "parameters": "lrtc_rtp_receiver_t* receiver",
+        "return_type": "lrtc_audio_track_t*",
+        "signature": "lrtc_audio_track_t* (lrtc_rtp_receiver_t* receiver)"
+      },
+      "lrtc_rtp_receiver_get_degradation_preference": {
+        "parameters": "lrtc_rtp_receiver_t* receiver",
+        "return_type": "int",
+        "signature": "int (lrtc_rtp_receiver_t* receiver)"
+      },
+      "lrtc_rtp_receiver_get_dtls_info": {
+        "parameters": "lrtc_rtp_receiver_t* receiver, lrtc_dtls_transport_info_t* info",
+        "return_type": "int",
+        "signature": "int (lrtc_rtp_receiver_t* receiver, lrtc_dtls_transport_info_t* info)"
+      },
+      "lrtc_rtp_receiver_get_encoding_info": {
+        "parameters": "lrtc_rtp_receiver_t* receiver, uint32_t index, lrtc_rtp_encoding_info_t* info",
+        "return_type": "int",
+        "signature": "int (lrtc_rtp_receiver_t* receiver, uint32_t index, lrtc_rtp_encoding_info_t* info)"
+      },
+      "lrtc_rtp_receiver_get_encoding_rid": {
+        "parameters": "lrtc_rtp_receiver_t* receiver, uint32_t index, char* buffer, uint32_t buffer_len",
+        "return_type": "int32_t",
+        "signature": "int32_t (lrtc_rtp_receiver_t* receiver, uint32_t index, char* buffer, uint32_t buffer_len)"
+      },
+      "lrtc_rtp_receiver_get_encoding_scalability_mode": {
+        "parameters": "lrtc_rtp_receiver_t* receiver, uint32_t index, char* buffer, uint32_t buffer_len",
+        "return_type": "int32_t",
+        "signature": "int32_t (lrtc_rtp_receiver_t* receiver, uint32_t index, char* buffer, uint32_t buffer_len)"
+      },
+      "lrtc_rtp_receiver_get_id": {
+        "parameters": "lrtc_rtp_receiver_t* receiver, char* buffer, uint32_t buffer_len",
+        "return_type": "int32_t",
+        "signature": "int32_t (lrtc_rtp_receiver_t* receiver, char* buffer, uint32_t buffer_len)"
+      },
+      "lrtc_rtp_receiver_get_media_type": {
+        "parameters": "lrtc_rtp_receiver_t* receiver",
+        "return_type": "int",
+        "signature": "int (lrtc_rtp_receiver_t* receiver)"
+      },
+      "lrtc_rtp_receiver_get_parameters_mid": {
+        "parameters": "lrtc_rtp_receiver_t* receiver, char* buffer, uint32_t buffer_len",
+        "return_type": "int32_t",
+        "signature": "int32_t (lrtc_rtp_receiver_t* receiver, char* buffer, uint32_t buffer_len)"
+      },
+      "lrtc_rtp_receiver_get_stream": {
+        "parameters": "lrtc_rtp_receiver_t* receiver, uint32_t index",
+        "return_type": "lrtc_media_stream_t*",
+        "signature": "lrtc_media_stream_t* (lrtc_rtp_receiver_t* receiver, uint32_t index)"
+      },
+      "lrtc_rtp_receiver_get_stream_id": {
+        "parameters": "lrtc_rtp_receiver_t* receiver, uint32_t index, char* buffer, uint32_t buffer_len",
+        "return_type": "int32_t",
+        "signature": "int32_t (lrtc_rtp_receiver_t* receiver, uint32_t index, char* buffer, uint32_t buffer_len)"
+      },
+      "lrtc_rtp_receiver_get_video_track": {
+        "parameters": "lrtc_rtp_receiver_t* receiver",
+        "return_type": "lrtc_video_track_t*",
+        "signature": "lrtc_video_track_t* (lrtc_rtp_receiver_t* receiver)"
+      },
+      "lrtc_rtp_receiver_release": {
+        "parameters": "lrtc_rtp_receiver_t* receiver",
+        "return_type": "void",
+        "signature": "void (lrtc_rtp_receiver_t* receiver)"
+      },
+      "lrtc_rtp_receiver_set_jitter_buffer_min_delay": {
+        "parameters": "lrtc_rtp_receiver_t* receiver, double delay_seconds",
+        "return_type": "int",
+        "signature": "int (lrtc_rtp_receiver_t* receiver, double delay_seconds)"
+      },
+      "lrtc_rtp_receiver_stream_count": {
+        "parameters": "lrtc_rtp_receiver_t* receiver",
+        "return_type": "uint32_t",
+        "signature": "uint32_t (lrtc_rtp_receiver_t* receiver)"
+      },
+      "lrtc_rtp_receiver_stream_id_count": {
+        "parameters": "lrtc_rtp_receiver_t* receiver",
+        "return_type": "uint32_t",
+        "signature": "uint32_t (lrtc_rtp_receiver_t* receiver)"
+      },
+      "lrtc_rtp_sender_encoding_count": {
+        "parameters": "lrtc_rtp_sender_t* sender",
+        "return_type": "uint32_t",
+        "signature": "uint32_t (lrtc_rtp_sender_t* sender)"
+      },
+      "lrtc_rtp_sender_get_audio_track": {
+        "parameters": "lrtc_rtp_sender_t* sender",
+        "return_type": "lrtc_audio_track_t*",
+        "signature": "lrtc_audio_track_t* (lrtc_rtp_sender_t* sender)"
+      },
+      "lrtc_rtp_sender_get_degradation_preference": {
+        "parameters": "lrtc_rtp_sender_t* sender",
+        "return_type": "int",
+        "signature": "int (lrtc_rtp_sender_t* sender)"
+      },
+      "lrtc_rtp_sender_get_dtls_info": {
+        "parameters": "lrtc_rtp_sender_t* sender, lrtc_dtls_transport_info_t* info",
+        "return_type": "int",
+        "signature": "int (lrtc_rtp_sender_t* sender, lrtc_dtls_transport_info_t* info)"
+      },
+      "lrtc_rtp_sender_get_dtmf_sender": {
+        "parameters": "lrtc_rtp_sender_t* sender",
+        "return_type": "lrtc_dtmf_sender_t*",
+        "signature": "lrtc_dtmf_sender_t* (lrtc_rtp_sender_t* sender)"
+      },
+      "lrtc_rtp_sender_get_encoding_info": {
+        "parameters": "lrtc_rtp_sender_t* sender, uint32_t index, lrtc_rtp_encoding_info_t* info",
+        "return_type": "int",
+        "signature": "int (lrtc_rtp_sender_t* sender, uint32_t index, lrtc_rtp_encoding_info_t* info)"
+      },
+      "lrtc_rtp_sender_get_encoding_rid": {
+        "parameters": "lrtc_rtp_sender_t* sender, uint32_t index, char* buffer, uint32_t buffer_len",
+        "return_type": "int32_t",
+        "signature": "int32_t (lrtc_rtp_sender_t* sender, uint32_t index, char* buffer, uint32_t buffer_len)"
+      },
+      "lrtc_rtp_sender_get_encoding_scalability_mode": {
+        "parameters": "lrtc_rtp_sender_t* sender, uint32_t index, char* buffer, uint32_t buffer_len",
+        "return_type": "int32_t",
+        "signature": "int32_t (lrtc_rtp_sender_t* sender, uint32_t index, char* buffer, uint32_t buffer_len)"
+      },
+      "lrtc_rtp_sender_get_id": {
+        "parameters": "lrtc_rtp_sender_t* sender, char* buffer, uint32_t buffer_len",
+        "return_type": "int32_t",
+        "signature": "int32_t (lrtc_rtp_sender_t* sender, char* buffer, uint32_t buffer_len)"
+      },
+      "lrtc_rtp_sender_get_media_type": {
+        "parameters": "lrtc_rtp_sender_t* sender",
+        "return_type": "int",
+        "signature": "int (lrtc_rtp_sender_t* sender)"
+      },
+      "lrtc_rtp_sender_get_parameters_mid": {
+        "parameters": "lrtc_rtp_sender_t* sender, char* buffer, uint32_t buffer_len",
+        "return_type": "int32_t",
+        "signature": "int32_t (lrtc_rtp_sender_t* sender, char* buffer, uint32_t buffer_len)"
+      },
+      "lrtc_rtp_sender_get_ssrc": {
+        "parameters": "lrtc_rtp_sender_t* sender",
+        "return_type": "uint32_t",
+        "signature": "uint32_t (lrtc_rtp_sender_t* sender)"
+      },
+      "lrtc_rtp_sender_get_stream_id": {
+        "parameters": "lrtc_rtp_sender_t* sender, uint32_t index, char* buffer, uint32_t buffer_len",
+        "return_type": "int32_t",
+        "signature": "int32_t (lrtc_rtp_sender_t* sender, uint32_t index, char* buffer, uint32_t buffer_len)"
+      },
+      "lrtc_rtp_sender_get_video_track": {
+        "parameters": "lrtc_rtp_sender_t* sender",
+        "return_type": "lrtc_video_track_t*",
+        "signature": "lrtc_video_track_t* (lrtc_rtp_sender_t* sender)"
+      },
+      "lrtc_rtp_sender_release": {
+        "parameters": "lrtc_rtp_sender_t* sender",
+        "return_type": "void",
+        "signature": "void (lrtc_rtp_sender_t* sender)"
+      },
+      "lrtc_rtp_sender_replace_audio_track": {
+        "parameters": "lrtc_rtp_sender_t* sender, lrtc_audio_track_t* track",
+        "return_type": "int",
+        "signature": "int (lrtc_rtp_sender_t* sender, lrtc_audio_track_t* track)"
+      },
+      "lrtc_rtp_sender_replace_video_track": {
+        "parameters": "lrtc_rtp_sender_t* sender, lrtc_video_track_t* track",
+        "return_type": "int",
+        "signature": "int (lrtc_rtp_sender_t* sender, lrtc_video_track_t* track)"
+      },
+      "lrtc_rtp_sender_set_encoding_parameters": {
+        "parameters": "lrtc_rtp_sender_t* sender, const lrtc_rtp_encoding_settings_t* settings",
+        "return_type": "int",
+        "signature": "int (lrtc_rtp_sender_t* sender, const lrtc_rtp_encoding_settings_t* settings)"
+      },
+      "lrtc_rtp_sender_set_encoding_parameters_at": {
+        "parameters": "lrtc_rtp_sender_t* sender, uint32_t index, const lrtc_rtp_encoding_settings_t* settings",
+        "return_type": "int",
+        "signature": "int (lrtc_rtp_sender_t* sender, uint32_t index, const lrtc_rtp_encoding_settings_t* settings)"
+      },
+      "lrtc_rtp_sender_set_stream_ids": {
+        "parameters": "lrtc_rtp_sender_t* sender, const char** stream_ids, uint32_t stream_id_count",
+        "return_type": "int",
+        "signature": "int (lrtc_rtp_sender_t* sender, const char** stream_ids, uint32_t stream_id_count)"
+      },
+      "lrtc_rtp_sender_stream_id_count": {
+        "parameters": "lrtc_rtp_sender_t* sender",
+        "return_type": "uint32_t",
+        "signature": "uint32_t (lrtc_rtp_sender_t* sender)"
+      },
+      "lrtc_rtp_transceiver_get_current_direction": {
+        "parameters": "lrtc_rtp_transceiver_t* transceiver",
+        "return_type": "int",
+        "signature": "int (lrtc_rtp_transceiver_t* transceiver)"
+      },
+      "lrtc_rtp_transceiver_get_direction": {
+        "parameters": "lrtc_rtp_transceiver_t* transceiver",
+        "return_type": "int",
+        "signature": "int (lrtc_rtp_transceiver_t* transceiver)"
+      },
+      "lrtc_rtp_transceiver_get_fired_direction": {
+        "parameters": "lrtc_rtp_transceiver_t* transceiver",
+        "return_type": "int",
+        "signature": "int (lrtc_rtp_transceiver_t* transceiver)"
+      },
+      "lrtc_rtp_transceiver_get_id": {
+        "parameters": "lrtc_rtp_transceiver_t* transceiver, char* buffer, uint32_t buffer_len",
+        "return_type": "int32_t",
+        "signature": "int32_t (lrtc_rtp_transceiver_t* transceiver, char* buffer, uint32_t buffer_len)"
+      },
+      "lrtc_rtp_transceiver_get_media_type": {
+        "parameters": "lrtc_rtp_transceiver_t* transceiver",
+        "return_type": "int",
+        "signature": "int (lrtc_rtp_transceiver_t* transceiver)"
+      },
+      "lrtc_rtp_transceiver_get_mid": {
+        "parameters": "lrtc_rtp_transceiver_t* transceiver, char* buffer, uint32_t buffer_len",
+        "return_type": "int32_t",
+        "signature": "int32_t (lrtc_rtp_transceiver_t* transceiver, char* buffer, uint32_t buffer_len)"
+      },
+      "lrtc_rtp_transceiver_get_receiver": {
+        "parameters": "lrtc_rtp_transceiver_t* transceiver",
+        "return_type": "lrtc_rtp_receiver_t*",
+        "signature": "lrtc_rtp_receiver_t* (lrtc_rtp_transceiver_t* transceiver)"
+      },
+      "lrtc_rtp_transceiver_get_sender": {
+        "parameters": "lrtc_rtp_transceiver_t* transceiver",
+        "return_type": "lrtc_rtp_sender_t*",
+        "signature": "lrtc_rtp_sender_t* (lrtc_rtp_transceiver_t* transceiver)"
+      },
+      "lrtc_rtp_transceiver_get_stopped": {
+        "parameters": "lrtc_rtp_transceiver_t* transceiver",
+        "return_type": "int",
+        "signature": "int (lrtc_rtp_transceiver_t* transceiver)"
+      },
+      "lrtc_rtp_transceiver_get_stopping": {
+        "parameters": "lrtc_rtp_transceiver_t* transceiver",
+        "return_type": "int",
+        "signature": "int (lrtc_rtp_transceiver_t* transceiver)"
+      },
+      "lrtc_rtp_transceiver_release": {
+        "parameters": "lrtc_rtp_transceiver_t* transceiver",
+        "return_type": "void",
+        "signature": "void (lrtc_rtp_transceiver_t* transceiver)"
+      },
+      "lrtc_rtp_transceiver_set_direction": {
+        "parameters": "lrtc_rtp_transceiver_t* transceiver, int direction, char* error, uint32_t error_len",
+        "return_type": "int",
+        "signature": "int (lrtc_rtp_transceiver_t* transceiver, int direction, char* error, uint32_t error_len)"
+      },
+      "lrtc_rtp_transceiver_stop": {
+        "parameters": "lrtc_rtp_transceiver_t* transceiver, char* error, uint32_t error_len",
+        "return_type": "int",
+        "signature": "int (lrtc_rtp_transceiver_t* transceiver, char* error, uint32_t error_len)"
+      },
+      "lrtc_terminate": {
+        "parameters": "void",
+        "return_type": "void",
+        "signature": "void (void)"
+      },
+      "lrtc_video_capturer_capture_started": {
+        "parameters": "lrtc_video_capturer_t* capturer",
+        "return_type": "bool",
+        "signature": "bool (lrtc_video_capturer_t* capturer)"
+      },
+      "lrtc_video_capturer_release": {
+        "parameters": "lrtc_video_capturer_t* capturer",
+        "return_type": "void",
+        "signature": "void (lrtc_video_capturer_t* capturer)"
+      },
+      "lrtc_video_capturer_start": {
+        "parameters": "lrtc_video_capturer_t* capturer",
+        "return_type": "bool",
+        "signature": "bool (lrtc_video_capturer_t* capturer)"
+      },
+      "lrtc_video_capturer_stop": {
+        "parameters": "lrtc_video_capturer_t* capturer",
+        "return_type": "void",
+        "signature": "void (lrtc_video_capturer_t* capturer)"
+      },
+      "lrtc_video_device_create_capturer": {
+        "parameters": "lrtc_video_device_t* device, const char* name, uint32_t index, size_t width, size_t height, size_t target_fps",
+        "return_type": "lrtc_video_capturer_t*",
+        "signature": "lrtc_video_capturer_t* (lrtc_video_device_t* device, const char* name, uint32_t index, size_t width, size_t height, size_t target_fps)"
+      },
+      "lrtc_video_device_get_device_name": {
+        "parameters": "lrtc_video_device_t* device, uint32_t index, char* name, uint32_t name_length, char* unique_id, uint32_t unique_id_length",
+        "return_type": "int32_t",
+        "signature": "int32_t (lrtc_video_device_t* device, uint32_t index, char* name, uint32_t name_length, char* unique_id, uint32_t unique_id_length)"
+      },
+      "lrtc_video_device_number_of_devices": {
+        "parameters": "lrtc_video_device_t* device",
+        "return_type": "uint32_t",
+        "signature": "uint32_t (lrtc_video_device_t* device)"
+      },
+      "lrtc_video_device_release": {
+        "parameters": "lrtc_video_device_t* device",
+        "return_type": "void",
+        "signature": "void (lrtc_video_device_t* device)"
+      },
+      "lrtc_video_frame_copy_i420": {
+        "parameters": "lrtc_video_frame_t* frame, uint8_t* dst_y, int dst_stride_y, uint8_t* dst_u, int dst_stride_u, uint8_t* dst_v, int dst_stride_v",
+        "return_type": "int",
+        "signature": "int (lrtc_video_frame_t* frame, uint8_t* dst_y, int dst_stride_y, uint8_t* dst_u, int dst_stride_u, uint8_t* dst_v, int dst_stride_v)"
+      },
+      "lrtc_video_frame_data_u": {
+        "parameters": "lrtc_video_frame_t* frame",
+        "return_type": "const uint8_t*",
+        "signature": "const uint8_t* (lrtc_video_frame_t* frame)"
+      },
+      "lrtc_video_frame_data_v": {
+        "parameters": "lrtc_video_frame_t* frame",
+        "return_type": "const uint8_t*",
+        "signature": "const uint8_t* (lrtc_video_frame_t* frame)"
+      },
+      "lrtc_video_frame_data_y": {
+        "parameters": "lrtc_video_frame_t* frame",
+        "return_type": "const uint8_t*",
+        "signature": "const uint8_t* (lrtc_video_frame_t* frame)"
+      },
+      "lrtc_video_frame_height": {
+        "parameters": "lrtc_video_frame_t* frame",
+        "return_type": "int",
+        "signature": "int (lrtc_video_frame_t* frame)"
+      },
+      "lrtc_video_frame_release": {
+        "parameters": "lrtc_video_frame_t* frame",
+        "return_type": "void",
+        "signature": "void (lrtc_video_frame_t* frame)"
+      },
+      "lrtc_video_frame_retain": {
+        "parameters": "lrtc_video_frame_t* frame",
+        "return_type": "lrtc_video_frame_t*",
+        "signature": "lrtc_video_frame_t* (lrtc_video_frame_t* frame)"
+      },
+      "lrtc_video_frame_stride_u": {
+        "parameters": "lrtc_video_frame_t* frame",
+        "return_type": "int",
+        "signature": "int (lrtc_video_frame_t* frame)"
+      },
+      "lrtc_video_frame_stride_v": {
+        "parameters": "lrtc_video_frame_t* frame",
+        "return_type": "int",
+        "signature": "int (lrtc_video_frame_t* frame)"
+      },
+      "lrtc_video_frame_stride_y": {
+        "parameters": "lrtc_video_frame_t* frame",
+        "return_type": "int",
+        "signature": "int (lrtc_video_frame_t* frame)"
+      },
+      "lrtc_video_frame_to_argb": {
+        "parameters": "lrtc_video_frame_t* frame, uint8_t* dst_argb, int dst_stride_argb, int dest_width, int dest_height, int format",
+        "return_type": "int",
+        "signature": "int (lrtc_video_frame_t* frame, uint8_t* dst_argb, int dst_stride_argb, int dest_width, int dest_height, int format)"
+      },
+      "lrtc_video_frame_width": {
+        "parameters": "lrtc_video_frame_t* frame",
+        "return_type": "int",
+        "signature": "int (lrtc_video_frame_t* frame)"
+      },
+      "lrtc_video_sink_create": {
+        "parameters": "const lrtc_video_sink_callbacks_t* callbacks, void* user_data",
+        "return_type": "lrtc_video_sink_t*",
+        "signature": "lrtc_video_sink_t* (const lrtc_video_sink_callbacks_t* callbacks, void* user_data)"
+      },
+      "lrtc_video_sink_release": {
+        "parameters": "lrtc_video_sink_t* sink",
+        "return_type": "void",
+        "signature": "void (lrtc_video_sink_t* sink)"
+      },
+      "lrtc_video_source_release": {
+        "parameters": "lrtc_video_source_t* source",
+        "return_type": "void",
+        "signature": "void (lrtc_video_source_t* source)"
+      },
+      "lrtc_video_track_add_sink": {
+        "parameters": "lrtc_video_track_t* track, lrtc_video_sink_t* sink",
+        "return_type": "void",
+        "signature": "void (lrtc_video_track_t* track, lrtc_video_sink_t* sink)"
+      },
+      "lrtc_video_track_get_enabled": {
+        "parameters": "lrtc_video_track_t* track",
+        "return_type": "int",
+        "signature": "int (lrtc_video_track_t* track)"
+      },
+      "lrtc_video_track_get_id": {
+        "parameters": "lrtc_video_track_t* track, char* buffer, uint32_t buffer_len",
+        "return_type": "int32_t",
+        "signature": "int32_t (lrtc_video_track_t* track, char* buffer, uint32_t buffer_len)"
+      },
+      "lrtc_video_track_get_state": {
+        "parameters": "lrtc_video_track_t* track",
+        "return_type": "int",
+        "signature": "int (lrtc_video_track_t* track)"
+      },
+      "lrtc_video_track_release": {
+        "parameters": "lrtc_video_track_t* track",
+        "return_type": "void",
+        "signature": "void (lrtc_video_track_t* track)"
+      },
+      "lrtc_video_track_remove_sink": {
+        "parameters": "lrtc_video_track_t* track, lrtc_video_sink_t* sink",
+        "return_type": "void",
+        "signature": "void (lrtc_video_track_t* track, lrtc_video_sink_t* sink)"
+      },
+      "lrtc_video_track_set_enabled": {
+        "parameters": "lrtc_video_track_t* track, int enabled",
+        "return_type": "int",
+        "signature": "int (lrtc_video_track_t* track, int enabled)"
+      }
+    },
+    "path": "native/include/lumenrtc.h",
+    "symbols": [
+      "lrtc_abi_version_major",
+      "lrtc_abi_version_minor",
+      "lrtc_abi_version_patch",
+      "lrtc_abi_version_string",
+      "lrtc_audio_device_microphone_volume",
+      "lrtc_audio_device_playout_device_name",
+      "lrtc_audio_device_playout_devices",
+      "lrtc_audio_device_recording_device_name",
+      "lrtc_audio_device_recording_devices",
+      "lrtc_audio_device_release",
+      "lrtc_audio_device_set_microphone_volume",
+      "lrtc_audio_device_set_playout_device",
+      "lrtc_audio_device_set_recording_device",
+      "lrtc_audio_device_set_speaker_volume",
+      "lrtc_audio_device_speaker_volume",
+      "lrtc_audio_sink_create",
+      "lrtc_audio_sink_release",
+      "lrtc_audio_source_capture_frame",
+      "lrtc_audio_source_release",
+      "lrtc_audio_track_add_sink",
+      "lrtc_audio_track_get_enabled",
+      "lrtc_audio_track_get_id",
+      "lrtc_audio_track_get_state",
+      "lrtc_audio_track_release",
+      "lrtc_audio_track_remove_sink",
+      "lrtc_audio_track_set_enabled",
+      "lrtc_audio_track_set_volume",
+      "lrtc_data_channel_close",
+      "lrtc_data_channel_release",
+      "lrtc_data_channel_send",
+      "lrtc_data_channel_set_callbacks",
+      "lrtc_desktop_capturer_is_running",
+      "lrtc_desktop_capturer_release",
+      "lrtc_desktop_capturer_start",
+      "lrtc_desktop_capturer_start_region",
+      "lrtc_desktop_capturer_stop",
+      "lrtc_desktop_device_create_capturer",
+      "lrtc_desktop_device_get_media_list",
+      "lrtc_desktop_device_release",
+      "lrtc_desktop_media_list_get_source",
+      "lrtc_desktop_media_list_get_source_count",
+      "lrtc_desktop_media_list_release",
+      "lrtc_desktop_media_list_update",
+      "lrtc_dtmf_sender_can_insert",
+      "lrtc_dtmf_sender_comma_delay",
+      "lrtc_dtmf_sender_duration",
+      "lrtc_dtmf_sender_insert",
+      "lrtc_dtmf_sender_inter_tone_gap",
+      "lrtc_dtmf_sender_release",
+      "lrtc_dtmf_sender_set_callbacks",
+      "lrtc_dtmf_sender_tones",
+      "lrtc_factory_create",
+      "lrtc_factory_create_audio_source",
+      "lrtc_factory_create_audio_track",
+      "lrtc_factory_create_desktop_source",
+      "lrtc_factory_create_stream",
+      "lrtc_factory_create_video_source",
+      "lrtc_factory_create_video_track",
+      "lrtc_factory_get_audio_device",
+      "lrtc_factory_get_desktop_device",
+      "lrtc_factory_get_rtp_receiver_capabilities",
+      "lrtc_factory_get_rtp_sender_capabilities",
+      "lrtc_factory_get_rtp_sender_codec_mime_types",
+      "lrtc_factory_get_video_device",
+      "lrtc_factory_initialize",
+      "lrtc_factory_release",
+      "lrtc_factory_terminate",
+      "lrtc_initialize",
+      "lrtc_logging_remove_callback",
+      "lrtc_logging_set_callback",
+      "lrtc_logging_set_min_level",
+      "lrtc_media_constraints_add_mandatory",
+      "lrtc_media_constraints_add_optional",
+      "lrtc_media_constraints_create",
+      "lrtc_media_constraints_release",
+      "lrtc_media_source_get_id",
+      "lrtc_media_source_get_name",
+      "lrtc_media_source_get_type",
+      "lrtc_media_source_release",
+      "lrtc_media_stream_add_audio_track",
+      "lrtc_media_stream_add_video_track",
+      "lrtc_media_stream_get_id",
+      "lrtc_media_stream_get_label",
+      "lrtc_media_stream_release",
+      "lrtc_media_stream_remove_audio_track",
+      "lrtc_media_stream_remove_video_track",
+      "lrtc_peer_connection_add_audio_track",
+      "lrtc_peer_connection_add_audio_track_sender",
+      "lrtc_peer_connection_add_audio_track_transceiver",
+      "lrtc_peer_connection_add_audio_track_transceiver_with_init",
+      "lrtc_peer_connection_add_ice_candidate",
+      "lrtc_peer_connection_add_ice_candidate_ex",
+      "lrtc_peer_connection_add_stream",
+      "lrtc_peer_connection_add_transceiver",
+      "lrtc_peer_connection_add_transceiver_with_init",
+      "lrtc_peer_connection_add_video_track",
+      "lrtc_peer_connection_add_video_track_sender",
+      "lrtc_peer_connection_add_video_track_transceiver",
+      "lrtc_peer_connection_add_video_track_transceiver_with_init",
+      "lrtc_peer_connection_close",
+      "lrtc_peer_connection_create",
+      "lrtc_peer_connection_create_answer",
+      "lrtc_peer_connection_create_data_channel",
+      "lrtc_peer_connection_create_offer",
+      "lrtc_peer_connection_get_local_description",
+      "lrtc_peer_connection_get_receiver",
+      "lrtc_peer_connection_get_receiver_stats",
+      "lrtc_peer_connection_get_remote_description",
+      "lrtc_peer_connection_get_sender",
+      "lrtc_peer_connection_get_sender_stats",
+      "lrtc_peer_connection_get_stats",
+      "lrtc_peer_connection_get_transceiver",
+      "lrtc_peer_connection_receiver_count",
+      "lrtc_peer_connection_release",
+      "lrtc_peer_connection_remove_stream",
+      "lrtc_peer_connection_remove_track",
+      "lrtc_peer_connection_restart_ice",
+      "lrtc_peer_connection_sender_count",
+      "lrtc_peer_connection_set_callbacks",
+      "lrtc_peer_connection_set_codec_preferences",
+      "lrtc_peer_connection_set_local_description",
+      "lrtc_peer_connection_set_remote_description",
+      "lrtc_peer_connection_set_transceiver_codec_preferences",
+      "lrtc_peer_connection_transceiver_count",
+      "lrtc_rtp_receiver_encoding_count",
+      "lrtc_rtp_receiver_get_audio_track",
+      "lrtc_rtp_receiver_get_degradation_preference",
+      "lrtc_rtp_receiver_get_dtls_info",
+      "lrtc_rtp_receiver_get_encoding_info",
+      "lrtc_rtp_receiver_get_encoding_rid",
+      "lrtc_rtp_receiver_get_encoding_scalability_mode",
+      "lrtc_rtp_receiver_get_id",
+      "lrtc_rtp_receiver_get_media_type",
+      "lrtc_rtp_receiver_get_parameters_mid",
+      "lrtc_rtp_receiver_get_stream",
+      "lrtc_rtp_receiver_get_stream_id",
+      "lrtc_rtp_receiver_get_video_track",
+      "lrtc_rtp_receiver_release",
+      "lrtc_rtp_receiver_set_jitter_buffer_min_delay",
+      "lrtc_rtp_receiver_stream_count",
+      "lrtc_rtp_receiver_stream_id_count",
+      "lrtc_rtp_sender_encoding_count",
+      "lrtc_rtp_sender_get_audio_track",
+      "lrtc_rtp_sender_get_degradation_preference",
+      "lrtc_rtp_sender_get_dtls_info",
+      "lrtc_rtp_sender_get_dtmf_sender",
+      "lrtc_rtp_sender_get_encoding_info",
+      "lrtc_rtp_sender_get_encoding_rid",
+      "lrtc_rtp_sender_get_encoding_scalability_mode",
+      "lrtc_rtp_sender_get_id",
+      "lrtc_rtp_sender_get_media_type",
+      "lrtc_rtp_sender_get_parameters_mid",
+      "lrtc_rtp_sender_get_ssrc",
+      "lrtc_rtp_sender_get_stream_id",
+      "lrtc_rtp_sender_get_video_track",
+      "lrtc_rtp_sender_release",
+      "lrtc_rtp_sender_replace_audio_track",
+      "lrtc_rtp_sender_replace_video_track",
+      "lrtc_rtp_sender_set_encoding_parameters",
+      "lrtc_rtp_sender_set_encoding_parameters_at",
+      "lrtc_rtp_sender_set_stream_ids",
+      "lrtc_rtp_sender_stream_id_count",
+      "lrtc_rtp_transceiver_get_current_direction",
+      "lrtc_rtp_transceiver_get_direction",
+      "lrtc_rtp_transceiver_get_fired_direction",
+      "lrtc_rtp_transceiver_get_id",
+      "lrtc_rtp_transceiver_get_media_type",
+      "lrtc_rtp_transceiver_get_mid",
+      "lrtc_rtp_transceiver_get_receiver",
+      "lrtc_rtp_transceiver_get_sender",
+      "lrtc_rtp_transceiver_get_stopped",
+      "lrtc_rtp_transceiver_get_stopping",
+      "lrtc_rtp_transceiver_release",
+      "lrtc_rtp_transceiver_set_direction",
+      "lrtc_rtp_transceiver_stop",
+      "lrtc_terminate",
+      "lrtc_video_capturer_capture_started",
+      "lrtc_video_capturer_release",
+      "lrtc_video_capturer_start",
+      "lrtc_video_capturer_stop",
+      "lrtc_video_device_create_capturer",
+      "lrtc_video_device_get_device_name",
+      "lrtc_video_device_number_of_devices",
+      "lrtc_video_device_release",
+      "lrtc_video_frame_copy_i420",
+      "lrtc_video_frame_data_u",
+      "lrtc_video_frame_data_v",
+      "lrtc_video_frame_data_y",
+      "lrtc_video_frame_height",
+      "lrtc_video_frame_release",
+      "lrtc_video_frame_retain",
+      "lrtc_video_frame_stride_u",
+      "lrtc_video_frame_stride_v",
+      "lrtc_video_frame_stride_y",
+      "lrtc_video_frame_to_argb",
+      "lrtc_video_frame_width",
+      "lrtc_video_sink_create",
+      "lrtc_video_sink_release",
+      "lrtc_video_source_release",
+      "lrtc_video_track_add_sink",
+      "lrtc_video_track_get_enabled",
+      "lrtc_video_track_get_id",
+      "lrtc_video_track_get_state",
+      "lrtc_video_track_release",
+      "lrtc_video_track_remove_sink",
+      "lrtc_video_track_set_enabled"
+    ]
+  },
+  "pinvoke": {
+    "declarations": {
+      "lrtc_abi_version_major": [
+        "src/LumenRTC/Interop/NativeMethods.Core.cs"
+      ],
+      "lrtc_abi_version_minor": [
+        "src/LumenRTC/Interop/NativeMethods.Core.cs"
+      ],
+      "lrtc_abi_version_patch": [
+        "src/LumenRTC/Interop/NativeMethods.Core.cs"
+      ],
+      "lrtc_abi_version_string": [
+        "src/LumenRTC/Interop/NativeMethods.Core.cs"
+      ],
+      "lrtc_audio_device_microphone_volume": [
+        "src/LumenRTC/Interop/NativeMethods.Audio.cs"
+      ],
+      "lrtc_audio_device_playout_device_name": [
+        "src/LumenRTC/Interop/NativeMethods.Audio.cs"
+      ],
+      "lrtc_audio_device_playout_devices": [
+        "src/LumenRTC/Interop/NativeMethods.Audio.cs"
+      ],
+      "lrtc_audio_device_recording_device_name": [
+        "src/LumenRTC/Interop/NativeMethods.Audio.cs"
+      ],
+      "lrtc_audio_device_recording_devices": [
+        "src/LumenRTC/Interop/NativeMethods.Audio.cs"
+      ],
+      "lrtc_audio_device_release": [
+        "src/LumenRTC/Interop/NativeMethods.Audio.cs"
+      ],
+      "lrtc_audio_device_set_microphone_volume": [
+        "src/LumenRTC/Interop/NativeMethods.Audio.cs"
+      ],
+      "lrtc_audio_device_set_playout_device": [
+        "src/LumenRTC/Interop/NativeMethods.Audio.cs"
+      ],
+      "lrtc_audio_device_set_recording_device": [
+        "src/LumenRTC/Interop/NativeMethods.Audio.cs"
+      ],
+      "lrtc_audio_device_set_speaker_volume": [
+        "src/LumenRTC/Interop/NativeMethods.Audio.cs"
+      ],
+      "lrtc_audio_device_speaker_volume": [
+        "src/LumenRTC/Interop/NativeMethods.Audio.cs"
+      ],
+      "lrtc_audio_sink_create": [
+        "src/LumenRTC/Interop/NativeMethods.Audio.cs"
+      ],
+      "lrtc_audio_sink_release": [
+        "src/LumenRTC/Interop/NativeMethods.Audio.cs"
+      ],
+      "lrtc_audio_source_capture_frame": [
+        "src/LumenRTC/Interop/NativeMethods.Audio.cs"
+      ],
+      "lrtc_audio_source_release": [
+        "src/LumenRTC/Interop/NativeMethods.Audio.cs"
+      ],
+      "lrtc_audio_track_add_sink": [
+        "src/LumenRTC/Interop/NativeMethods.Audio.cs"
+      ],
+      "lrtc_audio_track_get_enabled": [
+        "src/LumenRTC/Interop/NativeMethods.Audio.cs"
+      ],
+      "lrtc_audio_track_get_id": [
+        "src/LumenRTC/Interop/NativeMethods.Audio.cs"
+      ],
+      "lrtc_audio_track_get_state": [
+        "src/LumenRTC/Interop/NativeMethods.Audio.cs"
+      ],
+      "lrtc_audio_track_release": [
+        "src/LumenRTC/Interop/NativeMethods.Audio.cs"
+      ],
+      "lrtc_audio_track_remove_sink": [
+        "src/LumenRTC/Interop/NativeMethods.Audio.cs"
+      ],
+      "lrtc_audio_track_set_enabled": [
+        "src/LumenRTC/Interop/NativeMethods.Audio.cs"
+      ],
+      "lrtc_audio_track_set_volume": [
+        "src/LumenRTC/Interop/NativeMethods.Audio.cs"
+      ],
+      "lrtc_data_channel_close": [
+        "src/LumenRTC/Interop/NativeMethods.DataChannel.cs"
+      ],
+      "lrtc_data_channel_release": [
+        "src/LumenRTC/Interop/NativeMethods.DataChannel.cs"
+      ],
+      "lrtc_data_channel_send": [
+        "src/LumenRTC/Interop/NativeMethods.DataChannel.cs"
+      ],
+      "lrtc_data_channel_set_callbacks": [
+        "src/LumenRTC/Interop/NativeMethods.DataChannel.cs"
+      ],
+      "lrtc_desktop_capturer_is_running": [
+        "src/LumenRTC/Interop/NativeMethods.Desktop.cs"
+      ],
+      "lrtc_desktop_capturer_release": [
+        "src/LumenRTC/Interop/NativeMethods.Desktop.cs"
+      ],
+      "lrtc_desktop_capturer_start": [
+        "src/LumenRTC/Interop/NativeMethods.Desktop.cs"
+      ],
+      "lrtc_desktop_capturer_start_region": [
+        "src/LumenRTC/Interop/NativeMethods.Desktop.cs"
+      ],
+      "lrtc_desktop_capturer_stop": [
+        "src/LumenRTC/Interop/NativeMethods.Desktop.cs"
+      ],
+      "lrtc_desktop_device_create_capturer": [
+        "src/LumenRTC/Interop/NativeMethods.Desktop.cs"
+      ],
+      "lrtc_desktop_device_get_media_list": [
+        "src/LumenRTC/Interop/NativeMethods.Desktop.cs"
+      ],
+      "lrtc_desktop_device_release": [
+        "src/LumenRTC/Interop/NativeMethods.Desktop.cs"
+      ],
+      "lrtc_desktop_media_list_get_source": [
+        "src/LumenRTC/Interop/NativeMethods.Desktop.cs"
+      ],
+      "lrtc_desktop_media_list_get_source_count": [
+        "src/LumenRTC/Interop/NativeMethods.Desktop.cs"
+      ],
+      "lrtc_desktop_media_list_release": [
+        "src/LumenRTC/Interop/NativeMethods.Desktop.cs"
+      ],
+      "lrtc_desktop_media_list_update": [
+        "src/LumenRTC/Interop/NativeMethods.Desktop.cs"
+      ],
+      "lrtc_dtmf_sender_can_insert": [
+        "src/LumenRTC/Interop/NativeMethods.Rtp.cs"
+      ],
+      "lrtc_dtmf_sender_comma_delay": [
+        "src/LumenRTC/Interop/NativeMethods.Rtp.cs"
+      ],
+      "lrtc_dtmf_sender_duration": [
+        "src/LumenRTC/Interop/NativeMethods.Rtp.cs"
+      ],
+      "lrtc_dtmf_sender_insert": [
+        "src/LumenRTC/Interop/NativeMethods.Rtp.cs"
+      ],
+      "lrtc_dtmf_sender_inter_tone_gap": [
+        "src/LumenRTC/Interop/NativeMethods.Rtp.cs"
+      ],
+      "lrtc_dtmf_sender_release": [
+        "src/LumenRTC/Interop/NativeMethods.Rtp.cs"
+      ],
+      "lrtc_dtmf_sender_set_callbacks": [
+        "src/LumenRTC/Interop/NativeMethods.Rtp.cs"
+      ],
+      "lrtc_dtmf_sender_tones": [
+        "src/LumenRTC/Interop/NativeMethods.Rtp.cs"
+      ],
+      "lrtc_factory_create": [
+        "src/LumenRTC/Interop/NativeMethods.Factory.cs"
+      ],
+      "lrtc_factory_create_audio_source": [
+        "src/LumenRTC/Interop/NativeMethods.Factory.cs"
+      ],
+      "lrtc_factory_create_audio_track": [
+        "src/LumenRTC/Interop/NativeMethods.Factory.cs"
+      ],
+      "lrtc_factory_create_desktop_source": [
+        "src/LumenRTC/Interop/NativeMethods.Factory.cs"
+      ],
+      "lrtc_factory_create_stream": [
+        "src/LumenRTC/Interop/NativeMethods.Factory.cs"
+      ],
+      "lrtc_factory_create_video_source": [
+        "src/LumenRTC/Interop/NativeMethods.Factory.cs"
+      ],
+      "lrtc_factory_create_video_track": [
+        "src/LumenRTC/Interop/NativeMethods.Factory.cs"
+      ],
+      "lrtc_factory_get_audio_device": [
+        "src/LumenRTC/Interop/NativeMethods.Factory.cs"
+      ],
+      "lrtc_factory_get_desktop_device": [
+        "src/LumenRTC/Interop/NativeMethods.Factory.cs"
+      ],
+      "lrtc_factory_get_rtp_receiver_capabilities": [
+        "src/LumenRTC/Interop/NativeMethods.Factory.cs"
+      ],
+      "lrtc_factory_get_rtp_sender_capabilities": [
+        "src/LumenRTC/Interop/NativeMethods.Factory.cs"
+      ],
+      "lrtc_factory_get_rtp_sender_codec_mime_types": [
+        "src/LumenRTC/Interop/NativeMethods.Factory.cs"
+      ],
+      "lrtc_factory_get_video_device": [
+        "src/LumenRTC/Interop/NativeMethods.Factory.cs"
+      ],
+      "lrtc_factory_initialize": [
+        "src/LumenRTC/Interop/NativeMethods.Factory.cs"
+      ],
+      "lrtc_factory_release": [
+        "src/LumenRTC/Interop/NativeMethods.Factory.cs"
+      ],
+      "lrtc_factory_terminate": [
+        "src/LumenRTC/Interop/NativeMethods.Factory.cs"
+      ],
+      "lrtc_initialize": [
+        "src/LumenRTC/Interop/NativeMethods.Core.cs"
+      ],
+      "lrtc_logging_remove_callback": [
+        "src/LumenRTC/Interop/NativeMethods.Core.cs"
+      ],
+      "lrtc_logging_set_callback": [
+        "src/LumenRTC/Interop/NativeMethods.Core.cs"
+      ],
+      "lrtc_logging_set_min_level": [
+        "src/LumenRTC/Interop/NativeMethods.Core.cs"
+      ],
+      "lrtc_media_constraints_add_mandatory": [
+        "src/LumenRTC/Interop/NativeMethods.Constraints.cs"
+      ],
+      "lrtc_media_constraints_add_optional": [
+        "src/LumenRTC/Interop/NativeMethods.Constraints.cs"
+      ],
+      "lrtc_media_constraints_create": [
+        "src/LumenRTC/Interop/NativeMethods.Constraints.cs"
+      ],
+      "lrtc_media_constraints_release": [
+        "src/LumenRTC/Interop/NativeMethods.Constraints.cs"
+      ],
+      "lrtc_media_source_get_id": [
+        "src/LumenRTC/Interop/NativeMethods.Desktop.cs"
+      ],
+      "lrtc_media_source_get_name": [
+        "src/LumenRTC/Interop/NativeMethods.Desktop.cs"
+      ],
+      "lrtc_media_source_get_type": [
+        "src/LumenRTC/Interop/NativeMethods.Desktop.cs"
+      ],
+      "lrtc_media_source_release": [
+        "src/LumenRTC/Interop/NativeMethods.Desktop.cs"
+      ],
+      "lrtc_media_stream_add_audio_track": [
+        "src/LumenRTC/Interop/NativeMethods.MediaStream.cs"
+      ],
+      "lrtc_media_stream_add_video_track": [
+        "src/LumenRTC/Interop/NativeMethods.MediaStream.cs"
+      ],
+      "lrtc_media_stream_get_id": [
+        "src/LumenRTC/Interop/NativeMethods.MediaStream.cs"
+      ],
+      "lrtc_media_stream_get_label": [
+        "src/LumenRTC/Interop/NativeMethods.MediaStream.cs"
+      ],
+      "lrtc_media_stream_release": [
+        "src/LumenRTC/Interop/NativeMethods.MediaStream.cs"
+      ],
+      "lrtc_media_stream_remove_audio_track": [
+        "src/LumenRTC/Interop/NativeMethods.MediaStream.cs"
+      ],
+      "lrtc_media_stream_remove_video_track": [
+        "src/LumenRTC/Interop/NativeMethods.MediaStream.cs"
+      ],
+      "lrtc_peer_connection_add_audio_track": [
+        "src/LumenRTC/Interop/NativeMethods.PeerConnection.cs"
+      ],
+      "lrtc_peer_connection_add_audio_track_sender": [
+        "src/LumenRTC/Interop/NativeMethods.PeerConnection.cs"
+      ],
+      "lrtc_peer_connection_add_audio_track_transceiver": [
+        "src/LumenRTC/Interop/NativeMethods.PeerConnection.cs"
+      ],
+      "lrtc_peer_connection_add_audio_track_transceiver_with_init": [
+        "src/LumenRTC/Interop/NativeMethods.PeerConnection.cs"
+      ],
+      "lrtc_peer_connection_add_ice_candidate": [
+        "src/LumenRTC/Interop/NativeMethods.PeerConnection.cs"
+      ],
+      "lrtc_peer_connection_add_ice_candidate_ex": [
+        "src/LumenRTC/Interop/NativeMethods.PeerConnection.cs"
+      ],
+      "lrtc_peer_connection_add_stream": [
+        "src/LumenRTC/Interop/NativeMethods.PeerConnection.cs"
+      ],
+      "lrtc_peer_connection_add_transceiver": [
+        "src/LumenRTC/Interop/NativeMethods.PeerConnection.cs"
+      ],
+      "lrtc_peer_connection_add_transceiver_with_init": [
+        "src/LumenRTC/Interop/NativeMethods.PeerConnection.cs"
+      ],
+      "lrtc_peer_connection_add_video_track": [
+        "src/LumenRTC/Interop/NativeMethods.PeerConnection.cs"
+      ],
+      "lrtc_peer_connection_add_video_track_sender": [
+        "src/LumenRTC/Interop/NativeMethods.PeerConnection.cs"
+      ],
+      "lrtc_peer_connection_add_video_track_transceiver": [
+        "src/LumenRTC/Interop/NativeMethods.PeerConnection.cs"
+      ],
+      "lrtc_peer_connection_add_video_track_transceiver_with_init": [
+        "src/LumenRTC/Interop/NativeMethods.PeerConnection.cs"
+      ],
+      "lrtc_peer_connection_close": [
+        "src/LumenRTC/Interop/NativeMethods.PeerConnection.cs"
+      ],
+      "lrtc_peer_connection_create": [
+        "src/LumenRTC/Interop/NativeMethods.PeerConnection.cs"
+      ],
+      "lrtc_peer_connection_create_answer": [
+        "src/LumenRTC/Interop/NativeMethods.PeerConnection.cs"
+      ],
+      "lrtc_peer_connection_create_data_channel": [
+        "src/LumenRTC/Interop/NativeMethods.PeerConnection.cs"
+      ],
+      "lrtc_peer_connection_create_offer": [
+        "src/LumenRTC/Interop/NativeMethods.PeerConnection.cs"
+      ],
+      "lrtc_peer_connection_get_local_description": [
+        "src/LumenRTC/Interop/NativeMethods.PeerConnection.cs"
+      ],
+      "lrtc_peer_connection_get_receiver": [
+        "src/LumenRTC/Interop/NativeMethods.PeerConnection.cs"
+      ],
+      "lrtc_peer_connection_get_receiver_stats": [
+        "src/LumenRTC/Interop/NativeMethods.PeerConnection.cs"
+      ],
+      "lrtc_peer_connection_get_remote_description": [
+        "src/LumenRTC/Interop/NativeMethods.PeerConnection.cs"
+      ],
+      "lrtc_peer_connection_get_sender": [
+        "src/LumenRTC/Interop/NativeMethods.PeerConnection.cs"
+      ],
+      "lrtc_peer_connection_get_sender_stats": [
+        "src/LumenRTC/Interop/NativeMethods.PeerConnection.cs"
+      ],
+      "lrtc_peer_connection_get_stats": [
+        "src/LumenRTC/Interop/NativeMethods.PeerConnection.cs"
+      ],
+      "lrtc_peer_connection_get_transceiver": [
+        "src/LumenRTC/Interop/NativeMethods.PeerConnection.cs"
+      ],
+      "lrtc_peer_connection_receiver_count": [
+        "src/LumenRTC/Interop/NativeMethods.PeerConnection.cs"
+      ],
+      "lrtc_peer_connection_release": [
+        "src/LumenRTC/Interop/NativeMethods.PeerConnection.cs"
+      ],
+      "lrtc_peer_connection_remove_stream": [
+        "src/LumenRTC/Interop/NativeMethods.PeerConnection.cs"
+      ],
+      "lrtc_peer_connection_remove_track": [
+        "src/LumenRTC/Interop/NativeMethods.PeerConnection.cs"
+      ],
+      "lrtc_peer_connection_restart_ice": [
+        "src/LumenRTC/Interop/NativeMethods.PeerConnection.cs"
+      ],
+      "lrtc_peer_connection_sender_count": [
+        "src/LumenRTC/Interop/NativeMethods.PeerConnection.cs"
+      ],
+      "lrtc_peer_connection_set_callbacks": [
+        "src/LumenRTC/Interop/NativeMethods.PeerConnection.cs"
+      ],
+      "lrtc_peer_connection_set_codec_preferences": [
+        "src/LumenRTC/Interop/NativeMethods.PeerConnection.cs"
+      ],
+      "lrtc_peer_connection_set_local_description": [
+        "src/LumenRTC/Interop/NativeMethods.PeerConnection.cs"
+      ],
+      "lrtc_peer_connection_set_remote_description": [
+        "src/LumenRTC/Interop/NativeMethods.PeerConnection.cs"
+      ],
+      "lrtc_peer_connection_set_transceiver_codec_preferences": [
+        "src/LumenRTC/Interop/NativeMethods.PeerConnection.cs"
+      ],
+      "lrtc_peer_connection_transceiver_count": [
+        "src/LumenRTC/Interop/NativeMethods.PeerConnection.cs"
+      ],
+      "lrtc_rtp_receiver_encoding_count": [
+        "src/LumenRTC/Interop/NativeMethods.Rtp.cs"
+      ],
+      "lrtc_rtp_receiver_get_audio_track": [
+        "src/LumenRTC/Interop/NativeMethods.Rtp.cs"
+      ],
+      "lrtc_rtp_receiver_get_degradation_preference": [
+        "src/LumenRTC/Interop/NativeMethods.Rtp.cs"
+      ],
+      "lrtc_rtp_receiver_get_dtls_info": [
+        "src/LumenRTC/Interop/NativeMethods.Rtp.cs"
+      ],
+      "lrtc_rtp_receiver_get_encoding_info": [
+        "src/LumenRTC/Interop/NativeMethods.Rtp.cs"
+      ],
+      "lrtc_rtp_receiver_get_encoding_rid": [
+        "src/LumenRTC/Interop/NativeMethods.Rtp.cs"
+      ],
+      "lrtc_rtp_receiver_get_encoding_scalability_mode": [
+        "src/LumenRTC/Interop/NativeMethods.Rtp.cs"
+      ],
+      "lrtc_rtp_receiver_get_id": [
+        "src/LumenRTC/Interop/NativeMethods.Rtp.cs"
+      ],
+      "lrtc_rtp_receiver_get_media_type": [
+        "src/LumenRTC/Interop/NativeMethods.Rtp.cs"
+      ],
+      "lrtc_rtp_receiver_get_parameters_mid": [
+        "src/LumenRTC/Interop/NativeMethods.Rtp.cs"
+      ],
+      "lrtc_rtp_receiver_get_stream": [
+        "src/LumenRTC/Interop/NativeMethods.Rtp.cs"
+      ],
+      "lrtc_rtp_receiver_get_stream_id": [
+        "src/LumenRTC/Interop/NativeMethods.Rtp.cs"
+      ],
+      "lrtc_rtp_receiver_get_video_track": [
+        "src/LumenRTC/Interop/NativeMethods.Rtp.cs"
+      ],
+      "lrtc_rtp_receiver_release": [
+        "src/LumenRTC/Interop/NativeMethods.Rtp.cs"
+      ],
+      "lrtc_rtp_receiver_set_jitter_buffer_min_delay": [
+        "src/LumenRTC/Interop/NativeMethods.Rtp.cs"
+      ],
+      "lrtc_rtp_receiver_stream_count": [
+        "src/LumenRTC/Interop/NativeMethods.Rtp.cs"
+      ],
+      "lrtc_rtp_receiver_stream_id_count": [
+        "src/LumenRTC/Interop/NativeMethods.Rtp.cs"
+      ],
+      "lrtc_rtp_sender_encoding_count": [
+        "src/LumenRTC/Interop/NativeMethods.Rtp.cs"
+      ],
+      "lrtc_rtp_sender_get_audio_track": [
+        "src/LumenRTC/Interop/NativeMethods.Rtp.cs"
+      ],
+      "lrtc_rtp_sender_get_degradation_preference": [
+        "src/LumenRTC/Interop/NativeMethods.Rtp.cs"
+      ],
+      "lrtc_rtp_sender_get_dtls_info": [
+        "src/LumenRTC/Interop/NativeMethods.Rtp.cs"
+      ],
+      "lrtc_rtp_sender_get_dtmf_sender": [
+        "src/LumenRTC/Interop/NativeMethods.Rtp.cs"
+      ],
+      "lrtc_rtp_sender_get_encoding_info": [
+        "src/LumenRTC/Interop/NativeMethods.Rtp.cs"
+      ],
+      "lrtc_rtp_sender_get_encoding_rid": [
+        "src/LumenRTC/Interop/NativeMethods.Rtp.cs"
+      ],
+      "lrtc_rtp_sender_get_encoding_scalability_mode": [
+        "src/LumenRTC/Interop/NativeMethods.Rtp.cs"
+      ],
+      "lrtc_rtp_sender_get_id": [
+        "src/LumenRTC/Interop/NativeMethods.Rtp.cs"
+      ],
+      "lrtc_rtp_sender_get_media_type": [
+        "src/LumenRTC/Interop/NativeMethods.Rtp.cs"
+      ],
+      "lrtc_rtp_sender_get_parameters_mid": [
+        "src/LumenRTC/Interop/NativeMethods.Rtp.cs"
+      ],
+      "lrtc_rtp_sender_get_ssrc": [
+        "src/LumenRTC/Interop/NativeMethods.Rtp.cs"
+      ],
+      "lrtc_rtp_sender_get_stream_id": [
+        "src/LumenRTC/Interop/NativeMethods.Rtp.cs"
+      ],
+      "lrtc_rtp_sender_get_video_track": [
+        "src/LumenRTC/Interop/NativeMethods.Rtp.cs"
+      ],
+      "lrtc_rtp_sender_release": [
+        "src/LumenRTC/Interop/NativeMethods.Rtp.cs"
+      ],
+      "lrtc_rtp_sender_replace_audio_track": [
+        "src/LumenRTC/Interop/NativeMethods.Rtp.cs"
+      ],
+      "lrtc_rtp_sender_replace_video_track": [
+        "src/LumenRTC/Interop/NativeMethods.Rtp.cs"
+      ],
+      "lrtc_rtp_sender_set_encoding_parameters": [
+        "src/LumenRTC/Interop/NativeMethods.Rtp.cs"
+      ],
+      "lrtc_rtp_sender_set_encoding_parameters_at": [
+        "src/LumenRTC/Interop/NativeMethods.Rtp.cs"
+      ],
+      "lrtc_rtp_sender_set_stream_ids": [
+        "src/LumenRTC/Interop/NativeMethods.Rtp.cs"
+      ],
+      "lrtc_rtp_sender_stream_id_count": [
+        "src/LumenRTC/Interop/NativeMethods.Rtp.cs"
+      ],
+      "lrtc_rtp_transceiver_get_current_direction": [
+        "src/LumenRTC/Interop/NativeMethods.Rtp.cs"
+      ],
+      "lrtc_rtp_transceiver_get_direction": [
+        "src/LumenRTC/Interop/NativeMethods.Rtp.cs"
+      ],
+      "lrtc_rtp_transceiver_get_fired_direction": [
+        "src/LumenRTC/Interop/NativeMethods.Rtp.cs"
+      ],
+      "lrtc_rtp_transceiver_get_id": [
+        "src/LumenRTC/Interop/NativeMethods.Rtp.cs"
+      ],
+      "lrtc_rtp_transceiver_get_media_type": [
+        "src/LumenRTC/Interop/NativeMethods.Rtp.cs"
+      ],
+      "lrtc_rtp_transceiver_get_mid": [
+        "src/LumenRTC/Interop/NativeMethods.Rtp.cs"
+      ],
+      "lrtc_rtp_transceiver_get_receiver": [
+        "src/LumenRTC/Interop/NativeMethods.Rtp.cs"
+      ],
+      "lrtc_rtp_transceiver_get_sender": [
+        "src/LumenRTC/Interop/NativeMethods.Rtp.cs"
+      ],
+      "lrtc_rtp_transceiver_get_stopped": [
+        "src/LumenRTC/Interop/NativeMethods.Rtp.cs"
+      ],
+      "lrtc_rtp_transceiver_get_stopping": [
+        "src/LumenRTC/Interop/NativeMethods.Rtp.cs"
+      ],
+      "lrtc_rtp_transceiver_release": [
+        "src/LumenRTC/Interop/NativeMethods.Rtp.cs"
+      ],
+      "lrtc_rtp_transceiver_set_direction": [
+        "src/LumenRTC/Interop/NativeMethods.Rtp.cs"
+      ],
+      "lrtc_rtp_transceiver_stop": [
+        "src/LumenRTC/Interop/NativeMethods.Rtp.cs"
+      ],
+      "lrtc_terminate": [
+        "src/LumenRTC/Interop/NativeMethods.Core.cs"
+      ],
+      "lrtc_video_capturer_capture_started": [
+        "src/LumenRTC/Interop/NativeMethods.Video.cs"
+      ],
+      "lrtc_video_capturer_release": [
+        "src/LumenRTC/Interop/NativeMethods.Video.cs"
+      ],
+      "lrtc_video_capturer_start": [
+        "src/LumenRTC/Interop/NativeMethods.Video.cs"
+      ],
+      "lrtc_video_capturer_stop": [
+        "src/LumenRTC/Interop/NativeMethods.Video.cs"
+      ],
+      "lrtc_video_device_create_capturer": [
+        "src/LumenRTC/Interop/NativeMethods.Video.cs"
+      ],
+      "lrtc_video_device_get_device_name": [
+        "src/LumenRTC/Interop/NativeMethods.Video.cs"
+      ],
+      "lrtc_video_device_number_of_devices": [
+        "src/LumenRTC/Interop/NativeMethods.Video.cs"
+      ],
+      "lrtc_video_device_release": [
+        "src/LumenRTC/Interop/NativeMethods.Video.cs"
+      ],
+      "lrtc_video_frame_copy_i420": [
+        "src/LumenRTC/Interop/NativeMethods.Video.cs"
+      ],
+      "lrtc_video_frame_data_u": [
+        "src/LumenRTC/Interop/NativeMethods.Video.cs"
+      ],
+      "lrtc_video_frame_data_v": [
+        "src/LumenRTC/Interop/NativeMethods.Video.cs"
+      ],
+      "lrtc_video_frame_data_y": [
+        "src/LumenRTC/Interop/NativeMethods.Video.cs"
+      ],
+      "lrtc_video_frame_height": [
+        "src/LumenRTC/Interop/NativeMethods.Video.cs"
+      ],
+      "lrtc_video_frame_release": [
+        "src/LumenRTC/Interop/NativeMethods.Video.cs"
+      ],
+      "lrtc_video_frame_retain": [
+        "src/LumenRTC/Interop/NativeMethods.Video.cs"
+      ],
+      "lrtc_video_frame_stride_u": [
+        "src/LumenRTC/Interop/NativeMethods.Video.cs"
+      ],
+      "lrtc_video_frame_stride_v": [
+        "src/LumenRTC/Interop/NativeMethods.Video.cs"
+      ],
+      "lrtc_video_frame_stride_y": [
+        "src/LumenRTC/Interop/NativeMethods.Video.cs"
+      ],
+      "lrtc_video_frame_to_argb": [
+        "src/LumenRTC/Interop/NativeMethods.Video.cs"
+      ],
+      "lrtc_video_frame_width": [
+        "src/LumenRTC/Interop/NativeMethods.Video.cs"
+      ],
+      "lrtc_video_sink_create": [
+        "src/LumenRTC/Interop/NativeMethods.Video.cs"
+      ],
+      "lrtc_video_sink_release": [
+        "src/LumenRTC/Interop/NativeMethods.Video.cs"
+      ],
+      "lrtc_video_source_release": [
+        "src/LumenRTC/Interop/NativeMethods.Video.cs"
+      ],
+      "lrtc_video_track_add_sink": [
+        "src/LumenRTC/Interop/NativeMethods.Video.cs"
+      ],
+      "lrtc_video_track_get_enabled": [
+        "src/LumenRTC/Interop/NativeMethods.Video.cs"
+      ],
+      "lrtc_video_track_get_id": [
+        "src/LumenRTC/Interop/NativeMethods.Video.cs"
+      ],
+      "lrtc_video_track_get_state": [
+        "src/LumenRTC/Interop/NativeMethods.Video.cs"
+      ],
+      "lrtc_video_track_release": [
+        "src/LumenRTC/Interop/NativeMethods.Video.cs"
+      ],
+      "lrtc_video_track_remove_sink": [
+        "src/LumenRTC/Interop/NativeMethods.Video.cs"
+      ],
+      "lrtc_video_track_set_enabled": [
+        "src/LumenRTC/Interop/NativeMethods.Video.cs"
+      ]
+    },
+    "file_count": 11,
+    "files": [
+      "src/LumenRTC/Interop/NativeMethods.Audio.cs",
+      "src/LumenRTC/Interop/NativeMethods.Constraints.cs",
+      "src/LumenRTC/Interop/NativeMethods.Core.cs",
+      "src/LumenRTC/Interop/NativeMethods.DataChannel.cs",
+      "src/LumenRTC/Interop/NativeMethods.Desktop.cs",
+      "src/LumenRTC/Interop/NativeMethods.Factory.cs",
+      "src/LumenRTC/Interop/NativeMethods.MediaStream.cs",
+      "src/LumenRTC/Interop/NativeMethods.PeerConnection.cs",
+      "src/LumenRTC/Interop/NativeMethods.Rtp.cs",
+      "src/LumenRTC/Interop/NativeMethods.Video.cs",
+      "src/LumenRTC/Interop/NativeTypes.cs"
+    ],
+    "symbol_count": 206,
+    "symbols": [
+      "lrtc_abi_version_major",
+      "lrtc_abi_version_minor",
+      "lrtc_abi_version_patch",
+      "lrtc_abi_version_string",
+      "lrtc_audio_device_microphone_volume",
+      "lrtc_audio_device_playout_device_name",
+      "lrtc_audio_device_playout_devices",
+      "lrtc_audio_device_recording_device_name",
+      "lrtc_audio_device_recording_devices",
+      "lrtc_audio_device_release",
+      "lrtc_audio_device_set_microphone_volume",
+      "lrtc_audio_device_set_playout_device",
+      "lrtc_audio_device_set_recording_device",
+      "lrtc_audio_device_set_speaker_volume",
+      "lrtc_audio_device_speaker_volume",
+      "lrtc_audio_sink_create",
+      "lrtc_audio_sink_release",
+      "lrtc_audio_source_capture_frame",
+      "lrtc_audio_source_release",
+      "lrtc_audio_track_add_sink",
+      "lrtc_audio_track_get_enabled",
+      "lrtc_audio_track_get_id",
+      "lrtc_audio_track_get_state",
+      "lrtc_audio_track_release",
+      "lrtc_audio_track_remove_sink",
+      "lrtc_audio_track_set_enabled",
+      "lrtc_audio_track_set_volume",
+      "lrtc_data_channel_close",
+      "lrtc_data_channel_release",
+      "lrtc_data_channel_send",
+      "lrtc_data_channel_set_callbacks",
+      "lrtc_desktop_capturer_is_running",
+      "lrtc_desktop_capturer_release",
+      "lrtc_desktop_capturer_start",
+      "lrtc_desktop_capturer_start_region",
+      "lrtc_desktop_capturer_stop",
+      "lrtc_desktop_device_create_capturer",
+      "lrtc_desktop_device_get_media_list",
+      "lrtc_desktop_device_release",
+      "lrtc_desktop_media_list_get_source",
+      "lrtc_desktop_media_list_get_source_count",
+      "lrtc_desktop_media_list_release",
+      "lrtc_desktop_media_list_update",
+      "lrtc_dtmf_sender_can_insert",
+      "lrtc_dtmf_sender_comma_delay",
+      "lrtc_dtmf_sender_duration",
+      "lrtc_dtmf_sender_insert",
+      "lrtc_dtmf_sender_inter_tone_gap",
+      "lrtc_dtmf_sender_release",
+      "lrtc_dtmf_sender_set_callbacks",
+      "lrtc_dtmf_sender_tones",
+      "lrtc_factory_create",
+      "lrtc_factory_create_audio_source",
+      "lrtc_factory_create_audio_track",
+      "lrtc_factory_create_desktop_source",
+      "lrtc_factory_create_stream",
+      "lrtc_factory_create_video_source",
+      "lrtc_factory_create_video_track",
+      "lrtc_factory_get_audio_device",
+      "lrtc_factory_get_desktop_device",
+      "lrtc_factory_get_rtp_receiver_capabilities",
+      "lrtc_factory_get_rtp_sender_capabilities",
+      "lrtc_factory_get_rtp_sender_codec_mime_types",
+      "lrtc_factory_get_video_device",
+      "lrtc_factory_initialize",
+      "lrtc_factory_release",
+      "lrtc_factory_terminate",
+      "lrtc_initialize",
+      "lrtc_logging_remove_callback",
+      "lrtc_logging_set_callback",
+      "lrtc_logging_set_min_level",
+      "lrtc_media_constraints_add_mandatory",
+      "lrtc_media_constraints_add_optional",
+      "lrtc_media_constraints_create",
+      "lrtc_media_constraints_release",
+      "lrtc_media_source_get_id",
+      "lrtc_media_source_get_name",
+      "lrtc_media_source_get_type",
+      "lrtc_media_source_release",
+      "lrtc_media_stream_add_audio_track",
+      "lrtc_media_stream_add_video_track",
+      "lrtc_media_stream_get_id",
+      "lrtc_media_stream_get_label",
+      "lrtc_media_stream_release",
+      "lrtc_media_stream_remove_audio_track",
+      "lrtc_media_stream_remove_video_track",
+      "lrtc_peer_connection_add_audio_track",
+      "lrtc_peer_connection_add_audio_track_sender",
+      "lrtc_peer_connection_add_audio_track_transceiver",
+      "lrtc_peer_connection_add_audio_track_transceiver_with_init",
+      "lrtc_peer_connection_add_ice_candidate",
+      "lrtc_peer_connection_add_ice_candidate_ex",
+      "lrtc_peer_connection_add_stream",
+      "lrtc_peer_connection_add_transceiver",
+      "lrtc_peer_connection_add_transceiver_with_init",
+      "lrtc_peer_connection_add_video_track",
+      "lrtc_peer_connection_add_video_track_sender",
+      "lrtc_peer_connection_add_video_track_transceiver",
+      "lrtc_peer_connection_add_video_track_transceiver_with_init",
+      "lrtc_peer_connection_close",
+      "lrtc_peer_connection_create",
+      "lrtc_peer_connection_create_answer",
+      "lrtc_peer_connection_create_data_channel",
+      "lrtc_peer_connection_create_offer",
+      "lrtc_peer_connection_get_local_description",
+      "lrtc_peer_connection_get_receiver",
+      "lrtc_peer_connection_get_receiver_stats",
+      "lrtc_peer_connection_get_remote_description",
+      "lrtc_peer_connection_get_sender",
+      "lrtc_peer_connection_get_sender_stats",
+      "lrtc_peer_connection_get_stats",
+      "lrtc_peer_connection_get_transceiver",
+      "lrtc_peer_connection_receiver_count",
+      "lrtc_peer_connection_release",
+      "lrtc_peer_connection_remove_stream",
+      "lrtc_peer_connection_remove_track",
+      "lrtc_peer_connection_restart_ice",
+      "lrtc_peer_connection_sender_count",
+      "lrtc_peer_connection_set_callbacks",
+      "lrtc_peer_connection_set_codec_preferences",
+      "lrtc_peer_connection_set_local_description",
+      "lrtc_peer_connection_set_remote_description",
+      "lrtc_peer_connection_set_transceiver_codec_preferences",
+      "lrtc_peer_connection_transceiver_count",
+      "lrtc_rtp_receiver_encoding_count",
+      "lrtc_rtp_receiver_get_audio_track",
+      "lrtc_rtp_receiver_get_degradation_preference",
+      "lrtc_rtp_receiver_get_dtls_info",
+      "lrtc_rtp_receiver_get_encoding_info",
+      "lrtc_rtp_receiver_get_encoding_rid",
+      "lrtc_rtp_receiver_get_encoding_scalability_mode",
+      "lrtc_rtp_receiver_get_id",
+      "lrtc_rtp_receiver_get_media_type",
+      "lrtc_rtp_receiver_get_parameters_mid",
+      "lrtc_rtp_receiver_get_stream",
+      "lrtc_rtp_receiver_get_stream_id",
+      "lrtc_rtp_receiver_get_video_track",
+      "lrtc_rtp_receiver_release",
+      "lrtc_rtp_receiver_set_jitter_buffer_min_delay",
+      "lrtc_rtp_receiver_stream_count",
+      "lrtc_rtp_receiver_stream_id_count",
+      "lrtc_rtp_sender_encoding_count",
+      "lrtc_rtp_sender_get_audio_track",
+      "lrtc_rtp_sender_get_degradation_preference",
+      "lrtc_rtp_sender_get_dtls_info",
+      "lrtc_rtp_sender_get_dtmf_sender",
+      "lrtc_rtp_sender_get_encoding_info",
+      "lrtc_rtp_sender_get_encoding_rid",
+      "lrtc_rtp_sender_get_encoding_scalability_mode",
+      "lrtc_rtp_sender_get_id",
+      "lrtc_rtp_sender_get_media_type",
+      "lrtc_rtp_sender_get_parameters_mid",
+      "lrtc_rtp_sender_get_ssrc",
+      "lrtc_rtp_sender_get_stream_id",
+      "lrtc_rtp_sender_get_video_track",
+      "lrtc_rtp_sender_release",
+      "lrtc_rtp_sender_replace_audio_track",
+      "lrtc_rtp_sender_replace_video_track",
+      "lrtc_rtp_sender_set_encoding_parameters",
+      "lrtc_rtp_sender_set_encoding_parameters_at",
+      "lrtc_rtp_sender_set_stream_ids",
+      "lrtc_rtp_sender_stream_id_count",
+      "lrtc_rtp_transceiver_get_current_direction",
+      "lrtc_rtp_transceiver_get_direction",
+      "lrtc_rtp_transceiver_get_fired_direction",
+      "lrtc_rtp_transceiver_get_id",
+      "lrtc_rtp_transceiver_get_media_type",
+      "lrtc_rtp_transceiver_get_mid",
+      "lrtc_rtp_transceiver_get_receiver",
+      "lrtc_rtp_transceiver_get_sender",
+      "lrtc_rtp_transceiver_get_stopped",
+      "lrtc_rtp_transceiver_get_stopping",
+      "lrtc_rtp_transceiver_release",
+      "lrtc_rtp_transceiver_set_direction",
+      "lrtc_rtp_transceiver_stop",
+      "lrtc_terminate",
+      "lrtc_video_capturer_capture_started",
+      "lrtc_video_capturer_release",
+      "lrtc_video_capturer_start",
+      "lrtc_video_capturer_stop",
+      "lrtc_video_device_create_capturer",
+      "lrtc_video_device_get_device_name",
+      "lrtc_video_device_number_of_devices",
+      "lrtc_video_device_release",
+      "lrtc_video_frame_copy_i420",
+      "lrtc_video_frame_data_u",
+      "lrtc_video_frame_data_v",
+      "lrtc_video_frame_data_y",
+      "lrtc_video_frame_height",
+      "lrtc_video_frame_release",
+      "lrtc_video_frame_retain",
+      "lrtc_video_frame_stride_u",
+      "lrtc_video_frame_stride_v",
+      "lrtc_video_frame_stride_y",
+      "lrtc_video_frame_to_argb",
+      "lrtc_video_frame_width",
+      "lrtc_video_sink_create",
+      "lrtc_video_sink_release",
+      "lrtc_video_source_release",
+      "lrtc_video_track_add_sink",
+      "lrtc_video_track_get_enabled",
+      "lrtc_video_track_get_id",
+      "lrtc_video_track_get_state",
+      "lrtc_video_track_release",
+      "lrtc_video_track_remove_sink",
+      "lrtc_video_track_set_enabled"
+    ]
+  },
+  "target": "lumenrtc",
+  "tool": {
+    "name": "abi_guard",
+    "version": "1.0.0"
+  }
+}

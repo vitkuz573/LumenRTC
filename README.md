@@ -65,6 +65,50 @@ If you use the bridge source at `vendor/libwebrtc`, you can omit
 If your `libwebrtc` was built without desktop capture, set
 `LUMENRTC_ENABLE_DESKTOP_CAPTURE=OFF` to avoid ABI mismatches.
 
+## ABI Governance
+
+The native ABI is versioned directly in `native/include/lumenrtc.h` via:
+
+- `LUMENRTC_ABI_VERSION_MAJOR`
+- `LUMENRTC_ABI_VERSION_MINOR`
+- `LUMENRTC_ABI_VERSION_PATCH`
+
+The native library exports runtime probes:
+
+- `lrtc_abi_version_major`
+- `lrtc_abi_version_minor`
+- `lrtc_abi_version_patch`
+- `lrtc_abi_version_string`
+
+The managed loader validates ABI major compatibility before the first P/Invoke
+call, so incompatible native binaries fail fast with a clear error.
+
+### ABI Tooling
+
+Use the config-driven ABI guard framework:
+
+```bash
+# Create/update baseline from current header + P/Invoke surface.
+scripts/abi.sh baseline
+
+# Verify current state against baseline (header <-> P/Invoke).
+scripts/abi.sh check --skip-binary
+
+# Verify including native export surface (after native build).
+scripts/abi.sh check --binary native/build/liblumenrtc.so
+```
+
+PowerShell equivalent:
+
+```powershell
+scripts\\abi.ps1 baseline
+scripts\\abi.ps1 check -- --skip-binary
+scripts\\abi.ps1 check -- --binary native\\build\\lumenrtc.dll
+```
+
+The generic tooling lives in `tools/abi_guard/` and can be reused for other ABI
+targets through `abi/config.json`.
+
 ### One-command bootstrap
 
 Linux/macOS:

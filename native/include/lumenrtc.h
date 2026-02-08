@@ -24,6 +24,9 @@ extern "C" {
 #endif
 
 #define LRTC_MAX_ICE_SERVERS 8
+#define LUMENRTC_ABI_VERSION_MAJOR 1
+#define LUMENRTC_ABI_VERSION_MINOR 0
+#define LUMENRTC_ABI_VERSION_PATCH 0
 
 typedef struct lrtc_factory_t lrtc_factory_t;
 typedef struct lrtc_peer_connection_t lrtc_peer_connection_t;
@@ -368,6 +371,11 @@ typedef struct lrtc_audio_sink_callbacks_t {
 
 LUMENRTC_API lrtc_result_t LUMENRTC_CALL lrtc_initialize(void);
 LUMENRTC_API void LUMENRTC_CALL lrtc_terminate(void);
+LUMENRTC_API uint32_t LUMENRTC_CALL lrtc_abi_version_major(void);
+LUMENRTC_API uint32_t LUMENRTC_CALL lrtc_abi_version_minor(void);
+LUMENRTC_API uint32_t LUMENRTC_CALL lrtc_abi_version_patch(void);
+LUMENRTC_API int32_t LUMENRTC_CALL lrtc_abi_version_string(char* buffer,
+                                                            uint32_t buffer_len);
 LUMENRTC_API void LUMENRTC_CALL lrtc_logging_set_min_level(int severity);
 LUMENRTC_API void LUMENRTC_CALL lrtc_logging_set_callback(
     int severity, lrtc_log_message_cb callback, void* user_data);

@@ -79,6 +79,15 @@ using libwebrtc::scoped_refptr;
 using libwebrtc::string;
 using libwebrtc::vector;
 
+#define LRTC_STRINGIFY_INNER(x) #x
+#define LRTC_STRINGIFY(x) LRTC_STRINGIFY_INNER(x)
+static const char* kLrtcAbiVersionString =
+    LRTC_STRINGIFY(LUMENRTC_ABI_VERSION_MAJOR) "."
+    LRTC_STRINGIFY(LUMENRTC_ABI_VERSION_MINOR) "."
+    LRTC_STRINGIFY(LUMENRTC_ABI_VERSION_PATCH);
+#undef LRTC_STRINGIFY
+#undef LRTC_STRINGIFY_INNER
+
 struct lrtc_factory_t {
   scoped_refptr<RTCPeerConnectionFactory> ref;
 };
@@ -923,6 +932,23 @@ LUMENRTC_API lrtc_result_t LUMENRTC_CALL lrtc_initialize(void) {
 
 LUMENRTC_API void LUMENRTC_CALL lrtc_terminate(void) {
   libwebrtc::LibWebRTC::Terminate();
+}
+
+LUMENRTC_API uint32_t LUMENRTC_CALL lrtc_abi_version_major(void) {
+  return static_cast<uint32_t>(LUMENRTC_ABI_VERSION_MAJOR);
+}
+
+LUMENRTC_API uint32_t LUMENRTC_CALL lrtc_abi_version_minor(void) {
+  return static_cast<uint32_t>(LUMENRTC_ABI_VERSION_MINOR);
+}
+
+LUMENRTC_API uint32_t LUMENRTC_CALL lrtc_abi_version_patch(void) {
+  return static_cast<uint32_t>(LUMENRTC_ABI_VERSION_PATCH);
+}
+
+LUMENRTC_API int32_t LUMENRTC_CALL lrtc_abi_version_string(char* buffer,
+                                                           uint32_t buffer_len) {
+  return CopyPortableString(string(kLrtcAbiVersionString), buffer, buffer_len);
 }
 
 LUMENRTC_API void LUMENRTC_CALL lrtc_logging_set_min_level(int severity) {

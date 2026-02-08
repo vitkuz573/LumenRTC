@@ -1,0 +1,50 @@
+name: ABI Guard
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "abi/**"
+      - "native/include/lumenrtc.h"
+      - "src/LumenRTC/Interop/**"
+      - "tools/abi_guard/**"
+      - "scripts/abi.sh"
+      - "scripts/abi.ps1"
+  push:
+    branches:
+      - main
+    paths:
+      - "abi/**"
+      - "native/include/lumenrtc.h"
+      - "src/LumenRTC/Interop/**"
+      - "tools/abi_guard/**"
+      - "scripts/abi.sh"
+      - "scripts/abi.ps1"
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Verify ABI (header + P/Invoke + baseline)
+        run: |
+          python3 tools/abi_guard/abi_guard.py verify \
+            --config abi/config.json \
+            --target lumenrtc \
+            --baseline abi/baselines/lumenrtc.json \
+            --skip-binary \
+            --current-output artifacts/abi/current.json \
+            --report artifacts/abi/report.json \
+            --markdown-report artifacts/abi/report.md
+
+      - name: Upload ABI artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: abi-report
+          path: artifacts/abi/**

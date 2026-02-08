@@ -37,6 +37,14 @@ add_library(lumenrtc SHARED
   src/lumenrtc.cpp
 )
 
+if(NOT WIN32)
+  set_target_properties(lumenrtc PROPERTIES
+    C_VISIBILITY_PRESET hidden
+    CXX_VISIBILITY_PRESET hidden
+    VISIBILITY_INLINES_HIDDEN YES
+  )
+endif()
+
 target_include_directories(lumenrtc PUBLIC
   include
   "${LIBWEBRTC_INCLUDE_DIR}"
@@ -66,6 +74,9 @@ else()
 endif()
 
 if(UNIX AND NOT APPLE)
+  target_link_options(lumenrtc PRIVATE
+    "-Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/lumenrtc.map"
+  )
   set_target_properties(lumenrtc PROPERTIES
     BUILD_RPATH "${LIBWEBRTC_BUILD_DIR}"
     INSTALL_RPATH "${LIBWEBRTC_BUILD_DIR}"
