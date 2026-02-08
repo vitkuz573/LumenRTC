@@ -66,12 +66,12 @@ switch ($Mode) {
   }
   "viewer" {
     $Host.UI.RawUI.WindowTitle = "LumenRTC Streaming Viewer"
-    $projectPath = Join-Path $resolvedRepoRoot "samples\LumenRTC.Sample.Streaming\LumenRTC.Sample.Streaming.csproj"
+    $projectPath = Join-Path $resolvedRepoRoot "samples\LumenRTC.Sample.Streaming.Core\LumenRTC.Sample.Streaming.Core.csproj"
     $modeArgs = @("--role", "viewer", "--server", $SignalUrl, "--room", $Room)
   }
   "sender" {
     $Host.UI.RawUI.WindowTitle = "LumenRTC Streaming Sender"
-    $projectPath = Join-Path $resolvedRepoRoot "samples\LumenRTC.Sample.Streaming\LumenRTC.Sample.Streaming.csproj"
+    $projectPath = Join-Path $resolvedRepoRoot "samples\LumenRTC.Sample.Streaming.Core\LumenRTC.Sample.Streaming.Core.csproj"
     $modeArgs = @(
       "--role", "sender",
       "--server", $SignalUrl,

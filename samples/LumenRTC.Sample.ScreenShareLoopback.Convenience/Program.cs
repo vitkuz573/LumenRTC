@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 using LumenRTC;
 using LumenRTC.Rendering.Sdl;
 
-namespace LumenRTC.Sample.ScreenShareLoopback;
+namespace LumenRTC.Sample.ScreenShareLoopback.Convenience;
 
 internal static class Program
 {
@@ -388,13 +388,10 @@ internal static class Program
         }
 
         Environment.SetEnvironmentVariable("LUMENRTC_TRACE_ICE_NATIVE", traceIceNative ? "1" : "0");
-        LumenRtc.Initialize();
-        try
-        {
-            using var factory = PeerConnectionFactory.Create();
-            factory.Initialize();
+        using var rtc = ConvenienceApi.CreateContext();
+        var factory = rtc.Factory;
 
-            await using var signaling = CreateSignalingChannel(signalingMode, signalingServer, signalingRoom);
+        await using var signaling = CreateSignalingChannel(signalingMode, signalingServer, signalingRoom);
 
             var startedAt = DateTime.UtcNow;
             var firstFrameLogged = 0;
@@ -918,17 +915,11 @@ internal static class Program
                 track.Dispose();
             }
 
-            senderRtp?.Dispose();
-            senderPc.Close();
-            viewerPc.Close();
-            senderPc.Dispose();
-            viewerPc.Dispose();
-            factory.Terminate();
-        }
-        finally
-        {
-            LumenRtc.Terminate();
-        }
+        senderRtp?.Dispose();
+        senderPc.Close();
+        viewerPc.Close();
+        senderPc.Dispose();
+        viewerPc.Dispose();
     }
 
     private static void ApplyCandidate(

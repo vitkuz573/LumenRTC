@@ -2,13 +2,13 @@ using System;
 using LumenRTC;
 using LumenRTC.Rendering.Sdl;
 
-namespace LumenRTC.Sample.LocalCamera;
+namespace LumenRTC.Sample.LocalCamera.Convenience;
 
 internal static class Program
 {
     public static void Main()
     {
-        using var rtc = RtcContext.Create();
+        using var rtc = ConvenienceApi.CreateContext();
 
         const uint width = 1280;
         const uint height = 720;

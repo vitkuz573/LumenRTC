@@ -545,4 +545,4 @@ if (Test-Path $nativeDefault) {
 }
 Write-Host ('  $env:LIBWEBRTC_BUILD_DIR="{0}"' -f $libWebRtcOutDir)
 Write-Host ('  $env:LumenRtcNativeDir="{0}"' -f $nativeDefault)
-Write-Host "  dotnet run --project .\\samples\\LumenRTC.Sample.LocalCamera\\LumenRTC.Sample.LocalCamera.csproj"
+Write-Host "  dotnet run --project .\\samples\\LumenRTC.Sample.LocalCamera.Convenience\\LumenRTC.Sample.LocalCamera.Convenience.csproj"

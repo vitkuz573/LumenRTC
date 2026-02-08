@@ -2,7 +2,7 @@ using System;
 using LumenRTC;
 using LumenRTC.Rendering.Sdl;
 
-namespace LumenRTC.Sample.ScreenShare;
+namespace LumenRTC.Sample.ScreenShare.Core;
 
 internal static class Program
 {

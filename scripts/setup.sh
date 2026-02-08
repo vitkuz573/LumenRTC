@@ -208,5 +208,5 @@ cat <<NEXT_EOF
 Next steps:
   export LIBWEBRTC_BUILD_DIR="$out_dir"
   export LumenRtcNativeDir="${repo_root}/native/build"
-  dotnet run --project ./samples/LumenRTC.Sample.LocalCamera/LumenRTC.Sample.LocalCamera.csproj
+  dotnet run --project ./samples/LumenRTC.Sample.LocalCamera.Convenience/LumenRTC.Sample.LocalCamera.Convenience.csproj
 NEXT_EOF

@@ -118,7 +118,7 @@ function Resolve-LumenRtcNativeDir {
 }
 
 $repoRoot = Resolve-RepoRoot
-$projectPath = Join-Path $repoRoot "samples\LumenRTC.Sample.ScreenShareLoopback\LumenRTC.Sample.ScreenShareLoopback.csproj"
+$projectPath = Join-Path $repoRoot "samples\LumenRTC.Sample.ScreenShareLoopback.Core\LumenRTC.Sample.ScreenShareLoopback.Core.csproj"
 if (-not (Test-Path $projectPath)) {
   throw "Loopback project not found: $projectPath"
 }

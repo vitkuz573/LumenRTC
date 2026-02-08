@@ -184,7 +184,7 @@ Minimal camera preview:
 using LumenRTC;
 using LumenRTC.Rendering.Sdl;
 
-using var rtc = RtcContext.Create();
+using var rtc = ConvenienceApi.CreateContext();
 using var camera = rtc.CreateCameraTrack(new CameraTrackOptions
 {
     Width = 1280,
@@ -200,7 +200,7 @@ renderer.Run();
 Async offer/answer flow:
 
 ```csharp
-using var rtc = RtcContext.Create();
+using var rtc = ConvenienceApi.CreateContext();
 var config = new RtcConfiguration()
     .WithStun("stun:stun.l.google.com:19302")
     .EnableDscp();
@@ -211,6 +211,36 @@ using var pc = rtc.CreatePeerConnection(builder => builder
 
 var offer = await pc.CreateOfferAsync();
 await pc.SetLocalDescriptionAsync(offer);
+```
+
+## Quickstart (Core API)
+
+Minimal camera preview with explicit factory/device primitives:
+
+```csharp
+using LumenRTC;
+using LumenRTC.Rendering.Sdl;
+
+using var core = CoreApi.CreateSession();
+using var videoDevice = core.Factory.GetVideoDevice();
+if (videoDevice.NumberOfDevices() == 0)
+{
+    throw new InvalidOperationException("No camera devices available.");
+}
+
+var firstDevice = videoDevice.GetDeviceName(0);
+using var capturer = videoDevice.CreateCapturer(firstDevice.Name, 0, 1280, 720, 30);
+if (!capturer.Start())
+{
+    throw new InvalidOperationException("Failed to start camera capture.");
+}
+
+using var source = core.Factory.CreateVideoSource(capturer, "camera");
+using var track = core.Factory.CreateVideoTrack(source, "camera0");
+using var renderer = new SdlVideoRenderer("LumenRTC Camera", 1280, 720);
+track.AddSink(renderer.Sink);
+renderer.Run();
+capturer.Stop();
 ```
 
 ## Packaging
@@ -303,19 +333,31 @@ if (dtmf?.CanInsert == true)
 Local camera preview (requires SDL2 runtime):
 
 ```bash
-dotnet run --project samples/LumenRTC.Sample.LocalCamera/LumenRTC.Sample.LocalCamera.csproj
+# Convenience API
+dotnet run --project samples/LumenRTC.Sample.LocalCamera.Convenience/LumenRTC.Sample.LocalCamera.Convenience.csproj
+
+# Core API
+dotnet run --project samples/LumenRTC.Sample.LocalCamera.Core/LumenRTC.Sample.LocalCamera.Core.csproj
 ```
 
 Screen share preview (requires SDL2 runtime and desktop capture enabled):
 
 ```bash
-dotnet run --project samples/LumenRTC.Sample.ScreenShare/LumenRTC.Sample.ScreenShare.csproj
+# Core API
+dotnet run --project samples/LumenRTC.Sample.ScreenShare.Core/LumenRTC.Sample.ScreenShare.Core.csproj
+
+# Convenience API
+dotnet run --project samples/LumenRTC.Sample.ScreenShare.Convenience/LumenRTC.Sample.ScreenShare.Convenience.csproj
 ```
 
 Screen share loopback (offer/answer in-process, codec preferences applied):
 
 ```bash
-dotnet run --project samples/LumenRTC.Sample.ScreenShareLoopback/LumenRTC.Sample.ScreenShareLoopback.csproj
+# Core API
+dotnet run --project samples/LumenRTC.Sample.ScreenShareLoopback.Core/LumenRTC.Sample.ScreenShareLoopback.Core.csproj
+
+# Convenience API
+dotnet run --project samples/LumenRTC.Sample.ScreenShareLoopback.Convenience/LumenRTC.Sample.ScreenShareLoopback.Convenience.csproj
 ```
 
 Signaling server (simple WebSocket relay):
@@ -327,12 +369,20 @@ dotnet run --project samples/LumenRTC.Sample.SignalingServer/LumenRTC.Sample.Sig
 Streaming demo (run in two terminals):
 
 ```bash
-# Sender (captures screen)
-dotnet run --project samples/LumenRTC.Sample.Streaming/LumenRTC.Sample.Streaming.csproj -- \\
+# Core API sender (captures screen)
+dotnet run --project samples/LumenRTC.Sample.Streaming.Core/LumenRTC.Sample.Streaming.Core.csproj -- \\
   --role sender --server ws://localhost:8080/ws/ --room demo --capture screen --source 0 --fps 30
 
-# Viewer (renders remote track + opens data channel)
-dotnet run --project samples/LumenRTC.Sample.Streaming/LumenRTC.Sample.Streaming.csproj -- \\
+# Core API viewer (renders remote track + opens data channel)
+dotnet run --project samples/LumenRTC.Sample.Streaming.Core/LumenRTC.Sample.Streaming.Core.csproj -- \\
+  --role viewer --server ws://localhost:8080/ws/ --room demo
+
+# Convenience API sender
+dotnet run --project samples/LumenRTC.Sample.Streaming.Convenience/LumenRTC.Sample.Streaming.Convenience.csproj -- \\
+  --role sender --server ws://localhost:8080/ws/ --room demo --capture screen --source 0 --fps 30
+
+# Convenience API viewer
+dotnet run --project samples/LumenRTC.Sample.Streaming.Convenience/LumenRTC.Sample.Streaming.Convenience.csproj -- \\
   --role viewer --server ws://localhost:8080/ws/ --room demo
 ```
 

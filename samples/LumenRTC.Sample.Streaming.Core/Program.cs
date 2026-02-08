@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 using LumenRTC;
 using LumenRTC.Rendering.Sdl;
 
-namespace LumenRTC.Sample.Streaming;
+namespace LumenRTC.Sample.Streaming.Core;
 
 internal static class Program
 {

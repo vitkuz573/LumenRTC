@@ -192,7 +192,7 @@ function Start-PowerShellWindow {
 $repoRoot = Resolve-RepoRoot
 
 $signalingProject = Join-Path $repoRoot "samples\LumenRTC.Sample.SignalingServer\LumenRTC.Sample.SignalingServer.csproj"
-$streamingProject = Join-Path $repoRoot "samples\LumenRTC.Sample.Streaming\LumenRTC.Sample.Streaming.csproj"
+$streamingProject = Join-Path $repoRoot "samples\LumenRTC.Sample.Streaming.Core\LumenRTC.Sample.Streaming.Core.csproj"
 $childScript = Join-Path $repoRoot "scripts\run-streaming-child.ps1"
 
 if (-not (Test-Path $signalingProject)) {
