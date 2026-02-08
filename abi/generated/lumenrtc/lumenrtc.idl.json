@@ -5,19 +5,16 @@
     "patch": 0
   },
   "codegen": {
-    "calling_convention": "Cdecl",
-    "class_name": "NativeMethods",
-    "emit_entry_point": true,
-    "namespace": "LumenRTC.Interop"
+    "enabled": true,
+    "exclude_symbols": [],
+    "include_symbols": []
   },
-  "content_fingerprint": "f999dfd6801b5c0ad30c45fba2e9305f9b5ade1d498378dfb6a613f3b3d41cae",
+  "content_fingerprint": "c2af15f045bfab2fc7349add166a2f5203f14c5ad7a34e01af489bc883ee750b",
   "functions": [
     {
       "c_parameters_raw": "void",
       "c_return_type": "uint32_t",
       "c_signature": "uint32_t (void)",
-      "managed_return_type": "uint",
-      "managed_signature": "uint lrtc_abi_version_major()",
       "name": "lrtc_abi_version_major",
       "parameters": [],
       "stable_id": "27e5a06300f3f700bd3045f3f65fa9d3a99ee2712dcc8e0708cab89fbc5ab88d"
@@ -26,8 +23,6 @@
       "c_parameters_raw": "void",
       "c_return_type": "uint32_t",
       "c_signature": "uint32_t (void)",
-      "managed_return_type": "uint",
-      "managed_signature": "uint lrtc_abi_version_minor()",
       "name": "lrtc_abi_version_minor",
       "parameters": [],
       "stable_id": "d98f9e3eea3415dbe6be3a20171d95e48d14a38dba16d1887429e8fe2a1f9fb5"
@@ -36,8 +31,6 @@
       "c_parameters_raw": "void",
       "c_return_type": "uint32_t",
       "c_signature": "uint32_t (void)",
-      "managed_return_type": "uint",
-      "managed_signature": "uint lrtc_abi_version_patch()",
       "name": "lrtc_abi_version_patch",
       "parameters": [],
       "stable_id": "ed8fca2c9fea759f89968607fc1dd4248b111d2aa91b07eff2d203ad07f2d1e1"
@@ -46,22 +39,16 @@
       "c_parameters_raw": "char* buffer, uint32_t buffer_len",
       "c_return_type": "int32_t",
       "c_signature": "int32_t (char* buffer, uint32_t buffer_len)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_abi_version_string(IntPtr buffer, uint buffer_len)",
       "name": "lrtc_abi_version_string",
       "parameters": [
         {
           "c_type": "char*",
-          "managed_name": "buffer",
-          "managed_type": "IntPtr",
           "name": "buffer",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "uint32_t",
-          "managed_name": "buffer_len",
-          "managed_type": "uint",
           "name": "buffer_len",
           "pointer_depth": 0,
           "variadic": false
@@ -73,22 +60,16 @@
       "c_parameters_raw": "lrtc_audio_device_t* device, uint32_t* volume",
       "c_return_type": "int32_t",
       "c_signature": "int32_t (lrtc_audio_device_t* device, uint32_t* volume)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_audio_device_microphone_volume(IntPtr device, IntPtr volume)",
       "name": "lrtc_audio_device_microphone_volume",
       "parameters": [
         {
           "c_type": "lrtc_audio_device_t*",
-          "managed_name": "device",
-          "managed_type": "IntPtr",
           "name": "device",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "uint32_t*",
-          "managed_name": "volume",
-          "managed_type": "IntPtr",
           "name": "volume",
           "pointer_depth": 1,
           "variadic": false
@@ -100,54 +81,40 @@
       "c_parameters_raw": "lrtc_audio_device_t* device, uint16_t index, char* name, uint32_t name_len, char* guid, uint32_t guid_len",
       "c_return_type": "int32_t",
       "c_signature": "int32_t (lrtc_audio_device_t* device, uint16_t index, char* name, uint32_t name_len, char* guid, uint32_t guid_len)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_audio_device_playout_device_name(IntPtr device, ushort index, IntPtr name, uint name_len, IntPtr guid, uint guid_len)",
       "name": "lrtc_audio_device_playout_device_name",
       "parameters": [
         {
           "c_type": "lrtc_audio_device_t*",
-          "managed_name": "device",
-          "managed_type": "IntPtr",
           "name": "device",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "uint16_t",
-          "managed_name": "index",
-          "managed_type": "ushort",
           "name": "index",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "char*",
-          "managed_name": "name",
-          "managed_type": "IntPtr",
           "name": "name",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "uint32_t",
-          "managed_name": "name_len",
-          "managed_type": "uint",
           "name": "name_len",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "char*",
-          "managed_name": "guid",
-          "managed_type": "IntPtr",
           "name": "guid",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "uint32_t",
-          "managed_name": "guid_len",
-          "managed_type": "uint",
           "name": "guid_len",
           "pointer_depth": 0,
           "variadic": false
@@ -159,14 +126,10 @@
       "c_parameters_raw": "lrtc_audio_device_t* device",
       "c_return_type": "int16_t",
       "c_signature": "int16_t (lrtc_audio_device_t* device)",
-      "managed_return_type": "short",
-      "managed_signature": "short lrtc_audio_device_playout_devices(IntPtr device)",
       "name": "lrtc_audio_device_playout_devices",
       "parameters": [
         {
           "c_type": "lrtc_audio_device_t*",
-          "managed_name": "device",
-          "managed_type": "IntPtr",
           "name": "device",
           "pointer_depth": 1,
           "variadic": false
@@ -178,54 +141,40 @@
       "c_parameters_raw": "lrtc_audio_device_t* device, uint16_t index, char* name, uint32_t name_len, char* guid, uint32_t guid_len",
       "c_return_type": "int32_t",
       "c_signature": "int32_t (lrtc_audio_device_t* device, uint16_t index, char* name, uint32_t name_len, char* guid, uint32_t guid_len)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_audio_device_recording_device_name(IntPtr device, ushort index, IntPtr name, uint name_len, IntPtr guid, uint guid_len)",
       "name": "lrtc_audio_device_recording_device_name",
       "parameters": [
         {
           "c_type": "lrtc_audio_device_t*",
-          "managed_name": "device",
-          "managed_type": "IntPtr",
           "name": "device",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "uint16_t",
-          "managed_name": "index",
-          "managed_type": "ushort",
           "name": "index",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "char*",
-          "managed_name": "name",
-          "managed_type": "IntPtr",
           "name": "name",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "uint32_t",
-          "managed_name": "name_len",
-          "managed_type": "uint",
           "name": "name_len",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "char*",
-          "managed_name": "guid",
-          "managed_type": "IntPtr",
           "name": "guid",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "uint32_t",
-          "managed_name": "guid_len",
-          "managed_type": "uint",
           "name": "guid_len",
           "pointer_depth": 0,
           "variadic": false
@@ -237,14 +186,10 @@
       "c_parameters_raw": "lrtc_audio_device_t* device",
       "c_return_type": "int16_t",
       "c_signature": "int16_t (lrtc_audio_device_t* device)",
-      "managed_return_type": "short",
-      "managed_signature": "short lrtc_audio_device_recording_devices(IntPtr device)",
       "name": "lrtc_audio_device_recording_devices",
       "parameters": [
         {
           "c_type": "lrtc_audio_device_t*",
-          "managed_name": "device",
-          "managed_type": "IntPtr",
           "name": "device",
           "pointer_depth": 1,
           "variadic": false
@@ -256,14 +201,10 @@
       "c_parameters_raw": "lrtc_audio_device_t* device",
       "c_return_type": "void",
       "c_signature": "void (lrtc_audio_device_t* device)",
-      "managed_return_type": "void",
-      "managed_signature": "void lrtc_audio_device_release(IntPtr device)",
       "name": "lrtc_audio_device_release",
       "parameters": [
         {
           "c_type": "lrtc_audio_device_t*",
-          "managed_name": "device",
-          "managed_type": "IntPtr",
           "name": "device",
           "pointer_depth": 1,
           "variadic": false
@@ -275,22 +216,16 @@
       "c_parameters_raw": "lrtc_audio_device_t* device, uint32_t volume",
       "c_return_type": "int32_t",
       "c_signature": "int32_t (lrtc_audio_device_t* device, uint32_t volume)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_audio_device_set_microphone_volume(IntPtr device, uint volume)",
       "name": "lrtc_audio_device_set_microphone_volume",
       "parameters": [
         {
           "c_type": "lrtc_audio_device_t*",
-          "managed_name": "device",
-          "managed_type": "IntPtr",
           "name": "device",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "uint32_t",
-          "managed_name": "volume",
-          "managed_type": "uint",
           "name": "volume",
           "pointer_depth": 0,
           "variadic": false
@@ -302,22 +237,16 @@
       "c_parameters_raw": "lrtc_audio_device_t* device, uint16_t index",
       "c_return_type": "int32_t",
       "c_signature": "int32_t (lrtc_audio_device_t* device, uint16_t index)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_audio_device_set_playout_device(IntPtr device, ushort index)",
       "name": "lrtc_audio_device_set_playout_device",
       "parameters": [
         {
           "c_type": "lrtc_audio_device_t*",
-          "managed_name": "device",
-          "managed_type": "IntPtr",
           "name": "device",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "uint16_t",
-          "managed_name": "index",
-          "managed_type": "ushort",
           "name": "index",
           "pointer_depth": 0,
           "variadic": false
@@ -329,22 +258,16 @@
       "c_parameters_raw": "lrtc_audio_device_t* device, uint16_t index",
       "c_return_type": "int32_t",
       "c_signature": "int32_t (lrtc_audio_device_t* device, uint16_t index)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_audio_device_set_recording_device(IntPtr device, ushort index)",
       "name": "lrtc_audio_device_set_recording_device",
       "parameters": [
         {
           "c_type": "lrtc_audio_device_t*",
-          "managed_name": "device",
-          "managed_type": "IntPtr",
           "name": "device",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "uint16_t",
-          "managed_name": "index",
-          "managed_type": "ushort",
           "name": "index",
           "pointer_depth": 0,
           "variadic": false
@@ -356,22 +279,16 @@
       "c_parameters_raw": "lrtc_audio_device_t* device, uint32_t volume",
       "c_return_type": "int32_t",
       "c_signature": "int32_t (lrtc_audio_device_t* device, uint32_t volume)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_audio_device_set_speaker_volume(IntPtr device, uint volume)",
       "name": "lrtc_audio_device_set_speaker_volume",
       "parameters": [
         {
           "c_type": "lrtc_audio_device_t*",
-          "managed_name": "device",
-          "managed_type": "IntPtr",
           "name": "device",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "uint32_t",
-          "managed_name": "volume",
-          "managed_type": "uint",
           "name": "volume",
           "pointer_depth": 0,
           "variadic": false
@@ -383,22 +300,16 @@
       "c_parameters_raw": "lrtc_audio_device_t* device, uint32_t* volume",
       "c_return_type": "int32_t",
       "c_signature": "int32_t (lrtc_audio_device_t* device, uint32_t* volume)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_audio_device_speaker_volume(IntPtr device, IntPtr volume)",
       "name": "lrtc_audio_device_speaker_volume",
       "parameters": [
         {
           "c_type": "lrtc_audio_device_t*",
-          "managed_name": "device",
-          "managed_type": "IntPtr",
           "name": "device",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "uint32_t*",
-          "managed_name": "volume",
-          "managed_type": "IntPtr",
           "name": "volume",
           "pointer_depth": 1,
           "variadic": false
@@ -410,22 +321,16 @@
       "c_parameters_raw": "const lrtc_audio_sink_callbacks_t* callbacks, void* user_data",
       "c_return_type": "lrtc_audio_sink_t*",
       "c_signature": "lrtc_audio_sink_t* (const lrtc_audio_sink_callbacks_t* callbacks, void* user_data)",
-      "managed_return_type": "IntPtr",
-      "managed_signature": "IntPtr lrtc_audio_sink_create(IntPtr callbacks, IntPtr user_data)",
       "name": "lrtc_audio_sink_create",
       "parameters": [
         {
           "c_type": "const lrtc_audio_sink_callbacks_t*",
-          "managed_name": "callbacks",
-          "managed_type": "IntPtr",
           "name": "callbacks",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "void*",
-          "managed_name": "user_data",
-          "managed_type": "IntPtr",
           "name": "user_data",
           "pointer_depth": 1,
           "variadic": false
@@ -437,14 +342,10 @@
       "c_parameters_raw": "lrtc_audio_sink_t* sink",
       "c_return_type": "void",
       "c_signature": "void (lrtc_audio_sink_t* sink)",
-      "managed_return_type": "void",
-      "managed_signature": "void lrtc_audio_sink_release(IntPtr sink)",
       "name": "lrtc_audio_sink_release",
       "parameters": [
         {
           "c_type": "lrtc_audio_sink_t*",
-          "managed_name": "sink",
-          "managed_type": "IntPtr",
           "name": "sink",
           "pointer_depth": 1,
           "variadic": false
@@ -456,54 +357,40 @@
       "c_parameters_raw": "lrtc_audio_source_t* source, const void* audio_data, int bits_per_sample, int sample_rate, size_t number_of_channels, size_t number_of_frames",
       "c_return_type": "void",
       "c_signature": "void (lrtc_audio_source_t* source, const void* audio_data, int bits_per_sample, int sample_rate, size_t number_of_channels, size_t number_of_frames)",
-      "managed_return_type": "void",
-      "managed_signature": "void lrtc_audio_source_capture_frame(IntPtr source, IntPtr audio_data, int bits_per_sample, int sample_rate, nuint number_of_channels, nuint number_of_frames)",
       "name": "lrtc_audio_source_capture_frame",
       "parameters": [
         {
           "c_type": "lrtc_audio_source_t*",
-          "managed_name": "source",
-          "managed_type": "IntPtr",
           "name": "source",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "const void*",
-          "managed_name": "audio_data",
-          "managed_type": "IntPtr",
           "name": "audio_data",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "int",
-          "managed_name": "bits_per_sample",
-          "managed_type": "int",
           "name": "bits_per_sample",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "int",
-          "managed_name": "sample_rate",
-          "managed_type": "int",
           "name": "sample_rate",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "size_t",
-          "managed_name": "number_of_channels",
-          "managed_type": "nuint",
           "name": "number_of_channels",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "size_t",
-          "managed_name": "number_of_frames",
-          "managed_type": "nuint",
           "name": "number_of_frames",
           "pointer_depth": 0,
           "variadic": false
@@ -515,14 +402,10 @@
       "c_parameters_raw": "lrtc_audio_source_t* source",
       "c_return_type": "void",
       "c_signature": "void (lrtc_audio_source_t* source)",
-      "managed_return_type": "void",
-      "managed_signature": "void lrtc_audio_source_release(IntPtr source)",
       "name": "lrtc_audio_source_release",
       "parameters": [
         {
           "c_type": "lrtc_audio_source_t*",
-          "managed_name": "source",
-          "managed_type": "IntPtr",
           "name": "source",
           "pointer_depth": 1,
           "variadic": false
@@ -534,22 +417,16 @@
       "c_parameters_raw": "lrtc_audio_track_t* track, lrtc_audio_sink_t* sink",
       "c_return_type": "void",
       "c_signature": "void (lrtc_audio_track_t* track, lrtc_audio_sink_t* sink)",
-      "managed_return_type": "void",
-      "managed_signature": "void lrtc_audio_track_add_sink(IntPtr track, IntPtr sink)",
       "name": "lrtc_audio_track_add_sink",
       "parameters": [
         {
           "c_type": "lrtc_audio_track_t*",
-          "managed_name": "track",
-          "managed_type": "IntPtr",
           "name": "track",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "lrtc_audio_sink_t*",
-          "managed_name": "sink",
-          "managed_type": "IntPtr",
           "name": "sink",
           "pointer_depth": 1,
           "variadic": false
@@ -561,14 +438,10 @@
       "c_parameters_raw": "lrtc_audio_track_t* track",
       "c_return_type": "int",
       "c_signature": "int (lrtc_audio_track_t* track)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_audio_track_get_enabled(IntPtr track)",
       "name": "lrtc_audio_track_get_enabled",
       "parameters": [
         {
           "c_type": "lrtc_audio_track_t*",
-          "managed_name": "track",
-          "managed_type": "IntPtr",
           "name": "track",
           "pointer_depth": 1,
           "variadic": false
@@ -580,30 +453,22 @@
       "c_parameters_raw": "lrtc_audio_track_t* track, char* buffer, uint32_t buffer_len",
       "c_return_type": "int32_t",
       "c_signature": "int32_t (lrtc_audio_track_t* track, char* buffer, uint32_t buffer_len)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_audio_track_get_id(IntPtr track, IntPtr buffer, uint buffer_len)",
       "name": "lrtc_audio_track_get_id",
       "parameters": [
         {
           "c_type": "lrtc_audio_track_t*",
-          "managed_name": "track",
-          "managed_type": "IntPtr",
           "name": "track",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "char*",
-          "managed_name": "buffer",
-          "managed_type": "IntPtr",
           "name": "buffer",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "uint32_t",
-          "managed_name": "buffer_len",
-          "managed_type": "uint",
           "name": "buffer_len",
           "pointer_depth": 0,
           "variadic": false
@@ -615,14 +480,10 @@
       "c_parameters_raw": "lrtc_audio_track_t* track",
       "c_return_type": "int",
       "c_signature": "int (lrtc_audio_track_t* track)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_audio_track_get_state(IntPtr track)",
       "name": "lrtc_audio_track_get_state",
       "parameters": [
         {
           "c_type": "lrtc_audio_track_t*",
-          "managed_name": "track",
-          "managed_type": "IntPtr",
           "name": "track",
           "pointer_depth": 1,
           "variadic": false
@@ -634,14 +495,10 @@
       "c_parameters_raw": "lrtc_audio_track_t* track",
       "c_return_type": "void",
       "c_signature": "void (lrtc_audio_track_t* track)",
-      "managed_return_type": "void",
-      "managed_signature": "void lrtc_audio_track_release(IntPtr track)",
       "name": "lrtc_audio_track_release",
       "parameters": [
         {
           "c_type": "lrtc_audio_track_t*",
-          "managed_name": "track",
-          "managed_type": "IntPtr",
           "name": "track",
           "pointer_depth": 1,
           "variadic": false
@@ -653,22 +510,16 @@
       "c_parameters_raw": "lrtc_audio_track_t* track, lrtc_audio_sink_t* sink",
       "c_return_type": "void",
       "c_signature": "void (lrtc_audio_track_t* track, lrtc_audio_sink_t* sink)",
-      "managed_return_type": "void",
-      "managed_signature": "void lrtc_audio_track_remove_sink(IntPtr track, IntPtr sink)",
       "name": "lrtc_audio_track_remove_sink",
       "parameters": [
         {
           "c_type": "lrtc_audio_track_t*",
-          "managed_name": "track",
-          "managed_type": "IntPtr",
           "name": "track",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "lrtc_audio_sink_t*",
-          "managed_name": "sink",
-          "managed_type": "IntPtr",
           "name": "sink",
           "pointer_depth": 1,
           "variadic": false
@@ -680,22 +531,16 @@
       "c_parameters_raw": "lrtc_audio_track_t* track, int enabled",
       "c_return_type": "int",
       "c_signature": "int (lrtc_audio_track_t* track, int enabled)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_audio_track_set_enabled(IntPtr track, int enabled)",
       "name": "lrtc_audio_track_set_enabled",
       "parameters": [
         {
           "c_type": "lrtc_audio_track_t*",
-          "managed_name": "track",
-          "managed_type": "IntPtr",
           "name": "track",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "int",
-          "managed_name": "enabled",
-          "managed_type": "int",
           "name": "enabled",
           "pointer_depth": 0,
           "variadic": false
@@ -707,22 +552,16 @@
       "c_parameters_raw": "lrtc_audio_track_t* track, double volume",
       "c_return_type": "void",
       "c_signature": "void (lrtc_audio_track_t* track, double volume)",
-      "managed_return_type": "void",
-      "managed_signature": "void lrtc_audio_track_set_volume(IntPtr track, double volume)",
       "name": "lrtc_audio_track_set_volume",
       "parameters": [
         {
           "c_type": "lrtc_audio_track_t*",
-          "managed_name": "track",
-          "managed_type": "IntPtr",
           "name": "track",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "double",
-          "managed_name": "volume",
-          "managed_type": "double",
           "name": "volume",
           "pointer_depth": 0,
           "variadic": false
@@ -734,14 +573,10 @@
       "c_parameters_raw": "lrtc_data_channel_t* channel",
       "c_return_type": "void",
       "c_signature": "void (lrtc_data_channel_t* channel)",
-      "managed_return_type": "void",
-      "managed_signature": "void lrtc_data_channel_close(IntPtr channel)",
       "name": "lrtc_data_channel_close",
       "parameters": [
         {
           "c_type": "lrtc_data_channel_t*",
-          "managed_name": "channel",
-          "managed_type": "IntPtr",
           "name": "channel",
           "pointer_depth": 1,
           "variadic": false
@@ -753,14 +588,10 @@
       "c_parameters_raw": "lrtc_data_channel_t* channel",
       "c_return_type": "void",
       "c_signature": "void (lrtc_data_channel_t* channel)",
-      "managed_return_type": "void",
-      "managed_signature": "void lrtc_data_channel_release(IntPtr channel)",
       "name": "lrtc_data_channel_release",
       "parameters": [
         {
           "c_type": "lrtc_data_channel_t*",
-          "managed_name": "channel",
-          "managed_type": "IntPtr",
           "name": "channel",
           "pointer_depth": 1,
           "variadic": false
@@ -772,38 +603,28 @@
       "c_parameters_raw": "lrtc_data_channel_t* channel, const uint8_t* data, uint32_t size, int binary",
       "c_return_type": "void",
       "c_signature": "void (lrtc_data_channel_t* channel, const uint8_t* data, uint32_t size, int binary)",
-      "managed_return_type": "void",
-      "managed_signature": "void lrtc_data_channel_send(IntPtr channel, IntPtr data, uint size, int binary)",
       "name": "lrtc_data_channel_send",
       "parameters": [
         {
           "c_type": "lrtc_data_channel_t*",
-          "managed_name": "channel",
-          "managed_type": "IntPtr",
           "name": "channel",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "const uint8_t*",
-          "managed_name": "data",
-          "managed_type": "IntPtr",
           "name": "data",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "uint32_t",
-          "managed_name": "size",
-          "managed_type": "uint",
           "name": "size",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "int",
-          "managed_name": "binary",
-          "managed_type": "int",
           "name": "binary",
           "pointer_depth": 0,
           "variadic": false
@@ -815,30 +636,22 @@
       "c_parameters_raw": "lrtc_data_channel_t* channel, const lrtc_data_channel_callbacks_t* callbacks, void* user_data",
       "c_return_type": "void",
       "c_signature": "void (lrtc_data_channel_t* channel, const lrtc_data_channel_callbacks_t* callbacks, void* user_data)",
-      "managed_return_type": "void",
-      "managed_signature": "void lrtc_data_channel_set_callbacks(IntPtr channel, IntPtr callbacks, IntPtr user_data)",
       "name": "lrtc_data_channel_set_callbacks",
       "parameters": [
         {
           "c_type": "lrtc_data_channel_t*",
-          "managed_name": "channel",
-          "managed_type": "IntPtr",
           "name": "channel",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "const lrtc_data_channel_callbacks_t*",
-          "managed_name": "callbacks",
-          "managed_type": "IntPtr",
           "name": "callbacks",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "void*",
-          "managed_name": "user_data",
-          "managed_type": "IntPtr",
           "name": "user_data",
           "pointer_depth": 1,
           "variadic": false
@@ -850,14 +663,10 @@
       "c_parameters_raw": "lrtc_desktop_capturer_t* capturer",
       "c_return_type": "bool",
       "c_signature": "bool (lrtc_desktop_capturer_t* capturer)",
-      "managed_return_type": "bool",
-      "managed_signature": "bool lrtc_desktop_capturer_is_running(IntPtr capturer)",
       "name": "lrtc_desktop_capturer_is_running",
       "parameters": [
         {
           "c_type": "lrtc_desktop_capturer_t*",
-          "managed_name": "capturer",
-          "managed_type": "IntPtr",
           "name": "capturer",
           "pointer_depth": 1,
           "variadic": false
@@ -869,14 +678,10 @@
       "c_parameters_raw": "lrtc_desktop_capturer_t* capturer",
       "c_return_type": "void",
       "c_signature": "void (lrtc_desktop_capturer_t* capturer)",
-      "managed_return_type": "void",
-      "managed_signature": "void lrtc_desktop_capturer_release(IntPtr capturer)",
       "name": "lrtc_desktop_capturer_release",
       "parameters": [
         {
           "c_type": "lrtc_desktop_capturer_t*",
-          "managed_name": "capturer",
-          "managed_type": "IntPtr",
           "name": "capturer",
           "pointer_depth": 1,
           "variadic": false
@@ -888,22 +693,16 @@
       "c_parameters_raw": "lrtc_desktop_capturer_t* capturer, uint32_t fps",
       "c_return_type": "lrtc_desktop_capture_state",
       "c_signature": "lrtc_desktop_capture_state (lrtc_desktop_capturer_t* capturer, uint32_t fps)",
-      "managed_return_type": "LrtcDesktopCaptureState",
-      "managed_signature": "LrtcDesktopCaptureState lrtc_desktop_capturer_start(IntPtr capturer, uint fps)",
       "name": "lrtc_desktop_capturer_start",
       "parameters": [
         {
           "c_type": "lrtc_desktop_capturer_t*",
-          "managed_name": "capturer",
-          "managed_type": "IntPtr",
           "name": "capturer",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "uint32_t",
-          "managed_name": "fps",
-          "managed_type": "uint",
           "name": "fps",
           "pointer_depth": 0,
           "variadic": false
@@ -915,54 +714,40 @@
       "c_parameters_raw": "lrtc_desktop_capturer_t* capturer, uint32_t fps, uint32_t x, uint32_t y, uint32_t w, uint32_t h",
       "c_return_type": "lrtc_desktop_capture_state",
       "c_signature": "lrtc_desktop_capture_state (lrtc_desktop_capturer_t* capturer, uint32_t fps, uint32_t x, uint32_t y, uint32_t w, uint32_t h)",
-      "managed_return_type": "LrtcDesktopCaptureState",
-      "managed_signature": "LrtcDesktopCaptureState lrtc_desktop_capturer_start_region(IntPtr capturer, uint fps, uint x, uint y, uint w, uint h)",
       "name": "lrtc_desktop_capturer_start_region",
       "parameters": [
         {
           "c_type": "lrtc_desktop_capturer_t*",
-          "managed_name": "capturer",
-          "managed_type": "IntPtr",
           "name": "capturer",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "uint32_t",
-          "managed_name": "fps",
-          "managed_type": "uint",
           "name": "fps",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "uint32_t",
-          "managed_name": "x",
-          "managed_type": "uint",
           "name": "x",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "uint32_t",
-          "managed_name": "y",
-          "managed_type": "uint",
           "name": "y",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "uint32_t",
-          "managed_name": "w",
-          "managed_type": "uint",
           "name": "w",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "uint32_t",
-          "managed_name": "h",
-          "managed_type": "uint",
           "name": "h",
           "pointer_depth": 0,
           "variadic": false
@@ -974,14 +759,10 @@
       "c_parameters_raw": "lrtc_desktop_capturer_t* capturer",
       "c_return_type": "void",
       "c_signature": "void (lrtc_desktop_capturer_t* capturer)",
-      "managed_return_type": "void",
-      "managed_signature": "void lrtc_desktop_capturer_stop(IntPtr capturer)",
       "name": "lrtc_desktop_capturer_stop",
       "parameters": [
         {
           "c_type": "lrtc_desktop_capturer_t*",
-          "managed_name": "capturer",
-          "managed_type": "IntPtr",
           "name": "capturer",
           "pointer_depth": 1,
           "variadic": false
@@ -993,30 +774,22 @@
       "c_parameters_raw": "lrtc_desktop_device_t* device, lrtc_media_source_t* source, bool show_cursor",
       "c_return_type": "lrtc_desktop_capturer_t*",
       "c_signature": "lrtc_desktop_capturer_t* (lrtc_desktop_device_t* device, lrtc_media_source_t* source, bool show_cursor)",
-      "managed_return_type": "IntPtr",
-      "managed_signature": "IntPtr lrtc_desktop_device_create_capturer(IntPtr device, IntPtr source, bool show_cursor)",
       "name": "lrtc_desktop_device_create_capturer",
       "parameters": [
         {
           "c_type": "lrtc_desktop_device_t*",
-          "managed_name": "device",
-          "managed_type": "IntPtr",
           "name": "device",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "lrtc_media_source_t*",
-          "managed_name": "source",
-          "managed_type": "IntPtr",
           "name": "source",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "bool",
-          "managed_name": "show_cursor",
-          "managed_type": "bool",
           "name": "show_cursor",
           "pointer_depth": 0,
           "variadic": false
@@ -1028,22 +801,16 @@
       "c_parameters_raw": "lrtc_desktop_device_t* device, lrtc_desktop_type type",
       "c_return_type": "lrtc_desktop_media_list_t*",
       "c_signature": "lrtc_desktop_media_list_t* (lrtc_desktop_device_t* device, lrtc_desktop_type type)",
-      "managed_return_type": "IntPtr",
-      "managed_signature": "IntPtr lrtc_desktop_device_get_media_list(IntPtr device, LrtcDesktopType type)",
       "name": "lrtc_desktop_device_get_media_list",
       "parameters": [
         {
           "c_type": "lrtc_desktop_device_t*",
-          "managed_name": "device",
-          "managed_type": "IntPtr",
           "name": "device",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "lrtc_desktop_type",
-          "managed_name": "type",
-          "managed_type": "LrtcDesktopType",
           "name": "type",
           "pointer_depth": 0,
           "variadic": false
@@ -1055,14 +822,10 @@
       "c_parameters_raw": "lrtc_desktop_device_t* device",
       "c_return_type": "void",
       "c_signature": "void (lrtc_desktop_device_t* device)",
-      "managed_return_type": "void",
-      "managed_signature": "void lrtc_desktop_device_release(IntPtr device)",
       "name": "lrtc_desktop_device_release",
       "parameters": [
         {
           "c_type": "lrtc_desktop_device_t*",
-          "managed_name": "device",
-          "managed_type": "IntPtr",
           "name": "device",
           "pointer_depth": 1,
           "variadic": false
@@ -1074,22 +837,16 @@
       "c_parameters_raw": "lrtc_desktop_media_list_t* list, int index",
       "c_return_type": "lrtc_media_source_t*",
       "c_signature": "lrtc_media_source_t* (lrtc_desktop_media_list_t* list, int index)",
-      "managed_return_type": "IntPtr",
-      "managed_signature": "IntPtr lrtc_desktop_media_list_get_source(IntPtr list, int index)",
       "name": "lrtc_desktop_media_list_get_source",
       "parameters": [
         {
           "c_type": "lrtc_desktop_media_list_t*",
-          "managed_name": "list",
-          "managed_type": "IntPtr",
           "name": "list",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "int",
-          "managed_name": "index",
-          "managed_type": "int",
           "name": "index",
           "pointer_depth": 0,
           "variadic": false
@@ -1101,14 +858,10 @@
       "c_parameters_raw": "lrtc_desktop_media_list_t* list",
       "c_return_type": "int",
       "c_signature": "int (lrtc_desktop_media_list_t* list)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_desktop_media_list_get_source_count(IntPtr list)",
       "name": "lrtc_desktop_media_list_get_source_count",
       "parameters": [
         {
           "c_type": "lrtc_desktop_media_list_t*",
-          "managed_name": "list",
-          "managed_type": "IntPtr",
           "name": "list",
           "pointer_depth": 1,
           "variadic": false
@@ -1120,14 +873,10 @@
       "c_parameters_raw": "lrtc_desktop_media_list_t* list",
       "c_return_type": "void",
       "c_signature": "void (lrtc_desktop_media_list_t* list)",
-      "managed_return_type": "void",
-      "managed_signature": "void lrtc_desktop_media_list_release(IntPtr list)",
       "name": "lrtc_desktop_media_list_release",
       "parameters": [
         {
           "c_type": "lrtc_desktop_media_list_t*",
-          "managed_name": "list",
-          "managed_type": "IntPtr",
           "name": "list",
           "pointer_depth": 1,
           "variadic": false
@@ -1139,30 +888,22 @@
       "c_parameters_raw": "lrtc_desktop_media_list_t* list, bool force_reload, bool get_thumbnail",
       "c_return_type": "int32_t",
       "c_signature": "int32_t (lrtc_desktop_media_list_t* list, bool force_reload, bool get_thumbnail)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_desktop_media_list_update(IntPtr list, bool force_reload, bool get_thumbnail)",
       "name": "lrtc_desktop_media_list_update",
       "parameters": [
         {
           "c_type": "lrtc_desktop_media_list_t*",
-          "managed_name": "list",
-          "managed_type": "IntPtr",
           "name": "list",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "bool",
-          "managed_name": "force_reload",
-          "managed_type": "bool",
           "name": "force_reload",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "bool",
-          "managed_name": "get_thumbnail",
-          "managed_type": "bool",
           "name": "get_thumbnail",
           "pointer_depth": 0,
           "variadic": false
@@ -1174,14 +915,10 @@
       "c_parameters_raw": "lrtc_dtmf_sender_t* sender",
       "c_return_type": "int",
       "c_signature": "int (lrtc_dtmf_sender_t* sender)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_dtmf_sender_can_insert(IntPtr sender)",
       "name": "lrtc_dtmf_sender_can_insert",
       "parameters": [
         {
           "c_type": "lrtc_dtmf_sender_t*",
-          "managed_name": "sender",
-          "managed_type": "IntPtr",
           "name": "sender",
           "pointer_depth": 1,
           "variadic": false
@@ -1193,14 +930,10 @@
       "c_parameters_raw": "lrtc_dtmf_sender_t* sender",
       "c_return_type": "int",
       "c_signature": "int (lrtc_dtmf_sender_t* sender)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_dtmf_sender_comma_delay(IntPtr sender)",
       "name": "lrtc_dtmf_sender_comma_delay",
       "parameters": [
         {
           "c_type": "lrtc_dtmf_sender_t*",
-          "managed_name": "sender",
-          "managed_type": "IntPtr",
           "name": "sender",
           "pointer_depth": 1,
           "variadic": false
@@ -1212,14 +945,10 @@
       "c_parameters_raw": "lrtc_dtmf_sender_t* sender",
       "c_return_type": "int",
       "c_signature": "int (lrtc_dtmf_sender_t* sender)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_dtmf_sender_duration(IntPtr sender)",
       "name": "lrtc_dtmf_sender_duration",
       "parameters": [
         {
           "c_type": "lrtc_dtmf_sender_t*",
-          "managed_name": "sender",
-          "managed_type": "IntPtr",
           "name": "sender",
           "pointer_depth": 1,
           "variadic": false
@@ -1231,46 +960,34 @@
       "c_parameters_raw": "lrtc_dtmf_sender_t* sender, const char* tones, int duration, int inter_tone_gap, int comma_delay",
       "c_return_type": "int",
       "c_signature": "int (lrtc_dtmf_sender_t* sender, const char* tones, int duration, int inter_tone_gap, int comma_delay)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_dtmf_sender_insert(IntPtr sender, IntPtr tones, int duration, int inter_tone_gap, int comma_delay)",
       "name": "lrtc_dtmf_sender_insert",
       "parameters": [
         {
           "c_type": "lrtc_dtmf_sender_t*",
-          "managed_name": "sender",
-          "managed_type": "IntPtr",
           "name": "sender",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "const char*",
-          "managed_name": "tones",
-          "managed_type": "IntPtr",
           "name": "tones",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "int",
-          "managed_name": "duration",
-          "managed_type": "int",
           "name": "duration",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "int",
-          "managed_name": "inter_tone_gap",
-          "managed_type": "int",
           "name": "inter_tone_gap",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "int",
-          "managed_name": "comma_delay",
-          "managed_type": "int",
           "name": "comma_delay",
           "pointer_depth": 0,
           "variadic": false
@@ -1282,14 +999,10 @@
       "c_parameters_raw": "lrtc_dtmf_sender_t* sender",
       "c_return_type": "int",
       "c_signature": "int (lrtc_dtmf_sender_t* sender)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_dtmf_sender_inter_tone_gap(IntPtr sender)",
       "name": "lrtc_dtmf_sender_inter_tone_gap",
       "parameters": [
         {
           "c_type": "lrtc_dtmf_sender_t*",
-          "managed_name": "sender",
-          "managed_type": "IntPtr",
           "name": "sender",
           "pointer_depth": 1,
           "variadic": false
@@ -1301,14 +1014,10 @@
       "c_parameters_raw": "lrtc_dtmf_sender_t* sender",
       "c_return_type": "void",
       "c_signature": "void (lrtc_dtmf_sender_t* sender)",
-      "managed_return_type": "void",
-      "managed_signature": "void lrtc_dtmf_sender_release(IntPtr sender)",
       "name": "lrtc_dtmf_sender_release",
       "parameters": [
         {
           "c_type": "lrtc_dtmf_sender_t*",
-          "managed_name": "sender",
-          "managed_type": "IntPtr",
           "name": "sender",
           "pointer_depth": 1,
           "variadic": false
@@ -1320,30 +1029,22 @@
       "c_parameters_raw": "lrtc_dtmf_sender_t* sender, const lrtc_dtmf_sender_callbacks_t* callbacks, void* user_data",
       "c_return_type": "void",
       "c_signature": "void (lrtc_dtmf_sender_t* sender, const lrtc_dtmf_sender_callbacks_t* callbacks, void* user_data)",
-      "managed_return_type": "void",
-      "managed_signature": "void lrtc_dtmf_sender_set_callbacks(IntPtr sender, IntPtr callbacks, IntPtr user_data)",
       "name": "lrtc_dtmf_sender_set_callbacks",
       "parameters": [
         {
           "c_type": "lrtc_dtmf_sender_t*",
-          "managed_name": "sender",
-          "managed_type": "IntPtr",
           "name": "sender",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "const lrtc_dtmf_sender_callbacks_t*",
-          "managed_name": "callbacks",
-          "managed_type": "IntPtr",
           "name": "callbacks",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "void*",
-          "managed_name": "user_data",
-          "managed_type": "IntPtr",
           "name": "user_data",
           "pointer_depth": 1,
           "variadic": false
@@ -1355,30 +1056,22 @@
       "c_parameters_raw": "lrtc_dtmf_sender_t* sender, char* buffer, uint32_t buffer_len",
       "c_return_type": "int32_t",
       "c_signature": "int32_t (lrtc_dtmf_sender_t* sender, char* buffer, uint32_t buffer_len)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_dtmf_sender_tones(IntPtr sender, IntPtr buffer, uint buffer_len)",
       "name": "lrtc_dtmf_sender_tones",
       "parameters": [
         {
           "c_type": "lrtc_dtmf_sender_t*",
-          "managed_name": "sender",
-          "managed_type": "IntPtr",
           "name": "sender",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "char*",
-          "managed_name": "buffer",
-          "managed_type": "IntPtr",
           "name": "buffer",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "uint32_t",
-          "managed_name": "buffer_len",
-          "managed_type": "uint",
           "name": "buffer_len",
           "pointer_depth": 0,
           "variadic": false
@@ -1390,8 +1083,6 @@
       "c_parameters_raw": "void",
       "c_return_type": "lrtc_factory_t*",
       "c_signature": "lrtc_factory_t* (void)",
-      "managed_return_type": "IntPtr",
-      "managed_signature": "IntPtr lrtc_factory_create()",
       "name": "lrtc_factory_create",
       "parameters": [],
       "stable_id": "6995f4abe4d790638c720ca1b48d0684aa83fe358dd916c1c9609b62e54a6e8b"
@@ -1400,38 +1091,28 @@
       "c_parameters_raw": "lrtc_factory_t* factory, const char* label, lrtc_audio_source_type source_type, const lrtc_audio_options_t* options",
       "c_return_type": "lrtc_audio_source_t*",
       "c_signature": "lrtc_audio_source_t* (lrtc_factory_t* factory, const char* label, lrtc_audio_source_type source_type, const lrtc_audio_options_t* options)",
-      "managed_return_type": "IntPtr",
-      "managed_signature": "IntPtr lrtc_factory_create_audio_source(IntPtr factory, IntPtr label, LrtcAudioSourceType source_type, IntPtr options)",
       "name": "lrtc_factory_create_audio_source",
       "parameters": [
         {
           "c_type": "lrtc_factory_t*",
-          "managed_name": "factory",
-          "managed_type": "IntPtr",
           "name": "factory",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "const char*",
-          "managed_name": "label",
-          "managed_type": "IntPtr",
           "name": "label",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "lrtc_audio_source_type",
-          "managed_name": "source_type",
-          "managed_type": "LrtcAudioSourceType",
           "name": "source_type",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "const lrtc_audio_options_t*",
-          "managed_name": "options",
-          "managed_type": "IntPtr",
           "name": "options",
           "pointer_depth": 1,
           "variadic": false
@@ -1443,30 +1124,22 @@
       "c_parameters_raw": "lrtc_factory_t* factory, lrtc_audio_source_t* source, const char* track_id",
       "c_return_type": "lrtc_audio_track_t*",
       "c_signature": "lrtc_audio_track_t* (lrtc_factory_t* factory, lrtc_audio_source_t* source, const char* track_id)",
-      "managed_return_type": "IntPtr",
-      "managed_signature": "IntPtr lrtc_factory_create_audio_track(IntPtr factory, IntPtr source, IntPtr track_id)",
       "name": "lrtc_factory_create_audio_track",
       "parameters": [
         {
           "c_type": "lrtc_factory_t*",
-          "managed_name": "factory",
-          "managed_type": "IntPtr",
           "name": "factory",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "lrtc_audio_source_t*",
-          "managed_name": "source",
-          "managed_type": "IntPtr",
           "name": "source",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "const char*",
-          "managed_name": "track_id",
-          "managed_type": "IntPtr",
           "name": "track_id",
           "pointer_depth": 1,
           "variadic": false
@@ -1478,38 +1151,28 @@
       "c_parameters_raw": "lrtc_factory_t* factory, lrtc_desktop_capturer_t* capturer, const char* label, lrtc_media_constraints_t* constraints",
       "c_return_type": "lrtc_video_source_t*",
       "c_signature": "lrtc_video_source_t* (lrtc_factory_t* factory, lrtc_desktop_capturer_t* capturer, const char* label, lrtc_media_constraints_t* constraints)",
-      "managed_return_type": "IntPtr",
-      "managed_signature": "IntPtr lrtc_factory_create_desktop_source(IntPtr factory, IntPtr capturer, IntPtr label, IntPtr constraints)",
       "name": "lrtc_factory_create_desktop_source",
       "parameters": [
         {
           "c_type": "lrtc_factory_t*",
-          "managed_name": "factory",
-          "managed_type": "IntPtr",
           "name": "factory",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "lrtc_desktop_capturer_t*",
-          "managed_name": "capturer",
-          "managed_type": "IntPtr",
           "name": "capturer",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "const char*",
-          "managed_name": "label",
-          "managed_type": "IntPtr",
           "name": "label",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "lrtc_media_constraints_t*",
-          "managed_name": "constraints",
-          "managed_type": "IntPtr",
           "name": "constraints",
           "pointer_depth": 1,
           "variadic": false
@@ -1521,22 +1184,16 @@
       "c_parameters_raw": "lrtc_factory_t* factory, const char* stream_id",
       "c_return_type": "lrtc_media_stream_t*",
       "c_signature": "lrtc_media_stream_t* (lrtc_factory_t* factory, const char* stream_id)",
-      "managed_return_type": "IntPtr",
-      "managed_signature": "IntPtr lrtc_factory_create_stream(IntPtr factory, IntPtr stream_id)",
       "name": "lrtc_factory_create_stream",
       "parameters": [
         {
           "c_type": "lrtc_factory_t*",
-          "managed_name": "factory",
-          "managed_type": "IntPtr",
           "name": "factory",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "const char*",
-          "managed_name": "stream_id",
-          "managed_type": "IntPtr",
           "name": "stream_id",
           "pointer_depth": 1,
           "variadic": false
@@ -1548,38 +1205,28 @@
       "c_parameters_raw": "lrtc_factory_t* factory, lrtc_video_capturer_t* capturer, const char* label, lrtc_media_constraints_t* constraints",
       "c_return_type": "lrtc_video_source_t*",
       "c_signature": "lrtc_video_source_t* (lrtc_factory_t* factory, lrtc_video_capturer_t* capturer, const char* label, lrtc_media_constraints_t* constraints)",
-      "managed_return_type": "IntPtr",
-      "managed_signature": "IntPtr lrtc_factory_create_video_source(IntPtr factory, IntPtr capturer, IntPtr label, IntPtr constraints)",
       "name": "lrtc_factory_create_video_source",
       "parameters": [
         {
           "c_type": "lrtc_factory_t*",
-          "managed_name": "factory",
-          "managed_type": "IntPtr",
           "name": "factory",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "lrtc_video_capturer_t*",
-          "managed_name": "capturer",
-          "managed_type": "IntPtr",
           "name": "capturer",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "const char*",
-          "managed_name": "label",
-          "managed_type": "IntPtr",
           "name": "label",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "lrtc_media_constraints_t*",
-          "managed_name": "constraints",
-          "managed_type": "IntPtr",
           "name": "constraints",
           "pointer_depth": 1,
           "variadic": false
@@ -1591,30 +1238,22 @@
       "c_parameters_raw": "lrtc_factory_t* factory, lrtc_video_source_t* source, const char* track_id",
       "c_return_type": "lrtc_video_track_t*",
       "c_signature": "lrtc_video_track_t* (lrtc_factory_t* factory, lrtc_video_source_t* source, const char* track_id)",
-      "managed_return_type": "IntPtr",
-      "managed_signature": "IntPtr lrtc_factory_create_video_track(IntPtr factory, IntPtr source, IntPtr track_id)",
       "name": "lrtc_factory_create_video_track",
       "parameters": [
         {
           "c_type": "lrtc_factory_t*",
-          "managed_name": "factory",
-          "managed_type": "IntPtr",
           "name": "factory",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "lrtc_video_source_t*",
-          "managed_name": "source",
-          "managed_type": "IntPtr",
           "name": "source",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "const char*",
-          "managed_name": "track_id",
-          "managed_type": "IntPtr",
           "name": "track_id",
           "pointer_depth": 1,
           "variadic": false
@@ -1626,14 +1265,10 @@
       "c_parameters_raw": "lrtc_factory_t* factory",
       "c_return_type": "lrtc_audio_device_t*",
       "c_signature": "lrtc_audio_device_t* (lrtc_factory_t* factory)",
-      "managed_return_type": "IntPtr",
-      "managed_signature": "IntPtr lrtc_factory_get_audio_device(IntPtr factory)",
       "name": "lrtc_factory_get_audio_device",
       "parameters": [
         {
           "c_type": "lrtc_factory_t*",
-          "managed_name": "factory",
-          "managed_type": "IntPtr",
           "name": "factory",
           "pointer_depth": 1,
           "variadic": false
@@ -1645,14 +1280,10 @@
       "c_parameters_raw": "lrtc_factory_t* factory",
       "c_return_type": "lrtc_desktop_device_t*",
       "c_signature": "lrtc_desktop_device_t* (lrtc_factory_t* factory)",
-      "managed_return_type": "IntPtr",
-      "managed_signature": "IntPtr lrtc_factory_get_desktop_device(IntPtr factory)",
       "name": "lrtc_factory_get_desktop_device",
       "parameters": [
         {
           "c_type": "lrtc_factory_t*",
-          "managed_name": "factory",
-          "managed_type": "IntPtr",
           "name": "factory",
           "pointer_depth": 1,
           "variadic": false
@@ -1664,46 +1295,34 @@
       "c_parameters_raw": "lrtc_factory_t* factory, lrtc_media_type media_type, lrtc_stats_success_cb success, lrtc_stats_failure_cb failure, void* user_data",
       "c_return_type": "void",
       "c_signature": "void (lrtc_factory_t* factory, lrtc_media_type media_type, lrtc_stats_success_cb success, lrtc_stats_failure_cb failure, void* user_data)",
-      "managed_return_type": "void",
-      "managed_signature": "void lrtc_factory_get_rtp_receiver_capabilities(IntPtr factory, LrtcMediaType media_type, LrtcStatsSuccessCb success, LrtcStatsFailureCb failure, IntPtr user_data)",
       "name": "lrtc_factory_get_rtp_receiver_capabilities",
       "parameters": [
         {
           "c_type": "lrtc_factory_t*",
-          "managed_name": "factory",
-          "managed_type": "IntPtr",
           "name": "factory",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "lrtc_media_type",
-          "managed_name": "media_type",
-          "managed_type": "LrtcMediaType",
           "name": "media_type",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "lrtc_stats_success_cb",
-          "managed_name": "success",
-          "managed_type": "LrtcStatsSuccessCb",
           "name": "success",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "lrtc_stats_failure_cb",
-          "managed_name": "failure",
-          "managed_type": "LrtcStatsFailureCb",
           "name": "failure",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "void*",
-          "managed_name": "user_data",
-          "managed_type": "IntPtr",
           "name": "user_data",
           "pointer_depth": 1,
           "variadic": false
@@ -1715,46 +1334,34 @@
       "c_parameters_raw": "lrtc_factory_t* factory, lrtc_media_type media_type, lrtc_stats_success_cb success, lrtc_stats_failure_cb failure, void* user_data",
       "c_return_type": "void",
       "c_signature": "void (lrtc_factory_t* factory, lrtc_media_type media_type, lrtc_stats_success_cb success, lrtc_stats_failure_cb failure, void* user_data)",
-      "managed_return_type": "void",
-      "managed_signature": "void lrtc_factory_get_rtp_sender_capabilities(IntPtr factory, LrtcMediaType media_type, LrtcStatsSuccessCb success, LrtcStatsFailureCb failure, IntPtr user_data)",
       "name": "lrtc_factory_get_rtp_sender_capabilities",
       "parameters": [
         {
           "c_type": "lrtc_factory_t*",
-          "managed_name": "factory",
-          "managed_type": "IntPtr",
           "name": "factory",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "lrtc_media_type",
-          "managed_name": "media_type",
-          "managed_type": "LrtcMediaType",
           "name": "media_type",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "lrtc_stats_success_cb",
-          "managed_name": "success",
-          "managed_type": "LrtcStatsSuccessCb",
           "name": "success",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "lrtc_stats_failure_cb",
-          "managed_name": "failure",
-          "managed_type": "LrtcStatsFailureCb",
           "name": "failure",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "void*",
-          "managed_name": "user_data",
-          "managed_type": "IntPtr",
           "name": "user_data",
           "pointer_depth": 1,
           "variadic": false
@@ -1766,46 +1373,34 @@
       "c_parameters_raw": "lrtc_factory_t* factory, lrtc_media_type media_type, lrtc_stats_success_cb success, lrtc_stats_failure_cb failure, void* user_data",
       "c_return_type": "void",
       "c_signature": "void (lrtc_factory_t* factory, lrtc_media_type media_type, lrtc_stats_success_cb success, lrtc_stats_failure_cb failure, void* user_data)",
-      "managed_return_type": "void",
-      "managed_signature": "void lrtc_factory_get_rtp_sender_codec_mime_types(IntPtr factory, LrtcMediaType media_type, LrtcStatsSuccessCb success, LrtcStatsFailureCb failure, IntPtr user_data)",
       "name": "lrtc_factory_get_rtp_sender_codec_mime_types",
       "parameters": [
         {
           "c_type": "lrtc_factory_t*",
-          "managed_name": "factory",
-          "managed_type": "IntPtr",
           "name": "factory",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "lrtc_media_type",
-          "managed_name": "media_type",
-          "managed_type": "LrtcMediaType",
           "name": "media_type",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "lrtc_stats_success_cb",
-          "managed_name": "success",
-          "managed_type": "LrtcStatsSuccessCb",
           "name": "success",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "lrtc_stats_failure_cb",
-          "managed_name": "failure",
-          "managed_type": "LrtcStatsFailureCb",
           "name": "failure",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "void*",
-          "managed_name": "user_data",
-          "managed_type": "IntPtr",
           "name": "user_data",
           "pointer_depth": 1,
           "variadic": false
@@ -1817,14 +1412,10 @@
       "c_parameters_raw": "lrtc_factory_t* factory",
       "c_return_type": "lrtc_video_device_t*",
       "c_signature": "lrtc_video_device_t* (lrtc_factory_t* factory)",
-      "managed_return_type": "IntPtr",
-      "managed_signature": "IntPtr lrtc_factory_get_video_device(IntPtr factory)",
       "name": "lrtc_factory_get_video_device",
       "parameters": [
         {
           "c_type": "lrtc_factory_t*",
-          "managed_name": "factory",
-          "managed_type": "IntPtr",
           "name": "factory",
           "pointer_depth": 1,
           "variadic": false
@@ -1836,14 +1427,10 @@
       "c_parameters_raw": "lrtc_factory_t* factory",
       "c_return_type": "lrtc_result_t",
       "c_signature": "lrtc_result_t (lrtc_factory_t* factory)",
-      "managed_return_type": "LrtcResult",
-      "managed_signature": "LrtcResult lrtc_factory_initialize(IntPtr factory)",
       "name": "lrtc_factory_initialize",
       "parameters": [
         {
           "c_type": "lrtc_factory_t*",
-          "managed_name": "factory",
-          "managed_type": "IntPtr",
           "name": "factory",
           "pointer_depth": 1,
           "variadic": false
@@ -1855,14 +1442,10 @@
       "c_parameters_raw": "lrtc_factory_t* factory",
       "c_return_type": "void",
       "c_signature": "void (lrtc_factory_t* factory)",
-      "managed_return_type": "void",
-      "managed_signature": "void lrtc_factory_release(IntPtr factory)",
       "name": "lrtc_factory_release",
       "parameters": [
         {
           "c_type": "lrtc_factory_t*",
-          "managed_name": "factory",
-          "managed_type": "IntPtr",
           "name": "factory",
           "pointer_depth": 1,
           "variadic": false
@@ -1874,14 +1457,10 @@
       "c_parameters_raw": "lrtc_factory_t* factory",
       "c_return_type": "void",
       "c_signature": "void (lrtc_factory_t* factory)",
-      "managed_return_type": "void",
-      "managed_signature": "void lrtc_factory_terminate(IntPtr factory)",
       "name": "lrtc_factory_terminate",
       "parameters": [
         {
           "c_type": "lrtc_factory_t*",
-          "managed_name": "factory",
-          "managed_type": "IntPtr",
           "name": "factory",
           "pointer_depth": 1,
           "variadic": false
@@ -1893,8 +1472,6 @@
       "c_parameters_raw": "void",
       "c_return_type": "lrtc_result_t",
       "c_signature": "lrtc_result_t (void)",
-      "managed_return_type": "LrtcResult",
-      "managed_signature": "LrtcResult lrtc_initialize()",
       "name": "lrtc_initialize",
       "parameters": [],
       "stable_id": "f9bd5abd12810d467eb10db43d19699a9539e41dd44a678fc8b24250102c46da"
@@ -1903,8 +1480,6 @@
       "c_parameters_raw": "void",
       "c_return_type": "void",
       "c_signature": "void (void)",
-      "managed_return_type": "void",
-      "managed_signature": "void lrtc_logging_remove_callback()",
       "name": "lrtc_logging_remove_callback",
       "parameters": [],
       "stable_id": "832de6297d766f5a0893a7919cb33365b4ee48ccfd2ec707852b06da7f75a6f9"
@@ -1913,30 +1488,22 @@
       "c_parameters_raw": "int severity, lrtc_log_message_cb callback, void* user_data",
       "c_return_type": "void",
       "c_signature": "void (int severity, lrtc_log_message_cb callback, void* user_data)",
-      "managed_return_type": "void",
-      "managed_signature": "void lrtc_logging_set_callback(int severity, LrtcLogMessageCb callback, IntPtr user_data)",
       "name": "lrtc_logging_set_callback",
       "parameters": [
         {
           "c_type": "int",
-          "managed_name": "severity",
-          "managed_type": "int",
           "name": "severity",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "lrtc_log_message_cb",
-          "managed_name": "callback",
-          "managed_type": "LrtcLogMessageCb",
           "name": "callback",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "void*",
-          "managed_name": "user_data",
-          "managed_type": "IntPtr",
           "name": "user_data",
           "pointer_depth": 1,
           "variadic": false
@@ -1948,14 +1515,10 @@
       "c_parameters_raw": "int severity",
       "c_return_type": "void",
       "c_signature": "void (int severity)",
-      "managed_return_type": "void",
-      "managed_signature": "void lrtc_logging_set_min_level(int severity)",
       "name": "lrtc_logging_set_min_level",
       "parameters": [
         {
           "c_type": "int",
-          "managed_name": "severity",
-          "managed_type": "int",
           "name": "severity",
           "pointer_depth": 0,
           "variadic": false
@@ -1967,30 +1530,22 @@
       "c_parameters_raw": "lrtc_media_constraints_t* constraints, const char* key, const char* value",
       "c_return_type": "void",
       "c_signature": "void (lrtc_media_constraints_t* constraints, const char* key, const char* value)",
-      "managed_return_type": "void",
-      "managed_signature": "void lrtc_media_constraints_add_mandatory(IntPtr constraints, IntPtr key, IntPtr value)",
       "name": "lrtc_media_constraints_add_mandatory",
       "parameters": [
         {
           "c_type": "lrtc_media_constraints_t*",
-          "managed_name": "constraints",
-          "managed_type": "IntPtr",
           "name": "constraints",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "const char*",
-          "managed_name": "key",
-          "managed_type": "IntPtr",
           "name": "key",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "const char*",
-          "managed_name": "value",
-          "managed_type": "IntPtr",
           "name": "value",
           "pointer_depth": 1,
           "variadic": false
@@ -2002,30 +1557,22 @@
       "c_parameters_raw": "lrtc_media_constraints_t* constraints, const char* key, const char* value",
       "c_return_type": "void",
       "c_signature": "void (lrtc_media_constraints_t* constraints, const char* key, const char* value)",
-      "managed_return_type": "void",
-      "managed_signature": "void lrtc_media_constraints_add_optional(IntPtr constraints, IntPtr key, IntPtr value)",
       "name": "lrtc_media_constraints_add_optional",
       "parameters": [
         {
           "c_type": "lrtc_media_constraints_t*",
-          "managed_name": "constraints",
-          "managed_type": "IntPtr",
           "name": "constraints",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "const char*",
-          "managed_name": "key",
-          "managed_type": "IntPtr",
           "name": "key",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "const char*",
-          "managed_name": "value",
-          "managed_type": "IntPtr",
           "name": "value",
           "pointer_depth": 1,
           "variadic": false
@@ -2037,8 +1584,6 @@
       "c_parameters_raw": "void",
       "c_return_type": "lrtc_media_constraints_t*",
       "c_signature": "lrtc_media_constraints_t* (void)",
-      "managed_return_type": "IntPtr",
-      "managed_signature": "IntPtr lrtc_media_constraints_create()",
       "name": "lrtc_media_constraints_create",
       "parameters": [],
       "stable_id": "ed4fbe9c34e2ee02f64e8157a2a2baf0e8d57256fbc3155009726f5df8a16167"
@@ -2047,14 +1592,10 @@
       "c_parameters_raw": "lrtc_media_constraints_t* constraints",
       "c_return_type": "void",
       "c_signature": "void (lrtc_media_constraints_t* constraints)",
-      "managed_return_type": "void",
-      "managed_signature": "void lrtc_media_constraints_release(IntPtr constraints)",
       "name": "lrtc_media_constraints_release",
       "parameters": [
         {
           "c_type": "lrtc_media_constraints_t*",
-          "managed_name": "constraints",
-          "managed_type": "IntPtr",
           "name": "constraints",
           "pointer_depth": 1,
           "variadic": false
@@ -2066,30 +1607,22 @@
       "c_parameters_raw": "lrtc_media_source_t* source, char* buffer, uint32_t buffer_len",
       "c_return_type": "int32_t",
       "c_signature": "int32_t (lrtc_media_source_t* source, char* buffer, uint32_t buffer_len)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_media_source_get_id(IntPtr source, IntPtr buffer, uint buffer_len)",
       "name": "lrtc_media_source_get_id",
       "parameters": [
         {
           "c_type": "lrtc_media_source_t*",
-          "managed_name": "source",
-          "managed_type": "IntPtr",
           "name": "source",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "char*",
-          "managed_name": "buffer",
-          "managed_type": "IntPtr",
           "name": "buffer",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "uint32_t",
-          "managed_name": "buffer_len",
-          "managed_type": "uint",
           "name": "buffer_len",
           "pointer_depth": 0,
           "variadic": false
@@ -2101,30 +1634,22 @@
       "c_parameters_raw": "lrtc_media_source_t* source, char* buffer, uint32_t buffer_len",
       "c_return_type": "int32_t",
       "c_signature": "int32_t (lrtc_media_source_t* source, char* buffer, uint32_t buffer_len)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_media_source_get_name(IntPtr source, IntPtr buffer, uint buffer_len)",
       "name": "lrtc_media_source_get_name",
       "parameters": [
         {
           "c_type": "lrtc_media_source_t*",
-          "managed_name": "source",
-          "managed_type": "IntPtr",
           "name": "source",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "char*",
-          "managed_name": "buffer",
-          "managed_type": "IntPtr",
           "name": "buffer",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "uint32_t",
-          "managed_name": "buffer_len",
-          "managed_type": "uint",
           "name": "buffer_len",
           "pointer_depth": 0,
           "variadic": false
@@ -2136,14 +1661,10 @@
       "c_parameters_raw": "lrtc_media_source_t* source",
       "c_return_type": "int",
       "c_signature": "int (lrtc_media_source_t* source)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_media_source_get_type(IntPtr source)",
       "name": "lrtc_media_source_get_type",
       "parameters": [
         {
           "c_type": "lrtc_media_source_t*",
-          "managed_name": "source",
-          "managed_type": "IntPtr",
           "name": "source",
           "pointer_depth": 1,
           "variadic": false
@@ -2155,14 +1676,10 @@
       "c_parameters_raw": "lrtc_media_source_t* source",
       "c_return_type": "void",
       "c_signature": "void (lrtc_media_source_t* source)",
-      "managed_return_type": "void",
-      "managed_signature": "void lrtc_media_source_release(IntPtr source)",
       "name": "lrtc_media_source_release",
       "parameters": [
         {
           "c_type": "lrtc_media_source_t*",
-          "managed_name": "source",
-          "managed_type": "IntPtr",
           "name": "source",
           "pointer_depth": 1,
           "variadic": false
@@ -2174,22 +1691,16 @@
       "c_parameters_raw": "lrtc_media_stream_t* stream, lrtc_audio_track_t* track",
       "c_return_type": "bool",
       "c_signature": "bool (lrtc_media_stream_t* stream, lrtc_audio_track_t* track)",
-      "managed_return_type": "bool",
-      "managed_signature": "bool lrtc_media_stream_add_audio_track(IntPtr stream, IntPtr track)",
       "name": "lrtc_media_stream_add_audio_track",
       "parameters": [
         {
           "c_type": "lrtc_media_stream_t*",
-          "managed_name": "stream",
-          "managed_type": "IntPtr",
           "name": "stream",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "lrtc_audio_track_t*",
-          "managed_name": "track",
-          "managed_type": "IntPtr",
           "name": "track",
           "pointer_depth": 1,
           "variadic": false
@@ -2201,22 +1712,16 @@
       "c_parameters_raw": "lrtc_media_stream_t* stream, lrtc_video_track_t* track",
       "c_return_type": "bool",
       "c_signature": "bool (lrtc_media_stream_t* stream, lrtc_video_track_t* track)",
-      "managed_return_type": "bool",
-      "managed_signature": "bool lrtc_media_stream_add_video_track(IntPtr stream, IntPtr track)",
       "name": "lrtc_media_stream_add_video_track",
       "parameters": [
         {
           "c_type": "lrtc_media_stream_t*",
-          "managed_name": "stream",
-          "managed_type": "IntPtr",
           "name": "stream",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "lrtc_video_track_t*",
-          "managed_name": "track",
-          "managed_type": "IntPtr",
           "name": "track",
           "pointer_depth": 1,
           "variadic": false
@@ -2228,30 +1733,22 @@
       "c_parameters_raw": "lrtc_media_stream_t* stream, char* buffer, uint32_t buffer_len",
       "c_return_type": "int32_t",
       "c_signature": "int32_t (lrtc_media_stream_t* stream, char* buffer, uint32_t buffer_len)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_media_stream_get_id(IntPtr stream, IntPtr buffer, uint buffer_len)",
       "name": "lrtc_media_stream_get_id",
       "parameters": [
         {
           "c_type": "lrtc_media_stream_t*",
-          "managed_name": "stream",
-          "managed_type": "IntPtr",
           "name": "stream",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "char*",
-          "managed_name": "buffer",
-          "managed_type": "IntPtr",
           "name": "buffer",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "uint32_t",
-          "managed_name": "buffer_len",
-          "managed_type": "uint",
           "name": "buffer_len",
           "pointer_depth": 0,
           "variadic": false
@@ -2263,30 +1760,22 @@
       "c_parameters_raw": "lrtc_media_stream_t* stream, char* buffer, uint32_t buffer_len",
       "c_return_type": "int32_t",
       "c_signature": "int32_t (lrtc_media_stream_t* stream, char* buffer, uint32_t buffer_len)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_media_stream_get_label(IntPtr stream, IntPtr buffer, uint buffer_len)",
       "name": "lrtc_media_stream_get_label",
       "parameters": [
         {
           "c_type": "lrtc_media_stream_t*",
-          "managed_name": "stream",
-          "managed_type": "IntPtr",
           "name": "stream",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "char*",
-          "managed_name": "buffer",
-          "managed_type": "IntPtr",
           "name": "buffer",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "uint32_t",
-          "managed_name": "buffer_len",
-          "managed_type": "uint",
           "name": "buffer_len",
           "pointer_depth": 0,
           "variadic": false
@@ -2298,14 +1787,10 @@
       "c_parameters_raw": "lrtc_media_stream_t* stream",
       "c_return_type": "void",
       "c_signature": "void (lrtc_media_stream_t* stream)",
-      "managed_return_type": "void",
-      "managed_signature": "void lrtc_media_stream_release(IntPtr stream)",
       "name": "lrtc_media_stream_release",
       "parameters": [
         {
           "c_type": "lrtc_media_stream_t*",
-          "managed_name": "stream",
-          "managed_type": "IntPtr",
           "name": "stream",
           "pointer_depth": 1,
           "variadic": false
@@ -2317,22 +1802,16 @@
       "c_parameters_raw": "lrtc_media_stream_t* stream, lrtc_audio_track_t* track",
       "c_return_type": "bool",
       "c_signature": "bool (lrtc_media_stream_t* stream, lrtc_audio_track_t* track)",
-      "managed_return_type": "bool",
-      "managed_signature": "bool lrtc_media_stream_remove_audio_track(IntPtr stream, IntPtr track)",
       "name": "lrtc_media_stream_remove_audio_track",
       "parameters": [
         {
           "c_type": "lrtc_media_stream_t*",
-          "managed_name": "stream",
-          "managed_type": "IntPtr",
           "name": "stream",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "lrtc_audio_track_t*",
-          "managed_name": "track",
-          "managed_type": "IntPtr",
           "name": "track",
           "pointer_depth": 1,
           "variadic": false
@@ -2344,22 +1823,16 @@
       "c_parameters_raw": "lrtc_media_stream_t* stream, lrtc_video_track_t* track",
       "c_return_type": "bool",
       "c_signature": "bool (lrtc_media_stream_t* stream, lrtc_video_track_t* track)",
-      "managed_return_type": "bool",
-      "managed_signature": "bool lrtc_media_stream_remove_video_track(IntPtr stream, IntPtr track)",
       "name": "lrtc_media_stream_remove_video_track",
       "parameters": [
         {
           "c_type": "lrtc_media_stream_t*",
-          "managed_name": "stream",
-          "managed_type": "IntPtr",
           "name": "stream",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "lrtc_video_track_t*",
-          "managed_name": "track",
-          "managed_type": "IntPtr",
           "name": "track",
           "pointer_depth": 1,
           "variadic": false
@@ -2371,38 +1844,28 @@
       "c_parameters_raw": "lrtc_peer_connection_t* pc, lrtc_audio_track_t* track, const char** stream_ids, uint32_t stream_id_count",
       "c_return_type": "int",
       "c_signature": "int (lrtc_peer_connection_t* pc, lrtc_audio_track_t* track, const char** stream_ids, uint32_t stream_id_count)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_peer_connection_add_audio_track(IntPtr pc, IntPtr track, IntPtr stream_ids, uint stream_id_count)",
       "name": "lrtc_peer_connection_add_audio_track",
       "parameters": [
         {
           "c_type": "lrtc_peer_connection_t*",
-          "managed_name": "pc",
-          "managed_type": "IntPtr",
           "name": "pc",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "lrtc_audio_track_t*",
-          "managed_name": "track",
-          "managed_type": "IntPtr",
           "name": "track",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "const char**",
-          "managed_name": "stream_ids",
-          "managed_type": "IntPtr",
           "name": "stream_ids",
           "pointer_depth": 2,
           "variadic": false
         },
         {
           "c_type": "uint32_t",
-          "managed_name": "stream_id_count",
-          "managed_type": "uint",
           "name": "stream_id_count",
           "pointer_depth": 0,
           "variadic": false
@@ -2414,38 +1877,28 @@
       "c_parameters_raw": "lrtc_peer_connection_t* pc, lrtc_audio_track_t* track, const char** stream_ids, uint32_t stream_id_count",
       "c_return_type": "lrtc_rtp_sender_t*",
       "c_signature": "lrtc_rtp_sender_t* (lrtc_peer_connection_t* pc, lrtc_audio_track_t* track, const char** stream_ids, uint32_t stream_id_count)",
-      "managed_return_type": "IntPtr",
-      "managed_signature": "IntPtr lrtc_peer_connection_add_audio_track_sender(IntPtr pc, IntPtr track, IntPtr stream_ids, uint stream_id_count)",
       "name": "lrtc_peer_connection_add_audio_track_sender",
       "parameters": [
         {
           "c_type": "lrtc_peer_connection_t*",
-          "managed_name": "pc",
-          "managed_type": "IntPtr",
           "name": "pc",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "lrtc_audio_track_t*",
-          "managed_name": "track",
-          "managed_type": "IntPtr",
           "name": "track",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "const char**",
-          "managed_name": "stream_ids",
-          "managed_type": "IntPtr",
           "name": "stream_ids",
           "pointer_depth": 2,
           "variadic": false
         },
         {
           "c_type": "uint32_t",
-          "managed_name": "stream_id_count",
-          "managed_type": "uint",
           "name": "stream_id_count",
           "pointer_depth": 0,
           "variadic": false
@@ -2457,22 +1910,16 @@
       "c_parameters_raw": "lrtc_peer_connection_t* pc, lrtc_audio_track_t* track",
       "c_return_type": "lrtc_rtp_transceiver_t*",
       "c_signature": "lrtc_rtp_transceiver_t* (lrtc_peer_connection_t* pc, lrtc_audio_track_t* track)",
-      "managed_return_type": "IntPtr",
-      "managed_signature": "IntPtr lrtc_peer_connection_add_audio_track_transceiver(IntPtr pc, IntPtr track)",
       "name": "lrtc_peer_connection_add_audio_track_transceiver",
       "parameters": [
         {
           "c_type": "lrtc_peer_connection_t*",
-          "managed_name": "pc",
-          "managed_type": "IntPtr",
           "name": "pc",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "lrtc_audio_track_t*",
-          "managed_name": "track",
-          "managed_type": "IntPtr",
           "name": "track",
           "pointer_depth": 1,
           "variadic": false
@@ -2484,30 +1931,22 @@
       "c_parameters_raw": "lrtc_peer_connection_t* pc, lrtc_audio_track_t* track, const lrtc_rtp_transceiver_init_t* init",
       "c_return_type": "lrtc_rtp_transceiver_t*",
       "c_signature": "lrtc_rtp_transceiver_t* (lrtc_peer_connection_t* pc, lrtc_audio_track_t* track, const lrtc_rtp_transceiver_init_t* init)",
-      "managed_return_type": "IntPtr",
-      "managed_signature": "IntPtr lrtc_peer_connection_add_audio_track_transceiver_with_init(IntPtr pc, IntPtr track, IntPtr init)",
       "name": "lrtc_peer_connection_add_audio_track_transceiver_with_init",
       "parameters": [
         {
           "c_type": "lrtc_peer_connection_t*",
-          "managed_name": "pc",
-          "managed_type": "IntPtr",
           "name": "pc",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "lrtc_audio_track_t*",
-          "managed_name": "track",
-          "managed_type": "IntPtr",
           "name": "track",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "const lrtc_rtp_transceiver_init_t*",
-          "managed_name": "init",
-          "managed_type": "IntPtr",
           "name": "init",
           "pointer_depth": 1,
           "variadic": false
@@ -2519,38 +1958,28 @@
       "c_parameters_raw": "lrtc_peer_connection_t* pc, const char* sdp_mid, int sdp_mline_index, const char* candidate",
       "c_return_type": "void",
       "c_signature": "void (lrtc_peer_connection_t* pc, const char* sdp_mid, int sdp_mline_index, const char* candidate)",
-      "managed_return_type": "void",
-      "managed_signature": "void lrtc_peer_connection_add_ice_candidate(IntPtr pc, IntPtr sdp_mid, int sdp_mline_index, IntPtr candidate)",
       "name": "lrtc_peer_connection_add_ice_candidate",
       "parameters": [
         {
           "c_type": "lrtc_peer_connection_t*",
-          "managed_name": "pc",
-          "managed_type": "IntPtr",
           "name": "pc",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "const char*",
-          "managed_name": "sdp_mid",
-          "managed_type": "IntPtr",
           "name": "sdp_mid",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "int",
-          "managed_name": "sdp_mline_index",
-          "managed_type": "int",
           "name": "sdp_mline_index",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "const char*",
-          "managed_name": "candidate",
-          "managed_type": "IntPtr",
           "name": "candidate",
           "pointer_depth": 1,
           "variadic": false
@@ -2562,38 +1991,28 @@
       "c_parameters_raw": "lrtc_peer_connection_t* pc, const char* sdp_mid, int sdp_mline_index, const char* candidate",
       "c_return_type": "int",
       "c_signature": "int (lrtc_peer_connection_t* pc, const char* sdp_mid, int sdp_mline_index, const char* candidate)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_peer_connection_add_ice_candidate_ex(IntPtr pc, IntPtr sdp_mid, int sdp_mline_index, IntPtr candidate)",
       "name": "lrtc_peer_connection_add_ice_candidate_ex",
       "parameters": [
         {
           "c_type": "lrtc_peer_connection_t*",
-          "managed_name": "pc",
-          "managed_type": "IntPtr",
           "name": "pc",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "const char*",
-          "managed_name": "sdp_mid",
-          "managed_type": "IntPtr",
           "name": "sdp_mid",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "int",
-          "managed_name": "sdp_mline_index",
-          "managed_type": "int",
           "name": "sdp_mline_index",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "const char*",
-          "managed_name": "candidate",
-          "managed_type": "IntPtr",
           "name": "candidate",
           "pointer_depth": 1,
           "variadic": false
@@ -2605,22 +2024,16 @@
       "c_parameters_raw": "lrtc_peer_connection_t* pc, lrtc_media_stream_t* stream",
       "c_return_type": "bool",
       "c_signature": "bool (lrtc_peer_connection_t* pc, lrtc_media_stream_t* stream)",
-      "managed_return_type": "bool",
-      "managed_signature": "bool lrtc_peer_connection_add_stream(IntPtr pc, IntPtr stream)",
       "name": "lrtc_peer_connection_add_stream",
       "parameters": [
         {
           "c_type": "lrtc_peer_connection_t*",
-          "managed_name": "pc",
-          "managed_type": "IntPtr",
           "name": "pc",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "lrtc_media_stream_t*",
-          "managed_name": "stream",
-          "managed_type": "IntPtr",
           "name": "stream",
           "pointer_depth": 1,
           "variadic": false
@@ -2632,22 +2045,16 @@
       "c_parameters_raw": "lrtc_peer_connection_t* pc, lrtc_media_type media_type",
       "c_return_type": "lrtc_rtp_transceiver_t*",
       "c_signature": "lrtc_rtp_transceiver_t* (lrtc_peer_connection_t* pc, lrtc_media_type media_type)",
-      "managed_return_type": "IntPtr",
-      "managed_signature": "IntPtr lrtc_peer_connection_add_transceiver(IntPtr pc, LrtcMediaType media_type)",
       "name": "lrtc_peer_connection_add_transceiver",
       "parameters": [
         {
           "c_type": "lrtc_peer_connection_t*",
-          "managed_name": "pc",
-          "managed_type": "IntPtr",
           "name": "pc",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "lrtc_media_type",
-          "managed_name": "media_type",
-          "managed_type": "LrtcMediaType",
           "name": "media_type",
           "pointer_depth": 0,
           "variadic": false
@@ -2659,30 +2066,22 @@
       "c_parameters_raw": "lrtc_peer_connection_t* pc, lrtc_media_type media_type, const lrtc_rtp_transceiver_init_t* init",
       "c_return_type": "lrtc_rtp_transceiver_t*",
       "c_signature": "lrtc_rtp_transceiver_t* (lrtc_peer_connection_t* pc, lrtc_media_type media_type, const lrtc_rtp_transceiver_init_t* init)",
-      "managed_return_type": "IntPtr",
-      "managed_signature": "IntPtr lrtc_peer_connection_add_transceiver_with_init(IntPtr pc, LrtcMediaType media_type, IntPtr init)",
       "name": "lrtc_peer_connection_add_transceiver_with_init",
       "parameters": [
         {
           "c_type": "lrtc_peer_connection_t*",
-          "managed_name": "pc",
-          "managed_type": "IntPtr",
           "name": "pc",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "lrtc_media_type",
-          "managed_name": "media_type",
-          "managed_type": "LrtcMediaType",
           "name": "media_type",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "const lrtc_rtp_transceiver_init_t*",
-          "managed_name": "init",
-          "managed_type": "IntPtr",
           "name": "init",
           "pointer_depth": 1,
           "variadic": false
@@ -2694,38 +2093,28 @@
       "c_parameters_raw": "lrtc_peer_connection_t* pc, lrtc_video_track_t* track, const char** stream_ids, uint32_t stream_id_count",
       "c_return_type": "int",
       "c_signature": "int (lrtc_peer_connection_t* pc, lrtc_video_track_t* track, const char** stream_ids, uint32_t stream_id_count)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_peer_connection_add_video_track(IntPtr pc, IntPtr track, IntPtr stream_ids, uint stream_id_count)",
       "name": "lrtc_peer_connection_add_video_track",
       "parameters": [
         {
           "c_type": "lrtc_peer_connection_t*",
-          "managed_name": "pc",
-          "managed_type": "IntPtr",
           "name": "pc",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "lrtc_video_track_t*",
-          "managed_name": "track",
-          "managed_type": "IntPtr",
           "name": "track",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "const char**",
-          "managed_name": "stream_ids",
-          "managed_type": "IntPtr",
           "name": "stream_ids",
           "pointer_depth": 2,
           "variadic": false
         },
         {
           "c_type": "uint32_t",
-          "managed_name": "stream_id_count",
-          "managed_type": "uint",
           "name": "stream_id_count",
           "pointer_depth": 0,
           "variadic": false
@@ -2737,38 +2126,28 @@
       "c_parameters_raw": "lrtc_peer_connection_t* pc, lrtc_video_track_t* track, const char** stream_ids, uint32_t stream_id_count",
       "c_return_type": "lrtc_rtp_sender_t*",
       "c_signature": "lrtc_rtp_sender_t* (lrtc_peer_connection_t* pc, lrtc_video_track_t* track, const char** stream_ids, uint32_t stream_id_count)",
-      "managed_return_type": "IntPtr",
-      "managed_signature": "IntPtr lrtc_peer_connection_add_video_track_sender(IntPtr pc, IntPtr track, IntPtr stream_ids, uint stream_id_count)",
       "name": "lrtc_peer_connection_add_video_track_sender",
       "parameters": [
         {
           "c_type": "lrtc_peer_connection_t*",
-          "managed_name": "pc",
-          "managed_type": "IntPtr",
           "name": "pc",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "lrtc_video_track_t*",
-          "managed_name": "track",
-          "managed_type": "IntPtr",
           "name": "track",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "const char**",
-          "managed_name": "stream_ids",
-          "managed_type": "IntPtr",
           "name": "stream_ids",
           "pointer_depth": 2,
           "variadic": false
         },
         {
           "c_type": "uint32_t",
-          "managed_name": "stream_id_count",
-          "managed_type": "uint",
           "name": "stream_id_count",
           "pointer_depth": 0,
           "variadic": false
@@ -2780,22 +2159,16 @@
       "c_parameters_raw": "lrtc_peer_connection_t* pc, lrtc_video_track_t* track",
       "c_return_type": "lrtc_rtp_transceiver_t*",
       "c_signature": "lrtc_rtp_transceiver_t* (lrtc_peer_connection_t* pc, lrtc_video_track_t* track)",
-      "managed_return_type": "IntPtr",
-      "managed_signature": "IntPtr lrtc_peer_connection_add_video_track_transceiver(IntPtr pc, IntPtr track)",
       "name": "lrtc_peer_connection_add_video_track_transceiver",
       "parameters": [
         {
           "c_type": "lrtc_peer_connection_t*",
-          "managed_name": "pc",
-          "managed_type": "IntPtr",
           "name": "pc",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "lrtc_video_track_t*",
-          "managed_name": "track",
-          "managed_type": "IntPtr",
           "name": "track",
           "pointer_depth": 1,
           "variadic": false
@@ -2807,30 +2180,22 @@
       "c_parameters_raw": "lrtc_peer_connection_t* pc, lrtc_video_track_t* track, const lrtc_rtp_transceiver_init_t* init",
       "c_return_type": "lrtc_rtp_transceiver_t*",
       "c_signature": "lrtc_rtp_transceiver_t* (lrtc_peer_connection_t* pc, lrtc_video_track_t* track, const lrtc_rtp_transceiver_init_t* init)",
-      "managed_return_type": "IntPtr",
-      "managed_signature": "IntPtr lrtc_peer_connection_add_video_track_transceiver_with_init(IntPtr pc, IntPtr track, IntPtr init)",
       "name": "lrtc_peer_connection_add_video_track_transceiver_with_init",
       "parameters": [
         {
           "c_type": "lrtc_peer_connection_t*",
-          "managed_name": "pc",
-          "managed_type": "IntPtr",
           "name": "pc",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "lrtc_video_track_t*",
-          "managed_name": "track",
-          "managed_type": "IntPtr",
           "name": "track",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "const lrtc_rtp_transceiver_init_t*",
-          "managed_name": "init",
-          "managed_type": "IntPtr",
           "name": "init",
           "pointer_depth": 1,
           "variadic": false
@@ -2842,14 +2207,10 @@
       "c_parameters_raw": "lrtc_peer_connection_t* pc",
       "c_return_type": "void",
       "c_signature": "void (lrtc_peer_connection_t* pc)",
-      "managed_return_type": "void",
-      "managed_signature": "void lrtc_peer_connection_close(IntPtr pc)",
       "name": "lrtc_peer_connection_close",
       "parameters": [
         {
           "c_type": "lrtc_peer_connection_t*",
-          "managed_name": "pc",
-          "managed_type": "IntPtr",
           "name": "pc",
           "pointer_depth": 1,
           "variadic": false
@@ -2861,46 +2222,34 @@
       "c_parameters_raw": "lrtc_factory_t* factory, const lrtc_rtc_config_t* config, lrtc_media_constraints_t* constraints, const lrtc_peer_connection_callbacks_t* callbacks, void* user_data",
       "c_return_type": "lrtc_peer_connection_t*",
       "c_signature": "lrtc_peer_connection_t* (lrtc_factory_t* factory, const lrtc_rtc_config_t* config, lrtc_media_constraints_t* constraints, const lrtc_peer_connection_callbacks_t* callbacks, void* user_data)",
-      "managed_return_type": "IntPtr",
-      "managed_signature": "IntPtr lrtc_peer_connection_create(IntPtr factory, IntPtr config, IntPtr constraints, IntPtr callbacks, IntPtr user_data)",
       "name": "lrtc_peer_connection_create",
       "parameters": [
         {
           "c_type": "lrtc_factory_t*",
-          "managed_name": "factory",
-          "managed_type": "IntPtr",
           "name": "factory",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "const lrtc_rtc_config_t*",
-          "managed_name": "config",
-          "managed_type": "IntPtr",
           "name": "config",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "lrtc_media_constraints_t*",
-          "managed_name": "constraints",
-          "managed_type": "IntPtr",
           "name": "constraints",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "const lrtc_peer_connection_callbacks_t*",
-          "managed_name": "callbacks",
-          "managed_type": "IntPtr",
           "name": "callbacks",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "void*",
-          "managed_name": "user_data",
-          "managed_type": "IntPtr",
           "name": "user_data",
           "pointer_depth": 1,
           "variadic": false
@@ -2912,46 +2261,34 @@
       "c_parameters_raw": "lrtc_peer_connection_t* pc, lrtc_sdp_success_cb success, lrtc_sdp_error_cb failure, void* user_data, lrtc_media_constraints_t* constraints",
       "c_return_type": "void",
       "c_signature": "void (lrtc_peer_connection_t* pc, lrtc_sdp_success_cb success, lrtc_sdp_error_cb failure, void* user_data, lrtc_media_constraints_t* constraints)",
-      "managed_return_type": "void",
-      "managed_signature": "void lrtc_peer_connection_create_answer(IntPtr pc, LrtcSdpSuccessCb success, LrtcSdpErrorCb failure, IntPtr user_data, IntPtr constraints)",
       "name": "lrtc_peer_connection_create_answer",
       "parameters": [
         {
           "c_type": "lrtc_peer_connection_t*",
-          "managed_name": "pc",
-          "managed_type": "IntPtr",
           "name": "pc",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "lrtc_sdp_success_cb",
-          "managed_name": "success",
-          "managed_type": "LrtcSdpSuccessCb",
           "name": "success",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "lrtc_sdp_error_cb",
-          "managed_name": "failure",
-          "managed_type": "LrtcSdpErrorCb",
           "name": "failure",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "void*",
-          "managed_name": "user_data",
-          "managed_type": "IntPtr",
           "name": "user_data",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "lrtc_media_constraints_t*",
-          "managed_name": "constraints",
-          "managed_type": "IntPtr",
           "name": "constraints",
           "pointer_depth": 1,
           "variadic": false
@@ -2963,78 +2300,58 @@
       "c_parameters_raw": "lrtc_peer_connection_t* pc, const char* label, int ordered, int reliable, int max_retransmit_time, int max_retransmits, const char* protocol, int negotiated, int id",
       "c_return_type": "lrtc_data_channel_t*",
       "c_signature": "lrtc_data_channel_t* (lrtc_peer_connection_t* pc, const char* label, int ordered, int reliable, int max_retransmit_time, int max_retransmits, const char* protocol, int negotiated, int id)",
-      "managed_return_type": "IntPtr",
-      "managed_signature": "IntPtr lrtc_peer_connection_create_data_channel(IntPtr pc, IntPtr label, int ordered, int reliable, int max_retransmit_time, int max_retransmits, IntPtr protocol, int negotiated, int id)",
       "name": "lrtc_peer_connection_create_data_channel",
       "parameters": [
         {
           "c_type": "lrtc_peer_connection_t*",
-          "managed_name": "pc",
-          "managed_type": "IntPtr",
           "name": "pc",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "const char*",
-          "managed_name": "label",
-          "managed_type": "IntPtr",
           "name": "label",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "int",
-          "managed_name": "ordered",
-          "managed_type": "int",
           "name": "ordered",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "int",
-          "managed_name": "reliable",
-          "managed_type": "int",
           "name": "reliable",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "int",
-          "managed_name": "max_retransmit_time",
-          "managed_type": "int",
           "name": "max_retransmit_time",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "int",
-          "managed_name": "max_retransmits",
-          "managed_type": "int",
           "name": "max_retransmits",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "const char*",
-          "managed_name": "protocol",
-          "managed_type": "IntPtr",
           "name": "protocol",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "int",
-          "managed_name": "negotiated",
-          "managed_type": "int",
           "name": "negotiated",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "int",
-          "managed_name": "id",
-          "managed_type": "int",
           "name": "id",
           "pointer_depth": 0,
           "variadic": false
@@ -3046,46 +2363,34 @@
       "c_parameters_raw": "lrtc_peer_connection_t* pc, lrtc_sdp_success_cb success, lrtc_sdp_error_cb failure, void* user_data, lrtc_media_constraints_t* constraints",
       "c_return_type": "void",
       "c_signature": "void (lrtc_peer_connection_t* pc, lrtc_sdp_success_cb success, lrtc_sdp_error_cb failure, void* user_data, lrtc_media_constraints_t* constraints)",
-      "managed_return_type": "void",
-      "managed_signature": "void lrtc_peer_connection_create_offer(IntPtr pc, LrtcSdpSuccessCb success, LrtcSdpErrorCb failure, IntPtr user_data, IntPtr constraints)",
       "name": "lrtc_peer_connection_create_offer",
       "parameters": [
         {
           "c_type": "lrtc_peer_connection_t*",
-          "managed_name": "pc",
-          "managed_type": "IntPtr",
           "name": "pc",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "lrtc_sdp_success_cb",
-          "managed_name": "success",
-          "managed_type": "LrtcSdpSuccessCb",
           "name": "success",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "lrtc_sdp_error_cb",
-          "managed_name": "failure",
-          "managed_type": "LrtcSdpErrorCb",
           "name": "failure",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "void*",
-          "managed_name": "user_data",
-          "managed_type": "IntPtr",
           "name": "user_data",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "lrtc_media_constraints_t*",
-          "managed_name": "constraints",
-          "managed_type": "IntPtr",
           "name": "constraints",
           "pointer_depth": 1,
           "variadic": false
@@ -3097,38 +2402,28 @@
       "c_parameters_raw": "lrtc_peer_connection_t* pc, lrtc_sdp_success_cb success, lrtc_sdp_error_cb failure, void* user_data",
       "c_return_type": "void",
       "c_signature": "void (lrtc_peer_connection_t* pc, lrtc_sdp_success_cb success, lrtc_sdp_error_cb failure, void* user_data)",
-      "managed_return_type": "void",
-      "managed_signature": "void lrtc_peer_connection_get_local_description(IntPtr pc, LrtcSdpSuccessCb success, LrtcSdpErrorCb failure, IntPtr user_data)",
       "name": "lrtc_peer_connection_get_local_description",
       "parameters": [
         {
           "c_type": "lrtc_peer_connection_t*",
-          "managed_name": "pc",
-          "managed_type": "IntPtr",
           "name": "pc",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "lrtc_sdp_success_cb",
-          "managed_name": "success",
-          "managed_type": "LrtcSdpSuccessCb",
           "name": "success",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "lrtc_sdp_error_cb",
-          "managed_name": "failure",
-          "managed_type": "LrtcSdpErrorCb",
           "name": "failure",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "void*",
-          "managed_name": "user_data",
-          "managed_type": "IntPtr",
           "name": "user_data",
           "pointer_depth": 1,
           "variadic": false
@@ -3140,22 +2435,16 @@
       "c_parameters_raw": "lrtc_peer_connection_t* pc, uint32_t index",
       "c_return_type": "lrtc_rtp_receiver_t*",
       "c_signature": "lrtc_rtp_receiver_t* (lrtc_peer_connection_t* pc, uint32_t index)",
-      "managed_return_type": "IntPtr",
-      "managed_signature": "IntPtr lrtc_peer_connection_get_receiver(IntPtr pc, uint index)",
       "name": "lrtc_peer_connection_get_receiver",
       "parameters": [
         {
           "c_type": "lrtc_peer_connection_t*",
-          "managed_name": "pc",
-          "managed_type": "IntPtr",
           "name": "pc",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "uint32_t",
-          "managed_name": "index",
-          "managed_type": "uint",
           "name": "index",
           "pointer_depth": 0,
           "variadic": false
@@ -3167,46 +2456,34 @@
       "c_parameters_raw": "lrtc_peer_connection_t* pc, lrtc_rtp_receiver_t* receiver, lrtc_stats_success_cb success, lrtc_stats_failure_cb failure, void* user_data",
       "c_return_type": "void",
       "c_signature": "void (lrtc_peer_connection_t* pc, lrtc_rtp_receiver_t* receiver, lrtc_stats_success_cb success, lrtc_stats_failure_cb failure, void* user_data)",
-      "managed_return_type": "void",
-      "managed_signature": "void lrtc_peer_connection_get_receiver_stats(IntPtr pc, IntPtr receiver, LrtcStatsSuccessCb success, LrtcStatsFailureCb failure, IntPtr user_data)",
       "name": "lrtc_peer_connection_get_receiver_stats",
       "parameters": [
         {
           "c_type": "lrtc_peer_connection_t*",
-          "managed_name": "pc",
-          "managed_type": "IntPtr",
           "name": "pc",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "lrtc_rtp_receiver_t*",
-          "managed_name": "receiver",
-          "managed_type": "IntPtr",
           "name": "receiver",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "lrtc_stats_success_cb",
-          "managed_name": "success",
-          "managed_type": "LrtcStatsSuccessCb",
           "name": "success",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "lrtc_stats_failure_cb",
-          "managed_name": "failure",
-          "managed_type": "LrtcStatsFailureCb",
           "name": "failure",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "void*",
-          "managed_name": "user_data",
-          "managed_type": "IntPtr",
           "name": "user_data",
           "pointer_depth": 1,
           "variadic": false
@@ -3218,38 +2495,28 @@
       "c_parameters_raw": "lrtc_peer_connection_t* pc, lrtc_sdp_success_cb success, lrtc_sdp_error_cb failure, void* user_data",
       "c_return_type": "void",
       "c_signature": "void (lrtc_peer_connection_t* pc, lrtc_sdp_success_cb success, lrtc_sdp_error_cb failure, void* user_data)",
-      "managed_return_type": "void",
-      "managed_signature": "void lrtc_peer_connection_get_remote_description(IntPtr pc, LrtcSdpSuccessCb success, LrtcSdpErrorCb failure, IntPtr user_data)",
       "name": "lrtc_peer_connection_get_remote_description",
       "parameters": [
         {
           "c_type": "lrtc_peer_connection_t*",
-          "managed_name": "pc",
-          "managed_type": "IntPtr",
           "name": "pc",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "lrtc_sdp_success_cb",
-          "managed_name": "success",
-          "managed_type": "LrtcSdpSuccessCb",
           "name": "success",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "lrtc_sdp_error_cb",
-          "managed_name": "failure",
-          "managed_type": "LrtcSdpErrorCb",
           "name": "failure",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "void*",
-          "managed_name": "user_data",
-          "managed_type": "IntPtr",
           "name": "user_data",
           "pointer_depth": 1,
           "variadic": false
@@ -3261,22 +2528,16 @@
       "c_parameters_raw": "lrtc_peer_connection_t* pc, uint32_t index",
       "c_return_type": "lrtc_rtp_sender_t*",
       "c_signature": "lrtc_rtp_sender_t* (lrtc_peer_connection_t* pc, uint32_t index)",
-      "managed_return_type": "IntPtr",
-      "managed_signature": "IntPtr lrtc_peer_connection_get_sender(IntPtr pc, uint index)",
       "name": "lrtc_peer_connection_get_sender",
       "parameters": [
         {
           "c_type": "lrtc_peer_connection_t*",
-          "managed_name": "pc",
-          "managed_type": "IntPtr",
           "name": "pc",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "uint32_t",
-          "managed_name": "index",
-          "managed_type": "uint",
           "name": "index",
           "pointer_depth": 0,
           "variadic": false
@@ -3288,46 +2549,34 @@
       "c_parameters_raw": "lrtc_peer_connection_t* pc, lrtc_rtp_sender_t* sender, lrtc_stats_success_cb success, lrtc_stats_failure_cb failure, void* user_data",
       "c_return_type": "void",
       "c_signature": "void (lrtc_peer_connection_t* pc, lrtc_rtp_sender_t* sender, lrtc_stats_success_cb success, lrtc_stats_failure_cb failure, void* user_data)",
-      "managed_return_type": "void",
-      "managed_signature": "void lrtc_peer_connection_get_sender_stats(IntPtr pc, IntPtr sender, LrtcStatsSuccessCb success, LrtcStatsFailureCb failure, IntPtr user_data)",
       "name": "lrtc_peer_connection_get_sender_stats",
       "parameters": [
         {
           "c_type": "lrtc_peer_connection_t*",
-          "managed_name": "pc",
-          "managed_type": "IntPtr",
           "name": "pc",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "lrtc_rtp_sender_t*",
-          "managed_name": "sender",
-          "managed_type": "IntPtr",
           "name": "sender",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "lrtc_stats_success_cb",
-          "managed_name": "success",
-          "managed_type": "LrtcStatsSuccessCb",
           "name": "success",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "lrtc_stats_failure_cb",
-          "managed_name": "failure",
-          "managed_type": "LrtcStatsFailureCb",
           "name": "failure",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "void*",
-          "managed_name": "user_data",
-          "managed_type": "IntPtr",
           "name": "user_data",
           "pointer_depth": 1,
           "variadic": false
@@ -3339,38 +2588,28 @@
       "c_parameters_raw": "lrtc_peer_connection_t* pc, lrtc_stats_success_cb success, lrtc_stats_failure_cb failure, void* user_data",
       "c_return_type": "void",
       "c_signature": "void (lrtc_peer_connection_t* pc, lrtc_stats_success_cb success, lrtc_stats_failure_cb failure, void* user_data)",
-      "managed_return_type": "void",
-      "managed_signature": "void lrtc_peer_connection_get_stats(IntPtr pc, LrtcStatsSuccessCb success, LrtcStatsFailureCb failure, IntPtr user_data)",
       "name": "lrtc_peer_connection_get_stats",
       "parameters": [
         {
           "c_type": "lrtc_peer_connection_t*",
-          "managed_name": "pc",
-          "managed_type": "IntPtr",
           "name": "pc",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "lrtc_stats_success_cb",
-          "managed_name": "success",
-          "managed_type": "LrtcStatsSuccessCb",
           "name": "success",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "lrtc_stats_failure_cb",
-          "managed_name": "failure",
-          "managed_type": "LrtcStatsFailureCb",
           "name": "failure",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "void*",
-          "managed_name": "user_data",
-          "managed_type": "IntPtr",
           "name": "user_data",
           "pointer_depth": 1,
           "variadic": false
@@ -3382,22 +2621,16 @@
       "c_parameters_raw": "lrtc_peer_connection_t* pc, uint32_t index",
       "c_return_type": "lrtc_rtp_transceiver_t*",
       "c_signature": "lrtc_rtp_transceiver_t* (lrtc_peer_connection_t* pc, uint32_t index)",
-      "managed_return_type": "IntPtr",
-      "managed_signature": "IntPtr lrtc_peer_connection_get_transceiver(IntPtr pc, uint index)",
       "name": "lrtc_peer_connection_get_transceiver",
       "parameters": [
         {
           "c_type": "lrtc_peer_connection_t*",
-          "managed_name": "pc",
-          "managed_type": "IntPtr",
           "name": "pc",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "uint32_t",
-          "managed_name": "index",
-          "managed_type": "uint",
           "name": "index",
           "pointer_depth": 0,
           "variadic": false
@@ -3409,14 +2642,10 @@
       "c_parameters_raw": "lrtc_peer_connection_t* pc",
       "c_return_type": "uint32_t",
       "c_signature": "uint32_t (lrtc_peer_connection_t* pc)",
-      "managed_return_type": "uint",
-      "managed_signature": "uint lrtc_peer_connection_receiver_count(IntPtr pc)",
       "name": "lrtc_peer_connection_receiver_count",
       "parameters": [
         {
           "c_type": "lrtc_peer_connection_t*",
-          "managed_name": "pc",
-          "managed_type": "IntPtr",
           "name": "pc",
           "pointer_depth": 1,
           "variadic": false
@@ -3428,14 +2657,10 @@
       "c_parameters_raw": "lrtc_peer_connection_t* pc",
       "c_return_type": "void",
       "c_signature": "void (lrtc_peer_connection_t* pc)",
-      "managed_return_type": "void",
-      "managed_signature": "void lrtc_peer_connection_release(IntPtr pc)",
       "name": "lrtc_peer_connection_release",
       "parameters": [
         {
           "c_type": "lrtc_peer_connection_t*",
-          "managed_name": "pc",
-          "managed_type": "IntPtr",
           "name": "pc",
           "pointer_depth": 1,
           "variadic": false
@@ -3447,22 +2672,16 @@
       "c_parameters_raw": "lrtc_peer_connection_t* pc, lrtc_media_stream_t* stream",
       "c_return_type": "bool",
       "c_signature": "bool (lrtc_peer_connection_t* pc, lrtc_media_stream_t* stream)",
-      "managed_return_type": "bool",
-      "managed_signature": "bool lrtc_peer_connection_remove_stream(IntPtr pc, IntPtr stream)",
       "name": "lrtc_peer_connection_remove_stream",
       "parameters": [
         {
           "c_type": "lrtc_peer_connection_t*",
-          "managed_name": "pc",
-          "managed_type": "IntPtr",
           "name": "pc",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "lrtc_media_stream_t*",
-          "managed_name": "stream",
-          "managed_type": "IntPtr",
           "name": "stream",
           "pointer_depth": 1,
           "variadic": false
@@ -3474,22 +2693,16 @@
       "c_parameters_raw": "lrtc_peer_connection_t* pc, lrtc_rtp_sender_t* sender",
       "c_return_type": "int",
       "c_signature": "int (lrtc_peer_connection_t* pc, lrtc_rtp_sender_t* sender)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_peer_connection_remove_track(IntPtr pc, IntPtr sender)",
       "name": "lrtc_peer_connection_remove_track",
       "parameters": [
         {
           "c_type": "lrtc_peer_connection_t*",
-          "managed_name": "pc",
-          "managed_type": "IntPtr",
           "name": "pc",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "lrtc_rtp_sender_t*",
-          "managed_name": "sender",
-          "managed_type": "IntPtr",
           "name": "sender",
           "pointer_depth": 1,
           "variadic": false
@@ -3501,14 +2714,10 @@
       "c_parameters_raw": "lrtc_peer_connection_t* pc",
       "c_return_type": "void",
       "c_signature": "void (lrtc_peer_connection_t* pc)",
-      "managed_return_type": "void",
-      "managed_signature": "void lrtc_peer_connection_restart_ice(IntPtr pc)",
       "name": "lrtc_peer_connection_restart_ice",
       "parameters": [
         {
           "c_type": "lrtc_peer_connection_t*",
-          "managed_name": "pc",
-          "managed_type": "IntPtr",
           "name": "pc",
           "pointer_depth": 1,
           "variadic": false
@@ -3520,14 +2729,10 @@
       "c_parameters_raw": "lrtc_peer_connection_t* pc",
       "c_return_type": "uint32_t",
       "c_signature": "uint32_t (lrtc_peer_connection_t* pc)",
-      "managed_return_type": "uint",
-      "managed_signature": "uint lrtc_peer_connection_sender_count(IntPtr pc)",
       "name": "lrtc_peer_connection_sender_count",
       "parameters": [
         {
           "c_type": "lrtc_peer_connection_t*",
-          "managed_name": "pc",
-          "managed_type": "IntPtr",
           "name": "pc",
           "pointer_depth": 1,
           "variadic": false
@@ -3539,30 +2744,22 @@
       "c_parameters_raw": "lrtc_peer_connection_t* pc, const lrtc_peer_connection_callbacks_t* callbacks, void* user_data",
       "c_return_type": "void",
       "c_signature": "void (lrtc_peer_connection_t* pc, const lrtc_peer_connection_callbacks_t* callbacks, void* user_data)",
-      "managed_return_type": "void",
-      "managed_signature": "void lrtc_peer_connection_set_callbacks(IntPtr pc, IntPtr callbacks, IntPtr user_data)",
       "name": "lrtc_peer_connection_set_callbacks",
       "parameters": [
         {
           "c_type": "lrtc_peer_connection_t*",
-          "managed_name": "pc",
-          "managed_type": "IntPtr",
           "name": "pc",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "const lrtc_peer_connection_callbacks_t*",
-          "managed_name": "callbacks",
-          "managed_type": "IntPtr",
           "name": "callbacks",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "void*",
-          "managed_name": "user_data",
-          "managed_type": "IntPtr",
           "name": "user_data",
           "pointer_depth": 1,
           "variadic": false
@@ -3574,38 +2771,28 @@
       "c_parameters_raw": "lrtc_peer_connection_t* pc, lrtc_media_type media_type, const char** mime_types, uint32_t mime_type_count",
       "c_return_type": "int",
       "c_signature": "int (lrtc_peer_connection_t* pc, lrtc_media_type media_type, const char** mime_types, uint32_t mime_type_count)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_peer_connection_set_codec_preferences(IntPtr pc, LrtcMediaType media_type, IntPtr mime_types, uint mime_type_count)",
       "name": "lrtc_peer_connection_set_codec_preferences",
       "parameters": [
         {
           "c_type": "lrtc_peer_connection_t*",
-          "managed_name": "pc",
-          "managed_type": "IntPtr",
           "name": "pc",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "lrtc_media_type",
-          "managed_name": "media_type",
-          "managed_type": "LrtcMediaType",
           "name": "media_type",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "const char**",
-          "managed_name": "mime_types",
-          "managed_type": "IntPtr",
           "name": "mime_types",
           "pointer_depth": 2,
           "variadic": false
         },
         {
           "c_type": "uint32_t",
-          "managed_name": "mime_type_count",
-          "managed_type": "uint",
           "name": "mime_type_count",
           "pointer_depth": 0,
           "variadic": false
@@ -3617,54 +2804,40 @@
       "c_parameters_raw": "lrtc_peer_connection_t* pc, const char* sdp, const char* type, lrtc_void_cb success, lrtc_sdp_error_cb failure, void* user_data",
       "c_return_type": "void",
       "c_signature": "void (lrtc_peer_connection_t* pc, const char* sdp, const char* type, lrtc_void_cb success, lrtc_sdp_error_cb failure, void* user_data)",
-      "managed_return_type": "void",
-      "managed_signature": "void lrtc_peer_connection_set_local_description(IntPtr pc, IntPtr sdp, IntPtr type, LrtcVoidCb success, LrtcSdpErrorCb failure, IntPtr user_data)",
       "name": "lrtc_peer_connection_set_local_description",
       "parameters": [
         {
           "c_type": "lrtc_peer_connection_t*",
-          "managed_name": "pc",
-          "managed_type": "IntPtr",
           "name": "pc",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "const char*",
-          "managed_name": "sdp",
-          "managed_type": "IntPtr",
           "name": "sdp",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "const char*",
-          "managed_name": "type",
-          "managed_type": "IntPtr",
           "name": "type",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "lrtc_void_cb",
-          "managed_name": "success",
-          "managed_type": "LrtcVoidCb",
           "name": "success",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "lrtc_sdp_error_cb",
-          "managed_name": "failure",
-          "managed_type": "LrtcSdpErrorCb",
           "name": "failure",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "void*",
-          "managed_name": "user_data",
-          "managed_type": "IntPtr",
           "name": "user_data",
           "pointer_depth": 1,
           "variadic": false
@@ -3676,54 +2849,40 @@
       "c_parameters_raw": "lrtc_peer_connection_t* pc, const char* sdp, const char* type, lrtc_void_cb success, lrtc_sdp_error_cb failure, void* user_data",
       "c_return_type": "void",
       "c_signature": "void (lrtc_peer_connection_t* pc, const char* sdp, const char* type, lrtc_void_cb success, lrtc_sdp_error_cb failure, void* user_data)",
-      "managed_return_type": "void",
-      "managed_signature": "void lrtc_peer_connection_set_remote_description(IntPtr pc, IntPtr sdp, IntPtr type, LrtcVoidCb success, LrtcSdpErrorCb failure, IntPtr user_data)",
       "name": "lrtc_peer_connection_set_remote_description",
       "parameters": [
         {
           "c_type": "lrtc_peer_connection_t*",
-          "managed_name": "pc",
-          "managed_type": "IntPtr",
           "name": "pc",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "const char*",
-          "managed_name": "sdp",
-          "managed_type": "IntPtr",
           "name": "sdp",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "const char*",
-          "managed_name": "type",
-          "managed_type": "IntPtr",
           "name": "type",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "lrtc_void_cb",
-          "managed_name": "success",
-          "managed_type": "LrtcVoidCb",
           "name": "success",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "lrtc_sdp_error_cb",
-          "managed_name": "failure",
-          "managed_type": "LrtcSdpErrorCb",
           "name": "failure",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "void*",
-          "managed_name": "user_data",
-          "managed_type": "IntPtr",
           "name": "user_data",
           "pointer_depth": 1,
           "variadic": false
@@ -3735,38 +2894,28 @@
       "c_parameters_raw": "lrtc_peer_connection_t* pc, lrtc_rtp_transceiver_t* transceiver, const char** mime_types, uint32_t mime_type_count",
       "c_return_type": "int",
       "c_signature": "int (lrtc_peer_connection_t* pc, lrtc_rtp_transceiver_t* transceiver, const char** mime_types, uint32_t mime_type_count)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_peer_connection_set_transceiver_codec_preferences(IntPtr pc, IntPtr transceiver, IntPtr mime_types, uint mime_type_count)",
       "name": "lrtc_peer_connection_set_transceiver_codec_preferences",
       "parameters": [
         {
           "c_type": "lrtc_peer_connection_t*",
-          "managed_name": "pc",
-          "managed_type": "IntPtr",
           "name": "pc",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "lrtc_rtp_transceiver_t*",
-          "managed_name": "transceiver",
-          "managed_type": "IntPtr",
           "name": "transceiver",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "const char**",
-          "managed_name": "mime_types",
-          "managed_type": "IntPtr",
           "name": "mime_types",
           "pointer_depth": 2,
           "variadic": false
         },
         {
           "c_type": "uint32_t",
-          "managed_name": "mime_type_count",
-          "managed_type": "uint",
           "name": "mime_type_count",
           "pointer_depth": 0,
           "variadic": false
@@ -3778,14 +2927,10 @@
       "c_parameters_raw": "lrtc_peer_connection_t* pc",
       "c_return_type": "uint32_t",
       "c_signature": "uint32_t (lrtc_peer_connection_t* pc)",
-      "managed_return_type": "uint",
-      "managed_signature": "uint lrtc_peer_connection_transceiver_count(IntPtr pc)",
       "name": "lrtc_peer_connection_transceiver_count",
       "parameters": [
         {
           "c_type": "lrtc_peer_connection_t*",
-          "managed_name": "pc",
-          "managed_type": "IntPtr",
           "name": "pc",
           "pointer_depth": 1,
           "variadic": false
@@ -3797,14 +2942,10 @@
       "c_parameters_raw": "lrtc_rtp_receiver_t* receiver",
       "c_return_type": "uint32_t",
       "c_signature": "uint32_t (lrtc_rtp_receiver_t* receiver)",
-      "managed_return_type": "uint",
-      "managed_signature": "uint lrtc_rtp_receiver_encoding_count(IntPtr receiver)",
       "name": "lrtc_rtp_receiver_encoding_count",
       "parameters": [
         {
           "c_type": "lrtc_rtp_receiver_t*",
-          "managed_name": "receiver",
-          "managed_type": "IntPtr",
           "name": "receiver",
           "pointer_depth": 1,
           "variadic": false
@@ -3816,14 +2957,10 @@
       "c_parameters_raw": "lrtc_rtp_receiver_t* receiver",
       "c_return_type": "lrtc_audio_track_t*",
       "c_signature": "lrtc_audio_track_t* (lrtc_rtp_receiver_t* receiver)",
-      "managed_return_type": "IntPtr",
-      "managed_signature": "IntPtr lrtc_rtp_receiver_get_audio_track(IntPtr receiver)",
       "name": "lrtc_rtp_receiver_get_audio_track",
       "parameters": [
         {
           "c_type": "lrtc_rtp_receiver_t*",
-          "managed_name": "receiver",
-          "managed_type": "IntPtr",
           "name": "receiver",
           "pointer_depth": 1,
           "variadic": false
@@ -3835,14 +2972,10 @@
       "c_parameters_raw": "lrtc_rtp_receiver_t* receiver",
       "c_return_type": "int",
       "c_signature": "int (lrtc_rtp_receiver_t* receiver)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_rtp_receiver_get_degradation_preference(IntPtr receiver)",
       "name": "lrtc_rtp_receiver_get_degradation_preference",
       "parameters": [
         {
           "c_type": "lrtc_rtp_receiver_t*",
-          "managed_name": "receiver",
-          "managed_type": "IntPtr",
           "name": "receiver",
           "pointer_depth": 1,
           "variadic": false
@@ -3854,22 +2987,16 @@
       "c_parameters_raw": "lrtc_rtp_receiver_t* receiver, lrtc_dtls_transport_info_t* info",
       "c_return_type": "int",
       "c_signature": "int (lrtc_rtp_receiver_t* receiver, lrtc_dtls_transport_info_t* info)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_rtp_receiver_get_dtls_info(IntPtr receiver, IntPtr info)",
       "name": "lrtc_rtp_receiver_get_dtls_info",
       "parameters": [
         {
           "c_type": "lrtc_rtp_receiver_t*",
-          "managed_name": "receiver",
-          "managed_type": "IntPtr",
           "name": "receiver",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "lrtc_dtls_transport_info_t*",
-          "managed_name": "info",
-          "managed_type": "IntPtr",
           "name": "info",
           "pointer_depth": 1,
           "variadic": false
@@ -3881,30 +3008,22 @@
       "c_parameters_raw": "lrtc_rtp_receiver_t* receiver, uint32_t index, lrtc_rtp_encoding_info_t* info",
       "c_return_type": "int",
       "c_signature": "int (lrtc_rtp_receiver_t* receiver, uint32_t index, lrtc_rtp_encoding_info_t* info)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_rtp_receiver_get_encoding_info(IntPtr receiver, uint index, IntPtr info)",
       "name": "lrtc_rtp_receiver_get_encoding_info",
       "parameters": [
         {
           "c_type": "lrtc_rtp_receiver_t*",
-          "managed_name": "receiver",
-          "managed_type": "IntPtr",
           "name": "receiver",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "uint32_t",
-          "managed_name": "index",
-          "managed_type": "uint",
           "name": "index",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "lrtc_rtp_encoding_info_t*",
-          "managed_name": "info",
-          "managed_type": "IntPtr",
           "name": "info",
           "pointer_depth": 1,
           "variadic": false
@@ -3916,38 +3035,28 @@
       "c_parameters_raw": "lrtc_rtp_receiver_t* receiver, uint32_t index, char* buffer, uint32_t buffer_len",
       "c_return_type": "int32_t",
       "c_signature": "int32_t (lrtc_rtp_receiver_t* receiver, uint32_t index, char* buffer, uint32_t buffer_len)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_rtp_receiver_get_encoding_rid(IntPtr receiver, uint index, IntPtr buffer, uint buffer_len)",
       "name": "lrtc_rtp_receiver_get_encoding_rid",
       "parameters": [
         {
           "c_type": "lrtc_rtp_receiver_t*",
-          "managed_name": "receiver",
-          "managed_type": "IntPtr",
           "name": "receiver",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "uint32_t",
-          "managed_name": "index",
-          "managed_type": "uint",
           "name": "index",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "char*",
-          "managed_name": "buffer",
-          "managed_type": "IntPtr",
           "name": "buffer",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "uint32_t",
-          "managed_name": "buffer_len",
-          "managed_type": "uint",
           "name": "buffer_len",
           "pointer_depth": 0,
           "variadic": false
@@ -3959,38 +3068,28 @@
       "c_parameters_raw": "lrtc_rtp_receiver_t* receiver, uint32_t index, char* buffer, uint32_t buffer_len",
       "c_return_type": "int32_t",
       "c_signature": "int32_t (lrtc_rtp_receiver_t* receiver, uint32_t index, char* buffer, uint32_t buffer_len)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_rtp_receiver_get_encoding_scalability_mode(IntPtr receiver, uint index, IntPtr buffer, uint buffer_len)",
       "name": "lrtc_rtp_receiver_get_encoding_scalability_mode",
       "parameters": [
         {
           "c_type": "lrtc_rtp_receiver_t*",
-          "managed_name": "receiver",
-          "managed_type": "IntPtr",
           "name": "receiver",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "uint32_t",
-          "managed_name": "index",
-          "managed_type": "uint",
           "name": "index",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "char*",
-          "managed_name": "buffer",
-          "managed_type": "IntPtr",
           "name": "buffer",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "uint32_t",
-          "managed_name": "buffer_len",
-          "managed_type": "uint",
           "name": "buffer_len",
           "pointer_depth": 0,
           "variadic": false
@@ -4002,30 +3101,22 @@
       "c_parameters_raw": "lrtc_rtp_receiver_t* receiver, char* buffer, uint32_t buffer_len",
       "c_return_type": "int32_t",
       "c_signature": "int32_t (lrtc_rtp_receiver_t* receiver, char* buffer, uint32_t buffer_len)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_rtp_receiver_get_id(IntPtr receiver, IntPtr buffer, uint buffer_len)",
       "name": "lrtc_rtp_receiver_get_id",
       "parameters": [
         {
           "c_type": "lrtc_rtp_receiver_t*",
-          "managed_name": "receiver",
-          "managed_type": "IntPtr",
           "name": "receiver",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "char*",
-          "managed_name": "buffer",
-          "managed_type": "IntPtr",
           "name": "buffer",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "uint32_t",
-          "managed_name": "buffer_len",
-          "managed_type": "uint",
           "name": "buffer_len",
           "pointer_depth": 0,
           "variadic": false
@@ -4037,14 +3128,10 @@
       "c_parameters_raw": "lrtc_rtp_receiver_t* receiver",
       "c_return_type": "int",
       "c_signature": "int (lrtc_rtp_receiver_t* receiver)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_rtp_receiver_get_media_type(IntPtr receiver)",
       "name": "lrtc_rtp_receiver_get_media_type",
       "parameters": [
         {
           "c_type": "lrtc_rtp_receiver_t*",
-          "managed_name": "receiver",
-          "managed_type": "IntPtr",
           "name": "receiver",
           "pointer_depth": 1,
           "variadic": false
@@ -4056,30 +3143,22 @@
       "c_parameters_raw": "lrtc_rtp_receiver_t* receiver, char* buffer, uint32_t buffer_len",
       "c_return_type": "int32_t",
       "c_signature": "int32_t (lrtc_rtp_receiver_t* receiver, char* buffer, uint32_t buffer_len)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_rtp_receiver_get_parameters_mid(IntPtr receiver, IntPtr buffer, uint buffer_len)",
       "name": "lrtc_rtp_receiver_get_parameters_mid",
       "parameters": [
         {
           "c_type": "lrtc_rtp_receiver_t*",
-          "managed_name": "receiver",
-          "managed_type": "IntPtr",
           "name": "receiver",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "char*",
-          "managed_name": "buffer",
-          "managed_type": "IntPtr",
           "name": "buffer",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "uint32_t",
-          "managed_name": "buffer_len",
-          "managed_type": "uint",
           "name": "buffer_len",
           "pointer_depth": 0,
           "variadic": false
@@ -4091,22 +3170,16 @@
       "c_parameters_raw": "lrtc_rtp_receiver_t* receiver, uint32_t index",
       "c_return_type": "lrtc_media_stream_t*",
       "c_signature": "lrtc_media_stream_t* (lrtc_rtp_receiver_t* receiver, uint32_t index)",
-      "managed_return_type": "IntPtr",
-      "managed_signature": "IntPtr lrtc_rtp_receiver_get_stream(IntPtr receiver, uint index)",
       "name": "lrtc_rtp_receiver_get_stream",
       "parameters": [
         {
           "c_type": "lrtc_rtp_receiver_t*",
-          "managed_name": "receiver",
-          "managed_type": "IntPtr",
           "name": "receiver",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "uint32_t",
-          "managed_name": "index",
-          "managed_type": "uint",
           "name": "index",
           "pointer_depth": 0,
           "variadic": false
@@ -4118,38 +3191,28 @@
       "c_parameters_raw": "lrtc_rtp_receiver_t* receiver, uint32_t index, char* buffer, uint32_t buffer_len",
       "c_return_type": "int32_t",
       "c_signature": "int32_t (lrtc_rtp_receiver_t* receiver, uint32_t index, char* buffer, uint32_t buffer_len)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_rtp_receiver_get_stream_id(IntPtr receiver, uint index, IntPtr buffer, uint buffer_len)",
       "name": "lrtc_rtp_receiver_get_stream_id",
       "parameters": [
         {
           "c_type": "lrtc_rtp_receiver_t*",
-          "managed_name": "receiver",
-          "managed_type": "IntPtr",
           "name": "receiver",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "uint32_t",
-          "managed_name": "index",
-          "managed_type": "uint",
           "name": "index",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "char*",
-          "managed_name": "buffer",
-          "managed_type": "IntPtr",
           "name": "buffer",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "uint32_t",
-          "managed_name": "buffer_len",
-          "managed_type": "uint",
           "name": "buffer_len",
           "pointer_depth": 0,
           "variadic": false
@@ -4161,14 +3224,10 @@
       "c_parameters_raw": "lrtc_rtp_receiver_t* receiver",
       "c_return_type": "lrtc_video_track_t*",
       "c_signature": "lrtc_video_track_t* (lrtc_rtp_receiver_t* receiver)",
-      "managed_return_type": "IntPtr",
-      "managed_signature": "IntPtr lrtc_rtp_receiver_get_video_track(IntPtr receiver)",
       "name": "lrtc_rtp_receiver_get_video_track",
       "parameters": [
         {
           "c_type": "lrtc_rtp_receiver_t*",
-          "managed_name": "receiver",
-          "managed_type": "IntPtr",
           "name": "receiver",
           "pointer_depth": 1,
           "variadic": false
@@ -4180,14 +3239,10 @@
       "c_parameters_raw": "lrtc_rtp_receiver_t* receiver",
       "c_return_type": "void",
       "c_signature": "void (lrtc_rtp_receiver_t* receiver)",
-      "managed_return_type": "void",
-      "managed_signature": "void lrtc_rtp_receiver_release(IntPtr receiver)",
       "name": "lrtc_rtp_receiver_release",
       "parameters": [
         {
           "c_type": "lrtc_rtp_receiver_t*",
-          "managed_name": "receiver",
-          "managed_type": "IntPtr",
           "name": "receiver",
           "pointer_depth": 1,
           "variadic": false
@@ -4199,22 +3254,16 @@
       "c_parameters_raw": "lrtc_rtp_receiver_t* receiver, double delay_seconds",
       "c_return_type": "int",
       "c_signature": "int (lrtc_rtp_receiver_t* receiver, double delay_seconds)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_rtp_receiver_set_jitter_buffer_min_delay(IntPtr receiver, double delay_seconds)",
       "name": "lrtc_rtp_receiver_set_jitter_buffer_min_delay",
       "parameters": [
         {
           "c_type": "lrtc_rtp_receiver_t*",
-          "managed_name": "receiver",
-          "managed_type": "IntPtr",
           "name": "receiver",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "double",
-          "managed_name": "delay_seconds",
-          "managed_type": "double",
           "name": "delay_seconds",
           "pointer_depth": 0,
           "variadic": false
@@ -4226,14 +3275,10 @@
       "c_parameters_raw": "lrtc_rtp_receiver_t* receiver",
       "c_return_type": "uint32_t",
       "c_signature": "uint32_t (lrtc_rtp_receiver_t* receiver)",
-      "managed_return_type": "uint",
-      "managed_signature": "uint lrtc_rtp_receiver_stream_count(IntPtr receiver)",
       "name": "lrtc_rtp_receiver_stream_count",
       "parameters": [
         {
           "c_type": "lrtc_rtp_receiver_t*",
-          "managed_name": "receiver",
-          "managed_type": "IntPtr",
           "name": "receiver",
           "pointer_depth": 1,
           "variadic": false
@@ -4245,14 +3290,10 @@
       "c_parameters_raw": "lrtc_rtp_receiver_t* receiver",
       "c_return_type": "uint32_t",
       "c_signature": "uint32_t (lrtc_rtp_receiver_t* receiver)",
-      "managed_return_type": "uint",
-      "managed_signature": "uint lrtc_rtp_receiver_stream_id_count(IntPtr receiver)",
       "name": "lrtc_rtp_receiver_stream_id_count",
       "parameters": [
         {
           "c_type": "lrtc_rtp_receiver_t*",
-          "managed_name": "receiver",
-          "managed_type": "IntPtr",
           "name": "receiver",
           "pointer_depth": 1,
           "variadic": false
@@ -4264,14 +3305,10 @@
       "c_parameters_raw": "lrtc_rtp_sender_t* sender",
       "c_return_type": "uint32_t",
       "c_signature": "uint32_t (lrtc_rtp_sender_t* sender)",
-      "managed_return_type": "uint",
-      "managed_signature": "uint lrtc_rtp_sender_encoding_count(IntPtr sender)",
       "name": "lrtc_rtp_sender_encoding_count",
       "parameters": [
         {
           "c_type": "lrtc_rtp_sender_t*",
-          "managed_name": "sender",
-          "managed_type": "IntPtr",
           "name": "sender",
           "pointer_depth": 1,
           "variadic": false
@@ -4283,14 +3320,10 @@
       "c_parameters_raw": "lrtc_rtp_sender_t* sender",
       "c_return_type": "lrtc_audio_track_t*",
       "c_signature": "lrtc_audio_track_t* (lrtc_rtp_sender_t* sender)",
-      "managed_return_type": "IntPtr",
-      "managed_signature": "IntPtr lrtc_rtp_sender_get_audio_track(IntPtr sender)",
       "name": "lrtc_rtp_sender_get_audio_track",
       "parameters": [
         {
           "c_type": "lrtc_rtp_sender_t*",
-          "managed_name": "sender",
-          "managed_type": "IntPtr",
           "name": "sender",
           "pointer_depth": 1,
           "variadic": false
@@ -4302,14 +3335,10 @@
       "c_parameters_raw": "lrtc_rtp_sender_t* sender",
       "c_return_type": "int",
       "c_signature": "int (lrtc_rtp_sender_t* sender)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_rtp_sender_get_degradation_preference(IntPtr sender)",
       "name": "lrtc_rtp_sender_get_degradation_preference",
       "parameters": [
         {
           "c_type": "lrtc_rtp_sender_t*",
-          "managed_name": "sender",
-          "managed_type": "IntPtr",
           "name": "sender",
           "pointer_depth": 1,
           "variadic": false
@@ -4321,22 +3350,16 @@
       "c_parameters_raw": "lrtc_rtp_sender_t* sender, lrtc_dtls_transport_info_t* info",
       "c_return_type": "int",
       "c_signature": "int (lrtc_rtp_sender_t* sender, lrtc_dtls_transport_info_t* info)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_rtp_sender_get_dtls_info(IntPtr sender, IntPtr info)",
       "name": "lrtc_rtp_sender_get_dtls_info",
       "parameters": [
         {
           "c_type": "lrtc_rtp_sender_t*",
-          "managed_name": "sender",
-          "managed_type": "IntPtr",
           "name": "sender",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "lrtc_dtls_transport_info_t*",
-          "managed_name": "info",
-          "managed_type": "IntPtr",
           "name": "info",
           "pointer_depth": 1,
           "variadic": false
@@ -4348,14 +3371,10 @@
       "c_parameters_raw": "lrtc_rtp_sender_t* sender",
       "c_return_type": "lrtc_dtmf_sender_t*",
       "c_signature": "lrtc_dtmf_sender_t* (lrtc_rtp_sender_t* sender)",
-      "managed_return_type": "IntPtr",
-      "managed_signature": "IntPtr lrtc_rtp_sender_get_dtmf_sender(IntPtr sender)",
       "name": "lrtc_rtp_sender_get_dtmf_sender",
       "parameters": [
         {
           "c_type": "lrtc_rtp_sender_t*",
-          "managed_name": "sender",
-          "managed_type": "IntPtr",
           "name": "sender",
           "pointer_depth": 1,
           "variadic": false
@@ -4367,30 +3386,22 @@
       "c_parameters_raw": "lrtc_rtp_sender_t* sender, uint32_t index, lrtc_rtp_encoding_info_t* info",
       "c_return_type": "int",
       "c_signature": "int (lrtc_rtp_sender_t* sender, uint32_t index, lrtc_rtp_encoding_info_t* info)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_rtp_sender_get_encoding_info(IntPtr sender, uint index, IntPtr info)",
       "name": "lrtc_rtp_sender_get_encoding_info",
       "parameters": [
         {
           "c_type": "lrtc_rtp_sender_t*",
-          "managed_name": "sender",
-          "managed_type": "IntPtr",
           "name": "sender",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "uint32_t",
-          "managed_name": "index",
-          "managed_type": "uint",
           "name": "index",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "lrtc_rtp_encoding_info_t*",
-          "managed_name": "info",
-          "managed_type": "IntPtr",
           "name": "info",
           "pointer_depth": 1,
           "variadic": false
@@ -4402,38 +3413,28 @@
       "c_parameters_raw": "lrtc_rtp_sender_t* sender, uint32_t index, char* buffer, uint32_t buffer_len",
       "c_return_type": "int32_t",
       "c_signature": "int32_t (lrtc_rtp_sender_t* sender, uint32_t index, char* buffer, uint32_t buffer_len)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_rtp_sender_get_encoding_rid(IntPtr sender, uint index, IntPtr buffer, uint buffer_len)",
       "name": "lrtc_rtp_sender_get_encoding_rid",
       "parameters": [
         {
           "c_type": "lrtc_rtp_sender_t*",
-          "managed_name": "sender",
-          "managed_type": "IntPtr",
           "name": "sender",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "uint32_t",
-          "managed_name": "index",
-          "managed_type": "uint",
           "name": "index",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "char*",
-          "managed_name": "buffer",
-          "managed_type": "IntPtr",
           "name": "buffer",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "uint32_t",
-          "managed_name": "buffer_len",
-          "managed_type": "uint",
           "name": "buffer_len",
           "pointer_depth": 0,
           "variadic": false
@@ -4445,38 +3446,28 @@
       "c_parameters_raw": "lrtc_rtp_sender_t* sender, uint32_t index, char* buffer, uint32_t buffer_len",
       "c_return_type": "int32_t",
       "c_signature": "int32_t (lrtc_rtp_sender_t* sender, uint32_t index, char* buffer, uint32_t buffer_len)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_rtp_sender_get_encoding_scalability_mode(IntPtr sender, uint index, IntPtr buffer, uint buffer_len)",
       "name": "lrtc_rtp_sender_get_encoding_scalability_mode",
       "parameters": [
         {
           "c_type": "lrtc_rtp_sender_t*",
-          "managed_name": "sender",
-          "managed_type": "IntPtr",
           "name": "sender",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "uint32_t",
-          "managed_name": "index",
-          "managed_type": "uint",
           "name": "index",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "char*",
-          "managed_name": "buffer",
-          "managed_type": "IntPtr",
           "name": "buffer",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "uint32_t",
-          "managed_name": "buffer_len",
-          "managed_type": "uint",
           "name": "buffer_len",
           "pointer_depth": 0,
           "variadic": false
@@ -4488,30 +3479,22 @@
       "c_parameters_raw": "lrtc_rtp_sender_t* sender, char* buffer, uint32_t buffer_len",
       "c_return_type": "int32_t",
       "c_signature": "int32_t (lrtc_rtp_sender_t* sender, char* buffer, uint32_t buffer_len)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_rtp_sender_get_id(IntPtr sender, IntPtr buffer, uint buffer_len)",
       "name": "lrtc_rtp_sender_get_id",
       "parameters": [
         {
           "c_type": "lrtc_rtp_sender_t*",
-          "managed_name": "sender",
-          "managed_type": "IntPtr",
           "name": "sender",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "char*",
-          "managed_name": "buffer",
-          "managed_type": "IntPtr",
           "name": "buffer",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "uint32_t",
-          "managed_name": "buffer_len",
-          "managed_type": "uint",
           "name": "buffer_len",
           "pointer_depth": 0,
           "variadic": false
@@ -4523,14 +3506,10 @@
       "c_parameters_raw": "lrtc_rtp_sender_t* sender",
       "c_return_type": "int",
       "c_signature": "int (lrtc_rtp_sender_t* sender)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_rtp_sender_get_media_type(IntPtr sender)",
       "name": "lrtc_rtp_sender_get_media_type",
       "parameters": [
         {
           "c_type": "lrtc_rtp_sender_t*",
-          "managed_name": "sender",
-          "managed_type": "IntPtr",
           "name": "sender",
           "pointer_depth": 1,
           "variadic": false
@@ -4542,30 +3521,22 @@
       "c_parameters_raw": "lrtc_rtp_sender_t* sender, char* buffer, uint32_t buffer_len",
       "c_return_type": "int32_t",
       "c_signature": "int32_t (lrtc_rtp_sender_t* sender, char* buffer, uint32_t buffer_len)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_rtp_sender_get_parameters_mid(IntPtr sender, IntPtr buffer, uint buffer_len)",
       "name": "lrtc_rtp_sender_get_parameters_mid",
       "parameters": [
         {
           "c_type": "lrtc_rtp_sender_t*",
-          "managed_name": "sender",
-          "managed_type": "IntPtr",
           "name": "sender",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "char*",
-          "managed_name": "buffer",
-          "managed_type": "IntPtr",
           "name": "buffer",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "uint32_t",
-          "managed_name": "buffer_len",
-          "managed_type": "uint",
           "name": "buffer_len",
           "pointer_depth": 0,
           "variadic": false
@@ -4577,14 +3548,10 @@
       "c_parameters_raw": "lrtc_rtp_sender_t* sender",
       "c_return_type": "uint32_t",
       "c_signature": "uint32_t (lrtc_rtp_sender_t* sender)",
-      "managed_return_type": "uint",
-      "managed_signature": "uint lrtc_rtp_sender_get_ssrc(IntPtr sender)",
       "name": "lrtc_rtp_sender_get_ssrc",
       "parameters": [
         {
           "c_type": "lrtc_rtp_sender_t*",
-          "managed_name": "sender",
-          "managed_type": "IntPtr",
           "name": "sender",
           "pointer_depth": 1,
           "variadic": false
@@ -4596,38 +3563,28 @@
       "c_parameters_raw": "lrtc_rtp_sender_t* sender, uint32_t index, char* buffer, uint32_t buffer_len",
       "c_return_type": "int32_t",
       "c_signature": "int32_t (lrtc_rtp_sender_t* sender, uint32_t index, char* buffer, uint32_t buffer_len)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_rtp_sender_get_stream_id(IntPtr sender, uint index, IntPtr buffer, uint buffer_len)",
       "name": "lrtc_rtp_sender_get_stream_id",
       "parameters": [
         {
           "c_type": "lrtc_rtp_sender_t*",
-          "managed_name": "sender",
-          "managed_type": "IntPtr",
           "name": "sender",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "uint32_t",
-          "managed_name": "index",
-          "managed_type": "uint",
           "name": "index",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "char*",
-          "managed_name": "buffer",
-          "managed_type": "IntPtr",
           "name": "buffer",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "uint32_t",
-          "managed_name": "buffer_len",
-          "managed_type": "uint",
           "name": "buffer_len",
           "pointer_depth": 0,
           "variadic": false
@@ -4639,14 +3596,10 @@
       "c_parameters_raw": "lrtc_rtp_sender_t* sender",
       "c_return_type": "lrtc_video_track_t*",
       "c_signature": "lrtc_video_track_t* (lrtc_rtp_sender_t* sender)",
-      "managed_return_type": "IntPtr",
-      "managed_signature": "IntPtr lrtc_rtp_sender_get_video_track(IntPtr sender)",
       "name": "lrtc_rtp_sender_get_video_track",
       "parameters": [
         {
           "c_type": "lrtc_rtp_sender_t*",
-          "managed_name": "sender",
-          "managed_type": "IntPtr",
           "name": "sender",
           "pointer_depth": 1,
           "variadic": false
@@ -4658,14 +3611,10 @@
       "c_parameters_raw": "lrtc_rtp_sender_t* sender",
       "c_return_type": "void",
       "c_signature": "void (lrtc_rtp_sender_t* sender)",
-      "managed_return_type": "void",
-      "managed_signature": "void lrtc_rtp_sender_release(IntPtr sender)",
       "name": "lrtc_rtp_sender_release",
       "parameters": [
         {
           "c_type": "lrtc_rtp_sender_t*",
-          "managed_name": "sender",
-          "managed_type": "IntPtr",
           "name": "sender",
           "pointer_depth": 1,
           "variadic": false
@@ -4677,22 +3626,16 @@
       "c_parameters_raw": "lrtc_rtp_sender_t* sender, lrtc_audio_track_t* track",
       "c_return_type": "int",
       "c_signature": "int (lrtc_rtp_sender_t* sender, lrtc_audio_track_t* track)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_rtp_sender_replace_audio_track(IntPtr sender, IntPtr track)",
       "name": "lrtc_rtp_sender_replace_audio_track",
       "parameters": [
         {
           "c_type": "lrtc_rtp_sender_t*",
-          "managed_name": "sender",
-          "managed_type": "IntPtr",
           "name": "sender",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "lrtc_audio_track_t*",
-          "managed_name": "track",
-          "managed_type": "IntPtr",
           "name": "track",
           "pointer_depth": 1,
           "variadic": false
@@ -4704,22 +3647,16 @@
       "c_parameters_raw": "lrtc_rtp_sender_t* sender, lrtc_video_track_t* track",
       "c_return_type": "int",
       "c_signature": "int (lrtc_rtp_sender_t* sender, lrtc_video_track_t* track)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_rtp_sender_replace_video_track(IntPtr sender, IntPtr track)",
       "name": "lrtc_rtp_sender_replace_video_track",
       "parameters": [
         {
           "c_type": "lrtc_rtp_sender_t*",
-          "managed_name": "sender",
-          "managed_type": "IntPtr",
           "name": "sender",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "lrtc_video_track_t*",
-          "managed_name": "track",
-          "managed_type": "IntPtr",
           "name": "track",
           "pointer_depth": 1,
           "variadic": false
@@ -4731,22 +3668,16 @@
       "c_parameters_raw": "lrtc_rtp_sender_t* sender, const lrtc_rtp_encoding_settings_t* settings",
       "c_return_type": "int",
       "c_signature": "int (lrtc_rtp_sender_t* sender, const lrtc_rtp_encoding_settings_t* settings)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_rtp_sender_set_encoding_parameters(IntPtr sender, IntPtr settings)",
       "name": "lrtc_rtp_sender_set_encoding_parameters",
       "parameters": [
         {
           "c_type": "lrtc_rtp_sender_t*",
-          "managed_name": "sender",
-          "managed_type": "IntPtr",
           "name": "sender",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "const lrtc_rtp_encoding_settings_t*",
-          "managed_name": "settings",
-          "managed_type": "IntPtr",
           "name": "settings",
           "pointer_depth": 1,
           "variadic": false
@@ -4758,30 +3689,22 @@
       "c_parameters_raw": "lrtc_rtp_sender_t* sender, uint32_t index, const lrtc_rtp_encoding_settings_t* settings",
       "c_return_type": "int",
       "c_signature": "int (lrtc_rtp_sender_t* sender, uint32_t index, const lrtc_rtp_encoding_settings_t* settings)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_rtp_sender_set_encoding_parameters_at(IntPtr sender, uint index, IntPtr settings)",
       "name": "lrtc_rtp_sender_set_encoding_parameters_at",
       "parameters": [
         {
           "c_type": "lrtc_rtp_sender_t*",
-          "managed_name": "sender",
-          "managed_type": "IntPtr",
           "name": "sender",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "uint32_t",
-          "managed_name": "index",
-          "managed_type": "uint",
           "name": "index",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "const lrtc_rtp_encoding_settings_t*",
-          "managed_name": "settings",
-          "managed_type": "IntPtr",
           "name": "settings",
           "pointer_depth": 1,
           "variadic": false
@@ -4793,30 +3716,22 @@
       "c_parameters_raw": "lrtc_rtp_sender_t* sender, const char** stream_ids, uint32_t stream_id_count",
       "c_return_type": "int",
       "c_signature": "int (lrtc_rtp_sender_t* sender, const char** stream_ids, uint32_t stream_id_count)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_rtp_sender_set_stream_ids(IntPtr sender, IntPtr stream_ids, uint stream_id_count)",
       "name": "lrtc_rtp_sender_set_stream_ids",
       "parameters": [
         {
           "c_type": "lrtc_rtp_sender_t*",
-          "managed_name": "sender",
-          "managed_type": "IntPtr",
           "name": "sender",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "const char**",
-          "managed_name": "stream_ids",
-          "managed_type": "IntPtr",
           "name": "stream_ids",
           "pointer_depth": 2,
           "variadic": false
         },
         {
           "c_type": "uint32_t",
-          "managed_name": "stream_id_count",
-          "managed_type": "uint",
           "name": "stream_id_count",
           "pointer_depth": 0,
           "variadic": false
@@ -4828,14 +3743,10 @@
       "c_parameters_raw": "lrtc_rtp_sender_t* sender",
       "c_return_type": "uint32_t",
       "c_signature": "uint32_t (lrtc_rtp_sender_t* sender)",
-      "managed_return_type": "uint",
-      "managed_signature": "uint lrtc_rtp_sender_stream_id_count(IntPtr sender)",
       "name": "lrtc_rtp_sender_stream_id_count",
       "parameters": [
         {
           "c_type": "lrtc_rtp_sender_t*",
-          "managed_name": "sender",
-          "managed_type": "IntPtr",
           "name": "sender",
           "pointer_depth": 1,
           "variadic": false
@@ -4847,14 +3758,10 @@
       "c_parameters_raw": "lrtc_rtp_transceiver_t* transceiver",
       "c_return_type": "int",
       "c_signature": "int (lrtc_rtp_transceiver_t* transceiver)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_rtp_transceiver_get_current_direction(IntPtr transceiver)",
       "name": "lrtc_rtp_transceiver_get_current_direction",
       "parameters": [
         {
           "c_type": "lrtc_rtp_transceiver_t*",
-          "managed_name": "transceiver",
-          "managed_type": "IntPtr",
           "name": "transceiver",
           "pointer_depth": 1,
           "variadic": false
@@ -4866,14 +3773,10 @@
       "c_parameters_raw": "lrtc_rtp_transceiver_t* transceiver",
       "c_return_type": "int",
       "c_signature": "int (lrtc_rtp_transceiver_t* transceiver)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_rtp_transceiver_get_direction(IntPtr transceiver)",
       "name": "lrtc_rtp_transceiver_get_direction",
       "parameters": [
         {
           "c_type": "lrtc_rtp_transceiver_t*",
-          "managed_name": "transceiver",
-          "managed_type": "IntPtr",
           "name": "transceiver",
           "pointer_depth": 1,
           "variadic": false
@@ -4885,14 +3788,10 @@
       "c_parameters_raw": "lrtc_rtp_transceiver_t* transceiver",
       "c_return_type": "int",
       "c_signature": "int (lrtc_rtp_transceiver_t* transceiver)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_rtp_transceiver_get_fired_direction(IntPtr transceiver)",
       "name": "lrtc_rtp_transceiver_get_fired_direction",
       "parameters": [
         {
           "c_type": "lrtc_rtp_transceiver_t*",
-          "managed_name": "transceiver",
-          "managed_type": "IntPtr",
           "name": "transceiver",
           "pointer_depth": 1,
           "variadic": false
@@ -4904,30 +3803,22 @@
       "c_parameters_raw": "lrtc_rtp_transceiver_t* transceiver, char* buffer, uint32_t buffer_len",
       "c_return_type": "int32_t",
       "c_signature": "int32_t (lrtc_rtp_transceiver_t* transceiver, char* buffer, uint32_t buffer_len)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_rtp_transceiver_get_id(IntPtr transceiver, IntPtr buffer, uint buffer_len)",
       "name": "lrtc_rtp_transceiver_get_id",
       "parameters": [
         {
           "c_type": "lrtc_rtp_transceiver_t*",
-          "managed_name": "transceiver",
-          "managed_type": "IntPtr",
           "name": "transceiver",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "char*",
-          "managed_name": "buffer",
-          "managed_type": "IntPtr",
           "name": "buffer",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "uint32_t",
-          "managed_name": "buffer_len",
-          "managed_type": "uint",
           "name": "buffer_len",
           "pointer_depth": 0,
           "variadic": false
@@ -4939,14 +3830,10 @@
       "c_parameters_raw": "lrtc_rtp_transceiver_t* transceiver",
       "c_return_type": "int",
       "c_signature": "int (lrtc_rtp_transceiver_t* transceiver)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_rtp_transceiver_get_media_type(IntPtr transceiver)",
       "name": "lrtc_rtp_transceiver_get_media_type",
       "parameters": [
         {
           "c_type": "lrtc_rtp_transceiver_t*",
-          "managed_name": "transceiver",
-          "managed_type": "IntPtr",
           "name": "transceiver",
           "pointer_depth": 1,
           "variadic": false
@@ -4958,30 +3845,22 @@
       "c_parameters_raw": "lrtc_rtp_transceiver_t* transceiver, char* buffer, uint32_t buffer_len",
       "c_return_type": "int32_t",
       "c_signature": "int32_t (lrtc_rtp_transceiver_t* transceiver, char* buffer, uint32_t buffer_len)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_rtp_transceiver_get_mid(IntPtr transceiver, IntPtr buffer, uint buffer_len)",
       "name": "lrtc_rtp_transceiver_get_mid",
       "parameters": [
         {
           "c_type": "lrtc_rtp_transceiver_t*",
-          "managed_name": "transceiver",
-          "managed_type": "IntPtr",
           "name": "transceiver",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "char*",
-          "managed_name": "buffer",
-          "managed_type": "IntPtr",
           "name": "buffer",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "uint32_t",
-          "managed_name": "buffer_len",
-          "managed_type": "uint",
           "name": "buffer_len",
           "pointer_depth": 0,
           "variadic": false
@@ -4993,14 +3872,10 @@
       "c_parameters_raw": "lrtc_rtp_transceiver_t* transceiver",
       "c_return_type": "lrtc_rtp_receiver_t*",
       "c_signature": "lrtc_rtp_receiver_t* (lrtc_rtp_transceiver_t* transceiver)",
-      "managed_return_type": "IntPtr",
-      "managed_signature": "IntPtr lrtc_rtp_transceiver_get_receiver(IntPtr transceiver)",
       "name": "lrtc_rtp_transceiver_get_receiver",
       "parameters": [
         {
           "c_type": "lrtc_rtp_transceiver_t*",
-          "managed_name": "transceiver",
-          "managed_type": "IntPtr",
           "name": "transceiver",
           "pointer_depth": 1,
           "variadic": false
@@ -5012,14 +3887,10 @@
       "c_parameters_raw": "lrtc_rtp_transceiver_t* transceiver",
       "c_return_type": "lrtc_rtp_sender_t*",
       "c_signature": "lrtc_rtp_sender_t* (lrtc_rtp_transceiver_t* transceiver)",
-      "managed_return_type": "IntPtr",
-      "managed_signature": "IntPtr lrtc_rtp_transceiver_get_sender(IntPtr transceiver)",
       "name": "lrtc_rtp_transceiver_get_sender",
       "parameters": [
         {
           "c_type": "lrtc_rtp_transceiver_t*",
-          "managed_name": "transceiver",
-          "managed_type": "IntPtr",
           "name": "transceiver",
           "pointer_depth": 1,
           "variadic": false
@@ -5031,14 +3902,10 @@
       "c_parameters_raw": "lrtc_rtp_transceiver_t* transceiver",
       "c_return_type": "int",
       "c_signature": "int (lrtc_rtp_transceiver_t* transceiver)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_rtp_transceiver_get_stopped(IntPtr transceiver)",
       "name": "lrtc_rtp_transceiver_get_stopped",
       "parameters": [
         {
           "c_type": "lrtc_rtp_transceiver_t*",
-          "managed_name": "transceiver",
-          "managed_type": "IntPtr",
           "name": "transceiver",
           "pointer_depth": 1,
           "variadic": false
@@ -5050,14 +3917,10 @@
       "c_parameters_raw": "lrtc_rtp_transceiver_t* transceiver",
       "c_return_type": "int",
       "c_signature": "int (lrtc_rtp_transceiver_t* transceiver)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_rtp_transceiver_get_stopping(IntPtr transceiver)",
       "name": "lrtc_rtp_transceiver_get_stopping",
       "parameters": [
         {
           "c_type": "lrtc_rtp_transceiver_t*",
-          "managed_name": "transceiver",
-          "managed_type": "IntPtr",
           "name": "transceiver",
           "pointer_depth": 1,
           "variadic": false
@@ -5069,14 +3932,10 @@
       "c_parameters_raw": "lrtc_rtp_transceiver_t* transceiver",
       "c_return_type": "void",
       "c_signature": "void (lrtc_rtp_transceiver_t* transceiver)",
-      "managed_return_type": "void",
-      "managed_signature": "void lrtc_rtp_transceiver_release(IntPtr transceiver)",
       "name": "lrtc_rtp_transceiver_release",
       "parameters": [
         {
           "c_type": "lrtc_rtp_transceiver_t*",
-          "managed_name": "transceiver",
-          "managed_type": "IntPtr",
           "name": "transceiver",
           "pointer_depth": 1,
           "variadic": false
@@ -5088,38 +3947,28 @@
       "c_parameters_raw": "lrtc_rtp_transceiver_t* transceiver, int direction, char* error, uint32_t error_len",
       "c_return_type": "int",
       "c_signature": "int (lrtc_rtp_transceiver_t* transceiver, int direction, char* error, uint32_t error_len)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_rtp_transceiver_set_direction(IntPtr transceiver, int direction, IntPtr error, uint error_len)",
       "name": "lrtc_rtp_transceiver_set_direction",
       "parameters": [
         {
           "c_type": "lrtc_rtp_transceiver_t*",
-          "managed_name": "transceiver",
-          "managed_type": "IntPtr",
           "name": "transceiver",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "int",
-          "managed_name": "direction",
-          "managed_type": "int",
           "name": "direction",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "char*",
-          "managed_name": "error",
-          "managed_type": "IntPtr",
           "name": "error",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "uint32_t",
-          "managed_name": "error_len",
-          "managed_type": "uint",
           "name": "error_len",
           "pointer_depth": 0,
           "variadic": false
@@ -5131,30 +3980,22 @@
       "c_parameters_raw": "lrtc_rtp_transceiver_t* transceiver, char* error, uint32_t error_len",
       "c_return_type": "int",
       "c_signature": "int (lrtc_rtp_transceiver_t* transceiver, char* error, uint32_t error_len)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_rtp_transceiver_stop(IntPtr transceiver, IntPtr error, uint error_len)",
       "name": "lrtc_rtp_transceiver_stop",
       "parameters": [
         {
           "c_type": "lrtc_rtp_transceiver_t*",
-          "managed_name": "transceiver",
-          "managed_type": "IntPtr",
           "name": "transceiver",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "char*",
-          "managed_name": "error",
-          "managed_type": "IntPtr",
           "name": "error",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "uint32_t",
-          "managed_name": "error_len",
-          "managed_type": "uint",
           "name": "error_len",
           "pointer_depth": 0,
           "variadic": false
@@ -5166,8 +4007,6 @@
       "c_parameters_raw": "void",
       "c_return_type": "void",
       "c_signature": "void (void)",
-      "managed_return_type": "void",
-      "managed_signature": "void lrtc_terminate()",
       "name": "lrtc_terminate",
       "parameters": [],
       "stable_id": "e2016b6180997abd98804a3ce9f033e2144dc9b40e16341b31e8b434d8c15405"
@@ -5176,14 +4015,10 @@
       "c_parameters_raw": "lrtc_video_capturer_t* capturer",
       "c_return_type": "bool",
       "c_signature": "bool (lrtc_video_capturer_t* capturer)",
-      "managed_return_type": "bool",
-      "managed_signature": "bool lrtc_video_capturer_capture_started(IntPtr capturer)",
       "name": "lrtc_video_capturer_capture_started",
       "parameters": [
         {
           "c_type": "lrtc_video_capturer_t*",
-          "managed_name": "capturer",
-          "managed_type": "IntPtr",
           "name": "capturer",
           "pointer_depth": 1,
           "variadic": false
@@ -5195,14 +4030,10 @@
       "c_parameters_raw": "lrtc_video_capturer_t* capturer",
       "c_return_type": "void",
       "c_signature": "void (lrtc_video_capturer_t* capturer)",
-      "managed_return_type": "void",
-      "managed_signature": "void lrtc_video_capturer_release(IntPtr capturer)",
       "name": "lrtc_video_capturer_release",
       "parameters": [
         {
           "c_type": "lrtc_video_capturer_t*",
-          "managed_name": "capturer",
-          "managed_type": "IntPtr",
           "name": "capturer",
           "pointer_depth": 1,
           "variadic": false
@@ -5214,14 +4045,10 @@
       "c_parameters_raw": "lrtc_video_capturer_t* capturer",
       "c_return_type": "bool",
       "c_signature": "bool (lrtc_video_capturer_t* capturer)",
-      "managed_return_type": "bool",
-      "managed_signature": "bool lrtc_video_capturer_start(IntPtr capturer)",
       "name": "lrtc_video_capturer_start",
       "parameters": [
         {
           "c_type": "lrtc_video_capturer_t*",
-          "managed_name": "capturer",
-          "managed_type": "IntPtr",
           "name": "capturer",
           "pointer_depth": 1,
           "variadic": false
@@ -5233,14 +4060,10 @@
       "c_parameters_raw": "lrtc_video_capturer_t* capturer",
       "c_return_type": "void",
       "c_signature": "void (lrtc_video_capturer_t* capturer)",
-      "managed_return_type": "void",
-      "managed_signature": "void lrtc_video_capturer_stop(IntPtr capturer)",
       "name": "lrtc_video_capturer_stop",
       "parameters": [
         {
           "c_type": "lrtc_video_capturer_t*",
-          "managed_name": "capturer",
-          "managed_type": "IntPtr",
           "name": "capturer",
           "pointer_depth": 1,
           "variadic": false
@@ -5252,54 +4075,40 @@
       "c_parameters_raw": "lrtc_video_device_t* device, const char* name, uint32_t index, size_t width, size_t height, size_t target_fps",
       "c_return_type": "lrtc_video_capturer_t*",
       "c_signature": "lrtc_video_capturer_t* (lrtc_video_device_t* device, const char* name, uint32_t index, size_t width, size_t height, size_t target_fps)",
-      "managed_return_type": "IntPtr",
-      "managed_signature": "IntPtr lrtc_video_device_create_capturer(IntPtr device, IntPtr name, uint index, nuint width, nuint height, nuint target_fps)",
       "name": "lrtc_video_device_create_capturer",
       "parameters": [
         {
           "c_type": "lrtc_video_device_t*",
-          "managed_name": "device",
-          "managed_type": "IntPtr",
           "name": "device",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "const char*",
-          "managed_name": "name",
-          "managed_type": "IntPtr",
           "name": "name",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "uint32_t",
-          "managed_name": "index",
-          "managed_type": "uint",
           "name": "index",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "size_t",
-          "managed_name": "width",
-          "managed_type": "nuint",
           "name": "width",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "size_t",
-          "managed_name": "height",
-          "managed_type": "nuint",
           "name": "height",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "size_t",
-          "managed_name": "target_fps",
-          "managed_type": "nuint",
           "name": "target_fps",
           "pointer_depth": 0,
           "variadic": false
@@ -5311,54 +4120,40 @@
       "c_parameters_raw": "lrtc_video_device_t* device, uint32_t index, char* name, uint32_t name_length, char* unique_id, uint32_t unique_id_length",
       "c_return_type": "int32_t",
       "c_signature": "int32_t (lrtc_video_device_t* device, uint32_t index, char* name, uint32_t name_length, char* unique_id, uint32_t unique_id_length)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_video_device_get_device_name(IntPtr device, uint index, IntPtr name, uint name_length, IntPtr unique_id, uint unique_id_length)",
       "name": "lrtc_video_device_get_device_name",
       "parameters": [
         {
           "c_type": "lrtc_video_device_t*",
-          "managed_name": "device",
-          "managed_type": "IntPtr",
           "name": "device",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "uint32_t",
-          "managed_name": "index",
-          "managed_type": "uint",
           "name": "index",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "char*",
-          "managed_name": "name",
-          "managed_type": "IntPtr",
           "name": "name",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "uint32_t",
-          "managed_name": "name_length",
-          "managed_type": "uint",
           "name": "name_length",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "char*",
-          "managed_name": "unique_id",
-          "managed_type": "IntPtr",
           "name": "unique_id",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "uint32_t",
-          "managed_name": "unique_id_length",
-          "managed_type": "uint",
           "name": "unique_id_length",
           "pointer_depth": 0,
           "variadic": false
@@ -5370,14 +4165,10 @@
       "c_parameters_raw": "lrtc_video_device_t* device",
       "c_return_type": "uint32_t",
       "c_signature": "uint32_t (lrtc_video_device_t* device)",
-      "managed_return_type": "uint",
-      "managed_signature": "uint lrtc_video_device_number_of_devices(IntPtr device)",
       "name": "lrtc_video_device_number_of_devices",
       "parameters": [
         {
           "c_type": "lrtc_video_device_t*",
-          "managed_name": "device",
-          "managed_type": "IntPtr",
           "name": "device",
           "pointer_depth": 1,
           "variadic": false
@@ -5389,14 +4180,10 @@
       "c_parameters_raw": "lrtc_video_device_t* device",
       "c_return_type": "void",
       "c_signature": "void (lrtc_video_device_t* device)",
-      "managed_return_type": "void",
-      "managed_signature": "void lrtc_video_device_release(IntPtr device)",
       "name": "lrtc_video_device_release",
       "parameters": [
         {
           "c_type": "lrtc_video_device_t*",
-          "managed_name": "device",
-          "managed_type": "IntPtr",
           "name": "device",
           "pointer_depth": 1,
           "variadic": false
@@ -5408,62 +4195,46 @@
       "c_parameters_raw": "lrtc_video_frame_t* frame, uint8_t* dst_y, int dst_stride_y, uint8_t* dst_u, int dst_stride_u, uint8_t* dst_v, int dst_stride_v",
       "c_return_type": "int",
       "c_signature": "int (lrtc_video_frame_t* frame, uint8_t* dst_y, int dst_stride_y, uint8_t* dst_u, int dst_stride_u, uint8_t* dst_v, int dst_stride_v)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_video_frame_copy_i420(IntPtr frame, IntPtr dst_y, int dst_stride_y, IntPtr dst_u, int dst_stride_u, IntPtr dst_v, int dst_stride_v)",
       "name": "lrtc_video_frame_copy_i420",
       "parameters": [
         {
           "c_type": "lrtc_video_frame_t*",
-          "managed_name": "frame",
-          "managed_type": "IntPtr",
           "name": "frame",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "uint8_t*",
-          "managed_name": "dst_y",
-          "managed_type": "IntPtr",
           "name": "dst_y",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "int",
-          "managed_name": "dst_stride_y",
-          "managed_type": "int",
           "name": "dst_stride_y",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "uint8_t*",
-          "managed_name": "dst_u",
-          "managed_type": "IntPtr",
           "name": "dst_u",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "int",
-          "managed_name": "dst_stride_u",
-          "managed_type": "int",
           "name": "dst_stride_u",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "uint8_t*",
-          "managed_name": "dst_v",
-          "managed_type": "IntPtr",
           "name": "dst_v",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "int",
-          "managed_name": "dst_stride_v",
-          "managed_type": "int",
           "name": "dst_stride_v",
           "pointer_depth": 0,
           "variadic": false
@@ -5475,14 +4246,10 @@
       "c_parameters_raw": "lrtc_video_frame_t* frame",
       "c_return_type": "const uint8_t*",
       "c_signature": "const uint8_t* (lrtc_video_frame_t* frame)",
-      "managed_return_type": "IntPtr",
-      "managed_signature": "IntPtr lrtc_video_frame_data_u(IntPtr frame)",
       "name": "lrtc_video_frame_data_u",
       "parameters": [
         {
           "c_type": "lrtc_video_frame_t*",
-          "managed_name": "frame",
-          "managed_type": "IntPtr",
           "name": "frame",
           "pointer_depth": 1,
           "variadic": false
@@ -5494,14 +4261,10 @@
       "c_parameters_raw": "lrtc_video_frame_t* frame",
       "c_return_type": "const uint8_t*",
       "c_signature": "const uint8_t* (lrtc_video_frame_t* frame)",
-      "managed_return_type": "IntPtr",
-      "managed_signature": "IntPtr lrtc_video_frame_data_v(IntPtr frame)",
       "name": "lrtc_video_frame_data_v",
       "parameters": [
         {
           "c_type": "lrtc_video_frame_t*",
-          "managed_name": "frame",
-          "managed_type": "IntPtr",
           "name": "frame",
           "pointer_depth": 1,
           "variadic": false
@@ -5513,14 +4276,10 @@
       "c_parameters_raw": "lrtc_video_frame_t* frame",
       "c_return_type": "const uint8_t*",
       "c_signature": "const uint8_t* (lrtc_video_frame_t* frame)",
-      "managed_return_type": "IntPtr",
-      "managed_signature": "IntPtr lrtc_video_frame_data_y(IntPtr frame)",
       "name": "lrtc_video_frame_data_y",
       "parameters": [
         {
           "c_type": "lrtc_video_frame_t*",
-          "managed_name": "frame",
-          "managed_type": "IntPtr",
           "name": "frame",
           "pointer_depth": 1,
           "variadic": false
@@ -5532,14 +4291,10 @@
       "c_parameters_raw": "lrtc_video_frame_t* frame",
       "c_return_type": "int",
       "c_signature": "int (lrtc_video_frame_t* frame)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_video_frame_height(IntPtr frame)",
       "name": "lrtc_video_frame_height",
       "parameters": [
         {
           "c_type": "lrtc_video_frame_t*",
-          "managed_name": "frame",
-          "managed_type": "IntPtr",
           "name": "frame",
           "pointer_depth": 1,
           "variadic": false
@@ -5551,14 +4306,10 @@
       "c_parameters_raw": "lrtc_video_frame_t* frame",
       "c_return_type": "void",
       "c_signature": "void (lrtc_video_frame_t* frame)",
-      "managed_return_type": "void",
-      "managed_signature": "void lrtc_video_frame_release(IntPtr frame)",
       "name": "lrtc_video_frame_release",
       "parameters": [
         {
           "c_type": "lrtc_video_frame_t*",
-          "managed_name": "frame",
-          "managed_type": "IntPtr",
           "name": "frame",
           "pointer_depth": 1,
           "variadic": false
@@ -5570,14 +4321,10 @@
       "c_parameters_raw": "lrtc_video_frame_t* frame",
       "c_return_type": "lrtc_video_frame_t*",
       "c_signature": "lrtc_video_frame_t* (lrtc_video_frame_t* frame)",
-      "managed_return_type": "IntPtr",
-      "managed_signature": "IntPtr lrtc_video_frame_retain(IntPtr frame)",
       "name": "lrtc_video_frame_retain",
       "parameters": [
         {
           "c_type": "lrtc_video_frame_t*",
-          "managed_name": "frame",
-          "managed_type": "IntPtr",
           "name": "frame",
           "pointer_depth": 1,
           "variadic": false
@@ -5589,14 +4336,10 @@
       "c_parameters_raw": "lrtc_video_frame_t* frame",
       "c_return_type": "int",
       "c_signature": "int (lrtc_video_frame_t* frame)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_video_frame_stride_u(IntPtr frame)",
       "name": "lrtc_video_frame_stride_u",
       "parameters": [
         {
           "c_type": "lrtc_video_frame_t*",
-          "managed_name": "frame",
-          "managed_type": "IntPtr",
           "name": "frame",
           "pointer_depth": 1,
           "variadic": false
@@ -5608,14 +4351,10 @@
       "c_parameters_raw": "lrtc_video_frame_t* frame",
       "c_return_type": "int",
       "c_signature": "int (lrtc_video_frame_t* frame)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_video_frame_stride_v(IntPtr frame)",
       "name": "lrtc_video_frame_stride_v",
       "parameters": [
         {
           "c_type": "lrtc_video_frame_t*",
-          "managed_name": "frame",
-          "managed_type": "IntPtr",
           "name": "frame",
           "pointer_depth": 1,
           "variadic": false
@@ -5627,14 +4366,10 @@
       "c_parameters_raw": "lrtc_video_frame_t* frame",
       "c_return_type": "int",
       "c_signature": "int (lrtc_video_frame_t* frame)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_video_frame_stride_y(IntPtr frame)",
       "name": "lrtc_video_frame_stride_y",
       "parameters": [
         {
           "c_type": "lrtc_video_frame_t*",
-          "managed_name": "frame",
-          "managed_type": "IntPtr",
           "name": "frame",
           "pointer_depth": 1,
           "variadic": false
@@ -5646,54 +4381,40 @@
       "c_parameters_raw": "lrtc_video_frame_t* frame, uint8_t* dst_argb, int dst_stride_argb, int dest_width, int dest_height, int format",
       "c_return_type": "int",
       "c_signature": "int (lrtc_video_frame_t* frame, uint8_t* dst_argb, int dst_stride_argb, int dest_width, int dest_height, int format)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_video_frame_to_argb(IntPtr frame, IntPtr dst_argb, int dst_stride_argb, int dest_width, int dest_height, int format)",
       "name": "lrtc_video_frame_to_argb",
       "parameters": [
         {
           "c_type": "lrtc_video_frame_t*",
-          "managed_name": "frame",
-          "managed_type": "IntPtr",
           "name": "frame",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "uint8_t*",
-          "managed_name": "dst_argb",
-          "managed_type": "IntPtr",
           "name": "dst_argb",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "int",
-          "managed_name": "dst_stride_argb",
-          "managed_type": "int",
           "name": "dst_stride_argb",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "int",
-          "managed_name": "dest_width",
-          "managed_type": "int",
           "name": "dest_width",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "int",
-          "managed_name": "dest_height",
-          "managed_type": "int",
           "name": "dest_height",
           "pointer_depth": 0,
           "variadic": false
         },
         {
           "c_type": "int",
-          "managed_name": "format",
-          "managed_type": "int",
           "name": "format",
           "pointer_depth": 0,
           "variadic": false
@@ -5705,14 +4426,10 @@
       "c_parameters_raw": "lrtc_video_frame_t* frame",
       "c_return_type": "int",
       "c_signature": "int (lrtc_video_frame_t* frame)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_video_frame_width(IntPtr frame)",
       "name": "lrtc_video_frame_width",
       "parameters": [
         {
           "c_type": "lrtc_video_frame_t*",
-          "managed_name": "frame",
-          "managed_type": "IntPtr",
           "name": "frame",
           "pointer_depth": 1,
           "variadic": false
@@ -5724,22 +4441,16 @@
       "c_parameters_raw": "const lrtc_video_sink_callbacks_t* callbacks, void* user_data",
       "c_return_type": "lrtc_video_sink_t*",
       "c_signature": "lrtc_video_sink_t* (const lrtc_video_sink_callbacks_t* callbacks, void* user_data)",
-      "managed_return_type": "IntPtr",
-      "managed_signature": "IntPtr lrtc_video_sink_create(IntPtr callbacks, IntPtr user_data)",
       "name": "lrtc_video_sink_create",
       "parameters": [
         {
           "c_type": "const lrtc_video_sink_callbacks_t*",
-          "managed_name": "callbacks",
-          "managed_type": "IntPtr",
           "name": "callbacks",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "void*",
-          "managed_name": "user_data",
-          "managed_type": "IntPtr",
           "name": "user_data",
           "pointer_depth": 1,
           "variadic": false
@@ -5751,14 +4462,10 @@
       "c_parameters_raw": "lrtc_video_sink_t* sink",
       "c_return_type": "void",
       "c_signature": "void (lrtc_video_sink_t* sink)",
-      "managed_return_type": "void",
-      "managed_signature": "void lrtc_video_sink_release(IntPtr sink)",
       "name": "lrtc_video_sink_release",
       "parameters": [
         {
           "c_type": "lrtc_video_sink_t*",
-          "managed_name": "sink",
-          "managed_type": "IntPtr",
           "name": "sink",
           "pointer_depth": 1,
           "variadic": false
@@ -5770,14 +4477,10 @@
       "c_parameters_raw": "lrtc_video_source_t* source",
       "c_return_type": "void",
       "c_signature": "void (lrtc_video_source_t* source)",
-      "managed_return_type": "void",
-      "managed_signature": "void lrtc_video_source_release(IntPtr source)",
       "name": "lrtc_video_source_release",
       "parameters": [
         {
           "c_type": "lrtc_video_source_t*",
-          "managed_name": "source",
-          "managed_type": "IntPtr",
           "name": "source",
           "pointer_depth": 1,
           "variadic": false
@@ -5789,22 +4492,16 @@
       "c_parameters_raw": "lrtc_video_track_t* track, lrtc_video_sink_t* sink",
       "c_return_type": "void",
       "c_signature": "void (lrtc_video_track_t* track, lrtc_video_sink_t* sink)",
-      "managed_return_type": "void",
-      "managed_signature": "void lrtc_video_track_add_sink(IntPtr track, IntPtr sink)",
       "name": "lrtc_video_track_add_sink",
       "parameters": [
         {
           "c_type": "lrtc_video_track_t*",
-          "managed_name": "track",
-          "managed_type": "IntPtr",
           "name": "track",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "lrtc_video_sink_t*",
-          "managed_name": "sink",
-          "managed_type": "IntPtr",
           "name": "sink",
           "pointer_depth": 1,
           "variadic": false
@@ -5816,14 +4513,10 @@
       "c_parameters_raw": "lrtc_video_track_t* track",
       "c_return_type": "int",
       "c_signature": "int (lrtc_video_track_t* track)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_video_track_get_enabled(IntPtr track)",
       "name": "lrtc_video_track_get_enabled",
       "parameters": [
         {
           "c_type": "lrtc_video_track_t*",
-          "managed_name": "track",
-          "managed_type": "IntPtr",
           "name": "track",
           "pointer_depth": 1,
           "variadic": false
@@ -5835,30 +4528,22 @@
       "c_parameters_raw": "lrtc_video_track_t* track, char* buffer, uint32_t buffer_len",
       "c_return_type": "int32_t",
       "c_signature": "int32_t (lrtc_video_track_t* track, char* buffer, uint32_t buffer_len)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_video_track_get_id(IntPtr track, IntPtr buffer, uint buffer_len)",
       "name": "lrtc_video_track_get_id",
       "parameters": [
         {
           "c_type": "lrtc_video_track_t*",
-          "managed_name": "track",
-          "managed_type": "IntPtr",
           "name": "track",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "char*",
-          "managed_name": "buffer",
-          "managed_type": "IntPtr",
           "name": "buffer",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "uint32_t",
-          "managed_name": "buffer_len",
-          "managed_type": "uint",
           "name": "buffer_len",
           "pointer_depth": 0,
           "variadic": false
@@ -5870,14 +4555,10 @@
       "c_parameters_raw": "lrtc_video_track_t* track",
       "c_return_type": "int",
       "c_signature": "int (lrtc_video_track_t* track)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_video_track_get_state(IntPtr track)",
       "name": "lrtc_video_track_get_state",
       "parameters": [
         {
           "c_type": "lrtc_video_track_t*",
-          "managed_name": "track",
-          "managed_type": "IntPtr",
           "name": "track",
           "pointer_depth": 1,
           "variadic": false
@@ -5889,14 +4570,10 @@
       "c_parameters_raw": "lrtc_video_track_t* track",
       "c_return_type": "void",
       "c_signature": "void (lrtc_video_track_t* track)",
-      "managed_return_type": "void",
-      "managed_signature": "void lrtc_video_track_release(IntPtr track)",
       "name": "lrtc_video_track_release",
       "parameters": [
         {
           "c_type": "lrtc_video_track_t*",
-          "managed_name": "track",
-          "managed_type": "IntPtr",
           "name": "track",
           "pointer_depth": 1,
           "variadic": false
@@ -5908,22 +4585,16 @@
       "c_parameters_raw": "lrtc_video_track_t* track, lrtc_video_sink_t* sink",
       "c_return_type": "void",
       "c_signature": "void (lrtc_video_track_t* track, lrtc_video_sink_t* sink)",
-      "managed_return_type": "void",
-      "managed_signature": "void lrtc_video_track_remove_sink(IntPtr track, IntPtr sink)",
       "name": "lrtc_video_track_remove_sink",
       "parameters": [
         {
           "c_type": "lrtc_video_track_t*",
-          "managed_name": "track",
-          "managed_type": "IntPtr",
           "name": "track",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "lrtc_video_sink_t*",
-          "managed_name": "sink",
-          "managed_type": "IntPtr",
           "name": "sink",
           "pointer_depth": 1,
           "variadic": false
@@ -5935,22 +4606,16 @@
       "c_parameters_raw": "lrtc_video_track_t* track, int enabled",
       "c_return_type": "int",
       "c_signature": "int (lrtc_video_track_t* track, int enabled)",
-      "managed_return_type": "int",
-      "managed_signature": "int lrtc_video_track_set_enabled(IntPtr track, int enabled)",
       "name": "lrtc_video_track_set_enabled",
       "parameters": [
         {
           "c_type": "lrtc_video_track_t*",
-          "managed_name": "track",
-          "managed_type": "IntPtr",
           "name": "track",
           "pointer_depth": 1,
           "variadic": false
         },
         {
           "c_type": "int",
-          "managed_name": "enabled",
-          "managed_type": "int",
           "name": "enabled",
           "pointer_depth": 0,
           "variadic": false
@@ -6872,7 +5537,7 @@
   },
   "target": "lumenrtc",
   "tool": {
-    "name": "abi_guard",
+    "name": "abi_framework",
     "version": "3.0.0"
   }
 }

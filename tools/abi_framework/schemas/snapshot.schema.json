@@ -1,9 +1,9 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://lumenrtc.dev/abi_guard/snapshot.schema.json",
-  "title": "abi_guard snapshot",
+  "$id": "https://lumenrtc.dev/abi_framework/snapshot.schema.json",
+  "title": "abi_framework snapshot",
   "type": "object",
-  "required": ["tool", "target", "generated_at_utc", "abi_version", "header", "pinvoke", "binary"],
+  "required": ["tool", "target", "generated_at_utc", "abi_version", "header", "bindings", "binary"],
   "additionalProperties": true,
   "properties": {
     "tool": {
@@ -50,7 +50,7 @@
         "layout_probe": { "type": "object" }
       }
     },
-    "pinvoke": {
+    "bindings": {
       "type": "object",
       "required": ["symbol_count", "symbols"],
       "additionalProperties": true,

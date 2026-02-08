@@ -1,7 +1,6 @@
 # ABI Changelog
 
-- Generated at (UTC): `2026-02-08T10:29:23.769715+00:00`
-- Release tag: `vNEXT`
+- Generated at (UTC): `2026-02-08T11:14:38.183292+00:00`
 
 ## Summary
 

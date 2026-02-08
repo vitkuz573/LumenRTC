@@ -7,47 +7,51 @@
   - `LUMENRTC_ABI_VERSION_MAJOR`
   - `LUMENRTC_ABI_VERSION_MINOR`
   - `LUMENRTC_ABI_VERSION_PATCH`
-- Managed interop surface: `src/LumenRTC/Interop/*.cs`
+- Managed interop surface source files: `src/LumenRTC/Interop/*.cs`
 
-## Guard pipeline
+## Pipeline
 
-1. Build or edit ABI surface.
-2. Run `scripts/abi.sh check --skip-binary` for fast static checks.
-3. After native build, run `scripts/abi.sh check --binary native/build/liblumenrtc.so`.
-4. If ABI intentionally changed, update version macros and refresh baseline:
+1. Edit/build ABI surface.
+2. Fast static verification:
+   - `scripts/abi.sh check --skip-binary`
+3. Export verification after native build:
+   - `scripts/abi.sh check --binary native/build/liblumenrtc.so`
+4. Regenerate baseline when ABI change is intentional:
    - `scripts/abi.sh baseline`
-5. For multi-target repos, verify all targets at once:
+5. Multi-target verification:
    - `scripts/abi.sh check-all --skip-binary`
-6. Generate/update ABI IDL + managed stubs from config:
+6. Generate ABI IDL from config:
    - `scripts/abi.sh generate --skip-binary`
-   - Outputs (for `lumenrtc`): `abi/generated/lumenrtc/lumenrtc.idl.json` and `abi/generated/lumenrtc/NativeMethods.g.cs`
-7. Sync generated ABI artifacts and optionally refresh baselines:
+   - Output: `abi/generated/lumenrtc/lumenrtc.idl.json`
+7. Generate C# interop from IDL (Roslyn tool):
+   - `scripts/abi.sh roslyn`
+   - Output: `abi/generated/lumenrtc/NativeMethods.g.cs`
+8. Sync generated artifacts and optionally baselines:
    - `scripts/abi.sh sync --skip-binary`
-8. Generate changelog for release notes:
+9. Generate ABI changelog:
    - `scripts/abi.sh changelog --skip-binary --release-tag vX.Y.Z --output abi/CHANGELOG.md`
-9. Run full release preparation pipeline:
+10. Run full release preparation pipeline:
    - `scripts/abi.sh release-prepare --skip-binary --release-tag vX.Y.Z`
 
 ## Compatibility policy
 
-- Removing/changing existing ABI symbols is **breaking** and requires major version bump.
-- Adding new ABI symbols is additive and should not regress version tuple.
-- Enum value changes/removals are treated as **breaking** changes.
-- Struct layout changes are treated as **breaking** by default
-  (`struct_tail_addition_is_breaking` is configurable per target).
-- Header and C# P/Invoke surfaces must stay in sync.
+- Removing/changing existing ABI symbols is breaking and requires a major bump.
+- Adding ABI symbols is additive and requires at least a minor bump.
+- Enum value changes/removals are breaking.
+- Struct layout changes are breaking by default (`struct_tail_addition_is_breaking`).
 - Binary exports must match header ABI symbols.
+- Optional bindings symbol policy (`bindings.expected_symbols`) can enforce parity between ABI IDL and language binding expectations.
 
 ## Reusing for another ABI
 
-`tools/abi_guard` is target-driven. Add another target entry into `abi/config.json` with:
+`tools/abi_framework` is target-driven. Add another target in `abi/config.json` with:
 
 - header path + API/CALL macros + symbol prefix
 - type policy (`enum`/`struct` patterns and exceptions)
-- P/Invoke file roots
+- optional `bindings.expected_symbols`
 - optional baseline path override
-- optional binary path for export validation
+- optional binary export path
 
-Bootstrap command for new targets:
+Bootstrap command:
 
 - `scripts/abi.sh init-target ...` (or `scripts/abi.ps1 init-target ...`)

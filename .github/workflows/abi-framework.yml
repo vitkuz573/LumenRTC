@@ -1,4 +1,4 @@
-name: ABI Guard
+name: ABI Framework
 
 on:
   workflow_dispatch:
@@ -7,7 +7,8 @@ on:
       - "abi/**"
       - "native/include/lumenrtc.h"
       - "src/LumenRTC/Interop/**"
-      - "tools/abi_guard/**"
+      - "tools/abi_framework/**"
+      - "tools/lumenrtc_roslyn_codegen/**"
       - "scripts/abi.sh"
       - "scripts/abi.ps1"
   push:
@@ -17,7 +18,8 @@ on:
       - "abi/**"
       - "native/include/lumenrtc.h"
       - "src/LumenRTC/Interop/**"
-      - "tools/abi_guard/**"
+      - "tools/abi_framework/**"
+      - "tools/lumenrtc_roslyn_codegen/**"
       - "scripts/abi.sh"
       - "scripts/abi.ps1"
 
@@ -35,14 +37,19 @@ jobs:
         with:
           python-version: "3.x"
 
-      - name: Unit tests (abi_guard)
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Unit tests (abi_framework)
         run: |
-          python3 -m unittest discover -s tools/abi_guard/tests -p "test_*.py"
+          python3 -m unittest discover -s tools/abi_framework/tests -p "test_*.py"
 
       - name: Check generated ABI artifacts
         run: |
           mkdir -p artifacts/abi
-          python3 tools/abi_guard/abi_guard.py generate \
+          python3 tools/abi_framework/abi_framework.py generate \
             --repo-root . \
             --config abi/config.json \
             --skip-binary \
@@ -50,9 +57,13 @@ jobs:
             --fail-on-sync \
             --report-json artifacts/abi/generate.report.json
 
+      - name: Check Roslyn-generated interop
+        run: |
+          scripts/abi.sh roslyn --check
+
       - name: Verify ABI Targets
         run: |
-          python3 tools/abi_guard/abi_guard.py verify-all \
+          python3 tools/abi_framework/abi_framework.py verify-all \
             --repo-root . \
             --config abi/config.json \
             --skip-binary \

@@ -85,13 +85,13 @@ call, so incompatible native binaries fail fast with a clear error.
 
 ### ABI Tooling
 
-Use the config-driven ABI guard framework:
+Use the config-driven ABI framework:
 
 ```bash
-# Create/update baseline from current header + type surface + P/Invoke.
+# Create/update baseline from current header + type surface.
 scripts/abi.sh baseline
 
-# Verify current state against baseline (header <-> P/Invoke).
+# Verify current state against baseline.
 scripts/abi.sh check --skip-binary
 
 # Verify including native export surface (after native build).
@@ -100,8 +100,11 @@ scripts/abi.sh check --binary native/build/liblumenrtc.so
 # Verify all configured ABI targets (multi-target repos).
 scripts/abi.sh check-all --skip-binary
 
-# Generate ABI IDL and optional C# stubs from target config.
+# Generate ABI IDL from target config.
 scripts/abi.sh generate --skip-binary
+
+# Generate LumenRTC C# interop from ABI IDL (Roslyn).
+scripts/abi.sh roslyn
 
 # Sync generated ABI artifacts (and optionally baselines).
 scripts/abi.sh sync --skip-binary
@@ -130,8 +133,9 @@ scripts\\abi.ps1 changelog --skip-binary --release-tag vX.Y.Z --output abi\\CHAN
 scripts\\abi.ps1 release-prepare --skip-binary --release-tag vX.Y.Z
 ```
 
-The generic tooling lives in `tools/abi_guard/` and can be reused for other ABI
-targets through `abi/config.json`.
+The generic tooling lives in `tools/abi_framework/` and can be reused for other
+ABI targets through `abi/config.json`. LumenRTC-specific C# code generation is
+implemented separately in `tools/lumenrtc_roslyn_codegen/`.
 
 ### One-command bootstrap
 

@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://lumenrtc.dev/abi_guard/report.schema.json",
-  "title": "abi_guard compare report",
+  "$id": "https://lumenrtc.dev/abi_framework/report.schema.json",
+  "title": "abi_framework compare report",
   "type": "object",
   "required": ["status", "change_classification", "required_bump", "errors", "warnings"],
   "additionalProperties": true,

@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://lumenrtc.dev/abi_guard/config.schema.json",
-  "title": "abi_guard config",
+  "$id": "https://lumenrtc.dev/abi_framework/config.schema.json",
+  "title": "abi_framework config",
   "type": "object",
   "required": ["targets"],
   "additionalProperties": true,
@@ -23,7 +23,7 @@
       "minProperties": 1,
       "additionalProperties": {
         "type": "object",
-        "required": ["header", "pinvoke"],
+        "required": ["header"],
         "additionalProperties": true,
         "properties": {
           "baseline_path": { "type": "string", "minLength": 1 },
@@ -83,14 +83,12 @@
               }
             }
           },
-          "pinvoke": {
+          "bindings": {
             "type": "object",
-            "required": ["paths"],
             "additionalProperties": true,
             "properties": {
-              "paths": {
+              "expected_symbols": {
                 "type": "array",
-                "minItems": 1,
                 "items": { "type": "string", "minLength": 1 }
               }
             }
@@ -108,21 +106,11 @@
             "additionalProperties": true,
             "properties": {
               "enabled": { "type": "boolean" },
-              "namespace": { "type": "string", "minLength": 1 },
-              "class_name": { "type": "string", "minLength": 1 },
-              "access_modifier": { "type": "string", "minLength": 1 },
-              "calling_convention": { "type": "string", "minLength": 1 },
-              "library_name_expression": { "type": "string", "minLength": 1 },
-              "emit_entry_point": { "type": "boolean" },
-              "output_path": { "type": "string", "minLength": 1 },
               "idl_output_path": { "type": "string", "minLength": 1 },
-              "additional_usings": { "type": "array", "items": { "type": "string", "minLength": 1 } },
               "include_symbols": { "type": "array", "items": { "type": "string", "minLength": 1 } },
               "exclude_symbols": { "type": "array", "items": { "type": "string", "minLength": 1 } },
               "include_symbols_regex": { "type": "array", "items": { "type": "string", "minLength": 1 } },
-              "exclude_symbols_regex": { "type": "array", "items": { "type": "string", "minLength": 1 } },
-              "type_aliases": { "type": "object", "additionalProperties": { "type": "string", "minLength": 1 } },
-              "pointer_aliases": { "type": "object", "additionalProperties": { "type": "string", "minLength": 1 } }
+              "exclude_symbols_regex": { "type": "array", "items": { "type": "string", "minLength": 1 } }
             }
           }
         }
