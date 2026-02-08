@@ -388,8 +388,10 @@ internal static class Program
         }
 
         Environment.SetEnvironmentVariable("LUMENRTC_TRACE_ICE_NATIVE", traceIceNative ? "1" : "0");
-        using var rtc = ConvenienceApi.CreateContext();
-        var factory = rtc.Factory;
+        using var senderRtc = ConvenienceApi.CreateContext();
+        using var viewerRtc = ConvenienceApi.CreateContext();
+        var senderFactory = senderRtc.Factory;
+        var viewerFactory = viewerRtc.Factory;
 
         await using var signaling = CreateSignalingChannel(signalingMode, signalingServer, signalingRoom);
 
@@ -613,7 +615,7 @@ internal static class Program
                 config.IceServers.Add(new IceServer(stun));
             }
 
-            senderPc = factory.CreatePeerConnection(new PeerConnectionCallbacks
+            senderPc = senderFactory.CreatePeerConnection(new PeerConnectionCallbacks
             {
                 OnIceCandidate = (mid, mline, cand) =>
                 {
@@ -634,7 +636,7 @@ internal static class Program
                 },
             }, config);
 
-            viewerPc = factory.CreatePeerConnection(new PeerConnectionCallbacks
+            viewerPc = viewerFactory.CreatePeerConnection(new PeerConnectionCallbacks
             {
                 OnIceCandidate = (mid, mline, cand) =>
                 {
@@ -656,7 +658,7 @@ internal static class Program
                 },
             }, config);
 
-            using var desktop = factory.GetDesktopDevice();
+            using var desktop = senderFactory.GetDesktopDevice();
             using var list = desktop.GetMediaList(DesktopType.Screen);
             var updateResult = list.UpdateSourceList(forceReload: true, getThumbnail: false);
             if (updateResult < 0)
@@ -688,8 +690,8 @@ internal static class Program
                 return;
             }
 
-            using var videoSource = factory.CreateDesktopSource(capturer, "screen");
-            using var videoTrack = factory.CreateVideoTrack(videoSource, "screen0");
+            using var videoSource = senderFactory.CreateDesktopSource(capturer, "screen");
+            using var videoTrack = senderFactory.CreateVideoTrack(videoSource, "screen0");
             senderRtp = senderPc.AddVideoTrackSender(videoTrack, new[] { "stream0" });
             if (!senderRtp.SetEncodingParameters(new RtpEncodingSettings
                 {
