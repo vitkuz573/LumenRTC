@@ -11,6 +11,9 @@ Options:
   --webrtc-branch <branch>     WebRTC ref (default: branch-heads/7151)
   --target-cpu <cpu>           Target CPU (default: x64)
   --build-type <Release|Debug> Build type (default: Release)
+  --sync-retries <count>       gclient sync retries on transient failures (default: 3)
+  --sync-delay <seconds>       Delay between sync retries (default: 8)
+  --sync-full-history          Disable --no-history for gclient sync
   --skip-sync                  Skip gclient sync
   --skip-bootstrap             Skip building LumenRTC after libwebrtc
   -h, --help                   Show help
@@ -24,12 +27,63 @@ build_type="Release"
 skip_sync=false
 skip_bootstrap=false
 depot_tools_dir=""
+sync_retries=3
+sync_delay=8
+sync_no_history=true
 
 require_cmd() {
   if ! command -v "$1" >/dev/null 2>&1; then
     echo "Missing '$1' in PATH. Install depot_tools (for gclient/gn/ninja) and ensure it is on PATH." >&2
     exit 1
   fi
+}
+
+cleanup_partial_sync_artifacts() {
+  local root="$1"
+  local instr_dir="${root}/src/third_party/instrumented_libs"
+  if [[ -d "$instr_dir" ]]; then
+    rm -rf "${instr_dir}/binaries" || true
+    find "$instr_dir" -maxdepth 1 -type f \
+      \( -name "*.tmp" -o -name "*.partial" -o -name "*.tar" -o -name "*.tar.*" \) \
+      -delete 2>/dev/null || true
+  fi
+}
+
+run_gclient_sync_with_retry() {
+  local root="$1"
+  local attempts="$2"
+  local delay="$3"
+  local use_no_history="$4"
+  local attempt=1
+  local status=1
+
+  while (( attempt <= attempts )); do
+    local cmd=(gclient sync)
+    if [[ "$use_no_history" == true ]]; then
+      cmd+=(--no-history)
+    fi
+    if (( attempt > 1 )); then
+      cmd+=(--reset --delete_unversioned_trees)
+    fi
+
+    echo "[setup] gclient sync attempt ${attempt}/${attempts}..."
+    if "${cmd[@]}"; then
+      return 0
+    fi
+
+    status=$?
+    echo "[setup] gclient sync failed with exit code ${status}."
+    echo "[setup] Cleaning partial sync artifacts..."
+    cleanup_partial_sync_artifacts "$root"
+
+    if (( attempt < attempts )); then
+      echo "[setup] Retrying in ${delay}s..."
+      sleep "$delay"
+    fi
+    ((attempt++))
+  done
+
+  return "$status"
 }
 
 sync_libwebrtc_wrapper() {
@@ -74,6 +128,18 @@ while [[ $# -gt 0 ]]; do
       build_type="$2"
       shift 2
       ;;
+    --sync-retries)
+      sync_retries="$2"
+      shift 2
+      ;;
+    --sync-delay)
+      sync_delay="$2"
+      shift 2
+      ;;
+    --sync-full-history)
+      sync_no_history=false
+      shift
+      ;;
     --skip-sync)
       skip_sync=true
       shift
@@ -93,6 +159,16 @@ while [[ $# -gt 0 ]]; do
       ;;
   esac
 done
+
+if ! [[ "$sync_retries" =~ ^[0-9]+$ ]] || (( sync_retries < 1 )); then
+  echo "--sync-retries must be a positive integer." >&2
+  exit 1
+fi
+
+if ! [[ "$sync_delay" =~ ^[0-9]+$ ]] || (( sync_delay < 0 )); then
+  echo "--sync-delay must be a non-negative integer." >&2
+  exit 1
+fi
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 if [[ -z "$webrtc_root" ]]; then
@@ -141,7 +217,10 @@ GCLIENT_EOF
 
 pushd "$webrtc_root" >/dev/null
 if [[ "$skip_sync" == false ]]; then
-  gclient sync
+  if ! run_gclient_sync_with_retry "$webrtc_root" "$sync_retries" "$sync_delay" "$sync_no_history"; then
+    echo "gclient sync failed after ${sync_retries} attempt(s)." >&2
+    exit 1
+  fi
 fi
 
 src_dir="${webrtc_root}/src"
