@@ -6685,6 +6685,6 @@
   "target": "lumenrtc",
   "tool": {
     "name": "abi_framework",
-    "version": "4.0.0"
+    "version": "5.0.0"
   }
 }

@@ -56,6 +56,12 @@ jobs:
         run: |
           python3 -m unittest discover -s tools/abi_framework/tests -p "test_*.py"
 
+      - name: Validate config schema migration (v2)
+        run: |
+          python3 tools/abi_framework/abi_framework.py config-migrate \
+            --input abi/config.json \
+            --check
+
       - name: Check generated ABI artifacts
         run: |
           mkdir -p artifacts/abi
@@ -88,6 +94,14 @@ jobs:
             --config abi/config.json \
             --skip-binary \
             --output-dir artifacts/abi
+
+      - name: Audit waivers
+        run: |
+          python3 tools/abi_framework/abi_framework.py waiver-audit \
+            --config abi/config.json \
+            --output artifacts/abi/waiver.audit.report.json \
+            --fail-on-expired \
+            --fail-on-missing-metadata
 
       - name: Assert clang parser backend active
         run: |
@@ -128,6 +142,13 @@ jobs:
             --skip-binary \
             --iterations 2 \
             --output artifacts/abi/benchmark.report.json
+
+      - name: Enforce benchmark budget
+        run: |
+          python3 tools/abi_framework/abi_framework.py benchmark-gate \
+            --report artifacts/abi/benchmark.report.json \
+            --budget abi/benchmark_budget.json \
+            --output artifacts/abi/benchmark.gate.report.json
 
       - name: Upload SARIF
         uses: github/codeql-action/upload-sarif@v3

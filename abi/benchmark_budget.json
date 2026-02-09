@@ -1,0 +1,18 @@
+{
+  "targets": {
+    "lumenrtc": {
+      "generate_idl_ms": {
+        "mean_ms_max": 7000,
+        "p95_ms_max": 9000
+      },
+      "snapshot_ms": {
+        "mean_ms_max": 5000,
+        "p95_ms_max": 7000
+      },
+      "verify_ms": {
+        "mean_ms_max": 5000,
+        "p95_ms_max": 7000
+      }
+    }
+  }
+}

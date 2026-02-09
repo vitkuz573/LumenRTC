@@ -21,7 +21,10 @@ Commands:
   regen         Regenerate baselines for all targets (supports --verify)
   regen-baselines Alias for regen
   doctor        Run ABI config/environment diagnostics
+  waiver-audit  Audit waiver metadata/expiry policy
   benchmark     Benchmark ABI pipeline timings
+  benchmark-gate Enforce benchmark report against budget
+  config-migrate Migrate ABI config to latest schema
   generate      Generate ABI IDL for configured targets
   codegen       Generate ABI IDL and run configured language generators
   idl-migrate   Migrate ABI IDL payload to schema v2
@@ -91,11 +94,22 @@ case "${COMMAND}" in
       --config "${ABI_CONFIG}" \
       "$@"
     ;;
+  waiver-audit)
+    run_guard waiver-audit \
+      --config "${ABI_CONFIG}" \
+      "$@"
+    ;;
   benchmark)
     run_guard benchmark \
       --repo-root "${REPO_ROOT}" \
       --config "${ABI_CONFIG}" \
       "$@"
+    ;;
+  benchmark-gate)
+    run_guard benchmark-gate "$@"
+    ;;
+  config-migrate)
+    run_guard config-migrate "$@"
     ;;
   generate)
     run_guard generate \

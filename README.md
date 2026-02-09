@@ -111,6 +111,9 @@ scripts/abi.sh codegen --skip-binary
 # Migrate IDL payload to schema v2 (with metadata + availability/docs fields).
 scripts/abi.sh idl-migrate --input abi/generated/lumenrtc/lumenrtc.idl.json --to-version 2
 
+# Migrate config payload to latest schema.
+scripts/abi.sh config-migrate --input abi/config.json
+
 # Sync generated ABI artifacts (and optionally baselines).
 scripts/abi.sh sync --skip-binary
 
@@ -121,11 +124,17 @@ scripts/abi.sh init-target ...
 # Benchmark ABI pipeline latency and output JSON metrics.
 scripts/abi.sh benchmark --skip-binary --iterations 3 --output artifacts/abi/benchmark.report.json
 
+# Enforce benchmark regression budgets.
+scripts/abi.sh benchmark-gate --report artifacts/abi/benchmark.report.json --budget abi/benchmark_budget.json
+
+# Audit waiver expiry and metadata requirements.
+scripts/abi.sh waiver-audit --fail-on-expired --fail-on-missing-metadata
+
 # Generate release-ready ABI changelog.
 scripts/abi.sh changelog --skip-binary --release-tag vX.Y.Z --output abi/CHANGELOG.md
 
 # One-shot release ABI pipeline (doctor + sync + codegen + verify-all + changelog + benchmark + HTML report).
-scripts/abi.sh release-prepare --skip-binary --release-tag vX.Y.Z
+scripts/abi.sh release-prepare --skip-binary --release-tag vX.Y.Z --emit-sbom --emit-attestation
 ```
 
 PowerShell equivalent:
@@ -137,10 +146,13 @@ scripts\\abi.ps1 check --binary native\\build\\lumenrtc.dll
 scripts\\abi.ps1 check-all --skip-binary
 scripts\\abi.ps1 generate --skip-binary
 scripts\\abi.ps1 codegen --skip-binary
+scripts\\abi.ps1 config-migrate --input abi\\config.json
 scripts\\abi.ps1 sync --skip-binary
 scripts\\abi.ps1 benchmark --skip-binary --iterations 3 --output artifacts\\abi\\benchmark.report.json
+scripts\\abi.ps1 benchmark-gate --report artifacts\\abi\\benchmark.report.json --budget abi\\benchmark_budget.json
+scripts\\abi.ps1 waiver-audit --fail-on-expired --fail-on-missing-metadata
 scripts\\abi.ps1 changelog --skip-binary --release-tag vX.Y.Z --output abi\\CHANGELOG.md
-scripts\\abi.ps1 release-prepare --skip-binary --release-tag vX.Y.Z
+scripts\\abi.ps1 release-prepare --skip-binary --release-tag vX.Y.Z --emit-sbom --emit-attestation
 ```
 
 The generic tooling lives in `tools/abi_framework/` and can be reused for other

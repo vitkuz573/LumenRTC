@@ -1,4 +1,17 @@
 {
+  "schema_uri": "https://lumenrtc.dev/abi_framework/config.schema.v2.json",
+  "schema_version": 2,
+  "policy": {
+    "waiver_requirements": {
+      "max_ttl_days": 90,
+      "require_approved_by": true,
+      "require_expires_utc": true,
+      "require_owner": true,
+      "require_reason": true,
+      "require_ticket": true,
+      "warn_expiring_within_days": 21
+    }
+  },
   "targets": {
     "lumenrtc": {
       "baseline_path": "abi/baselines/lumenrtc.json",

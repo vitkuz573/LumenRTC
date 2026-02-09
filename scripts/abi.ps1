@@ -1,6 +1,6 @@
 param(
     [Parameter(Position = 0)]
-    [ValidateSet("snapshot", "baseline", "baseline-all", "regen", "regen-baselines", "doctor", "benchmark", "generate", "codegen", "idl-migrate", "sync", "release-prepare", "changelog", "verify", "check", "verify-all", "check-all", "list-targets", "init-target", "diff")]
+    [ValidateSet("snapshot", "baseline", "baseline-all", "regen", "regen-baselines", "doctor", "waiver-audit", "benchmark", "benchmark-gate", "config-migrate", "generate", "codegen", "idl-migrate", "sync", "release-prepare", "changelog", "verify", "check", "verify-all", "check-all", "list-targets", "init-target", "diff")]
     [string]$Command = "check",
 
     [Parameter(ValueFromRemainingArguments = $true)]
@@ -112,8 +112,23 @@ switch ($Command) {
         Invoke-Guard -GuardArgs $guardArgs
         break
     }
+    "waiver-audit" {
+        $guardArgs = @("waiver-audit", "--config", $config) + $extraArgs
+        Invoke-Guard -GuardArgs $guardArgs
+        break
+    }
     "benchmark" {
         $guardArgs = @("benchmark", "--repo-root", $repoRoot, "--config", $config) + $extraArgs
+        Invoke-Guard -GuardArgs $guardArgs
+        break
+    }
+    "benchmark-gate" {
+        $guardArgs = @("benchmark-gate") + $extraArgs
+        Invoke-Guard -GuardArgs $guardArgs
+        break
+    }
+    "config-migrate" {
+        $guardArgs = @("config-migrate") + $extraArgs
         Invoke-Guard -GuardArgs $guardArgs
         break
     }
