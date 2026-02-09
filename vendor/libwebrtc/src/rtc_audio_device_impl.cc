@@ -7,9 +7,7 @@ namespace libwebrtc {
 AudioDeviceImpl::AudioDeviceImpl(
     webrtc::scoped_refptr<webrtc::AudioDeviceModule> audio_device_module,
     webrtc::Thread* worker_thread)
-    : audio_device_module_(audio_device_module), worker_thread_(worker_thread) {
-  audio_device_module_->SetObserver(this);
-}
+    : audio_device_module_(audio_device_module), worker_thread_(worker_thread) {}
 
 AudioDeviceImpl::~AudioDeviceImpl() {
   RTC_LOG(LS_INFO) << __FUNCTION__ << ": dtor ";
@@ -104,10 +102,6 @@ int32_t AudioDeviceImpl::SpeakerVolume(uint32_t& volume) {
 int32_t AudioDeviceImpl::OnDeviceChange(OnDeviceChangeCallback listener) {
   listener_ = listener;
   return 0;
-}
-
-void AudioDeviceImpl::OnDevicesUpdated() {
-  if (listener_) listener_();
 }
 
 }  // namespace libwebrtc

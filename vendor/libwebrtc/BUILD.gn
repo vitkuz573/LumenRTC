@@ -220,7 +220,7 @@ rtc_shared_library("libwebrtc") {
     "../api:libjingle_peerconnection_api",
     "../api/audio_codecs:builtin_audio_decoder_factory",
     "../api/audio_codecs:builtin_audio_encoder_factory",
-    "../api/crypto:frame_crypto_transformer",
+    "../api/crypto:crypto",
     "../api/video:video_frame",
     "../api/video_codecs:builtin_video_decoder_factory",
     "../api/video_codecs:builtin_video_encoder_factory",

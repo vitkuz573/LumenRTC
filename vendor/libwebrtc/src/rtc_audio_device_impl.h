@@ -8,7 +8,7 @@
 #include "rtc_base/thread.h"
 
 namespace libwebrtc {
-class AudioDeviceImpl : public RTCAudioDevice, public webrtc::AudioDeviceObserver {
+class AudioDeviceImpl : public RTCAudioDevice {
  public:
   AudioDeviceImpl(
       webrtc::scoped_refptr<webrtc::AudioDeviceModule> audio_device_module,
@@ -40,9 +40,6 @@ class AudioDeviceImpl : public RTCAudioDevice, public webrtc::AudioDeviceObserve
   int32_t SpeakerVolume(uint32_t& volume) override;
 
   int32_t OnDeviceChange(OnDeviceChangeCallback listener) override;
-
- protected:
-  void OnDevicesUpdated() override;
 
  private:
   webrtc::scoped_refptr<webrtc::AudioDeviceModule> audio_device_module_;
