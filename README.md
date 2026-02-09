@@ -269,6 +269,34 @@ SDL renderer runtime (optional):
 - Windows: `SDL2.dll` must be on `PATH` or next to the app.
 - Linux: `libSDL2-2.0.so.0` must be discoverable by the loader.
 
+## AppVeyor (Hosted, Quota-Friendly)
+
+Building `libwebrtc` from source on free hosted CI usually exceeds quotas.
+Use AppVeyor only for final packing/publishing, and provide prebuilt native
+archives produced elsewhere.
+
+Required environment variables in AppVeyor project settings:
+
+- `WIN_NATIVE_URL`: URL to a `.zip` containing:
+  - `lumenrtc.dll`
+  - `libwebrtc.dll`
+- `LINUX_NATIVE_URL`: URL to a `.tar.gz` containing:
+  - `liblumenrtc.so`
+  - `libwebrtc.so`
+- `NUGET_API_KEY`: NuGet.org API key (secure variable)
+
+Optional:
+
+- `ASSET_AUTH_HEADER`: header for private asset download,
+  e.g. `Authorization: Bearer <token>`
+
+Release trigger:
+
+```bash
+git tag v1.0.1
+git push origin v1.0.1
+```
+
 ## SDL Renderer
 
 The `LumenRTC.Rendering.Sdl` project provides a minimal video renderer using SDL2.
