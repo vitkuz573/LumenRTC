@@ -63,6 +63,18 @@
     <LumenRtcPackNative>false</LumenRtcPackNative>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(LumenRtcPackNativeMultiRid)'==''">
+    <LumenRtcPackNativeMultiRid>false</LumenRtcPackNativeMultiRid>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(LumenRtcPackIncludeWinX64)'==''">
+    <LumenRtcPackIncludeWinX64>false</LumenRtcPackIncludeWinX64>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(LumenRtcPackIncludeLinuxX64)'==''">
+    <LumenRtcPackIncludeLinuxX64>false</LumenRtcPackIncludeLinuxX64>
+  </PropertyGroup>
+
   <PropertyGroup Condition="'$(LumenRtcPackNative)'=='true' and '$(LumenRtcPackRid)'=='' and '$(RuntimeIdentifier)'!=''">
     <LumenRtcPackRid>$(RuntimeIdentifier)</LumenRtcPackRid>
   </PropertyGroup>
@@ -86,9 +98,31 @@
           TargetPath="native/%(Filename)%(Extension)" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(LumenRtcPackNative)'=='true'">
+  <ItemGroup Condition="'$(LumenRtcPackNative)'=='true' and '$(MSBuildProjectName)'=='LumenRTC'">
     <None Include="$(LumenRtcNativeFile)" Condition="Exists('$(LumenRtcNativeFile)')" Pack="true" PackagePath="runtimes/$(LumenRtcPackRid)/native/" />
     <None Include="$(LibWebRtcNativeFile)" Condition="Exists('$(LibWebRtcNativeFile)')" Pack="true" PackagePath="runtimes/$(LumenRtcPackRid)/native/" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(LumenRtcPackNativeMultiRid)'=='true' and '$(LumenRtcPackIncludeWinX64)'=='true' and '$(MSBuildProjectName)'=='LumenRTC'">
+    <None Include="$(LumenRtcWinNativeDir)\lumenrtc.dll"
+          Condition="Exists('$(LumenRtcWinNativeDir)\lumenrtc.dll')"
+          Pack="true"
+          PackagePath="runtimes/win-x64/native/" />
+    <None Include="$(LibWebRtcWinBuildDir)\libwebrtc.dll"
+          Condition="Exists('$(LibWebRtcWinBuildDir)\libwebrtc.dll')"
+          Pack="true"
+          PackagePath="runtimes/win-x64/native/" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(LumenRtcPackNativeMultiRid)'=='true' and '$(LumenRtcPackIncludeLinuxX64)'=='true' and '$(MSBuildProjectName)'=='LumenRTC'">
+    <None Include="$(LumenRtcLinuxNativeDir)/liblumenrtc.so"
+          Condition="Exists('$(LumenRtcLinuxNativeDir)/liblumenrtc.so')"
+          Pack="true"
+          PackagePath="runtimes/linux-x64/native/" />
+    <None Include="$(LibWebRtcLinuxBuildDir)/libwebrtc.so"
+          Condition="Exists('$(LibWebRtcLinuxBuildDir)/libwebrtc.so')"
+          Pack="true"
+          PackagePath="runtimes/linux-x64/native/" />
   </ItemGroup>
 
   <Target Name="LumenRtcNativeCopyWarnings" AfterTargets="Build" Condition="'$(LumenRtcCopyNative)'=='true'">
@@ -98,12 +132,29 @@
              Text="libwebrtc library was not copied. Set LIBWEBRTC_BUILD_DIR (or LibWebRtcBuildDir). Expected: $(LibWebRtcNativeFile)" />
   </Target>
 
-  <Target Name="LumenRtcNativePackChecks" BeforeTargets="Pack" Condition="'$(LumenRtcPackNative)'=='true'">
+  <Target Name="LumenRtcNativePackChecks" BeforeTargets="Pack" Condition="'$(LumenRtcPackNative)'=='true' and '$(MSBuildProjectName)'=='LumenRTC'">
     <Error Condition="'$(LumenRtcPackRid)'==''"
            Text="Set LumenRtcPackRid (e.g. win-x64, linux-x64) when packing native assets." />
     <Error Condition="'$(LumenRtcNativeDir)'=='' or !Exists('$(LumenRtcNativeFile)')"
            Text="LumenRTC native library missing. Set LumenRtcNativeDir or build native output. Expected: $(LumenRtcNativeFile)" />
     <Error Condition="'$(LibWebRtcBuildDir)'=='' or !Exists('$(LibWebRtcNativeFile)')"
            Text="libwebrtc library missing. Set LIBWEBRTC_BUILD_DIR (or LibWebRtcBuildDir). Expected: $(LibWebRtcNativeFile)" />
+  </Target>
+
+  <Target Name="LumenRtcNativeMultiRidPackChecks"
+          BeforeTargets="Build"
+          Condition="'$(LumenRtcPackNativeMultiRid)'=='true' and '$(MSBuildProjectName)'=='LumenRTC'">
+    <Error Condition="'$(LumenRtcPackIncludeWinX64)'!='true' and '$(LumenRtcPackIncludeLinuxX64)'!='true'"
+           Text="Set at least one RID include flag for multi-RID pack (LumenRtcPackIncludeWinX64/LumenRtcPackIncludeLinuxX64)." />
+
+    <Error Condition="'$(LumenRtcPackIncludeWinX64)'=='true' and ('$(LumenRtcWinNativeDir)'=='' or !Exists('$(LumenRtcWinNativeDir)\lumenrtc.dll'))"
+           Text="Windows lumenrtc.dll missing. Set LumenRtcWinNativeDir to folder containing lumenrtc.dll." />
+    <Error Condition="'$(LumenRtcPackIncludeWinX64)'=='true' and ('$(LibWebRtcWinBuildDir)'=='' or !Exists('$(LibWebRtcWinBuildDir)\libwebrtc.dll'))"
+           Text="Windows libwebrtc.dll missing. Set LibWebRtcWinBuildDir to folder containing libwebrtc.dll." />
+
+    <Error Condition="'$(LumenRtcPackIncludeLinuxX64)'=='true' and ('$(LumenRtcLinuxNativeDir)'=='' or !Exists('$(LumenRtcLinuxNativeDir)/liblumenrtc.so'))"
+           Text="Linux liblumenrtc.so missing. Set LumenRtcLinuxNativeDir to folder containing liblumenrtc.so." />
+    <Error Condition="'$(LumenRtcPackIncludeLinuxX64)'=='true' and ('$(LibWebRtcLinuxBuildDir)'=='' or !Exists('$(LibWebRtcLinuxBuildDir)/libwebrtc.so'))"
+           Text="Linux libwebrtc.so missing. Set LibWebRtcLinuxBuildDir to folder containing libwebrtc.so." />
   </Target>
 </Project>

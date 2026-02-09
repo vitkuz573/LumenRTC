@@ -242,15 +242,26 @@ RID=linux-x64 LIBWEBRTC_BUILD_DIR=/path/to/webrtc/out/Release scripts/pack.sh
 
 To pack without native libraries, use `-NoNative` (PowerShell) or `NO_NATIVE=true`.
 
-To build multiple RID-specific packages in one go (each written to its own
-output subfolder):
+To build a single package containing multiple runtime folders:
 
 ```powershell
-scripts\pack-all.ps1 -Rids win-x64,linux-x64 -LibWebRtcBuildDir C:\path\to\webrtc\out\Release
+scripts\pack-all.ps1 `
+  -Rids win-x64,linux-x64 `
+  -WinLumenRtcNativeDir C:\path\to\native\build `
+  -WinLibWebRtcBuildDir C:\path\to\webrtc\out\Release `
+  -LinuxLumenRtcNativeDir /path/to/native/build `
+  -LinuxLibWebRtcBuildDir /path/to/webrtc/out/Release `
+  -PackageVersion 1.0.1
 ```
 
 ```bash
-RIDS=win-x64,linux-x64 LIBWEBRTC_BUILD_DIR=/path/to/webrtc/out/Release scripts/pack-all.sh
+RIDS=win-x64,linux-x64 \
+WIN_LUMENRTC_NATIVE_DIR=/path/to/win/native/build \
+WIN_LIBWEBRTC_BUILD_DIR=/path/to/win/webrtc/out/Release \
+LINUX_LUMENRTC_NATIVE_DIR=/path/to/linux/native/build \
+LINUX_LIBWEBRTC_BUILD_DIR=/path/to/linux/webrtc/out/Release \
+PACKAGE_VERSION=1.0.1 \
+scripts/pack-all.sh
 ```
 
 SDL renderer runtime (optional):
