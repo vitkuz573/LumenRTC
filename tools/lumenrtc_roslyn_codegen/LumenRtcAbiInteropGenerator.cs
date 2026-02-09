@@ -46,6 +46,33 @@ public sealed class LumenRtcAbiInteropGenerator : IIncrementalGenerator
         isEnabledByDefault: true
     );
 
+    private static readonly DiagnosticDescriptor MissingManagedMetadataDescriptor = new(
+        id: "LRTCABI005",
+        title: "Managed metadata file not found",
+        messageFormat: "Managed metadata file '{0}' was not found in AdditionalFiles; configure AdditionalFiles and LumenRtcAbiManagedMetadataPath",
+        category: "LumenRTC.Abi.SourceGenerator",
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true
+    );
+
+    private static readonly DiagnosticDescriptor MultipleManagedMetadataDescriptor = new(
+        id: "LRTCABI006",
+        title: "Multiple managed metadata files matched",
+        messageFormat: "Multiple AdditionalFiles match managed metadata path '{0}': {1}; keep exactly one match",
+        category: "LumenRTC.Abi.SourceGenerator",
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true
+    );
+
+    private static readonly DiagnosticDescriptor EmptyManagedMetadataDescriptor = new(
+        id: "LRTCABI007",
+        title: "Managed metadata file is empty",
+        messageFormat: "Managed metadata file '{0}' is empty or unreadable",
+        category: "LumenRTC.Abi.SourceGenerator",
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true
+    );
+
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         var optionsProvider = context.AnalyzerConfigOptionsProvider
@@ -70,17 +97,89 @@ public sealed class LumenRtcAbiInteropGenerator : IIncrementalGenerator
         ImmutableArray<AdditionalFileSnapshot> files,
         GeneratorOptions options)
     {
+        var matchedIdlFile = ResolveSingleAdditionalFile(
+            context,
+            files,
+            options.IdlPath,
+            options.MatchesIdlPath,
+            MissingIdlDescriptor,
+            MultipleIdlDescriptor,
+            EmptyIdlDescriptor);
+        if (!matchedIdlFile.HasValue)
+        {
+            return;
+        }
+
+        var matchedManagedFile = ResolveSingleAdditionalFile(
+            context,
+            files,
+            options.ManagedMetadataPath,
+            options.MatchesManagedMetadataPath,
+            MissingManagedMetadataDescriptor,
+            MultipleManagedMetadataDescriptor,
+            EmptyManagedMetadataDescriptor);
+        if (!matchedManagedFile.HasValue)
+        {
+            return;
+        }
+
+        try
+        {
+            var model = AbiInteropSourceEmitter.ParseIdl(matchedIdlFile.Value.Content!);
+            var source = AbiInteropSourceEmitter.RenderCode(model, options);
+            context.AddSource(
+                BuildHintName(options.ClassName, "Abi"),
+                SourceText.From(source, Encoding.UTF8)
+            );
+
+            var typeModel = AbiInteropTypesSourceEmitter.ParseIdl(matchedIdlFile.Value.Content!);
+            var typesSource = AbiInteropTypesSourceEmitter.RenderTypesCode(typeModel, options);
+            context.AddSource(
+                BuildHintName(options.ClassName, "Types"),
+                SourceText.From(typesSource, Encoding.UTF8)
+            );
+
+            var managedHandlesModel = AbiInteropTypesSourceEmitter.ParseManagedMetadata(matchedManagedFile.Value.Content!);
+            var handlesSource = AbiInteropTypesSourceEmitter.RenderHandlesCode(typeModel, managedHandlesModel, options);
+            context.AddSource(
+                BuildHintName(options.ClassName, "Handles"),
+                SourceText.From(handlesSource, Encoding.UTF8)
+            );
+        }
+        catch (GeneratorException ex)
+        {
+            context.ReportDiagnostic(
+                Diagnostic.Create(GenerationFailedDescriptor, Location.None, matchedIdlFile.Value.Path, ex.Message)
+            );
+        }
+        catch (Exception ex)
+        {
+            context.ReportDiagnostic(
+                Diagnostic.Create(GenerationFailedDescriptor, Location.None, matchedIdlFile.Value.Path, ex.Message)
+            );
+        }
+    }
+
+    private static AdditionalFileSnapshot? ResolveSingleAdditionalFile(
+        SourceProductionContext context,
+        ImmutableArray<AdditionalFileSnapshot> files,
+        string configuredPath,
+        Func<string, bool> matcher,
+        DiagnosticDescriptor missingDescriptor,
+        DiagnosticDescriptor multipleDescriptor,
+        DiagnosticDescriptor emptyDescriptor)
+    {
         var matches = files
-            .Where(file => options.MatchesIdlPath(file.Path))
+            .Where(file => matcher(file.Path))
             .OrderBy(file => file.Path, StringComparer.Ordinal)
             .ToArray();
 
         if (matches.Length == 0)
         {
             context.ReportDiagnostic(
-                Diagnostic.Create(MissingIdlDescriptor, Location.None, options.IdlPath)
+                Diagnostic.Create(missingDescriptor, Location.None, configuredPath)
             );
-            return;
+            return null;
         }
 
         if (matches.Length > 1)
@@ -92,44 +191,24 @@ public sealed class LumenRtcAbiInteropGenerator : IIncrementalGenerator
             }
 
             context.ReportDiagnostic(
-                Diagnostic.Create(MultipleIdlDescriptor, Location.None, options.IdlPath, preview)
+                Diagnostic.Create(multipleDescriptor, Location.None, configuredPath, preview)
             );
-            return;
+            return null;
         }
 
-        var matchedFile = matches[0];
-        if (string.IsNullOrWhiteSpace(matchedFile.Content))
+        var match = matches[0];
+        if (string.IsNullOrWhiteSpace(match.Content))
         {
             context.ReportDiagnostic(
-                Diagnostic.Create(EmptyIdlDescriptor, Location.None, matchedFile.Path)
+                Diagnostic.Create(emptyDescriptor, Location.None, match.Path)
             );
-            return;
+            return null;
         }
 
-        try
-        {
-            var model = AbiInteropSourceEmitter.ParseIdl(matchedFile.Content!);
-            var source = AbiInteropSourceEmitter.RenderCode(model, options);
-            context.AddSource(
-                BuildHintName(options.ClassName),
-                SourceText.From(source, Encoding.UTF8)
-            );
-        }
-        catch (GeneratorException ex)
-        {
-            context.ReportDiagnostic(
-                Diagnostic.Create(GenerationFailedDescriptor, Location.None, matchedFile.Path, ex.Message)
-            );
-        }
-        catch (Exception ex)
-        {
-            context.ReportDiagnostic(
-                Diagnostic.Create(GenerationFailedDescriptor, Location.None, matchedFile.Path, ex.Message)
-            );
-        }
+        return match;
     }
 
-    private static string BuildHintName(string className)
+    private static string BuildHintName(string className, string suffix)
     {
         var effectiveClassName = string.IsNullOrWhiteSpace(className)
             ? "NativeMethods"
@@ -140,7 +219,7 @@ public sealed class LumenRtcAbiInteropGenerator : IIncrementalGenerator
             sanitized = "NativeMethods";
         }
 
-        return sanitized + ".Abi.g.cs";
+        return sanitized + "." + suffix + ".g.cs";
     }
 
     private readonly struct AdditionalFileSnapshot

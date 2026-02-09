@@ -271,43 +271,13 @@
             "kind": "external",
             "command": [
               "python3",
-              "{repo_root}/tools/abi_framework/generators/lumenrtc_native_exports.py",
+              "{repo_root}/tools/lumenrtc_codegen/lumenrtc_native_exports.py",
               "--idl",
               "{idl}",
               "--out",
               "{repo_root}/native/src/lumenrtc.exports.cpp",
               "--impl-header",
               "{repo_root}/native/src/lumenrtc_impl.h",
-              "{check}",
-              "{dry_run}"
-            ]
-          },
-          {
-            "name": "csharp_interop",
-            "kind": "external",
-            "command": [
-              "python3",
-              "{repo_root}/tools/abi_framework/generators/lumenrtc_csharp_interop.py",
-              "--idl",
-              "{idl}",
-              "--out",
-              "{repo_root}/src/LumenRTC/Interop/NativeTypes.g.cs",
-              "{check}",
-              "{dry_run}"
-            ]
-          },
-          {
-            "name": "csharp_handles",
-            "kind": "external",
-            "command": [
-              "python3",
-              "{repo_root}/tools/abi_framework/generators/lumenrtc_csharp_handles.py",
-              "--idl",
-              "{idl}",
-              "--managed",
-              "{repo_root}/abi/bindings/lumenrtc.managed.json",
-              "--out",
-              "{repo_root}/src/LumenRTC/Interop/NativeHandles.g.cs",
               "{check}",
               "{dry_run}"
             ]

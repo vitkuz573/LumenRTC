@@ -692,9 +692,11 @@ internal sealed class GeneratorOptions
     private const string DefaultAccessModifier = "internal";
     private const string DefaultCallingConvention = "Cdecl";
     private const string DefaultLibraryExpression = "LibName";
+    private const string DefaultManagedMetadataPath = "abi/bindings/lumenrtc.managed.json";
 
     public GeneratorOptions(
         string idlPath,
+        string managedMetadataPath,
         string namespaceName,
         string className,
         string accessModifier,
@@ -702,6 +704,7 @@ internal sealed class GeneratorOptions
         string libraryExpression)
     {
         IdlPath = idlPath;
+        ManagedMetadataPath = managedMetadataPath;
         NamespaceName = namespaceName;
         ClassName = className;
         AccessModifier = accessModifier;
@@ -710,6 +713,8 @@ internal sealed class GeneratorOptions
     }
 
     public string IdlPath { get; }
+
+    public string ManagedMetadataPath { get; }
 
     public string NamespaceName { get; }
 
@@ -725,6 +730,7 @@ internal sealed class GeneratorOptions
     {
         return new GeneratorOptions(
             idlPath: ReadBuildProperty(options, "LumenRtcAbiIdlPath", DefaultIdlPath),
+            managedMetadataPath: ReadBuildProperty(options, "LumenRtcAbiManagedMetadataPath", DefaultManagedMetadataPath),
             namespaceName: ReadBuildProperty(options, "LumenRtcAbiNamespace", DefaultNamespace),
             className: ReadBuildProperty(options, "LumenRtcAbiClassName", DefaultClassName),
             accessModifier: ReadBuildProperty(options, "LumenRtcAbiAccessModifier", DefaultAccessModifier),
@@ -735,20 +741,30 @@ internal sealed class GeneratorOptions
 
     public bool MatchesIdlPath(string candidatePath)
     {
+        return MatchesConfiguredPath(candidatePath, IdlPath);
+    }
+
+    public bool MatchesManagedMetadataPath(string candidatePath)
+    {
+        return MatchesConfiguredPath(candidatePath, ManagedMetadataPath);
+    }
+
+    private static bool MatchesConfiguredPath(string candidatePath, string configuredPath)
+    {
         if (string.IsNullOrWhiteSpace(candidatePath))
         {
             return false;
         }
 
-        if (Path.IsPathRooted(IdlPath))
+        if (Path.IsPathRooted(configuredPath))
         {
-            var configuredAbsolute = NormalizePath(SafeGetFullPath(IdlPath));
+            var configuredAbsolute = NormalizePath(SafeGetFullPath(configuredPath));
             var candidateAbsolute = NormalizePath(SafeGetFullPath(candidatePath));
             return string.Equals(candidateAbsolute, configuredAbsolute, PathComparison);
         }
 
         var candidateNormalized = NormalizePath(candidatePath);
-        var configuredRelative = NormalizePath(IdlPath).TrimStart('/');
+        var configuredRelative = NormalizePath(configuredPath).TrimStart('/');
         if (string.IsNullOrWhiteSpace(configuredRelative))
         {
             return false;

@@ -23,6 +23,7 @@ macOS is not currently wired as a first-class build target in this repository.
 - `samples/`: local camera, screen share, streaming, signaling examples.
 - `abi/`: ABI config, baselines, generated IDL, changelog/governance docs.
 - `tools/abi_framework/`: reusable ABI framework.
+- `tools/lumenrtc_codegen/`: project-specific ABI codegen plugins/metadata tests.
 - `tools/lumenrtc_roslyn_codegen/`: Roslyn source generator for managed interop.
 
 ## Prerequisites
