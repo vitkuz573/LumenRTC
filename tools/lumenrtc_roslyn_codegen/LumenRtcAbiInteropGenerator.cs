@@ -1,8 +1,12 @@
+using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 
 namespace LumenRTC.Abi.RoslynGenerator;
@@ -73,6 +77,51 @@ public sealed class LumenRtcAbiInteropGenerator : IIncrementalGenerator
         isEnabledByDefault: true
     );
 
+    private static readonly DiagnosticDescriptor MissingManagedHandleTypeDescriptor = new(
+        id: "LRTCABI008",
+        title: "Managed handle base type not found",
+        messageFormat: "Managed handle '{0}' was not found in compilation; declare a partial SafeHandle class with this full name",
+        category: "LumenRTC.Abi.SourceGenerator",
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true
+    );
+
+    private static readonly DiagnosticDescriptor InvalidManagedHandleTypeDescriptor = new(
+        id: "LRTCABI009",
+        title: "Managed handle base type must be partial class",
+        messageFormat: "Managed handle '{0}' must be declared as a partial class in project source",
+        category: "LumenRTC.Abi.SourceGenerator",
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true
+    );
+
+    private static readonly DiagnosticDescriptor ManagedHandleBaseTypeDescriptor = new(
+        id: "LRTCABI010",
+        title: "Managed handle base type must inherit SafeHandle",
+        messageFormat: "Managed handle '{0}' must derive from System.Runtime.InteropServices.SafeHandle",
+        category: "LumenRTC.Abi.SourceGenerator",
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true
+    );
+
+    private static readonly DiagnosticDescriptor ManagedHandleAccessMismatchDescriptor = new(
+        id: "LRTCABI011",
+        title: "Managed handle accessibility mismatch",
+        messageFormat: "Managed handle '{0}' metadata access '{1}' does not match declared accessibility '{2}'",
+        category: "LumenRTC.Abi.SourceGenerator",
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true
+    );
+
+    private static readonly DiagnosticDescriptor DuplicateManagedHandleDescriptor = new(
+        id: "LRTCABI012",
+        title: "Duplicate managed handle metadata entry",
+        messageFormat: "Managed metadata contains duplicate handle entry '{0}'",
+        category: "LumenRTC.Abi.SourceGenerator",
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true
+    );
+
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         var optionsProvider = context.AnalyzerConfigOptionsProvider
@@ -85,15 +134,16 @@ public sealed class LumenRtcAbiInteropGenerator : IIncrementalGenerator
             ))
             .Collect();
 
-        var generationInputProvider = additionalFilesProvider.Combine(optionsProvider);
+        var generationInputProvider = context.CompilationProvider.Combine(additionalFilesProvider.Combine(optionsProvider));
         context.RegisterSourceOutput(generationInputProvider, static (spc, input) =>
         {
-            Execute(spc, input.Left, input.Right);
+            Execute(spc, input.Left, input.Right.Left, input.Right.Right);
         });
     }
 
     private static void Execute(
         SourceProductionContext context,
+        Compilation compilation,
         ImmutableArray<AdditionalFileSnapshot> files,
         GeneratorOptions options)
     {
@@ -140,6 +190,11 @@ public sealed class LumenRtcAbiInteropGenerator : IIncrementalGenerator
             );
 
             var managedHandlesModel = AbiInteropTypesSourceEmitter.ParseManagedMetadata(matchedManagedFile.Value.Content!);
+            if (!ValidateManagedHandleTypes(context, compilation, managedHandlesModel))
+            {
+                return;
+            }
+
             var handlesSource = AbiInteropTypesSourceEmitter.RenderHandlesCode(typeModel, managedHandlesModel, options);
             context.AddSource(
                 BuildHintName(options.ClassName, "Handles"),
@@ -206,6 +261,144 @@ public sealed class LumenRtcAbiInteropGenerator : IIncrementalGenerator
         }
 
         return match;
+    }
+
+    private static bool ValidateManagedHandleTypes(
+        SourceProductionContext context,
+        Compilation compilation,
+        ManagedHandlesModel handlesModel)
+    {
+        var safeHandleType = compilation.GetTypeByMetadataName("System.Runtime.InteropServices.SafeHandle");
+        if (safeHandleType is null)
+        {
+            context.ReportDiagnostic(
+                Diagnostic.Create(
+                    GenerationFailedDescriptor,
+                    Location.None,
+                    "<compilation>",
+                    "type System.Runtime.InteropServices.SafeHandle is unavailable"
+                )
+            );
+            return false;
+        }
+
+        var seenHandles = new HashSet<string>(StringComparer.Ordinal);
+        var success = true;
+
+        foreach (var handle in handlesModel.Handles)
+        {
+            var fullTypeName = BuildManagedTypeFullName(handle.NamespaceName, handle.CsType);
+            if (!seenHandles.Add(fullTypeName))
+            {
+                context.ReportDiagnostic(
+                    Diagnostic.Create(DuplicateManagedHandleDescriptor, Location.None, fullTypeName)
+                );
+                success = false;
+                continue;
+            }
+
+            var handleType = compilation.GetTypeByMetadataName(fullTypeName);
+            if (handleType is null)
+            {
+                context.ReportDiagnostic(
+                    Diagnostic.Create(MissingManagedHandleTypeDescriptor, Location.None, fullTypeName)
+                );
+                success = false;
+                continue;
+            }
+
+            if (!IsPartialClass(handleType, context.CancellationToken))
+            {
+                context.ReportDiagnostic(
+                    Diagnostic.Create(InvalidManagedHandleTypeDescriptor, Location.None, fullTypeName)
+                );
+                success = false;
+            }
+
+            if (!InheritsFrom(handleType, safeHandleType))
+            {
+                context.ReportDiagnostic(
+                    Diagnostic.Create(ManagedHandleBaseTypeDescriptor, Location.None, fullTypeName)
+                );
+                success = false;
+            }
+
+            var expectedAccessibility = string.Equals(handle.Access, "public", StringComparison.Ordinal)
+                ? Accessibility.Public
+                : Accessibility.Internal;
+            if (handleType.DeclaredAccessibility != expectedAccessibility)
+            {
+                context.ReportDiagnostic(
+                    Diagnostic.Create(
+                        ManagedHandleAccessMismatchDescriptor,
+                        Location.None,
+                        fullTypeName,
+                        HandleAccessText(expectedAccessibility),
+                        HandleAccessText(handleType.DeclaredAccessibility)
+                    )
+                );
+                success = false;
+            }
+        }
+
+        return success;
+    }
+
+    private static bool IsPartialClass(INamedTypeSymbol symbol, System.Threading.CancellationToken cancellationToken)
+    {
+        if (symbol.TypeKind != TypeKind.Class || symbol.DeclaringSyntaxReferences.Length == 0)
+        {
+            return false;
+        }
+
+        foreach (var reference in symbol.DeclaringSyntaxReferences)
+        {
+            if (reference.GetSyntax(cancellationToken) is not ClassDeclarationSyntax declaration)
+            {
+                return false;
+            }
+
+            if (!declaration.Modifiers.Any(static token => token.IsKind(SyntaxKind.PartialKeyword)))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static bool InheritsFrom(INamedTypeSymbol symbol, INamedTypeSymbol baseType)
+    {
+        for (INamedTypeSymbol? current = symbol; current != null; current = current.BaseType)
+        {
+            if (SymbolEqualityComparer.Default.Equals(current, baseType))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static string BuildManagedTypeFullName(string namespaceName, string typeName)
+    {
+        return string.IsNullOrWhiteSpace(namespaceName)
+            ? typeName
+            : namespaceName + "." + typeName;
+    }
+
+    private static string HandleAccessText(Accessibility accessibility)
+    {
+        return accessibility switch
+        {
+            Accessibility.Public => "public",
+            Accessibility.Internal => "internal",
+            Accessibility.Private => "private",
+            Accessibility.Protected => "protected",
+            Accessibility.ProtectedAndInternal => "private protected",
+            Accessibility.ProtectedOrInternal => "protected internal",
+            _ => accessibility.ToString().ToLowerInvariant(),
+        };
     }
 
     private static string BuildHintName(string className, string suffix)

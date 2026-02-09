@@ -23,6 +23,17 @@ during compilation.
 - Generated `NativeHandles` source (`SafeHandle` partial methods for release/lifetime).
 - All generated sources are added directly to compilation (no checked-in `*.g.cs` required).
 
+## Handle Contracts
+
+For each handle entry in managed metadata, project source must declare a matching
+type (`namespace` + `cs_type`) as:
+
+- `partial class`
+- inheriting `System.Runtime.InteropServices.SafeHandle`
+- accessibility matching metadata (`public` or `internal`)
+
+Violations are reported as source-generator diagnostics (`LRTCABI008`-`LRTCABI012`).
+
 ## Integration
 
 `src/LumenRTC/LumenRTC.csproj` wires the generator as an analyzer project reference

@@ -9,7 +9,9 @@ on:
       - "src/LumenRTC/Interop/**"
       - "src/LumenRTC/LumenRTC.csproj"
       - "tools/abi_framework/**"
+      - "tools/lumenrtc_codegen/**"
       - "tools/lumenrtc_roslyn_codegen/**"
+      - "scripts/abi_guardrails.sh"
       - "scripts/abi.sh"
       - "scripts/abi.ps1"
   push:
@@ -21,7 +23,9 @@ on:
       - "src/LumenRTC/Interop/**"
       - "src/LumenRTC/LumenRTC.csproj"
       - "tools/abi_framework/**"
+      - "tools/lumenrtc_codegen/**"
       - "tools/lumenrtc_roslyn_codegen/**"
+      - "scripts/abi_guardrails.sh"
       - "scripts/abi.sh"
       - "scripts/abi.ps1"
 
@@ -55,6 +59,14 @@ jobs:
       - name: Unit tests (abi_framework)
         run: |
           python3 -m unittest discover -s tools/abi_framework/tests -p "test_*.py"
+
+      - name: Unit tests (lumenrtc_codegen)
+        run: |
+          python3 -m unittest discover -s tools/lumenrtc_codegen/tests -p "test_*.py"
+
+      - name: Enforce generation guardrails
+        run: |
+          scripts/abi_guardrails.sh
 
       - name: Check generated ABI artifacts
         run: |

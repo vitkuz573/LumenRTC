@@ -1,6 +1,6 @@
 param(
     [Parameter(Position = 0)]
-    [ValidateSet("snapshot", "baseline", "baseline-all", "regen", "regen-baselines", "doctor", "waiver-audit", "benchmark", "benchmark-gate", "generate", "codegen", "sync", "release-prepare", "changelog", "verify", "check", "verify-all", "check-all", "list-targets", "init-target", "diff")]
+    [ValidateSet("snapshot", "baseline", "baseline-all", "regen", "regen-baselines", "doctor", "waiver-audit", "benchmark", "benchmark-gate", "guardrails", "generate", "codegen", "sync", "release-prepare", "changelog", "verify", "check", "verify-all", "check-all", "list-targets", "init-target", "diff")]
     [string]$Command = "check",
 
     [Parameter(ValueFromRemainingArguments = $true)]
@@ -125,6 +125,18 @@ switch ($Command) {
     "benchmark-gate" {
         $guardArgs = @("benchmark-gate") + $extraArgs
         Invoke-Guard -GuardArgs $guardArgs
+        break
+    }
+    "guardrails" {
+        $guardrailsScript = Join-Path $repoRoot "scripts/abi_guardrails.sh"
+        $bash = Get-Command bash -ErrorAction SilentlyContinue
+        if (-not $bash) {
+            throw "guardrails command requires bash to run scripts/abi_guardrails.sh"
+        }
+        & $bash.Source $guardrailsScript @extraArgs
+        if ($LASTEXITCODE -ne 0) {
+            throw "abi guardrails failed with exit code $LASTEXITCODE."
+        }
         break
     }
     "generate" {
