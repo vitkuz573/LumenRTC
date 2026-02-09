@@ -450,7 +450,11 @@ try {
   if (-not $SkipSync) {
     gclient sync
     if ($LASTEXITCODE -ne 0) {
-      throw "gclient sync failed. Check depot_tools and network access."
+      Write-Warning "gclient sync failed. Retrying with --reset --delete_unversioned_trees --no-history..."
+      gclient sync --reset --delete_unversioned_trees --no-history
+      if ($LASTEXITCODE -ne 0) {
+        throw "gclient sync failed. Check depot_tools and network access."
+      }
     }
   }
 }
