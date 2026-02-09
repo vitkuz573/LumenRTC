@@ -1,0 +1,217 @@
+version: "{build}"
+
+skip_non_tags: true
+
+max_jobs: 3
+
+build: off
+test: off
+
+environment:
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: "1"
+  DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+  NUGET_XMLDOC_MODE: "skip"
+
+  matrix:
+    - job_name: "Linux Native"
+      job_group: "Native"
+      appveyor_build_worker_image: "Ubuntu2204"
+
+    - job_name: "Windows Native"
+      job_group: "Native"
+      appveyor_build_worker_image: "Visual Studio 2022"
+
+    - job_name: "Pack & Publish"
+      job_depends_on: "Native"
+      appveyor_build_worker_image: "Ubuntu2204"
+
+matrix:
+  fast_finish: true
+
+for:
+  -
+    matrix:
+      only:
+        - job_name: "Linux Native"
+
+    build_script:
+      - sh: |
+          set -euo pipefail
+
+          if ! dotnet --list-sdks | grep -q '^10\.'; then
+            curl -fsSL https://dot.net/v1/dotnet-install.sh -o /tmp/dotnet-install.sh
+            bash /tmp/dotnet-install.sh --channel 10.0 --install-dir "$HOME/.dotnet"
+          fi
+
+          export PATH="$HOME/.dotnet:$APPVEYOR_BUILD_FOLDER/depot_tools:$PATH"
+          dotnet --info
+
+          scripts/setup.sh \
+            --build-type Release \
+            --depot-tools-dir "$APPVEYOR_BUILD_FOLDER/depot_tools" \
+            --webrtc-root "$APPVEYOR_BUILD_FOLDER/webrtc_build"
+
+          mkdir -p artifacts/native/linux-x64
+          cp -f native/build/liblumenrtc.so artifacts/native/linux-x64/liblumenrtc.so
+          cp -f "$APPVEYOR_BUILD_FOLDER/webrtc_build/src/out/Release/libwebrtc.so" artifacts/native/linux-x64/libwebrtc.so
+
+          tar -C artifacts/native -czf artifacts/native-linux-x64.tar.gz linux-x64
+          appveyor PushArtifact artifacts/native-linux-x64.tar.gz -FileName native-linux-x64.tar.gz
+
+  -
+    matrix:
+      only:
+        - job_name: "Windows Native"
+
+    build_script:
+      - ps: |
+          $ErrorActionPreference = "Stop"
+
+          $sdks = dotnet --list-sdks 2>$null
+          if ($sdks -notmatch '^10\.') {
+            Invoke-WebRequest https://dot.net/v1/dotnet-install.ps1 -OutFile "$env:TEMP\dotnet-install.ps1"
+            & powershell -NoProfile -ExecutionPolicy Bypass -File "$env:TEMP\dotnet-install.ps1" -Channel 10.0 -InstallDir "$env:USERPROFILE\.dotnet"
+          }
+
+          $env:PATH = "$env:USERPROFILE\.dotnet;$env:PATH"
+          dotnet --info
+
+          pwsh -NoProfile -ExecutionPolicy Bypass -File .\scripts\setup.ps1 `
+            -RepoRoot $env:APPVEYOR_BUILD_FOLDER `
+            -DepotToolsDir "$env:APPVEYOR_BUILD_FOLDER\depot_tools" `
+            -WebRtcRoot "$env:APPVEYOR_BUILD_FOLDER\webrtc_build" `
+            -BuildType Release
+
+          $nativeCandidates = @(
+            "$env:APPVEYOR_BUILD_FOLDER\native\build\Release\lumenrtc.dll",
+            "$env:APPVEYOR_BUILD_FOLDER\native\build\lumenrtc.dll"
+          )
+
+          $lumenRtcDll = $nativeCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+          if (-not $lumenRtcDll) {
+            throw "lumenrtc.dll not found. Checked: $($nativeCandidates -join ', ')"
+          }
+
+          $libWebRtcDll = "$env:APPVEYOR_BUILD_FOLDER\webrtc_build\src\out\Release\libwebrtc.dll"
+          if (-not (Test-Path $libWebRtcDll)) {
+            throw "libwebrtc.dll not found at $libWebRtcDll"
+          }
+
+          New-Item -ItemType Directory -Force -Path "$env:APPVEYOR_BUILD_FOLDER\artifacts\native\win-x64" | Out-Null
+          Copy-Item $lumenRtcDll "$env:APPVEYOR_BUILD_FOLDER\artifacts\native\win-x64\lumenrtc.dll" -Force
+          Copy-Item $libWebRtcDll "$env:APPVEYOR_BUILD_FOLDER\artifacts\native\win-x64\libwebrtc.dll" -Force
+
+          if (Test-Path "$env:APPVEYOR_BUILD_FOLDER\artifacts\native-win-x64.zip") {
+            Remove-Item "$env:APPVEYOR_BUILD_FOLDER\artifacts\native-win-x64.zip" -Force
+          }
+
+          Compress-Archive `
+            -Path "$env:APPVEYOR_BUILD_FOLDER\artifacts\native\win-x64\*" `
+            -DestinationPath "$env:APPVEYOR_BUILD_FOLDER\artifacts\native-win-x64.zip"
+
+          appveyor PushArtifact "$env:APPVEYOR_BUILD_FOLDER\artifacts\native-win-x64.zip" -FileName native-win-x64.zip
+
+  -
+    matrix:
+      only:
+        - job_name: "Pack & Publish"
+
+    build_script:
+      - sh: |
+          set -euo pipefail
+
+          if ! dotnet --list-sdks | grep -q '^10\.'; then
+            curl -fsSL https://dot.net/v1/dotnet-install.sh -o /tmp/dotnet-install.sh
+            bash /tmp/dotnet-install.sh --channel 10.0 --install-dir "$HOME/.dotnet"
+          fi
+
+          export PATH="$HOME/.dotnet:$PATH"
+          dotnet --info
+
+          if [[ "${APPVEYOR_REPO_TAG:-false}" != "true" ]]; then
+            echo "Non-tag build, skipping pack/publish."
+            exit 0
+          fi
+
+          mkdir -p .ci/downloads .ci/native/win-x64 .ci/native/linux-x64 artifacts/nuget
+
+          python3 - <<'PY'
+          import json
+          import os
+          import sys
+          import urllib.request
+
+          account = os.environ["APPVEYOR_ACCOUNT_NAME"]
+          project = os.environ["APPVEYOR_PROJECT_SLUG"]
+          build_version = os.environ["APPVEYOR_BUILD_VERSION"]
+          token = os.environ.get("APPVEYOR_API_TOKEN", "")
+          api_url = f"https://ci.appveyor.com/api/projects/{account}/{project}/build/{build_version}"
+
+          headers = {}
+          if token:
+            headers["Authorization"] = f"Bearer {token}"
+
+          req = urllib.request.Request(api_url, headers=headers)
+          with urllib.request.urlopen(req) as resp:
+            payload = json.load(resp)
+
+          jobs = payload.get("build", {}).get("jobs", [])
+          want = {
+              "Linux Native": "native-linux-x64.tar.gz",
+              "Windows Native": "native-win-x64.zip",
+          }
+
+          out_dir = ".ci/downloads"
+          os.makedirs(out_dir, exist_ok=True)
+
+          for job_name, artifact_name in want.items():
+            job = next((j for j in jobs if j.get("name") == job_name), None)
+            if not job:
+              raise RuntimeError(f"Job '{job_name}' not found in build '{build_version}'")
+            job_id = job.get("jobId")
+            status = (job.get("status") or "").lower()
+            if status != "success":
+              raise RuntimeError(f"Job '{job_name}' is not successful: {status}")
+
+            artifact_url = f"https://ci.appveyor.com/api/buildjobs/{job_id}/artifacts/{artifact_name}"
+            local_path = os.path.join(out_dir, artifact_name)
+            req = urllib.request.Request(artifact_url, headers=headers)
+            with urllib.request.urlopen(req) as src, open(local_path, "wb") as dst:
+              dst.write(src.read())
+            print(f"Downloaded {artifact_name} from {job_name} to {local_path}")
+          PY
+
+          tar -xzf .ci/downloads/native-linux-x64.tar.gz -C .ci/native
+          unzip -o .ci/downloads/native-win-x64.zip -d .ci/native/win-x64
+
+          if [[ "${APPVEYOR_REPO_TAG_NAME}" =~ ^v(.+)$ ]]; then
+            PACKAGE_VERSION="${BASH_REMATCH[1]}"
+          else
+            PACKAGE_VERSION="${APPVEYOR_REPO_TAG_NAME}"
+          fi
+
+          RIDS=win-x64,linux-x64 \
+          WIN_LUMENRTC_NATIVE_DIR="$APPVEYOR_BUILD_FOLDER/.ci/native/win-x64" \
+          WIN_LIBWEBRTC_BUILD_DIR="$APPVEYOR_BUILD_FOLDER/.ci/native/win-x64" \
+          LINUX_LUMENRTC_NATIVE_DIR="$APPVEYOR_BUILD_FOLDER/.ci/native/linux-x64" \
+          LINUX_LIBWEBRTC_BUILD_DIR="$APPVEYOR_BUILD_FOLDER/.ci/native/linux-x64" \
+          PACKAGE_VERSION="$PACKAGE_VERSION" \
+          OUTPUT="$APPVEYOR_BUILD_FOLDER/artifacts/nuget" \
+          ./scripts/pack-all.sh
+
+          unzip -l "artifacts/nuget/LumenRTC.${PACKAGE_VERSION}.nupkg" | grep "runtimes/win-x64/native/lumenrtc.dll"
+          unzip -l "artifacts/nuget/LumenRTC.${PACKAGE_VERSION}.nupkg" | grep "runtimes/win-x64/native/libwebrtc.dll"
+          unzip -l "artifacts/nuget/LumenRTC.${PACKAGE_VERSION}.nupkg" | grep "runtimes/linux-x64/native/liblumenrtc.so"
+          unzip -l "artifacts/nuget/LumenRTC.${PACKAGE_VERSION}.nupkg" | grep "runtimes/linux-x64/native/libwebrtc.so"
+
+          appveyor PushArtifact "artifacts/nuget/LumenRTC.${PACKAGE_VERSION}.nupkg" -FileName "LumenRTC.${PACKAGE_VERSION}.nupkg"
+          appveyor PushArtifact "artifacts/nuget/LumenRTC.${PACKAGE_VERSION}.snupkg" -FileName "LumenRTC.${PACKAGE_VERSION}.snupkg"
+
+          if [[ -n "${NUGET_API_KEY:-}" ]]; then
+            dotnet nuget push "artifacts/nuget/LumenRTC.${PACKAGE_VERSION}.nupkg" \
+              --source "https://api.nuget.org/v3/index.json" \
+              --api-key "${NUGET_API_KEY}" \
+              --skip-duplicate
+          else
+            echo "NUGET_API_KEY is not set; package was built and uploaded as AppVeyor artifact only."
+          fi
