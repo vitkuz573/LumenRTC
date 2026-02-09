@@ -56,6 +56,7 @@
         "allow_non_prefixed_exports": false
       },
       "bindings": {
+        "interop_metadata_path": "abi/bindings/lumenrtc.interop.json",
         "expected_symbols": [
           "lrtc_abi_version_major",
           "lrtc_abi_version_minor",
@@ -263,6 +264,38 @@
           "lrtc_video_track_release",
           "lrtc_video_track_remove_sink",
           "lrtc_video_track_set_enabled"
+        ],
+        "generators": [
+          {
+            "name": "native_exports",
+            "kind": "external",
+            "command": [
+              "python3",
+              "{repo_root}/tools/abi_framework/generators/lumenrtc_native_exports.py",
+              "--idl",
+              "{idl}",
+              "--out",
+              "{repo_root}/native/src/lumenrtc.exports.cpp",
+              "--impl-header",
+              "{repo_root}/native/src/lumenrtc_impl.h",
+              "{check}",
+              "{dry_run}"
+            ]
+          },
+          {
+            "name": "csharp_interop",
+            "kind": "external",
+            "command": [
+              "python3",
+              "{repo_root}/tools/abi_framework/generators/lumenrtc_csharp_interop.py",
+              "--idl",
+              "{idl}",
+              "--out",
+              "{repo_root}/src/LumenRTC/Interop/NativeTypes.g.cs",
+              "{check}",
+              "{dry_run}"
+            ]
+          }
         ]
       },
       "codegen": {

@@ -32,7 +32,8 @@ endif()
 set(LIBWEBRTC_INCLUDE_DIR "${LIBWEBRTC_ROOT}/include")
 
 add_library(lumenrtc SHARED
-  src/lumenrtc.cpp
+  src/lumenrtc_impl.cpp
+  src/lumenrtc.exports.cpp
 )
 
 if(NOT WIN32)

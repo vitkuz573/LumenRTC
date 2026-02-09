@@ -1,4 +1,4 @@
-#include "lumenrtc.h"
+#include "lumenrtc_impl.h"
 
 #include "libwebrtc.h"
 #include "rtc_audio_device.h"
@@ -926,37 +926,37 @@ class VideoSinkImpl : public RTCVideoRenderer<scoped_refptr<RTCVideoFrame>> {
 
 extern "C" {
 
-LUMENRTC_API lrtc_result_t LUMENRTC_CALL lrtc_initialize(void) {
+lrtc_result_t LUMENRTC_CALL lrtc_impl_initialize(void) {
   return libwebrtc::LibWebRTC::Initialize() ? LRTC_OK : LRTC_ERROR;
 }
 
-LUMENRTC_API void LUMENRTC_CALL lrtc_terminate(void) {
+void LUMENRTC_CALL lrtc_impl_terminate(void) {
   libwebrtc::LibWebRTC::Terminate();
 }
 
-LUMENRTC_API uint32_t LUMENRTC_CALL lrtc_abi_version_major(void) {
+uint32_t LUMENRTC_CALL lrtc_impl_abi_version_major(void) {
   return static_cast<uint32_t>(LUMENRTC_ABI_VERSION_MAJOR);
 }
 
-LUMENRTC_API uint32_t LUMENRTC_CALL lrtc_abi_version_minor(void) {
+uint32_t LUMENRTC_CALL lrtc_impl_abi_version_minor(void) {
   return static_cast<uint32_t>(LUMENRTC_ABI_VERSION_MINOR);
 }
 
-LUMENRTC_API uint32_t LUMENRTC_CALL lrtc_abi_version_patch(void) {
+uint32_t LUMENRTC_CALL lrtc_impl_abi_version_patch(void) {
   return static_cast<uint32_t>(LUMENRTC_ABI_VERSION_PATCH);
 }
 
-LUMENRTC_API int32_t LUMENRTC_CALL lrtc_abi_version_string(char* buffer,
+int32_t LUMENRTC_CALL lrtc_impl_abi_version_string(char* buffer,
                                                            uint32_t buffer_len) {
   return CopyPortableString(string(kLrtcAbiVersionString), buffer, buffer_len);
 }
 
-LUMENRTC_API void LUMENRTC_CALL lrtc_logging_set_min_level(int severity) {
+void LUMENRTC_CALL lrtc_impl_logging_set_min_level(int severity) {
   LibWebRTCLogging::setMinDebugLogLevel(
       static_cast<RTCLoggingSeverity>(severity));
 }
 
-LUMENRTC_API void LUMENRTC_CALL lrtc_logging_set_callback(int severity,
+void LUMENRTC_CALL lrtc_impl_logging_set_callback(int severity,
                                              lrtc_log_message_cb callback,
                                              void* user_data) {
   {
@@ -972,7 +972,7 @@ LUMENRTC_API void LUMENRTC_CALL lrtc_logging_set_callback(int severity,
   }
 }
 
-LUMENRTC_API void LUMENRTC_CALL lrtc_logging_remove_callback(void) {
+void LUMENRTC_CALL lrtc_impl_logging_remove_callback(void) {
   {
     std::lock_guard<std::mutex> lock(g_log_callback.mutex);
     g_log_callback.callback = nullptr;
@@ -981,7 +981,7 @@ LUMENRTC_API void LUMENRTC_CALL lrtc_logging_remove_callback(void) {
   LibWebRTCLogging::removeLogSink();
 }
 
-LUMENRTC_API lrtc_factory_t* LUMENRTC_CALL lrtc_factory_create(void) {
+lrtc_factory_t* LUMENRTC_CALL lrtc_impl_factory_create(void) {
   auto handle = new lrtc_factory_t();
   handle->ref = libwebrtc::LibWebRTC::CreateRTCPeerConnectionFactory();
   if (!handle->ref.get()) {
@@ -991,25 +991,25 @@ LUMENRTC_API lrtc_factory_t* LUMENRTC_CALL lrtc_factory_create(void) {
   return handle;
 }
 
-LUMENRTC_API lrtc_result_t LUMENRTC_CALL lrtc_factory_initialize(lrtc_factory_t* factory) {
+lrtc_result_t LUMENRTC_CALL lrtc_impl_factory_initialize(lrtc_factory_t* factory) {
   if (LrtcFailIfNull(factory) != LRTC_OK) {
     return LRTC_INVALID_ARG;
   }
   return factory->ref->Initialize() ? LRTC_OK : LRTC_ERROR;
 }
 
-LUMENRTC_API void LUMENRTC_CALL lrtc_factory_terminate(lrtc_factory_t* factory) {
+void LUMENRTC_CALL lrtc_impl_factory_terminate(lrtc_factory_t* factory) {
   if (!factory) {
     return;
   }
   factory->ref->Terminate();
 }
 
-LUMENRTC_API void LUMENRTC_CALL lrtc_factory_release(lrtc_factory_t* factory) {
+void LUMENRTC_CALL lrtc_impl_factory_release(lrtc_factory_t* factory) {
   delete factory;
 }
 
-LUMENRTC_API lrtc_audio_device_t* LUMENRTC_CALL lrtc_factory_get_audio_device(
+lrtc_audio_device_t* LUMENRTC_CALL lrtc_impl_factory_get_audio_device(
     lrtc_factory_t* factory) {
   if (!factory || !factory->ref.get()) {
     return nullptr;
@@ -1023,7 +1023,7 @@ LUMENRTC_API lrtc_audio_device_t* LUMENRTC_CALL lrtc_factory_get_audio_device(
   return handle;
 }
 
-LUMENRTC_API lrtc_video_device_t* LUMENRTC_CALL lrtc_factory_get_video_device(
+lrtc_video_device_t* LUMENRTC_CALL lrtc_impl_factory_get_video_device(
     lrtc_factory_t* factory) {
   if (!factory || !factory->ref.get()) {
     return nullptr;
@@ -1037,7 +1037,7 @@ LUMENRTC_API lrtc_video_device_t* LUMENRTC_CALL lrtc_factory_get_video_device(
   return handle;
 }
 
-LUMENRTC_API lrtc_desktop_device_t* LUMENRTC_CALL lrtc_factory_get_desktop_device(
+lrtc_desktop_device_t* LUMENRTC_CALL lrtc_impl_factory_get_desktop_device(
     lrtc_factory_t* factory) {
 #ifdef RTC_DESKTOP_DEVICE
   if (!factory || !factory->ref.get()) {
@@ -1056,7 +1056,7 @@ LUMENRTC_API lrtc_desktop_device_t* LUMENRTC_CALL lrtc_factory_get_desktop_devic
 #endif
 }
 
-LUMENRTC_API lrtc_audio_source_t* LUMENRTC_CALL lrtc_factory_create_audio_source(
+lrtc_audio_source_t* LUMENRTC_CALL lrtc_impl_factory_create_audio_source(
     lrtc_factory_t* factory, const char* label,
     lrtc_audio_source_type source_type, const lrtc_audio_options_t* options) {
   if (!factory || !factory->ref.get() || !label) {
@@ -1082,7 +1082,7 @@ LUMENRTC_API lrtc_audio_source_t* LUMENRTC_CALL lrtc_factory_create_audio_source
   return handle;
 }
 
-LUMENRTC_API lrtc_video_source_t* LUMENRTC_CALL lrtc_factory_create_video_source(
+lrtc_video_source_t* LUMENRTC_CALL lrtc_impl_factory_create_video_source(
     lrtc_factory_t* factory, lrtc_video_capturer_t* capturer,
     const char* label, lrtc_media_constraints_t* constraints) {
   if (!factory || !factory->ref.get() || !capturer || !capturer->ref.get() ||
@@ -1103,7 +1103,7 @@ LUMENRTC_API lrtc_video_source_t* LUMENRTC_CALL lrtc_factory_create_video_source
   return handle;
 }
 
-LUMENRTC_API lrtc_video_source_t* LUMENRTC_CALL lrtc_factory_create_desktop_source(
+lrtc_video_source_t* LUMENRTC_CALL lrtc_impl_factory_create_desktop_source(
     lrtc_factory_t* factory, lrtc_desktop_capturer_t* capturer,
     const char* label, lrtc_media_constraints_t* constraints) {
 #ifdef RTC_DESKTOP_DEVICE
@@ -1132,7 +1132,7 @@ LUMENRTC_API lrtc_video_source_t* LUMENRTC_CALL lrtc_factory_create_desktop_sour
 #endif
 }
 
-LUMENRTC_API lrtc_audio_track_t* LUMENRTC_CALL lrtc_factory_create_audio_track(
+lrtc_audio_track_t* LUMENRTC_CALL lrtc_impl_factory_create_audio_track(
     lrtc_factory_t* factory, lrtc_audio_source_t* source,
     const char* track_id) {
   if (!factory || !factory->ref.get() || !source || !source->ref.get() ||
@@ -1149,7 +1149,7 @@ LUMENRTC_API lrtc_audio_track_t* LUMENRTC_CALL lrtc_factory_create_audio_track(
   return handle;
 }
 
-LUMENRTC_API lrtc_video_track_t* LUMENRTC_CALL lrtc_factory_create_video_track(
+lrtc_video_track_t* LUMENRTC_CALL lrtc_impl_factory_create_video_track(
     lrtc_factory_t* factory, lrtc_video_source_t* source,
     const char* track_id) {
   if (!factory || !factory->ref.get() || !source || !source->ref.get() ||
@@ -1166,7 +1166,7 @@ LUMENRTC_API lrtc_video_track_t* LUMENRTC_CALL lrtc_factory_create_video_track(
   return handle;
 }
 
-LUMENRTC_API lrtc_media_stream_t* LUMENRTC_CALL lrtc_factory_create_stream(
+lrtc_media_stream_t* LUMENRTC_CALL lrtc_impl_factory_create_stream(
     lrtc_factory_t* factory, const char* stream_id) {
   if (!factory || !factory->ref.get() || !stream_id) {
     return nullptr;
@@ -1181,7 +1181,7 @@ LUMENRTC_API lrtc_media_stream_t* LUMENRTC_CALL lrtc_factory_create_stream(
   return handle;
 }
 
-LUMENRTC_API lrtc_media_constraints_t* LUMENRTC_CALL lrtc_media_constraints_create(void) {
+lrtc_media_constraints_t* LUMENRTC_CALL lrtc_impl_media_constraints_create(void) {
   auto handle = new lrtc_media_constraints_t();
   handle->ref = RTCMediaConstraints::Create();
   if (!handle->ref.get()) {
@@ -1191,7 +1191,7 @@ LUMENRTC_API lrtc_media_constraints_t* LUMENRTC_CALL lrtc_media_constraints_crea
   return handle;
 }
 
-LUMENRTC_API void LUMENRTC_CALL lrtc_media_constraints_add_mandatory(
+void LUMENRTC_CALL lrtc_impl_media_constraints_add_mandatory(
     lrtc_media_constraints_t* constraints, const char* key,
     const char* value) {
   if (!constraints || !constraints->ref.get() || !key || !value) {
@@ -1200,7 +1200,7 @@ LUMENRTC_API void LUMENRTC_CALL lrtc_media_constraints_add_mandatory(
   constraints->ref->AddMandatoryConstraint(string(key), string(value));
 }
 
-LUMENRTC_API void LUMENRTC_CALL lrtc_media_constraints_add_optional(
+void LUMENRTC_CALL lrtc_impl_media_constraints_add_optional(
     lrtc_media_constraints_t* constraints, const char* key,
     const char* value) {
   if (!constraints || !constraints->ref.get() || !key || !value) {
@@ -1209,12 +1209,12 @@ LUMENRTC_API void LUMENRTC_CALL lrtc_media_constraints_add_optional(
   constraints->ref->AddOptionalConstraint(string(key), string(value));
 }
 
-LUMENRTC_API void LUMENRTC_CALL lrtc_media_constraints_release(
+void LUMENRTC_CALL lrtc_impl_media_constraints_release(
     lrtc_media_constraints_t* constraints) {
   delete constraints;
 }
 
-LUMENRTC_API int16_t LUMENRTC_CALL lrtc_audio_device_playout_devices(
+int16_t LUMENRTC_CALL lrtc_impl_audio_device_playout_devices(
     lrtc_audio_device_t* device) {
   if (!device || !device->ref.get()) {
     return -1;
@@ -1222,7 +1222,7 @@ LUMENRTC_API int16_t LUMENRTC_CALL lrtc_audio_device_playout_devices(
   return device->ref->PlayoutDevices();
 }
 
-LUMENRTC_API int16_t LUMENRTC_CALL lrtc_audio_device_recording_devices(
+int16_t LUMENRTC_CALL lrtc_impl_audio_device_recording_devices(
     lrtc_audio_device_t* device) {
   if (!device || !device->ref.get()) {
     return -1;
@@ -1230,7 +1230,7 @@ LUMENRTC_API int16_t LUMENRTC_CALL lrtc_audio_device_recording_devices(
   return device->ref->RecordingDevices();
 }
 
-LUMENRTC_API int32_t LUMENRTC_CALL lrtc_audio_device_playout_device_name(
+int32_t LUMENRTC_CALL lrtc_impl_audio_device_playout_device_name(
     lrtc_audio_device_t* device, uint16_t index, char* name,
     uint32_t name_len, char* guid, uint32_t guid_len) {
   if (!device || !device->ref.get() || !name || !guid) {
@@ -1244,7 +1244,7 @@ LUMENRTC_API int32_t LUMENRTC_CALL lrtc_audio_device_playout_device_name(
       index, name, guid);
 }
 
-LUMENRTC_API int32_t LUMENRTC_CALL lrtc_audio_device_recording_device_name(
+int32_t LUMENRTC_CALL lrtc_impl_audio_device_recording_device_name(
     lrtc_audio_device_t* device, uint16_t index, char* name,
     uint32_t name_len, char* guid, uint32_t guid_len) {
   if (!device || !device->ref.get() || !name || !guid) {
@@ -1258,7 +1258,7 @@ LUMENRTC_API int32_t LUMENRTC_CALL lrtc_audio_device_recording_device_name(
       index, name, guid);
 }
 
-LUMENRTC_API int32_t LUMENRTC_CALL lrtc_audio_device_set_playout_device(
+int32_t LUMENRTC_CALL lrtc_impl_audio_device_set_playout_device(
     lrtc_audio_device_t* device, uint16_t index) {
   if (!device || !device->ref.get()) {
     return -1;
@@ -1266,7 +1266,7 @@ LUMENRTC_API int32_t LUMENRTC_CALL lrtc_audio_device_set_playout_device(
   return device->ref->SetPlayoutDevice(index);
 }
 
-LUMENRTC_API int32_t LUMENRTC_CALL lrtc_audio_device_set_recording_device(
+int32_t LUMENRTC_CALL lrtc_impl_audio_device_set_recording_device(
     lrtc_audio_device_t* device, uint16_t index) {
   if (!device || !device->ref.get()) {
     return -1;
@@ -1274,7 +1274,7 @@ LUMENRTC_API int32_t LUMENRTC_CALL lrtc_audio_device_set_recording_device(
   return device->ref->SetRecordingDevice(index);
 }
 
-LUMENRTC_API int32_t LUMENRTC_CALL lrtc_audio_device_set_microphone_volume(
+int32_t LUMENRTC_CALL lrtc_impl_audio_device_set_microphone_volume(
     lrtc_audio_device_t* device, uint32_t volume) {
   if (!device || !device->ref.get()) {
     return -1;
@@ -1282,7 +1282,7 @@ LUMENRTC_API int32_t LUMENRTC_CALL lrtc_audio_device_set_microphone_volume(
   return device->ref->SetMicrophoneVolume(volume);
 }
 
-LUMENRTC_API int32_t LUMENRTC_CALL lrtc_audio_device_microphone_volume(
+int32_t LUMENRTC_CALL lrtc_impl_audio_device_microphone_volume(
     lrtc_audio_device_t* device, uint32_t* volume) {
   if (!device || !device->ref.get() || !volume) {
     return -1;
@@ -1295,7 +1295,7 @@ LUMENRTC_API int32_t LUMENRTC_CALL lrtc_audio_device_microphone_volume(
   return result;
 }
 
-LUMENRTC_API int32_t LUMENRTC_CALL lrtc_audio_device_set_speaker_volume(
+int32_t LUMENRTC_CALL lrtc_impl_audio_device_set_speaker_volume(
     lrtc_audio_device_t* device, uint32_t volume) {
   if (!device || !device->ref.get()) {
     return -1;
@@ -1303,7 +1303,7 @@ LUMENRTC_API int32_t LUMENRTC_CALL lrtc_audio_device_set_speaker_volume(
   return device->ref->SetSpeakerVolume(volume);
 }
 
-LUMENRTC_API int32_t LUMENRTC_CALL lrtc_audio_device_speaker_volume(
+int32_t LUMENRTC_CALL lrtc_impl_audio_device_speaker_volume(
     lrtc_audio_device_t* device, uint32_t* volume) {
   if (!device || !device->ref.get() || !volume) {
     return -1;
@@ -1316,11 +1316,11 @@ LUMENRTC_API int32_t LUMENRTC_CALL lrtc_audio_device_speaker_volume(
   return result;
 }
 
-LUMENRTC_API void LUMENRTC_CALL lrtc_audio_device_release(lrtc_audio_device_t* device) {
+void LUMENRTC_CALL lrtc_impl_audio_device_release(lrtc_audio_device_t* device) {
   delete device;
 }
 
-LUMENRTC_API lrtc_desktop_media_list_t* LUMENRTC_CALL lrtc_desktop_device_get_media_list(
+lrtc_desktop_media_list_t* LUMENRTC_CALL lrtc_impl_desktop_device_get_media_list(
     lrtc_desktop_device_t* device, lrtc_desktop_type type) {
 #ifdef RTC_DESKTOP_DEVICE
   if (!device || !device->ref.get()) {
@@ -1342,7 +1342,7 @@ LUMENRTC_API lrtc_desktop_media_list_t* LUMENRTC_CALL lrtc_desktop_device_get_me
 #endif
 }
 
-LUMENRTC_API lrtc_desktop_capturer_t* LUMENRTC_CALL lrtc_desktop_device_create_capturer(
+lrtc_desktop_capturer_t* LUMENRTC_CALL lrtc_impl_desktop_device_create_capturer(
     lrtc_desktop_device_t* device, lrtc_media_source_t* source,
     bool show_cursor) {
 #ifdef RTC_DESKTOP_DEVICE
@@ -1365,11 +1365,11 @@ LUMENRTC_API lrtc_desktop_capturer_t* LUMENRTC_CALL lrtc_desktop_device_create_c
 #endif
 }
 
-LUMENRTC_API void LUMENRTC_CALL lrtc_desktop_device_release(lrtc_desktop_device_t* device) {
+void LUMENRTC_CALL lrtc_impl_desktop_device_release(lrtc_desktop_device_t* device) {
   delete device;
 }
 
-LUMENRTC_API int32_t LUMENRTC_CALL lrtc_desktop_media_list_update(
+int32_t LUMENRTC_CALL lrtc_impl_desktop_media_list_update(
     lrtc_desktop_media_list_t* list, bool force_reload, bool get_thumbnail) {
 #ifdef RTC_DESKTOP_DEVICE
   if (!list || !list->ref.get()) {
@@ -1384,7 +1384,7 @@ LUMENRTC_API int32_t LUMENRTC_CALL lrtc_desktop_media_list_update(
 #endif
 }
 
-LUMENRTC_API int LUMENRTC_CALL lrtc_desktop_media_list_get_source_count(
+int LUMENRTC_CALL lrtc_impl_desktop_media_list_get_source_count(
     lrtc_desktop_media_list_t* list) {
 #ifdef RTC_DESKTOP_DEVICE
   if (!list || !list->ref.get()) {
@@ -1397,7 +1397,7 @@ LUMENRTC_API int LUMENRTC_CALL lrtc_desktop_media_list_get_source_count(
 #endif
 }
 
-LUMENRTC_API lrtc_media_source_t* LUMENRTC_CALL lrtc_desktop_media_list_get_source(
+lrtc_media_source_t* LUMENRTC_CALL lrtc_impl_desktop_media_list_get_source(
     lrtc_desktop_media_list_t* list, int index) {
 #ifdef RTC_DESKTOP_DEVICE
   if (!list || !list->ref.get()) {
@@ -1417,12 +1417,12 @@ LUMENRTC_API lrtc_media_source_t* LUMENRTC_CALL lrtc_desktop_media_list_get_sour
 #endif
 }
 
-LUMENRTC_API void LUMENRTC_CALL lrtc_desktop_media_list_release(
+void LUMENRTC_CALL lrtc_impl_desktop_media_list_release(
     lrtc_desktop_media_list_t* list) {
   delete list;
 }
 
-LUMENRTC_API int32_t LUMENRTC_CALL lrtc_media_source_get_id(
+int32_t LUMENRTC_CALL lrtc_impl_media_source_get_id(
     lrtc_media_source_t* source, char* buffer, uint32_t buffer_len) {
 #ifdef RTC_DESKTOP_DEVICE
   if (!source || !source->ref.get()) {
@@ -1437,7 +1437,7 @@ LUMENRTC_API int32_t LUMENRTC_CALL lrtc_media_source_get_id(
 #endif
 }
 
-LUMENRTC_API int32_t LUMENRTC_CALL lrtc_media_source_get_name(
+int32_t LUMENRTC_CALL lrtc_impl_media_source_get_name(
     lrtc_media_source_t* source, char* buffer, uint32_t buffer_len) {
 #ifdef RTC_DESKTOP_DEVICE
   if (!source || !source->ref.get()) {
@@ -1452,7 +1452,7 @@ LUMENRTC_API int32_t LUMENRTC_CALL lrtc_media_source_get_name(
 #endif
 }
 
-LUMENRTC_API int LUMENRTC_CALL lrtc_media_source_get_type(lrtc_media_source_t* source) {
+int LUMENRTC_CALL lrtc_impl_media_source_get_type(lrtc_media_source_t* source) {
 #ifdef RTC_DESKTOP_DEVICE
   if (!source || !source->ref.get()) {
     return -1;
@@ -1464,11 +1464,11 @@ LUMENRTC_API int LUMENRTC_CALL lrtc_media_source_get_type(lrtc_media_source_t* s
 #endif
 }
 
-LUMENRTC_API void LUMENRTC_CALL lrtc_media_source_release(lrtc_media_source_t* source) {
+void LUMENRTC_CALL lrtc_impl_media_source_release(lrtc_media_source_t* source) {
   delete source;
 }
 
-LUMENRTC_API lrtc_desktop_capture_state LUMENRTC_CALL lrtc_desktop_capturer_start(
+lrtc_desktop_capture_state LUMENRTC_CALL lrtc_impl_desktop_capturer_start(
     lrtc_desktop_capturer_t* capturer, uint32_t fps) {
 #ifdef RTC_DESKTOP_DEVICE
   if (!capturer || !capturer->ref.get()) {
@@ -1482,7 +1482,7 @@ LUMENRTC_API lrtc_desktop_capture_state LUMENRTC_CALL lrtc_desktop_capturer_star
 #endif
 }
 
-LUMENRTC_API lrtc_desktop_capture_state LUMENRTC_CALL lrtc_desktop_capturer_start_region(
+lrtc_desktop_capture_state LUMENRTC_CALL lrtc_impl_desktop_capturer_start_region(
     lrtc_desktop_capturer_t* capturer, uint32_t fps, uint32_t x, uint32_t y,
     uint32_t w, uint32_t h) {
 #ifdef RTC_DESKTOP_DEVICE
@@ -1502,7 +1502,7 @@ LUMENRTC_API lrtc_desktop_capture_state LUMENRTC_CALL lrtc_desktop_capturer_star
 #endif
 }
 
-LUMENRTC_API void LUMENRTC_CALL lrtc_desktop_capturer_stop(
+void LUMENRTC_CALL lrtc_impl_desktop_capturer_stop(
     lrtc_desktop_capturer_t* capturer) {
 #ifdef RTC_DESKTOP_DEVICE
   if (!capturer || !capturer->ref.get()) {
@@ -1514,7 +1514,7 @@ LUMENRTC_API void LUMENRTC_CALL lrtc_desktop_capturer_stop(
 #endif
 }
 
-LUMENRTC_API bool LUMENRTC_CALL lrtc_desktop_capturer_is_running(
+bool LUMENRTC_CALL lrtc_impl_desktop_capturer_is_running(
     lrtc_desktop_capturer_t* capturer) {
 #ifdef RTC_DESKTOP_DEVICE
   if (!capturer || !capturer->ref.get()) {
@@ -1527,12 +1527,12 @@ LUMENRTC_API bool LUMENRTC_CALL lrtc_desktop_capturer_is_running(
 #endif
 }
 
-LUMENRTC_API void LUMENRTC_CALL lrtc_desktop_capturer_release(
+void LUMENRTC_CALL lrtc_impl_desktop_capturer_release(
     lrtc_desktop_capturer_t* capturer) {
   delete capturer;
 }
 
-LUMENRTC_API uint32_t LUMENRTC_CALL lrtc_video_device_number_of_devices(
+uint32_t LUMENRTC_CALL lrtc_impl_video_device_number_of_devices(
     lrtc_video_device_t* device) {
   if (!device || !device->ref.get()) {
     return 0;
@@ -1540,7 +1540,7 @@ LUMENRTC_API uint32_t LUMENRTC_CALL lrtc_video_device_number_of_devices(
   return device->ref->NumberOfDevices();
 }
 
-LUMENRTC_API int32_t LUMENRTC_CALL lrtc_video_device_get_device_name(
+int32_t LUMENRTC_CALL lrtc_impl_video_device_get_device_name(
     lrtc_video_device_t* device, uint32_t index, char* name,
     uint32_t name_length, char* unique_id, uint32_t unique_id_length) {
   if (!device || !device->ref.get() || !name || !unique_id) {
@@ -1550,7 +1550,7 @@ LUMENRTC_API int32_t LUMENRTC_CALL lrtc_video_device_get_device_name(
                                     unique_id_length);
 }
 
-LUMENRTC_API lrtc_video_capturer_t* LUMENRTC_CALL lrtc_video_device_create_capturer(
+lrtc_video_capturer_t* LUMENRTC_CALL lrtc_impl_video_device_create_capturer(
     lrtc_video_device_t* device, const char* name, uint32_t index, size_t width,
     size_t height, size_t target_fps) {
   if (!device || !device->ref.get() || !name) {
@@ -1566,11 +1566,11 @@ LUMENRTC_API lrtc_video_capturer_t* LUMENRTC_CALL lrtc_video_device_create_captu
   return handle;
 }
 
-LUMENRTC_API void LUMENRTC_CALL lrtc_video_device_release(lrtc_video_device_t* device) {
+void LUMENRTC_CALL lrtc_impl_video_device_release(lrtc_video_device_t* device) {
   delete device;
 }
 
-LUMENRTC_API bool LUMENRTC_CALL lrtc_video_capturer_start(
+bool LUMENRTC_CALL lrtc_impl_video_capturer_start(
     lrtc_video_capturer_t* capturer) {
   if (!capturer || !capturer->ref.get()) {
     return false;
@@ -1578,7 +1578,7 @@ LUMENRTC_API bool LUMENRTC_CALL lrtc_video_capturer_start(
   return capturer->ref->StartCapture();
 }
 
-LUMENRTC_API bool LUMENRTC_CALL lrtc_video_capturer_capture_started(
+bool LUMENRTC_CALL lrtc_impl_video_capturer_capture_started(
     lrtc_video_capturer_t* capturer) {
   if (!capturer || !capturer->ref.get()) {
     return false;
@@ -1586,7 +1586,7 @@ LUMENRTC_API bool LUMENRTC_CALL lrtc_video_capturer_capture_started(
   return capturer->ref->CaptureStarted();
 }
 
-LUMENRTC_API void LUMENRTC_CALL lrtc_video_capturer_stop(
+void LUMENRTC_CALL lrtc_impl_video_capturer_stop(
     lrtc_video_capturer_t* capturer) {
   if (!capturer || !capturer->ref.get()) {
     return;
@@ -1594,12 +1594,12 @@ LUMENRTC_API void LUMENRTC_CALL lrtc_video_capturer_stop(
   capturer->ref->StopCapture();
 }
 
-LUMENRTC_API void LUMENRTC_CALL lrtc_video_capturer_release(
+void LUMENRTC_CALL lrtc_impl_video_capturer_release(
     lrtc_video_capturer_t* capturer) {
   delete capturer;
 }
 
-LUMENRTC_API void LUMENRTC_CALL lrtc_audio_source_capture_frame(
+void LUMENRTC_CALL lrtc_impl_audio_source_capture_frame(
     lrtc_audio_source_t* source, const void* audio_data, int bits_per_sample,
     int sample_rate, size_t number_of_channels, size_t number_of_frames) {
   if (!source || !source->ref.get() || !audio_data) {
@@ -1609,15 +1609,15 @@ LUMENRTC_API void LUMENRTC_CALL lrtc_audio_source_capture_frame(
                             number_of_channels, number_of_frames);
 }
 
-LUMENRTC_API void LUMENRTC_CALL lrtc_audio_source_release(lrtc_audio_source_t* source) {
+void LUMENRTC_CALL lrtc_impl_audio_source_release(lrtc_audio_source_t* source) {
   delete source;
 }
 
-LUMENRTC_API void LUMENRTC_CALL lrtc_video_source_release(lrtc_video_source_t* source) {
+void LUMENRTC_CALL lrtc_impl_video_source_release(lrtc_video_source_t* source) {
   delete source;
 }
 
-LUMENRTC_API void LUMENRTC_CALL lrtc_audio_track_set_volume(lrtc_audio_track_t* track,
+void LUMENRTC_CALL lrtc_impl_audio_track_set_volume(lrtc_audio_track_t* track,
                                                double volume) {
   if (!track || !track->ref.get()) {
     return;
@@ -1625,7 +1625,7 @@ LUMENRTC_API void LUMENRTC_CALL lrtc_audio_track_set_volume(lrtc_audio_track_t* 
   track->ref->SetVolume(volume);
 }
 
-LUMENRTC_API int32_t LUMENRTC_CALL lrtc_audio_track_get_id(lrtc_audio_track_t* track,
+int32_t LUMENRTC_CALL lrtc_impl_audio_track_get_id(lrtc_audio_track_t* track,
                                               char* buffer,
                                               uint32_t buffer_len) {
   if (!track || !track->ref.get()) {
@@ -1634,21 +1634,21 @@ LUMENRTC_API int32_t LUMENRTC_CALL lrtc_audio_track_get_id(lrtc_audio_track_t* t
   return CopyPortableString(track->ref->id(), buffer, buffer_len);
 }
 
-LUMENRTC_API int LUMENRTC_CALL lrtc_audio_track_get_state(lrtc_audio_track_t* track) {
+int LUMENRTC_CALL lrtc_impl_audio_track_get_state(lrtc_audio_track_t* track) {
   if (!track || !track->ref.get()) {
     return -1;
   }
   return static_cast<int>(track->ref->state());
 }
 
-LUMENRTC_API int LUMENRTC_CALL lrtc_audio_track_get_enabled(lrtc_audio_track_t* track) {
+int LUMENRTC_CALL lrtc_impl_audio_track_get_enabled(lrtc_audio_track_t* track) {
   if (!track || !track->ref.get()) {
     return 0;
   }
   return track->ref->enabled() ? 1 : 0;
 }
 
-LUMENRTC_API int LUMENRTC_CALL lrtc_audio_track_set_enabled(lrtc_audio_track_t* track,
+int LUMENRTC_CALL lrtc_impl_audio_track_set_enabled(lrtc_audio_track_t* track,
                                                int enabled) {
   if (!track || !track->ref.get()) {
     return 0;
@@ -1656,7 +1656,7 @@ LUMENRTC_API int LUMENRTC_CALL lrtc_audio_track_set_enabled(lrtc_audio_track_t* 
   return track->ref->set_enabled(enabled != 0) ? 1 : 0;
 }
 
-LUMENRTC_API void LUMENRTC_CALL lrtc_audio_track_add_sink(lrtc_audio_track_t* track,
+void LUMENRTC_CALL lrtc_impl_audio_track_add_sink(lrtc_audio_track_t* track,
                                              lrtc_audio_sink_t* sink) {
   if (!track || !track->ref.get() || !sink || !sink->sink) {
     return;
@@ -1664,7 +1664,7 @@ LUMENRTC_API void LUMENRTC_CALL lrtc_audio_track_add_sink(lrtc_audio_track_t* tr
   track->ref->AddSink(sink->sink);
 }
 
-LUMENRTC_API void LUMENRTC_CALL lrtc_audio_track_remove_sink(lrtc_audio_track_t* track,
+void LUMENRTC_CALL lrtc_impl_audio_track_remove_sink(lrtc_audio_track_t* track,
                                                 lrtc_audio_sink_t* sink) {
   if (!track || !track->ref.get() || !sink || !sink->sink) {
     return;
@@ -1672,11 +1672,11 @@ LUMENRTC_API void LUMENRTC_CALL lrtc_audio_track_remove_sink(lrtc_audio_track_t*
   track->ref->RemoveSink(sink->sink);
 }
 
-LUMENRTC_API void LUMENRTC_CALL lrtc_audio_track_release(lrtc_audio_track_t* track) {
+void LUMENRTC_CALL lrtc_impl_audio_track_release(lrtc_audio_track_t* track) {
   delete track;
 }
 
-LUMENRTC_API lrtc_audio_sink_t* LUMENRTC_CALL lrtc_audio_sink_create(
+lrtc_audio_sink_t* LUMENRTC_CALL lrtc_impl_audio_sink_create(
     const lrtc_audio_sink_callbacks_t* callbacks, void* user_data) {
   auto handle = new lrtc_audio_sink_t();
   auto* sink = new AudioSinkImpl();
@@ -1685,7 +1685,7 @@ LUMENRTC_API lrtc_audio_sink_t* LUMENRTC_CALL lrtc_audio_sink_create(
   return handle;
 }
 
-LUMENRTC_API void LUMENRTC_CALL lrtc_audio_sink_release(lrtc_audio_sink_t* sink) {
+void LUMENRTC_CALL lrtc_impl_audio_sink_release(lrtc_audio_sink_t* sink) {
   if (!sink) {
     return;
   }
@@ -1694,7 +1694,7 @@ LUMENRTC_API void LUMENRTC_CALL lrtc_audio_sink_release(lrtc_audio_sink_t* sink)
   delete sink;
 }
 
-LUMENRTC_API bool LUMENRTC_CALL lrtc_media_stream_add_audio_track(
+bool LUMENRTC_CALL lrtc_impl_media_stream_add_audio_track(
     lrtc_media_stream_t* stream, lrtc_audio_track_t* track) {
   if (!stream || !stream->ref.get() || !track || !track->ref.get()) {
     return false;
@@ -1702,7 +1702,7 @@ LUMENRTC_API bool LUMENRTC_CALL lrtc_media_stream_add_audio_track(
   return stream->ref->AddTrack(track->ref);
 }
 
-LUMENRTC_API bool LUMENRTC_CALL lrtc_media_stream_add_video_track(
+bool LUMENRTC_CALL lrtc_impl_media_stream_add_video_track(
     lrtc_media_stream_t* stream, lrtc_video_track_t* track) {
   if (!stream || !stream->ref.get() || !track || !track->ref.get()) {
     return false;
@@ -1710,7 +1710,7 @@ LUMENRTC_API bool LUMENRTC_CALL lrtc_media_stream_add_video_track(
   return stream->ref->AddTrack(track->ref);
 }
 
-LUMENRTC_API bool LUMENRTC_CALL lrtc_media_stream_remove_audio_track(
+bool LUMENRTC_CALL lrtc_impl_media_stream_remove_audio_track(
     lrtc_media_stream_t* stream, lrtc_audio_track_t* track) {
   if (!stream || !stream->ref.get() || !track || !track->ref.get()) {
     return false;
@@ -1718,7 +1718,7 @@ LUMENRTC_API bool LUMENRTC_CALL lrtc_media_stream_remove_audio_track(
   return stream->ref->RemoveTrack(track->ref);
 }
 
-LUMENRTC_API bool LUMENRTC_CALL lrtc_media_stream_remove_video_track(
+bool LUMENRTC_CALL lrtc_impl_media_stream_remove_video_track(
     lrtc_media_stream_t* stream, lrtc_video_track_t* track) {
   if (!stream || !stream->ref.get() || !track || !track->ref.get()) {
     return false;
@@ -1726,7 +1726,7 @@ LUMENRTC_API bool LUMENRTC_CALL lrtc_media_stream_remove_video_track(
   return stream->ref->RemoveTrack(track->ref);
 }
 
-LUMENRTC_API int32_t LUMENRTC_CALL lrtc_media_stream_get_id(lrtc_media_stream_t* stream,
+int32_t LUMENRTC_CALL lrtc_impl_media_stream_get_id(lrtc_media_stream_t* stream,
                                                char* buffer,
                                                uint32_t buffer_len) {
   if (!stream || !stream->ref.get()) {
@@ -1735,7 +1735,7 @@ LUMENRTC_API int32_t LUMENRTC_CALL lrtc_media_stream_get_id(lrtc_media_stream_t*
   return CopyPortableString(stream->ref->id(), buffer, buffer_len);
 }
 
-LUMENRTC_API int32_t LUMENRTC_CALL lrtc_media_stream_get_label(lrtc_media_stream_t* stream,
+int32_t LUMENRTC_CALL lrtc_impl_media_stream_get_label(lrtc_media_stream_t* stream,
                                                   char* buffer,
                                                   uint32_t buffer_len) {
   if (!stream || !stream->ref.get()) {
@@ -1744,11 +1744,11 @@ LUMENRTC_API int32_t LUMENRTC_CALL lrtc_media_stream_get_label(lrtc_media_stream
   return CopyPortableString(stream->ref->label(), buffer, buffer_len);
 }
 
-LUMENRTC_API void LUMENRTC_CALL lrtc_media_stream_release(lrtc_media_stream_t* stream) {
+void LUMENRTC_CALL lrtc_impl_media_stream_release(lrtc_media_stream_t* stream) {
   delete stream;
 }
 
-LUMENRTC_API lrtc_peer_connection_t* LUMENRTC_CALL lrtc_peer_connection_create(
+lrtc_peer_connection_t* LUMENRTC_CALL lrtc_impl_peer_connection_create(
     lrtc_factory_t* factory, const lrtc_rtc_config_t* config,
     lrtc_media_constraints_t* constraints,
     const lrtc_peer_connection_callbacks_t* callbacks, void* user_data) {
@@ -1781,7 +1781,7 @@ LUMENRTC_API lrtc_peer_connection_t* LUMENRTC_CALL lrtc_peer_connection_create(
   return handle;
 }
 
-LUMENRTC_API void LUMENRTC_CALL lrtc_peer_connection_set_callbacks(
+void LUMENRTC_CALL lrtc_impl_peer_connection_set_callbacks(
     lrtc_peer_connection_t* pc,
     const lrtc_peer_connection_callbacks_t* callbacks, void* user_data) {
   if (!pc || !pc->observer) {
@@ -1790,14 +1790,14 @@ LUMENRTC_API void LUMENRTC_CALL lrtc_peer_connection_set_callbacks(
   pc->observer->SetCallbacks(callbacks, user_data);
 }
 
-LUMENRTC_API void LUMENRTC_CALL lrtc_peer_connection_close(lrtc_peer_connection_t* pc) {
+void LUMENRTC_CALL lrtc_impl_peer_connection_close(lrtc_peer_connection_t* pc) {
   if (!pc || !pc->ref.get()) {
     return;
   }
   pc->ref->Close();
 }
 
-LUMENRTC_API void LUMENRTC_CALL lrtc_peer_connection_release(lrtc_peer_connection_t* pc) {
+void LUMENRTC_CALL lrtc_impl_peer_connection_release(lrtc_peer_connection_t* pc) {
   if (!pc) {
     return;
   }
@@ -1809,7 +1809,7 @@ LUMENRTC_API void LUMENRTC_CALL lrtc_peer_connection_release(lrtc_peer_connectio
   delete pc;
 }
 
-LUMENRTC_API void LUMENRTC_CALL lrtc_peer_connection_create_offer(
+void LUMENRTC_CALL lrtc_impl_peer_connection_create_offer(
     lrtc_peer_connection_t* pc, lrtc_sdp_success_cb success,
     lrtc_sdp_error_cb failure, void* user_data,
     lrtc_media_constraints_t* constraints) {
@@ -1838,7 +1838,7 @@ LUMENRTC_API void LUMENRTC_CALL lrtc_peer_connection_create_offer(
       mc);
 }
 
-LUMENRTC_API void LUMENRTC_CALL lrtc_peer_connection_create_answer(
+void LUMENRTC_CALL lrtc_impl_peer_connection_create_answer(
     lrtc_peer_connection_t* pc, lrtc_sdp_success_cb success,
     lrtc_sdp_error_cb failure, void* user_data,
     lrtc_media_constraints_t* constraints) {
@@ -1867,7 +1867,7 @@ LUMENRTC_API void LUMENRTC_CALL lrtc_peer_connection_create_answer(
       mc);
 }
 
-LUMENRTC_API void LUMENRTC_CALL lrtc_peer_connection_restart_ice(
+void LUMENRTC_CALL lrtc_impl_peer_connection_restart_ice(
     lrtc_peer_connection_t* pc) {
   if (!pc || !pc->ref.get()) {
     return;
@@ -1875,7 +1875,7 @@ LUMENRTC_API void LUMENRTC_CALL lrtc_peer_connection_restart_ice(
   pc->ref->RestartIce();
 }
 
-LUMENRTC_API void LUMENRTC_CALL lrtc_peer_connection_set_local_description(
+void LUMENRTC_CALL lrtc_impl_peer_connection_set_local_description(
     lrtc_peer_connection_t* pc, const char* sdp, const char* type,
     lrtc_void_cb success, lrtc_sdp_error_cb failure, void* user_data) {
   if (!pc || !pc->ref.get() || !sdp || !type) {
@@ -1898,7 +1898,7 @@ LUMENRTC_API void LUMENRTC_CALL lrtc_peer_connection_set_local_description(
       });
 }
 
-LUMENRTC_API void LUMENRTC_CALL lrtc_peer_connection_set_remote_description(
+void LUMENRTC_CALL lrtc_impl_peer_connection_set_remote_description(
     lrtc_peer_connection_t* pc, const char* sdp, const char* type,
     lrtc_void_cb success, lrtc_sdp_error_cb failure, void* user_data) {
   if (!pc || !pc->ref.get() || !sdp || !type) {
@@ -1921,7 +1921,7 @@ LUMENRTC_API void LUMENRTC_CALL lrtc_peer_connection_set_remote_description(
       });
 }
 
-LUMENRTC_API void LUMENRTC_CALL lrtc_peer_connection_get_local_description(
+void LUMENRTC_CALL lrtc_impl_peer_connection_get_local_description(
     lrtc_peer_connection_t* pc, lrtc_sdp_success_cb success,
     lrtc_sdp_error_cb failure, void* user_data) {
   if (!pc || !pc->ref.get()) {
@@ -1943,7 +1943,7 @@ LUMENRTC_API void LUMENRTC_CALL lrtc_peer_connection_get_local_description(
       });
 }
 
-LUMENRTC_API void LUMENRTC_CALL lrtc_peer_connection_get_remote_description(
+void LUMENRTC_CALL lrtc_impl_peer_connection_get_remote_description(
     lrtc_peer_connection_t* pc, lrtc_sdp_success_cb success,
     lrtc_sdp_error_cb failure, void* user_data) {
   if (!pc || !pc->ref.get()) {
@@ -1965,7 +1965,7 @@ LUMENRTC_API void LUMENRTC_CALL lrtc_peer_connection_get_remote_description(
       });
 }
 
-LUMENRTC_API void LUMENRTC_CALL lrtc_peer_connection_get_stats(
+void LUMENRTC_CALL lrtc_impl_peer_connection_get_stats(
     lrtc_peer_connection_t* pc, lrtc_stats_success_cb success,
     lrtc_stats_failure_cb failure, void* user_data) {
   if (!pc || !pc->ref.get()) {
@@ -1989,7 +1989,7 @@ LUMENRTC_API void LUMENRTC_CALL lrtc_peer_connection_get_stats(
       });
 }
 
-LUMENRTC_API void LUMENRTC_CALL lrtc_peer_connection_get_sender_stats(
+void LUMENRTC_CALL lrtc_impl_peer_connection_get_sender_stats(
     lrtc_peer_connection_t* pc, lrtc_rtp_sender_t* sender,
     lrtc_stats_success_cb success, lrtc_stats_failure_cb failure,
     void* user_data) {
@@ -2015,7 +2015,7 @@ LUMENRTC_API void LUMENRTC_CALL lrtc_peer_connection_get_sender_stats(
       });
 }
 
-LUMENRTC_API void LUMENRTC_CALL lrtc_peer_connection_get_receiver_stats(
+void LUMENRTC_CALL lrtc_impl_peer_connection_get_receiver_stats(
     lrtc_peer_connection_t* pc, lrtc_rtp_receiver_t* receiver,
     lrtc_stats_success_cb success, lrtc_stats_failure_cb failure,
     void* user_data) {
@@ -2041,7 +2041,7 @@ LUMENRTC_API void LUMENRTC_CALL lrtc_peer_connection_get_receiver_stats(
       });
 }
 
-LUMENRTC_API int LUMENRTC_CALL lrtc_peer_connection_set_codec_preferences(
+int LUMENRTC_CALL lrtc_impl_peer_connection_set_codec_preferences(
     lrtc_peer_connection_t* pc, lrtc_media_type media_type,
     const char** mime_types, uint32_t mime_type_count) {
   if (!pc || !pc->ref.get() || !pc->factory.get()) {
@@ -2075,7 +2075,7 @@ LUMENRTC_API int LUMENRTC_CALL lrtc_peer_connection_set_codec_preferences(
   return applied ? 1 : 0;
 }
 
-LUMENRTC_API int LUMENRTC_CALL lrtc_peer_connection_set_transceiver_codec_preferences(
+int LUMENRTC_CALL lrtc_impl_peer_connection_set_transceiver_codec_preferences(
     lrtc_peer_connection_t* pc, lrtc_rtp_transceiver_t* transceiver,
     const char** mime_types, uint32_t mime_type_count) {
   if (!pc || !pc->ref.get() || !pc->factory.get() || !transceiver ||
@@ -2097,7 +2097,7 @@ LUMENRTC_API int LUMENRTC_CALL lrtc_peer_connection_set_transceiver_codec_prefer
   return 1;
 }
 
-LUMENRTC_API int LUMENRTC_CALL lrtc_peer_connection_add_ice_candidate_ex(
+int LUMENRTC_CALL lrtc_impl_peer_connection_add_ice_candidate_ex(
     lrtc_peer_connection_t* pc, const char* sdp_mid, int sdp_mline_index,
     const char* candidate) {
   const bool trace_ice_native = IsTraceIceNativeEnabled();
@@ -2146,14 +2146,14 @@ LUMENRTC_API int LUMENRTC_CALL lrtc_peer_connection_add_ice_candidate_ex(
   return 1;
 }
 
-LUMENRTC_API void LUMENRTC_CALL lrtc_peer_connection_add_ice_candidate(
+void LUMENRTC_CALL lrtc_impl_peer_connection_add_ice_candidate(
     lrtc_peer_connection_t* pc, const char* sdp_mid, int sdp_mline_index,
     const char* candidate) {
-  lrtc_peer_connection_add_ice_candidate_ex(pc, sdp_mid, sdp_mline_index,
+  lrtc_impl_peer_connection_add_ice_candidate_ex(pc, sdp_mid, sdp_mline_index,
                                             candidate);
 }
 
-LUMENRTC_API bool LUMENRTC_CALL lrtc_peer_connection_add_stream(
+bool LUMENRTC_CALL lrtc_impl_peer_connection_add_stream(
     lrtc_peer_connection_t* pc, lrtc_media_stream_t* stream) {
   if (!pc || !pc->ref.get() || !stream || !stream->ref.get()) {
     return false;
@@ -2161,7 +2161,7 @@ LUMENRTC_API bool LUMENRTC_CALL lrtc_peer_connection_add_stream(
   return pc->ref->AddStream(stream->ref) == 0;
 }
 
-LUMENRTC_API bool LUMENRTC_CALL lrtc_peer_connection_remove_stream(
+bool LUMENRTC_CALL lrtc_impl_peer_connection_remove_stream(
     lrtc_peer_connection_t* pc, lrtc_media_stream_t* stream) {
   if (!pc || !pc->ref.get() || !stream || !stream->ref.get()) {
     return false;
@@ -2169,7 +2169,7 @@ LUMENRTC_API bool LUMENRTC_CALL lrtc_peer_connection_remove_stream(
   return pc->ref->RemoveStream(stream->ref) == 0;
 }
 
-LUMENRTC_API int LUMENRTC_CALL lrtc_peer_connection_add_audio_track(
+int LUMENRTC_CALL lrtc_impl_peer_connection_add_audio_track(
     lrtc_peer_connection_t* pc, lrtc_audio_track_t* track,
     const char** stream_ids, uint32_t stream_id_count) {
   if (!pc || !pc->ref.get() || !track || !track->ref.get()) {
@@ -2181,7 +2181,7 @@ LUMENRTC_API int LUMENRTC_CALL lrtc_peer_connection_add_audio_track(
   return sender.get() ? 1 : 0;
 }
 
-LUMENRTC_API int LUMENRTC_CALL lrtc_peer_connection_add_video_track(
+int LUMENRTC_CALL lrtc_impl_peer_connection_add_video_track(
     lrtc_peer_connection_t* pc, lrtc_video_track_t* track,
     const char** stream_ids, uint32_t stream_id_count) {
   if (!pc || !pc->ref.get() || !track || !track->ref.get()) {
@@ -2193,7 +2193,7 @@ LUMENRTC_API int LUMENRTC_CALL lrtc_peer_connection_add_video_track(
   return sender.get() ? 1 : 0;
 }
 
-LUMENRTC_API lrtc_rtp_sender_t* LUMENRTC_CALL lrtc_peer_connection_add_audio_track_sender(
+lrtc_rtp_sender_t* LUMENRTC_CALL lrtc_impl_peer_connection_add_audio_track_sender(
     lrtc_peer_connection_t* pc, lrtc_audio_track_t* track,
     const char** stream_ids, uint32_t stream_id_count) {
   if (!pc || !pc->ref.get() || !track || !track->ref.get()) {
@@ -2210,7 +2210,7 @@ LUMENRTC_API lrtc_rtp_sender_t* LUMENRTC_CALL lrtc_peer_connection_add_audio_tra
   return handle;
 }
 
-LUMENRTC_API lrtc_rtp_sender_t* LUMENRTC_CALL lrtc_peer_connection_add_video_track_sender(
+lrtc_rtp_sender_t* LUMENRTC_CALL lrtc_impl_peer_connection_add_video_track_sender(
     lrtc_peer_connection_t* pc, lrtc_video_track_t* track,
     const char** stream_ids, uint32_t stream_id_count) {
   if (!pc || !pc->ref.get() || !track || !track->ref.get()) {
@@ -2227,7 +2227,7 @@ LUMENRTC_API lrtc_rtp_sender_t* LUMENRTC_CALL lrtc_peer_connection_add_video_tra
   return handle;
 }
 
-LUMENRTC_API lrtc_rtp_transceiver_t* LUMENRTC_CALL lrtc_peer_connection_add_transceiver(
+lrtc_rtp_transceiver_t* LUMENRTC_CALL lrtc_impl_peer_connection_add_transceiver(
     lrtc_peer_connection_t* pc, lrtc_media_type media_type) {
   if (!pc || !pc->ref.get()) {
     return nullptr;
@@ -2243,7 +2243,7 @@ LUMENRTC_API lrtc_rtp_transceiver_t* LUMENRTC_CALL lrtc_peer_connection_add_tran
   return handle;
 }
 
-LUMENRTC_API lrtc_rtp_transceiver_t* LUMENRTC_CALL lrtc_peer_connection_add_audio_track_transceiver(
+lrtc_rtp_transceiver_t* LUMENRTC_CALL lrtc_impl_peer_connection_add_audio_track_transceiver(
     lrtc_peer_connection_t* pc, lrtc_audio_track_t* track) {
   if (!pc || !pc->ref.get() || !track || !track->ref.get()) {
     return nullptr;
@@ -2258,7 +2258,7 @@ LUMENRTC_API lrtc_rtp_transceiver_t* LUMENRTC_CALL lrtc_peer_connection_add_audi
   return handle;
 }
 
-LUMENRTC_API lrtc_rtp_transceiver_t* LUMENRTC_CALL lrtc_peer_connection_add_video_track_transceiver(
+lrtc_rtp_transceiver_t* LUMENRTC_CALL lrtc_impl_peer_connection_add_video_track_transceiver(
     lrtc_peer_connection_t* pc, lrtc_video_track_t* track) {
   if (!pc || !pc->ref.get() || !track || !track->ref.get()) {
     return nullptr;
@@ -2273,7 +2273,7 @@ LUMENRTC_API lrtc_rtp_transceiver_t* LUMENRTC_CALL lrtc_peer_connection_add_vide
   return handle;
 }
 
-LUMENRTC_API lrtc_rtp_transceiver_t* LUMENRTC_CALL lrtc_peer_connection_add_transceiver_with_init(
+lrtc_rtp_transceiver_t* LUMENRTC_CALL lrtc_impl_peer_connection_add_transceiver_with_init(
     lrtc_peer_connection_t* pc, lrtc_media_type media_type,
     const lrtc_rtp_transceiver_init_t* init) {
   if (!pc || !pc->ref.get() || !init) {
@@ -2295,7 +2295,7 @@ LUMENRTC_API lrtc_rtp_transceiver_t* LUMENRTC_CALL lrtc_peer_connection_add_tran
   return handle;
 }
 
-LUMENRTC_API lrtc_rtp_transceiver_t* LUMENRTC_CALL lrtc_peer_connection_add_audio_track_transceiver_with_init(
+lrtc_rtp_transceiver_t* LUMENRTC_CALL lrtc_impl_peer_connection_add_audio_track_transceiver_with_init(
     lrtc_peer_connection_t* pc, lrtc_audio_track_t* track,
     const lrtc_rtp_transceiver_init_t* init) {
   if (!pc || !pc->ref.get() || !track || !track->ref.get() || !init) {
@@ -2316,7 +2316,7 @@ LUMENRTC_API lrtc_rtp_transceiver_t* LUMENRTC_CALL lrtc_peer_connection_add_audi
   return handle;
 }
 
-LUMENRTC_API lrtc_rtp_transceiver_t* LUMENRTC_CALL lrtc_peer_connection_add_video_track_transceiver_with_init(
+lrtc_rtp_transceiver_t* LUMENRTC_CALL lrtc_impl_peer_connection_add_video_track_transceiver_with_init(
     lrtc_peer_connection_t* pc, lrtc_video_track_t* track,
     const lrtc_rtp_transceiver_init_t* init) {
   if (!pc || !pc->ref.get() || !track || !track->ref.get() || !init) {
@@ -2337,7 +2337,7 @@ LUMENRTC_API lrtc_rtp_transceiver_t* LUMENRTC_CALL lrtc_peer_connection_add_vide
   return handle;
 }
 
-LUMENRTC_API int LUMENRTC_CALL lrtc_peer_connection_remove_track(
+int LUMENRTC_CALL lrtc_impl_peer_connection_remove_track(
     lrtc_peer_connection_t* pc, lrtc_rtp_sender_t* sender) {
   if (!pc || !pc->ref.get() || !sender || !sender->ref.get()) {
     return 0;
@@ -2345,7 +2345,7 @@ LUMENRTC_API int LUMENRTC_CALL lrtc_peer_connection_remove_track(
   return pc->ref->RemoveTrack(sender->ref) ? 1 : 0;
 }
 
-LUMENRTC_API uint32_t LUMENRTC_CALL lrtc_peer_connection_sender_count(
+uint32_t LUMENRTC_CALL lrtc_impl_peer_connection_sender_count(
     lrtc_peer_connection_t* pc) {
   if (!pc || !pc->ref.get()) {
     return 0;
@@ -2353,7 +2353,7 @@ LUMENRTC_API uint32_t LUMENRTC_CALL lrtc_peer_connection_sender_count(
   return static_cast<uint32_t>(pc->ref->senders().size());
 }
 
-LUMENRTC_API lrtc_rtp_sender_t* LUMENRTC_CALL lrtc_peer_connection_get_sender(
+lrtc_rtp_sender_t* LUMENRTC_CALL lrtc_impl_peer_connection_get_sender(
     lrtc_peer_connection_t* pc, uint32_t index) {
   if (!pc || !pc->ref.get()) {
     return nullptr;
@@ -2371,7 +2371,7 @@ LUMENRTC_API lrtc_rtp_sender_t* LUMENRTC_CALL lrtc_peer_connection_get_sender(
   return handle;
 }
 
-LUMENRTC_API uint32_t LUMENRTC_CALL lrtc_peer_connection_receiver_count(
+uint32_t LUMENRTC_CALL lrtc_impl_peer_connection_receiver_count(
     lrtc_peer_connection_t* pc) {
   if (!pc || !pc->ref.get()) {
     return 0;
@@ -2379,7 +2379,7 @@ LUMENRTC_API uint32_t LUMENRTC_CALL lrtc_peer_connection_receiver_count(
   return static_cast<uint32_t>(pc->ref->receivers().size());
 }
 
-LUMENRTC_API lrtc_rtp_receiver_t* LUMENRTC_CALL lrtc_peer_connection_get_receiver(
+lrtc_rtp_receiver_t* LUMENRTC_CALL lrtc_impl_peer_connection_get_receiver(
     lrtc_peer_connection_t* pc, uint32_t index) {
   if (!pc || !pc->ref.get()) {
     return nullptr;
@@ -2398,7 +2398,7 @@ LUMENRTC_API lrtc_rtp_receiver_t* LUMENRTC_CALL lrtc_peer_connection_get_receive
   return handle;
 }
 
-LUMENRTC_API uint32_t LUMENRTC_CALL lrtc_peer_connection_transceiver_count(
+uint32_t LUMENRTC_CALL lrtc_impl_peer_connection_transceiver_count(
     lrtc_peer_connection_t* pc) {
   if (!pc || !pc->ref.get()) {
     return 0;
@@ -2406,7 +2406,7 @@ LUMENRTC_API uint32_t LUMENRTC_CALL lrtc_peer_connection_transceiver_count(
   return static_cast<uint32_t>(pc->ref->transceivers().size());
 }
 
-LUMENRTC_API lrtc_rtp_transceiver_t* LUMENRTC_CALL lrtc_peer_connection_get_transceiver(
+lrtc_rtp_transceiver_t* LUMENRTC_CALL lrtc_impl_peer_connection_get_transceiver(
     lrtc_peer_connection_t* pc, uint32_t index) {
   if (!pc || !pc->ref.get()) {
     return nullptr;
@@ -2426,7 +2426,7 @@ LUMENRTC_API lrtc_rtp_transceiver_t* LUMENRTC_CALL lrtc_peer_connection_get_tran
   return handle;
 }
 
-LUMENRTC_API lrtc_data_channel_t* LUMENRTC_CALL lrtc_peer_connection_create_data_channel(
+lrtc_data_channel_t* LUMENRTC_CALL lrtc_impl_peer_connection_create_data_channel(
     lrtc_peer_connection_t* pc, const char* label, int ordered, int reliable,
     int max_retransmit_time, int max_retransmits, const char* protocol,
     int negotiated, int id) {
@@ -2454,7 +2454,7 @@ LUMENRTC_API lrtc_data_channel_t* LUMENRTC_CALL lrtc_peer_connection_create_data
   return handle;
 }
 
-LUMENRTC_API void LUMENRTC_CALL lrtc_data_channel_set_callbacks(
+void LUMENRTC_CALL lrtc_impl_data_channel_set_callbacks(
     lrtc_data_channel_t* channel, const lrtc_data_channel_callbacks_t* callbacks,
     void* user_data) {
   if (!channel || !channel->ref.get()) {
@@ -2467,7 +2467,7 @@ LUMENRTC_API void LUMENRTC_CALL lrtc_data_channel_set_callbacks(
   channel->observer->SetCallbacks(callbacks, user_data);
 }
 
-LUMENRTC_API void LUMENRTC_CALL lrtc_data_channel_send(lrtc_data_channel_t* channel,
+void LUMENRTC_CALL lrtc_impl_data_channel_send(lrtc_data_channel_t* channel,
                                          const uint8_t* data, uint32_t size,
                                          int binary) {
   if (!channel || !channel->ref.get() || (!data && size > 0)) {
@@ -2476,14 +2476,14 @@ LUMENRTC_API void LUMENRTC_CALL lrtc_data_channel_send(lrtc_data_channel_t* chan
   channel->ref->Send(data, size, binary != 0);
 }
 
-LUMENRTC_API void LUMENRTC_CALL lrtc_data_channel_close(lrtc_data_channel_t* channel) {
+void LUMENRTC_CALL lrtc_impl_data_channel_close(lrtc_data_channel_t* channel) {
   if (!channel || !channel->ref.get()) {
     return;
   }
   channel->ref->Close();
 }
 
-LUMENRTC_API void LUMENRTC_CALL lrtc_data_channel_release(lrtc_data_channel_t* channel) {
+void LUMENRTC_CALL lrtc_impl_data_channel_release(lrtc_data_channel_t* channel) {
   if (!channel) {
     return;
   }
@@ -2495,7 +2495,7 @@ LUMENRTC_API void LUMENRTC_CALL lrtc_data_channel_release(lrtc_data_channel_t* c
   delete channel;
 }
 
-LUMENRTC_API lrtc_video_sink_t* LUMENRTC_CALL lrtc_video_sink_create(
+lrtc_video_sink_t* LUMENRTC_CALL lrtc_impl_video_sink_create(
     const lrtc_video_sink_callbacks_t* callbacks, void* user_data) {
   auto handle = new lrtc_video_sink_t();
   auto* renderer = new VideoSinkImpl();
@@ -2504,7 +2504,7 @@ LUMENRTC_API lrtc_video_sink_t* LUMENRTC_CALL lrtc_video_sink_create(
   return handle;
 }
 
-LUMENRTC_API void LUMENRTC_CALL lrtc_video_sink_release(lrtc_video_sink_t* sink) {
+void LUMENRTC_CALL lrtc_impl_video_sink_release(lrtc_video_sink_t* sink) {
   if (!sink) {
     return;
   }
@@ -2513,7 +2513,7 @@ LUMENRTC_API void LUMENRTC_CALL lrtc_video_sink_release(lrtc_video_sink_t* sink)
   delete sink;
 }
 
-LUMENRTC_API void LUMENRTC_CALL lrtc_video_track_add_sink(lrtc_video_track_t* track,
+void LUMENRTC_CALL lrtc_impl_video_track_add_sink(lrtc_video_track_t* track,
                                              lrtc_video_sink_t* sink) {
   if (!track || !track->ref.get() || !sink || !sink->renderer) {
     return;
@@ -2521,7 +2521,7 @@ LUMENRTC_API void LUMENRTC_CALL lrtc_video_track_add_sink(lrtc_video_track_t* tr
   track->ref->AddRenderer(sink->renderer);
 }
 
-LUMENRTC_API void LUMENRTC_CALL lrtc_video_track_remove_sink(lrtc_video_track_t* track,
+void LUMENRTC_CALL lrtc_impl_video_track_remove_sink(lrtc_video_track_t* track,
                                                 lrtc_video_sink_t* sink) {
   if (!track || !track->ref.get() || !sink || !sink->renderer) {
     return;
@@ -2529,7 +2529,7 @@ LUMENRTC_API void LUMENRTC_CALL lrtc_video_track_remove_sink(lrtc_video_track_t*
   track->ref->RemoveRenderer(sink->renderer);
 }
 
-LUMENRTC_API int32_t LUMENRTC_CALL lrtc_video_track_get_id(lrtc_video_track_t* track,
+int32_t LUMENRTC_CALL lrtc_impl_video_track_get_id(lrtc_video_track_t* track,
                                               char* buffer,
                                               uint32_t buffer_len) {
   if (!track || !track->ref.get()) {
@@ -2538,21 +2538,21 @@ LUMENRTC_API int32_t LUMENRTC_CALL lrtc_video_track_get_id(lrtc_video_track_t* t
   return CopyPortableString(track->ref->id(), buffer, buffer_len);
 }
 
-LUMENRTC_API int LUMENRTC_CALL lrtc_video_track_get_state(lrtc_video_track_t* track) {
+int LUMENRTC_CALL lrtc_impl_video_track_get_state(lrtc_video_track_t* track) {
   if (!track || !track->ref.get()) {
     return -1;
   }
   return static_cast<int>(track->ref->state());
 }
 
-LUMENRTC_API int LUMENRTC_CALL lrtc_video_track_get_enabled(lrtc_video_track_t* track) {
+int LUMENRTC_CALL lrtc_impl_video_track_get_enabled(lrtc_video_track_t* track) {
   if (!track || !track->ref.get()) {
     return 0;
   }
   return track->ref->enabled() ? 1 : 0;
 }
 
-LUMENRTC_API int LUMENRTC_CALL lrtc_video_track_set_enabled(lrtc_video_track_t* track,
+int LUMENRTC_CALL lrtc_impl_video_track_set_enabled(lrtc_video_track_t* track,
                                                int enabled) {
   if (!track || !track->ref.get()) {
     return 0;
@@ -2560,67 +2560,67 @@ LUMENRTC_API int LUMENRTC_CALL lrtc_video_track_set_enabled(lrtc_video_track_t* 
   return track->ref->set_enabled(enabled != 0) ? 1 : 0;
 }
 
-LUMENRTC_API void LUMENRTC_CALL lrtc_video_track_release(lrtc_video_track_t* track) {
+void LUMENRTC_CALL lrtc_impl_video_track_release(lrtc_video_track_t* track) {
   delete track;
 }
 
-LUMENRTC_API int LUMENRTC_CALL lrtc_video_frame_width(lrtc_video_frame_t* frame) {
+int LUMENRTC_CALL lrtc_impl_video_frame_width(lrtc_video_frame_t* frame) {
   if (!frame || !frame->ref.get()) {
     return 0;
   }
   return frame->ref->width();
 }
 
-LUMENRTC_API int LUMENRTC_CALL lrtc_video_frame_height(lrtc_video_frame_t* frame) {
+int LUMENRTC_CALL lrtc_impl_video_frame_height(lrtc_video_frame_t* frame) {
   if (!frame || !frame->ref.get()) {
     return 0;
   }
   return frame->ref->height();
 }
 
-LUMENRTC_API int LUMENRTC_CALL lrtc_video_frame_stride_y(lrtc_video_frame_t* frame) {
+int LUMENRTC_CALL lrtc_impl_video_frame_stride_y(lrtc_video_frame_t* frame) {
   if (!frame || !frame->ref.get()) {
     return 0;
   }
   return frame->ref->StrideY();
 }
 
-LUMENRTC_API int LUMENRTC_CALL lrtc_video_frame_stride_u(lrtc_video_frame_t* frame) {
+int LUMENRTC_CALL lrtc_impl_video_frame_stride_u(lrtc_video_frame_t* frame) {
   if (!frame || !frame->ref.get()) {
     return 0;
   }
   return frame->ref->StrideU();
 }
 
-LUMENRTC_API int LUMENRTC_CALL lrtc_video_frame_stride_v(lrtc_video_frame_t* frame) {
+int LUMENRTC_CALL lrtc_impl_video_frame_stride_v(lrtc_video_frame_t* frame) {
   if (!frame || !frame->ref.get()) {
     return 0;
   }
   return frame->ref->StrideV();
 }
 
-LUMENRTC_API const uint8_t* LUMENRTC_CALL lrtc_video_frame_data_y(lrtc_video_frame_t* frame) {
+const uint8_t* LUMENRTC_CALL lrtc_impl_video_frame_data_y(lrtc_video_frame_t* frame) {
   if (!frame || !frame->ref.get()) {
     return nullptr;
   }
   return frame->ref->DataY();
 }
 
-LUMENRTC_API const uint8_t* LUMENRTC_CALL lrtc_video_frame_data_u(lrtc_video_frame_t* frame) {
+const uint8_t* LUMENRTC_CALL lrtc_impl_video_frame_data_u(lrtc_video_frame_t* frame) {
   if (!frame || !frame->ref.get()) {
     return nullptr;
   }
   return frame->ref->DataU();
 }
 
-LUMENRTC_API const uint8_t* LUMENRTC_CALL lrtc_video_frame_data_v(lrtc_video_frame_t* frame) {
+const uint8_t* LUMENRTC_CALL lrtc_impl_video_frame_data_v(lrtc_video_frame_t* frame) {
   if (!frame || !frame->ref.get()) {
     return nullptr;
   }
   return frame->ref->DataV();
 }
 
-LUMENRTC_API int LUMENRTC_CALL lrtc_video_frame_copy_i420(
+int LUMENRTC_CALL lrtc_impl_video_frame_copy_i420(
     lrtc_video_frame_t* frame, uint8_t* dst_y, int dst_stride_y,
     uint8_t* dst_u, int dst_stride_u, uint8_t* dst_v, int dst_stride_v) {
   if (!frame || !frame->ref.get()) {
@@ -2658,7 +2658,7 @@ LUMENRTC_API int LUMENRTC_CALL lrtc_video_frame_copy_i420(
   return 1;
 }
 
-LUMENRTC_API int LUMENRTC_CALL lrtc_video_frame_to_argb(
+int LUMENRTC_CALL lrtc_impl_video_frame_to_argb(
     lrtc_video_frame_t* frame, uint8_t* dst_argb, int dst_stride_argb,
     int dest_width, int dest_height, int format) {
   if (!frame || !frame->ref.get() || !dst_argb) {
@@ -2669,7 +2669,7 @@ LUMENRTC_API int LUMENRTC_CALL lrtc_video_frame_to_argb(
       dest_width, dest_height);
 }
 
-LUMENRTC_API lrtc_video_frame_t* LUMENRTC_CALL lrtc_video_frame_retain(
+lrtc_video_frame_t* LUMENRTC_CALL lrtc_impl_video_frame_retain(
     lrtc_video_frame_t* frame) {
   if (!frame || !frame->ref.get()) {
     return nullptr;
@@ -2679,11 +2679,11 @@ LUMENRTC_API lrtc_video_frame_t* LUMENRTC_CALL lrtc_video_frame_retain(
   return handle;
 }
 
-LUMENRTC_API void LUMENRTC_CALL lrtc_video_frame_release(lrtc_video_frame_t* frame) {
+void LUMENRTC_CALL lrtc_impl_video_frame_release(lrtc_video_frame_t* frame) {
   delete frame;
 }
 
-LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_sender_set_encoding_parameters(
+int LUMENRTC_CALL lrtc_impl_rtp_sender_set_encoding_parameters(
     lrtc_rtp_sender_t* sender, const lrtc_rtp_encoding_settings_t* settings) {
   if (!sender || !sender->ref.get() || !settings) {
     return 0;
@@ -2767,7 +2767,7 @@ LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_sender_set_encoding_parameters(
   return sender->ref->set_parameters(parameters) ? 1 : 0;
 }
 
-LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_sender_set_encoding_parameters_at(
+int LUMENRTC_CALL lrtc_impl_rtp_sender_set_encoding_parameters_at(
     lrtc_rtp_sender_t* sender, uint32_t index,
     const lrtc_rtp_encoding_settings_t* settings) {
   if (!sender || !sender->ref.get() || !settings) {
@@ -2855,7 +2855,7 @@ LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_sender_set_encoding_parameters_at(
   return sender->ref->set_parameters(parameters) ? 1 : 0;
 }
 
-LUMENRTC_API uint32_t LUMENRTC_CALL lrtc_rtp_sender_encoding_count(
+uint32_t LUMENRTC_CALL lrtc_impl_rtp_sender_encoding_count(
     lrtc_rtp_sender_t* sender) {
   if (!sender || !sender->ref.get()) {
     return 0;
@@ -2868,7 +2868,7 @@ LUMENRTC_API uint32_t LUMENRTC_CALL lrtc_rtp_sender_encoding_count(
   return static_cast<uint32_t>(parameters->encodings().size());
 }
 
-LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_sender_get_encoding_info(
+int LUMENRTC_CALL lrtc_impl_rtp_sender_get_encoding_info(
     lrtc_rtp_sender_t* sender, uint32_t index,
     lrtc_rtp_encoding_info_t* info) {
   if (!sender || !sender->ref.get() || !info) {
@@ -2902,7 +2902,7 @@ LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_sender_get_encoding_info(
   return 1;
 }
 
-LUMENRTC_API int32_t LUMENRTC_CALL lrtc_rtp_sender_get_encoding_rid(
+int32_t LUMENRTC_CALL lrtc_impl_rtp_sender_get_encoding_rid(
     lrtc_rtp_sender_t* sender, uint32_t index, char* buffer,
     uint32_t buffer_len) {
   if (!sender || !sender->ref.get()) {
@@ -2926,7 +2926,7 @@ LUMENRTC_API int32_t LUMENRTC_CALL lrtc_rtp_sender_get_encoding_rid(
   return CopyPortableString(encoding->rid(), buffer, buffer_len);
 }
 
-LUMENRTC_API int32_t LUMENRTC_CALL lrtc_rtp_sender_get_encoding_scalability_mode(
+int32_t LUMENRTC_CALL lrtc_impl_rtp_sender_get_encoding_scalability_mode(
     lrtc_rtp_sender_t* sender, uint32_t index, char* buffer,
     uint32_t buffer_len) {
   if (!sender || !sender->ref.get()) {
@@ -2951,7 +2951,7 @@ LUMENRTC_API int32_t LUMENRTC_CALL lrtc_rtp_sender_get_encoding_scalability_mode
                             buffer, buffer_len);
 }
 
-LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_sender_get_degradation_preference(
+int LUMENRTC_CALL lrtc_impl_rtp_sender_get_degradation_preference(
     lrtc_rtp_sender_t* sender) {
   if (!sender || !sender->ref.get()) {
     return -1;
@@ -2964,7 +2964,7 @@ LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_sender_get_degradation_preference(
   return static_cast<int>(parameters->GetDegradationPreference());
 }
 
-LUMENRTC_API int32_t LUMENRTC_CALL lrtc_rtp_sender_get_parameters_mid(
+int32_t LUMENRTC_CALL lrtc_impl_rtp_sender_get_parameters_mid(
     lrtc_rtp_sender_t* sender, char* buffer, uint32_t buffer_len) {
   if (!sender || !sender->ref.get()) {
     return -1;
@@ -2977,7 +2977,7 @@ LUMENRTC_API int32_t LUMENRTC_CALL lrtc_rtp_sender_get_parameters_mid(
   return CopyPortableString(parameters->mid(), buffer, buffer_len);
 }
 
-LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_sender_get_dtls_info(
+int LUMENRTC_CALL lrtc_impl_rtp_sender_get_dtls_info(
     lrtc_rtp_sender_t* sender, lrtc_dtls_transport_info_t* info) {
   if (!sender || !sender->ref.get()) {
     return 0;
@@ -2985,14 +2985,14 @@ LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_sender_get_dtls_info(
   return FillDtlsInfo(sender->ref->dtls_transport(), info) ? 1 : 0;
 }
 
-LUMENRTC_API uint32_t LUMENRTC_CALL lrtc_rtp_sender_get_ssrc(lrtc_rtp_sender_t* sender) {
+uint32_t LUMENRTC_CALL lrtc_impl_rtp_sender_get_ssrc(lrtc_rtp_sender_t* sender) {
   if (!sender || !sender->ref.get()) {
     return 0;
   }
   return sender->ref->ssrc();
 }
 
-LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_sender_replace_audio_track(
+int LUMENRTC_CALL lrtc_impl_rtp_sender_replace_audio_track(
     lrtc_rtp_sender_t* sender, lrtc_audio_track_t* track) {
   if (!sender || !sender->ref.get()) {
     return 0;
@@ -3010,7 +3010,7 @@ LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_sender_replace_audio_track(
   return sender->ref->set_track(media_track) ? 1 : 0;
 }
 
-LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_sender_replace_video_track(
+int LUMENRTC_CALL lrtc_impl_rtp_sender_replace_video_track(
     lrtc_rtp_sender_t* sender, lrtc_video_track_t* track) {
   if (!sender || !sender->ref.get()) {
     return 0;
@@ -3028,14 +3028,14 @@ LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_sender_replace_video_track(
   return sender->ref->set_track(media_track) ? 1 : 0;
 }
 
-LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_sender_get_media_type(lrtc_rtp_sender_t* sender) {
+int LUMENRTC_CALL lrtc_impl_rtp_sender_get_media_type(lrtc_rtp_sender_t* sender) {
   if (!sender || !sender->ref.get()) {
     return -1;
   }
   return static_cast<int>(sender->ref->media_type());
 }
 
-LUMENRTC_API int32_t LUMENRTC_CALL lrtc_rtp_sender_get_id(
+int32_t LUMENRTC_CALL lrtc_impl_rtp_sender_get_id(
     lrtc_rtp_sender_t* sender, char* buffer, uint32_t buffer_len) {
   if (!sender || !sender->ref.get()) {
     return -1;
@@ -3043,7 +3043,7 @@ LUMENRTC_API int32_t LUMENRTC_CALL lrtc_rtp_sender_get_id(
   return CopyPortableString(sender->ref->id(), buffer, buffer_len);
 }
 
-LUMENRTC_API uint32_t LUMENRTC_CALL lrtc_rtp_sender_stream_id_count(
+uint32_t LUMENRTC_CALL lrtc_impl_rtp_sender_stream_id_count(
     lrtc_rtp_sender_t* sender) {
   if (!sender || !sender->ref.get()) {
     return 0;
@@ -3051,7 +3051,7 @@ LUMENRTC_API uint32_t LUMENRTC_CALL lrtc_rtp_sender_stream_id_count(
   return static_cast<uint32_t>(sender->ref->stream_ids().size());
 }
 
-LUMENRTC_API int32_t LUMENRTC_CALL lrtc_rtp_sender_get_stream_id(
+int32_t LUMENRTC_CALL lrtc_impl_rtp_sender_get_stream_id(
     lrtc_rtp_sender_t* sender, uint32_t index, char* buffer,
     uint32_t buffer_len) {
   if (!sender || !sender->ref.get()) {
@@ -3064,7 +3064,7 @@ LUMENRTC_API int32_t LUMENRTC_CALL lrtc_rtp_sender_get_stream_id(
   return CopyPortableString(ids[index], buffer, buffer_len);
 }
 
-LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_sender_set_stream_ids(
+int LUMENRTC_CALL lrtc_impl_rtp_sender_set_stream_ids(
     lrtc_rtp_sender_t* sender, const char** stream_ids,
     uint32_t stream_id_count) {
   if (!sender || !sender->ref.get()) {
@@ -3075,7 +3075,7 @@ LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_sender_set_stream_ids(
   return 1;
 }
 
-LUMENRTC_API lrtc_audio_track_t* LUMENRTC_CALL lrtc_rtp_sender_get_audio_track(
+lrtc_audio_track_t* LUMENRTC_CALL lrtc_impl_rtp_sender_get_audio_track(
     lrtc_rtp_sender_t* sender) {
   if (!sender || !sender->ref.get()) {
     return nullptr;
@@ -3093,7 +3093,7 @@ LUMENRTC_API lrtc_audio_track_t* LUMENRTC_CALL lrtc_rtp_sender_get_audio_track(
   return handle;
 }
 
-LUMENRTC_API lrtc_video_track_t* LUMENRTC_CALL lrtc_rtp_sender_get_video_track(
+lrtc_video_track_t* LUMENRTC_CALL lrtc_impl_rtp_sender_get_video_track(
     lrtc_rtp_sender_t* sender) {
   if (!sender || !sender->ref.get()) {
     return nullptr;
@@ -3111,7 +3111,7 @@ LUMENRTC_API lrtc_video_track_t* LUMENRTC_CALL lrtc_rtp_sender_get_video_track(
   return handle;
 }
 
-LUMENRTC_API lrtc_dtmf_sender_t* LUMENRTC_CALL lrtc_rtp_sender_get_dtmf_sender(
+lrtc_dtmf_sender_t* LUMENRTC_CALL lrtc_impl_rtp_sender_get_dtmf_sender(
     lrtc_rtp_sender_t* sender) {
   if (!sender || !sender->ref.get()) {
     return nullptr;
@@ -3125,7 +3125,7 @@ LUMENRTC_API lrtc_dtmf_sender_t* LUMENRTC_CALL lrtc_rtp_sender_get_dtmf_sender(
   return handle;
 }
 
-LUMENRTC_API void LUMENRTC_CALL lrtc_dtmf_sender_set_callbacks(
+void LUMENRTC_CALL lrtc_impl_dtmf_sender_set_callbacks(
     lrtc_dtmf_sender_t* sender,
     const lrtc_dtmf_sender_callbacks_t* callbacks,
     void* user_data) {
@@ -3142,14 +3142,14 @@ LUMENRTC_API void LUMENRTC_CALL lrtc_dtmf_sender_set_callbacks(
   }
 }
 
-LUMENRTC_API int LUMENRTC_CALL lrtc_dtmf_sender_can_insert(lrtc_dtmf_sender_t* sender) {
+int LUMENRTC_CALL lrtc_impl_dtmf_sender_can_insert(lrtc_dtmf_sender_t* sender) {
   if (!sender || !sender->ref.get()) {
     return 0;
   }
   return sender->ref->CanInsertDtmf() ? 1 : 0;
 }
 
-LUMENRTC_API int LUMENRTC_CALL lrtc_dtmf_sender_insert(lrtc_dtmf_sender_t* sender,
+int LUMENRTC_CALL lrtc_impl_dtmf_sender_insert(lrtc_dtmf_sender_t* sender,
                                          const char* tones, int duration,
                                          int inter_tone_gap,
                                          int comma_delay) {
@@ -3166,7 +3166,7 @@ LUMENRTC_API int LUMENRTC_CALL lrtc_dtmf_sender_insert(lrtc_dtmf_sender_t* sende
                                                                           : 0;
 }
 
-LUMENRTC_API int32_t LUMENRTC_CALL lrtc_dtmf_sender_tones(lrtc_dtmf_sender_t* sender,
+int32_t LUMENRTC_CALL lrtc_impl_dtmf_sender_tones(lrtc_dtmf_sender_t* sender,
                                             char* buffer,
                                             uint32_t buffer_len) {
   if (!sender || !sender->ref.get()) {
@@ -3175,14 +3175,14 @@ LUMENRTC_API int32_t LUMENRTC_CALL lrtc_dtmf_sender_tones(lrtc_dtmf_sender_t* se
   return CopyPortableString(sender->ref->tones(), buffer, buffer_len);
 }
 
-LUMENRTC_API int LUMENRTC_CALL lrtc_dtmf_sender_duration(lrtc_dtmf_sender_t* sender) {
+int LUMENRTC_CALL lrtc_impl_dtmf_sender_duration(lrtc_dtmf_sender_t* sender) {
   if (!sender || !sender->ref.get()) {
     return -1;
   }
   return sender->ref->duration();
 }
 
-LUMENRTC_API int LUMENRTC_CALL lrtc_dtmf_sender_inter_tone_gap(
+int LUMENRTC_CALL lrtc_impl_dtmf_sender_inter_tone_gap(
     lrtc_dtmf_sender_t* sender) {
   if (!sender || !sender->ref.get()) {
     return -1;
@@ -3190,14 +3190,14 @@ LUMENRTC_API int LUMENRTC_CALL lrtc_dtmf_sender_inter_tone_gap(
   return sender->ref->inter_tone_gap();
 }
 
-LUMENRTC_API int LUMENRTC_CALL lrtc_dtmf_sender_comma_delay(lrtc_dtmf_sender_t* sender) {
+int LUMENRTC_CALL lrtc_impl_dtmf_sender_comma_delay(lrtc_dtmf_sender_t* sender) {
   if (!sender || !sender->ref.get()) {
     return -1;
   }
   return sender->ref->comma_delay();
 }
 
-LUMENRTC_API void LUMENRTC_CALL lrtc_dtmf_sender_release(lrtc_dtmf_sender_t* sender) {
+void LUMENRTC_CALL lrtc_impl_dtmf_sender_release(lrtc_dtmf_sender_t* sender) {
   if (!sender) {
     return;
   }
@@ -3208,11 +3208,11 @@ LUMENRTC_API void LUMENRTC_CALL lrtc_dtmf_sender_release(lrtc_dtmf_sender_t* sen
   delete sender;
 }
 
-LUMENRTC_API void LUMENRTC_CALL lrtc_rtp_sender_release(lrtc_rtp_sender_t* sender) {
+void LUMENRTC_CALL lrtc_impl_rtp_sender_release(lrtc_rtp_sender_t* sender) {
   delete sender;
 }
 
-LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_receiver_get_media_type(
+int LUMENRTC_CALL lrtc_impl_rtp_receiver_get_media_type(
     lrtc_rtp_receiver_t* receiver) {
   if (!receiver || !receiver->ref.get()) {
     return -1;
@@ -3220,7 +3220,7 @@ LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_receiver_get_media_type(
   return static_cast<int>(receiver->ref->media_type());
 }
 
-LUMENRTC_API int32_t LUMENRTC_CALL lrtc_rtp_receiver_get_id(
+int32_t LUMENRTC_CALL lrtc_impl_rtp_receiver_get_id(
     lrtc_rtp_receiver_t* receiver, char* buffer, uint32_t buffer_len) {
   if (!receiver || !receiver->ref.get()) {
     return -1;
@@ -3228,7 +3228,7 @@ LUMENRTC_API int32_t LUMENRTC_CALL lrtc_rtp_receiver_get_id(
   return CopyPortableString(receiver->ref->id(), buffer, buffer_len);
 }
 
-LUMENRTC_API uint32_t LUMENRTC_CALL lrtc_rtp_receiver_encoding_count(
+uint32_t LUMENRTC_CALL lrtc_impl_rtp_receiver_encoding_count(
     lrtc_rtp_receiver_t* receiver) {
   if (!receiver || !receiver->ref.get()) {
     return 0;
@@ -3241,7 +3241,7 @@ LUMENRTC_API uint32_t LUMENRTC_CALL lrtc_rtp_receiver_encoding_count(
   return static_cast<uint32_t>(parameters->encodings().size());
 }
 
-LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_receiver_get_encoding_info(
+int LUMENRTC_CALL lrtc_impl_rtp_receiver_get_encoding_info(
     lrtc_rtp_receiver_t* receiver, uint32_t index,
     lrtc_rtp_encoding_info_t* info) {
   if (!receiver || !receiver->ref.get() || !info) {
@@ -3275,7 +3275,7 @@ LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_receiver_get_encoding_info(
   return 1;
 }
 
-LUMENRTC_API int32_t LUMENRTC_CALL lrtc_rtp_receiver_get_encoding_rid(
+int32_t LUMENRTC_CALL lrtc_impl_rtp_receiver_get_encoding_rid(
     lrtc_rtp_receiver_t* receiver, uint32_t index, char* buffer,
     uint32_t buffer_len) {
   if (!receiver || !receiver->ref.get()) {
@@ -3299,7 +3299,7 @@ LUMENRTC_API int32_t LUMENRTC_CALL lrtc_rtp_receiver_get_encoding_rid(
   return CopyPortableString(encoding->rid(), buffer, buffer_len);
 }
 
-LUMENRTC_API int32_t LUMENRTC_CALL lrtc_rtp_receiver_get_encoding_scalability_mode(
+int32_t LUMENRTC_CALL lrtc_impl_rtp_receiver_get_encoding_scalability_mode(
     lrtc_rtp_receiver_t* receiver, uint32_t index, char* buffer,
     uint32_t buffer_len) {
   if (!receiver || !receiver->ref.get()) {
@@ -3324,7 +3324,7 @@ LUMENRTC_API int32_t LUMENRTC_CALL lrtc_rtp_receiver_get_encoding_scalability_mo
                             buffer, buffer_len);
 }
 
-LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_receiver_get_degradation_preference(
+int LUMENRTC_CALL lrtc_impl_rtp_receiver_get_degradation_preference(
     lrtc_rtp_receiver_t* receiver) {
   if (!receiver || !receiver->ref.get()) {
     return -1;
@@ -3337,7 +3337,7 @@ LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_receiver_get_degradation_preference(
   return static_cast<int>(parameters->GetDegradationPreference());
 }
 
-LUMENRTC_API int32_t LUMENRTC_CALL lrtc_rtp_receiver_get_parameters_mid(
+int32_t LUMENRTC_CALL lrtc_impl_rtp_receiver_get_parameters_mid(
     lrtc_rtp_receiver_t* receiver, char* buffer, uint32_t buffer_len) {
   if (!receiver || !receiver->ref.get()) {
     return -1;
@@ -3350,7 +3350,7 @@ LUMENRTC_API int32_t LUMENRTC_CALL lrtc_rtp_receiver_get_parameters_mid(
   return CopyPortableString(parameters->mid(), buffer, buffer_len);
 }
 
-LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_receiver_get_dtls_info(
+int LUMENRTC_CALL lrtc_impl_rtp_receiver_get_dtls_info(
     lrtc_rtp_receiver_t* receiver, lrtc_dtls_transport_info_t* info) {
   if (!receiver || !receiver->ref.get()) {
     return 0;
@@ -3358,7 +3358,7 @@ LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_receiver_get_dtls_info(
   return FillDtlsInfo(receiver->ref->dtls_transport(), info) ? 1 : 0;
 }
 
-LUMENRTC_API uint32_t LUMENRTC_CALL lrtc_rtp_receiver_stream_id_count(
+uint32_t LUMENRTC_CALL lrtc_impl_rtp_receiver_stream_id_count(
     lrtc_rtp_receiver_t* receiver) {
   if (!receiver || !receiver->ref.get()) {
     return 0;
@@ -3366,7 +3366,7 @@ LUMENRTC_API uint32_t LUMENRTC_CALL lrtc_rtp_receiver_stream_id_count(
   return static_cast<uint32_t>(receiver->ref->stream_ids().size());
 }
 
-LUMENRTC_API int32_t LUMENRTC_CALL lrtc_rtp_receiver_get_stream_id(
+int32_t LUMENRTC_CALL lrtc_impl_rtp_receiver_get_stream_id(
     lrtc_rtp_receiver_t* receiver, uint32_t index, char* buffer,
     uint32_t buffer_len) {
   if (!receiver || !receiver->ref.get()) {
@@ -3379,7 +3379,7 @@ LUMENRTC_API int32_t LUMENRTC_CALL lrtc_rtp_receiver_get_stream_id(
   return CopyPortableString(ids[index], buffer, buffer_len);
 }
 
-LUMENRTC_API uint32_t LUMENRTC_CALL lrtc_rtp_receiver_stream_count(
+uint32_t LUMENRTC_CALL lrtc_impl_rtp_receiver_stream_count(
     lrtc_rtp_receiver_t* receiver) {
   if (!receiver || !receiver->ref.get()) {
     return 0;
@@ -3387,7 +3387,7 @@ LUMENRTC_API uint32_t LUMENRTC_CALL lrtc_rtp_receiver_stream_count(
   return static_cast<uint32_t>(receiver->ref->streams().size());
 }
 
-LUMENRTC_API lrtc_media_stream_t* LUMENRTC_CALL lrtc_rtp_receiver_get_stream(
+lrtc_media_stream_t* LUMENRTC_CALL lrtc_impl_rtp_receiver_get_stream(
     lrtc_rtp_receiver_t* receiver, uint32_t index) {
   if (!receiver || !receiver->ref.get()) {
     return nullptr;
@@ -3405,7 +3405,7 @@ LUMENRTC_API lrtc_media_stream_t* LUMENRTC_CALL lrtc_rtp_receiver_get_stream(
   return handle;
 }
 
-LUMENRTC_API lrtc_audio_track_t* LUMENRTC_CALL lrtc_rtp_receiver_get_audio_track(
+lrtc_audio_track_t* LUMENRTC_CALL lrtc_impl_rtp_receiver_get_audio_track(
     lrtc_rtp_receiver_t* receiver) {
   if (!receiver || !receiver->ref.get()) {
     return nullptr;
@@ -3423,7 +3423,7 @@ LUMENRTC_API lrtc_audio_track_t* LUMENRTC_CALL lrtc_rtp_receiver_get_audio_track
   return handle;
 }
 
-LUMENRTC_API lrtc_video_track_t* LUMENRTC_CALL lrtc_rtp_receiver_get_video_track(
+lrtc_video_track_t* LUMENRTC_CALL lrtc_impl_rtp_receiver_get_video_track(
     lrtc_rtp_receiver_t* receiver) {
   if (!receiver || !receiver->ref.get()) {
     return nullptr;
@@ -3441,7 +3441,7 @@ LUMENRTC_API lrtc_video_track_t* LUMENRTC_CALL lrtc_rtp_receiver_get_video_track
   return handle;
 }
 
-LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_receiver_set_jitter_buffer_min_delay(
+int LUMENRTC_CALL lrtc_impl_rtp_receiver_set_jitter_buffer_min_delay(
     lrtc_rtp_receiver_t* receiver, double delay_seconds) {
   if (!receiver || !receiver->ref.get()) {
     return 0;
@@ -3450,11 +3450,11 @@ LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_receiver_set_jitter_buffer_min_delay(
   return 1;
 }
 
-LUMENRTC_API void LUMENRTC_CALL lrtc_rtp_receiver_release(lrtc_rtp_receiver_t* receiver) {
+void LUMENRTC_CALL lrtc_impl_rtp_receiver_release(lrtc_rtp_receiver_t* receiver) {
   delete receiver;
 }
 
-LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_transceiver_get_media_type(
+int LUMENRTC_CALL lrtc_impl_rtp_transceiver_get_media_type(
     lrtc_rtp_transceiver_t* transceiver) {
   if (!transceiver || !transceiver->ref.get()) {
     return -1;
@@ -3462,7 +3462,7 @@ LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_transceiver_get_media_type(
   return static_cast<int>(transceiver->ref->media_type());
 }
 
-LUMENRTC_API int32_t LUMENRTC_CALL lrtc_rtp_transceiver_get_mid(
+int32_t LUMENRTC_CALL lrtc_impl_rtp_transceiver_get_mid(
     lrtc_rtp_transceiver_t* transceiver, char* buffer, uint32_t buffer_len) {
   if (!transceiver || !transceiver->ref.get()) {
     return -1;
@@ -3470,7 +3470,7 @@ LUMENRTC_API int32_t LUMENRTC_CALL lrtc_rtp_transceiver_get_mid(
   return CopyPortableString(transceiver->ref->mid(), buffer, buffer_len);
 }
 
-LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_transceiver_get_direction(
+int LUMENRTC_CALL lrtc_impl_rtp_transceiver_get_direction(
     lrtc_rtp_transceiver_t* transceiver) {
   if (!transceiver || !transceiver->ref.get()) {
     return -1;
@@ -3478,7 +3478,7 @@ LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_transceiver_get_direction(
   return static_cast<int>(transceiver->ref->direction());
 }
 
-LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_transceiver_get_current_direction(
+int LUMENRTC_CALL lrtc_impl_rtp_transceiver_get_current_direction(
     lrtc_rtp_transceiver_t* transceiver) {
   if (!transceiver || !transceiver->ref.get()) {
     return -1;
@@ -3486,7 +3486,7 @@ LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_transceiver_get_current_direction(
   return static_cast<int>(transceiver->ref->current_direction());
 }
 
-LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_transceiver_get_fired_direction(
+int LUMENRTC_CALL lrtc_impl_rtp_transceiver_get_fired_direction(
     lrtc_rtp_transceiver_t* transceiver) {
   if (!transceiver || !transceiver->ref.get()) {
     return -1;
@@ -3494,7 +3494,7 @@ LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_transceiver_get_fired_direction(
   return static_cast<int>(transceiver->ref->fired_direction());
 }
 
-LUMENRTC_API int32_t LUMENRTC_CALL lrtc_rtp_transceiver_get_id(
+int32_t LUMENRTC_CALL lrtc_impl_rtp_transceiver_get_id(
     lrtc_rtp_transceiver_t* transceiver, char* buffer, uint32_t buffer_len) {
   if (!transceiver || !transceiver->ref.get()) {
     return -1;
@@ -3503,7 +3503,7 @@ LUMENRTC_API int32_t LUMENRTC_CALL lrtc_rtp_transceiver_get_id(
                             buffer, buffer_len);
 }
 
-LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_transceiver_get_stopped(
+int LUMENRTC_CALL lrtc_impl_rtp_transceiver_get_stopped(
     lrtc_rtp_transceiver_t* transceiver) {
   if (!transceiver || !transceiver->ref.get()) {
     return 0;
@@ -3511,7 +3511,7 @@ LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_transceiver_get_stopped(
   return transceiver->ref->Stopped() ? 1 : 0;
 }
 
-LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_transceiver_get_stopping(
+int LUMENRTC_CALL lrtc_impl_rtp_transceiver_get_stopping(
     lrtc_rtp_transceiver_t* transceiver) {
   if (!transceiver || !transceiver->ref.get()) {
     return 0;
@@ -3519,7 +3519,7 @@ LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_transceiver_get_stopping(
   return transceiver->ref->Stopping() ? 1 : 0;
 }
 
-LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_transceiver_set_direction(
+int LUMENRTC_CALL lrtc_impl_rtp_transceiver_set_direction(
     lrtc_rtp_transceiver_t* transceiver, int direction, char* error,
     uint32_t error_len) {
   if (!transceiver || !transceiver->ref.get()) {
@@ -3537,7 +3537,7 @@ LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_transceiver_set_direction(
   return 1;
 }
 
-LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_transceiver_stop(
+int LUMENRTC_CALL lrtc_impl_rtp_transceiver_stop(
     lrtc_rtp_transceiver_t* transceiver, char* error, uint32_t error_len) {
   if (!transceiver || !transceiver->ref.get()) {
     return 0;
@@ -3553,7 +3553,7 @@ LUMENRTC_API int LUMENRTC_CALL lrtc_rtp_transceiver_stop(
   return 1;
 }
 
-LUMENRTC_API lrtc_rtp_sender_t* LUMENRTC_CALL lrtc_rtp_transceiver_get_sender(
+lrtc_rtp_sender_t* LUMENRTC_CALL lrtc_impl_rtp_transceiver_get_sender(
     lrtc_rtp_transceiver_t* transceiver) {
   if (!transceiver || !transceiver->ref.get()) {
     return nullptr;
@@ -3567,7 +3567,7 @@ LUMENRTC_API lrtc_rtp_sender_t* LUMENRTC_CALL lrtc_rtp_transceiver_get_sender(
   return handle;
 }
 
-LUMENRTC_API lrtc_rtp_receiver_t* LUMENRTC_CALL lrtc_rtp_transceiver_get_receiver(
+lrtc_rtp_receiver_t* LUMENRTC_CALL lrtc_impl_rtp_transceiver_get_receiver(
     lrtc_rtp_transceiver_t* transceiver) {
   if (!transceiver || !transceiver->ref.get()) {
     return nullptr;
@@ -3582,12 +3582,12 @@ LUMENRTC_API lrtc_rtp_receiver_t* LUMENRTC_CALL lrtc_rtp_transceiver_get_receive
   return handle;
 }
 
-LUMENRTC_API void LUMENRTC_CALL lrtc_rtp_transceiver_release(
+void LUMENRTC_CALL lrtc_impl_rtp_transceiver_release(
     lrtc_rtp_transceiver_t* transceiver) {
   delete transceiver;
 }
 
-LUMENRTC_API void LUMENRTC_CALL lrtc_factory_get_rtp_sender_codec_mime_types(
+void LUMENRTC_CALL lrtc_impl_factory_get_rtp_sender_codec_mime_types(
     lrtc_factory_t* factory, lrtc_media_type media_type,
     lrtc_stats_success_cb success, lrtc_stats_failure_cb failure,
     void* user_data) {
@@ -3612,7 +3612,7 @@ LUMENRTC_API void LUMENRTC_CALL lrtc_factory_get_rtp_sender_codec_mime_types(
   }
 }
 
-LUMENRTC_API void LUMENRTC_CALL lrtc_factory_get_rtp_sender_capabilities(
+void LUMENRTC_CALL lrtc_impl_factory_get_rtp_sender_capabilities(
     lrtc_factory_t* factory, lrtc_media_type media_type,
     lrtc_stats_success_cb success, lrtc_stats_failure_cb failure,
     void* user_data) {
@@ -3637,7 +3637,7 @@ LUMENRTC_API void LUMENRTC_CALL lrtc_factory_get_rtp_sender_capabilities(
   }
 }
 
-LUMENRTC_API void LUMENRTC_CALL lrtc_factory_get_rtp_receiver_capabilities(
+void LUMENRTC_CALL lrtc_impl_factory_get_rtp_receiver_capabilities(
     lrtc_factory_t* factory, lrtc_media_type media_type,
     lrtc_stats_success_cb success, lrtc_stats_failure_cb failure,
     void* user_data) {

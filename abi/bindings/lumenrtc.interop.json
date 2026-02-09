@@ -1,0 +1,84 @@
+{
+  "callback_field_overrides": {
+    "on_audio_track": "LrtcAudioTrackCb",
+    "on_data_channel": "LrtcDataChannelCreatedCb",
+    "on_video_track": "LrtcVideoTrackCb"
+  },
+  "functions": {},
+  "opaque_types": {
+    "lrtc_audio_device_t": {
+      "release": "lrtc_audio_device_release"
+    },
+    "lrtc_audio_sink_t": {
+      "release": "lrtc_audio_sink_release"
+    },
+    "lrtc_audio_source_t": {
+      "release": "lrtc_audio_source_release"
+    },
+    "lrtc_audio_track_t": {
+      "release": "lrtc_audio_track_release"
+    },
+    "lrtc_data_channel_t": {
+      "release": "lrtc_data_channel_release"
+    },
+    "lrtc_desktop_capturer_t": {
+      "release": "lrtc_desktop_capturer_release"
+    },
+    "lrtc_desktop_device_t": {
+      "release": "lrtc_desktop_device_release"
+    },
+    "lrtc_desktop_media_list_t": {
+      "release": "lrtc_desktop_media_list_release"
+    },
+    "lrtc_dtmf_sender_t": {
+      "release": "lrtc_dtmf_sender_release"
+    },
+    "lrtc_factory_t": {
+      "release": "lrtc_factory_release"
+    },
+    "lrtc_media_constraints_t": {
+      "release": "lrtc_media_constraints_release"
+    },
+    "lrtc_media_source_t": {
+      "release": "lrtc_media_source_release"
+    },
+    "lrtc_media_stream_t": {
+      "release": "lrtc_media_stream_release"
+    },
+    "lrtc_peer_connection_t": {
+      "release": "lrtc_peer_connection_release"
+    },
+    "lrtc_rtp_receiver_t": {
+      "release": "lrtc_rtp_receiver_release"
+    },
+    "lrtc_rtp_sender_t": {
+      "release": "lrtc_rtp_sender_release"
+    },
+    "lrtc_rtp_transceiver_t": {
+      "release": "lrtc_rtp_transceiver_release"
+    },
+    "lrtc_video_capturer_t": {
+      "release": "lrtc_video_capturer_release"
+    },
+    "lrtc_video_device_t": {
+      "release": "lrtc_video_device_release"
+    },
+    "lrtc_video_frame_t": {
+      "release": "lrtc_video_frame_release",
+      "retain": "lrtc_video_frame_retain"
+    },
+    "lrtc_video_sink_t": {
+      "release": "lrtc_video_sink_release"
+    },
+    "lrtc_video_source_t": {
+      "release": "lrtc_video_source_release"
+    },
+    "lrtc_video_track_t": {
+      "release": "lrtc_video_track_release"
+    }
+  },
+  "string_encoding": "utf8",
+  "struct_field_overrides": {
+    "lrtc_rtp_transceiver_init_t.direction": "LrtcRtpTransceiverDirection"
+  }
+}
