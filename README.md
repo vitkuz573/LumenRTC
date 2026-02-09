@@ -264,6 +264,20 @@ PACKAGE_VERSION=1.0.1 \
 scripts/pack-all.sh
 ```
 
+One-command local release (build win+linux, pack multi-RID, push to NuGet):
+
+```powershell
+$env:NUGET_API_KEY = "<nuget-api-key>"
+pwsh -File .\scripts\release-local.ps1 -Version 1.0.2 -BuildType Release
+```
+
+Useful options:
+
+- `-SkipNuGetPush` to only create `.nupkg` locally
+- `-WslDistro <name>` if you need a specific distro
+- `-WinLibWebRtcBuildDir`, `-LinuxLibWebRtcBuildDir` for explicit libwebrtc paths
+- `-WinLumenRtcNativeDir`, `-LinuxLumenRtcNativeDir` to reuse prebuilt native outputs
+
 SDL renderer runtime (optional):
 
 - Windows: `SDL2.dll` must be on `PATH` or next to the app.
