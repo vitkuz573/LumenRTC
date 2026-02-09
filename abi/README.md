@@ -18,40 +18,38 @@
 ## Pipeline
 
 1. Edit/build ABI surface.
-2. Keep config schema current:
-   - `scripts/abi.sh config-migrate --input abi/config.json`
-3. Fast static verification:
+2. Fast static verification:
    - `scripts/abi.sh check --skip-binary`
-4. Export verification after native build:
+3. Export verification after native build:
    - `scripts/abi.sh check --binary native/build/liblumenrtc.so`
-5. Regenerate baseline when ABI change is intentional:
+4. Regenerate baseline when ABI change is intentional:
    - `scripts/abi.sh baseline`
-6. Multi-target verification:
+5. Multi-target verification:
    - `scripts/abi.sh check-all --skip-binary`
-7. Generate ABI IDL from config:
+6. Generate ABI IDL from config:
    - `scripts/abi.sh generate --skip-binary`
    - Output: `abi/generated/lumenrtc/lumenrtc.idl.json`
-8. Run language generators from ABI IDL (plugin host):
+7. Run language generators from ABI IDL (plugin host):
    - `scripts/abi.sh codegen --skip-binary`
-9. Generate native ABI artifacts from ABI IDL:
+8. Generate native ABI artifacts from ABI IDL:
    - `scripts/abi.sh generate --skip-binary`
    - Outputs:
      - `native/include/lumenrtc.h`
      - `native/lumenrtc.map`
-10. Build C# project with source generation:
+9. Build C# project with source generation:
    - `dotnet build src/LumenRTC/LumenRTC.csproj`
    - `src/LumenRTC/LumenRTC.csproj` passes IDL as `AdditionalFiles` and receives generated `NativeMethods` in compilation.
-11. Sync generated artifacts and optionally baselines:
+10. Sync generated artifacts and optionally baselines:
    - `scripts/abi.sh sync --skip-binary`
-12. Benchmark ABI pipeline:
+11. Benchmark ABI pipeline:
    - `scripts/abi.sh benchmark --skip-binary --iterations 3 --output artifacts/abi/benchmark.report.json`
-13. Enforce benchmark budgets:
+12. Enforce benchmark budgets:
    - `scripts/abi.sh benchmark-gate --report artifacts/abi/benchmark.report.json --budget abi/benchmark_budget.json`
-14. Audit waiver lifecycle and metadata:
+13. Audit waiver lifecycle and metadata:
    - `scripts/abi.sh waiver-audit --fail-on-expired --fail-on-missing-metadata`
-15. Generate ABI changelog:
+14. Generate ABI changelog:
    - `scripts/abi.sh changelog --skip-binary --release-tag vX.Y.Z --output abi/CHANGELOG.md`
-16. Run full release preparation pipeline:
+15. Run full release preparation pipeline:
    - `scripts/abi.sh release-prepare --skip-binary --release-tag vX.Y.Z --emit-sbom --emit-attestation`
 
 `native/include/lumenrtc.h` and `native/lumenrtc.map` are generated artifacts.

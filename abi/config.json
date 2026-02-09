@@ -1,6 +1,4 @@
 {
-  "schema_uri": "https://lumenrtc.dev/abi_framework/config.schema.v2.json",
-  "schema_version": 2,
   "policy": {
     "waiver_requirements": {
       "max_ttl_days": 90,
@@ -269,7 +267,7 @@
       },
       "codegen": {
         "enabled": true,
-        "idl_schema_version": 2,
+        "idl_schema_version": 1,
         "idl_output_path": "abi/generated/lumenrtc/lumenrtc.idl.json",
         "native_header_output_path": "native/include/lumenrtc.h",
         "native_export_map_output_path": "native/lumenrtc.map",

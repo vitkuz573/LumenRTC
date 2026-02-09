@@ -24,10 +24,8 @@ Commands:
   waiver-audit  Audit waiver metadata/expiry policy
   benchmark     Benchmark ABI pipeline timings
   benchmark-gate Enforce benchmark report against budget
-  config-migrate Migrate ABI config to latest schema
   generate      Generate ABI IDL for configured targets
   codegen       Generate ABI IDL and run configured language generators
-  idl-migrate   Migrate ABI IDL payload to schema v2
   sync          Sync generated ABI artifacts (and optional baselines)
   release-prepare Run end-to-end ABI release preparation pipeline
   changelog     Generate ABI changelog markdown
@@ -108,9 +106,6 @@ case "${COMMAND}" in
   benchmark-gate)
     run_guard benchmark-gate "$@"
     ;;
-  config-migrate)
-    run_guard config-migrate "$@"
-    ;;
   generate)
     run_guard generate \
       --repo-root "${REPO_ROOT}" \
@@ -122,9 +117,6 @@ case "${COMMAND}" in
       --repo-root "${REPO_ROOT}" \
       --config "${ABI_CONFIG}" \
       "$@"
-    ;;
-  idl-migrate)
-    run_guard idl-migrate "$@"
     ;;
   sync)
     run_guard sync \

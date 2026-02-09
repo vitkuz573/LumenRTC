@@ -6671,8 +6671,8 @@
       }
     }
   },
-  "idl_schema": "https://lumenrtc.dev/abi_framework/idl.schema.v2.json",
-  "idl_schema_version": 2,
+  "idl_schema": "https://lumenrtc.dev/abi_framework/idl.schema.v1.json",
+  "idl_schema_version": 1,
   "source": {
     "header_path": "native/include/lumenrtc.h",
     "parser_backend": "clang_preprocess"
@@ -6685,6 +6685,6 @@
   "target": "lumenrtc",
   "tool": {
     "name": "abi_framework",
-    "version": "5.0.0"
+    "version": "1.0.0"
   }
 }

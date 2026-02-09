@@ -56,12 +56,6 @@ jobs:
         run: |
           python3 -m unittest discover -s tools/abi_framework/tests -p "test_*.py"
 
-      - name: Validate config schema migration (v2)
-        run: |
-          python3 tools/abi_framework/abi_framework.py config-migrate \
-            --input abi/config.json \
-            --check
-
       - name: Check generated ABI artifacts
         run: |
           mkdir -p artifacts/abi

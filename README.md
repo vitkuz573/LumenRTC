@@ -108,12 +108,6 @@ scripts/abi.sh generate --skip-binary
 # Generate ABI IDL + run configured language generators (plugin host).
 scripts/abi.sh codegen --skip-binary
 
-# Migrate IDL payload to schema v2 (with metadata + availability/docs fields).
-scripts/abi.sh idl-migrate --input abi/generated/lumenrtc/lumenrtc.idl.json --to-version 2
-
-# Migrate config payload to latest schema.
-scripts/abi.sh config-migrate --input abi/config.json
-
 # Sync generated ABI artifacts (and optionally baselines).
 scripts/abi.sh sync --skip-binary
 
@@ -146,7 +140,6 @@ scripts\\abi.ps1 check --binary native\\build\\lumenrtc.dll
 scripts\\abi.ps1 check-all --skip-binary
 scripts\\abi.ps1 generate --skip-binary
 scripts\\abi.ps1 codegen --skip-binary
-scripts\\abi.ps1 config-migrate --input abi\\config.json
 scripts\\abi.ps1 sync --skip-binary
 scripts\\abi.ps1 benchmark --skip-binary --iterations 3 --output artifacts\\abi\\benchmark.report.json
 scripts\\abi.ps1 benchmark-gate --report artifacts\\abi\\benchmark.report.json --budget abi\\benchmark_budget.json
@@ -158,7 +151,7 @@ scripts\\abi.ps1 release-prepare --skip-binary --release-tag vX.Y.Z --emit-sbom 
 The generic tooling lives in `tools/abi_framework/` and can be reused for other
 ABI targets through `abi/config.json`. LumenRTC-specific C# interop generation is
 implemented as a Roslyn source generator in `tools/lumenrtc_roslyn_codegen/`.
-The ABI IDL now uses schema v2 and can drive multiple language generators via
+The ABI IDL uses schema v1 and can drive multiple language generators via
 `bindings.generators` plugin entries.
 `src/LumenRTC` consumes ABI IDL (`abi/generated/lumenrtc/lumenrtc.idl.json`) as
 an `AdditionalFiles` input and emits `NativeMethods` at compile time; no
