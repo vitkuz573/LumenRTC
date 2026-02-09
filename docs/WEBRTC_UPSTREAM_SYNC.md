@@ -72,13 +72,7 @@ git -C ../webrtc_build/src status --short
 sed -n '1,120p' ../webrtc_build/.gclient
 ```
 
-3. No stale upstream references in LumenRTC tracked files:
-
-```bash
-git grep -n -E "webrtc-sdk|github.com/webrtc|external/libwebrtc|m137_release|webrtc\.git@" || true
-```
-
-4. ABI framework regeneration after upstream sync:
+3. ABI framework regeneration after upstream sync:
 
 ```bash
 scripts/abi.sh release-prepare --skip-binary --update-baselines --release-tag <tag>
