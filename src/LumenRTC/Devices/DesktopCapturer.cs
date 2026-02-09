@@ -3,7 +3,7 @@ namespace LumenRTC;
 /// <summary>
 /// Captures frames from desktop sources.
 /// </summary>
-public sealed class DesktopCapturer : SafeHandle
+public sealed partial class DesktopCapturer : SafeHandle
 {
     internal DesktopCapturer(IntPtr handle) : base(IntPtr.Zero, true)
     {
@@ -26,12 +26,4 @@ public sealed class DesktopCapturer : SafeHandle
     }
 
     public bool IsRunning => NativeMethods.lrtc_desktop_capturer_is_running(handle);
-
-    public override bool IsInvalid => handle == IntPtr.Zero;
-
-    protected override bool ReleaseHandle()
-    {
-        NativeMethods.lrtc_desktop_capturer_release(handle);
-        return true;
-    }
 }

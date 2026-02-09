@@ -3,7 +3,7 @@ namespace LumenRTC;
 /// <summary>
 /// Video frame handle provided by sinks.
 /// </summary>
-public sealed class VideoFrame : SafeHandle
+public sealed partial class VideoFrame : SafeHandle
 {
     internal VideoFrame(IntPtr handle) : base(IntPtr.Zero, true)
     {
@@ -50,13 +50,5 @@ public sealed class VideoFrame : SafeHandle
             throw new InvalidOperationException("Failed to retain video frame.");
         }
         return new VideoFrame(retained);
-    }
-
-    public override bool IsInvalid => handle == IntPtr.Zero;
-
-    protected override bool ReleaseHandle()
-    {
-        NativeMethods.lrtc_video_frame_release(handle);
-        return true;
     }
 }

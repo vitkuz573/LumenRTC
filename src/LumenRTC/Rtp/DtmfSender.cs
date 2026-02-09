@@ -3,7 +3,7 @@ namespace LumenRTC;
 /// <summary>
 /// Sends DTMF tones over an audio RTP sender.
 /// </summary>
-public sealed class DtmfSender : SafeHandle
+public sealed partial class DtmfSender : SafeHandle
 {
     private DtmfSenderCallbacks? _callbacks;
 
@@ -40,12 +40,4 @@ public sealed class DtmfSender : SafeHandle
     public int InterToneGap => NativeMethods.lrtc_dtmf_sender_inter_tone_gap(handle);
 
     public int CommaDelay => NativeMethods.lrtc_dtmf_sender_comma_delay(handle);
-
-    public override bool IsInvalid => handle == IntPtr.Zero;
-
-    protected override bool ReleaseHandle()
-    {
-        NativeMethods.lrtc_dtmf_sender_release(handle);
-        return true;
-    }
 }

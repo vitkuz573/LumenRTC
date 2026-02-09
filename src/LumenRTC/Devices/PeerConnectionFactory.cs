@@ -3,7 +3,7 @@ namespace LumenRTC;
 /// <summary>
 /// Creates peer connections, tracks, and device sources.
 /// </summary>
-public sealed class PeerConnectionFactory : SafeHandle
+public sealed partial class PeerConnectionFactory : SafeHandle
 {
     private static readonly JsonSerializerOptions s_rtpCapabilitiesJsonOptions = new()
     {
@@ -282,14 +282,6 @@ public sealed class PeerConnectionFactory : SafeHandle
         }
 
         return new RtpCapabilities(codecs, extensions);
-    }
-
-    public override bool IsInvalid => handle == IntPtr.Zero;
-
-    protected override bool ReleaseHandle()
-    {
-        NativeMethods.lrtc_factory_release(handle);
-        return true;
     }
 }
 

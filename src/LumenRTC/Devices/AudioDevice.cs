@@ -3,7 +3,7 @@ namespace LumenRTC;
 /// <summary>
 /// Wraps the native audio device module for device selection and volume.
 /// </summary>
-public sealed class AudioDevice : SafeHandle
+public sealed partial class AudioDevice : SafeHandle
 {
     private const int MaxDeviceNameSize = 128;
     private const int MaxGuidSize = 128;
@@ -85,14 +85,6 @@ public sealed class AudioDevice : SafeHandle
         var result = NativeMethods.lrtc_audio_device_speaker_volume(handle, out var volume);
         if (result != 0) throw new InvalidOperationException("Failed to get speaker volume.");
         return volume;
-    }
-
-    public override bool IsInvalid => handle == IntPtr.Zero;
-
-    protected override bool ReleaseHandle()
-    {
-        NativeMethods.lrtc_audio_device_release(handle);
-        return true;
     }
 }
 

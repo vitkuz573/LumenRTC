@@ -3,7 +3,7 @@ namespace LumenRTC;
 /// <summary>
 /// Represents a desktop capture source (screen or window).
 /// </summary>
-public sealed class MediaSource : SafeHandle
+public sealed partial class MediaSource : SafeHandle
 {
     internal MediaSource(IntPtr handle) : base(IntPtr.Zero, true)
     {
@@ -17,12 +17,4 @@ public sealed class MediaSource : SafeHandle
     public string Id { get; }
     public string Name { get; }
     public DesktopType Type { get; }
-
-    public override bool IsInvalid => handle == IntPtr.Zero;
-
-    protected override bool ReleaseHandle()
-    {
-        NativeMethods.lrtc_media_source_release(handle);
-        return true;
-    }
 }

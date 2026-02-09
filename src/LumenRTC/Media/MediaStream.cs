@@ -3,7 +3,7 @@ namespace LumenRTC;
 /// <summary>
 /// Collection of audio and video tracks.
 /// </summary>
-public sealed class MediaStream : SafeHandle
+public sealed partial class MediaStream : SafeHandle
 {
     public string Id { get; }
     public string Label { get; }
@@ -37,13 +37,5 @@ public sealed class MediaStream : SafeHandle
     {
         if (track == null) throw new ArgumentNullException(nameof(track));
         return NativeMethods.lrtc_media_stream_remove_video_track(handle, track.DangerousGetHandle());
-    }
-
-    public override bool IsInvalid => handle == IntPtr.Zero;
-
-    protected override bool ReleaseHandle()
-    {
-        NativeMethods.lrtc_media_stream_release(handle);
-        return true;
     }
 }

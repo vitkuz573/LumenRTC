@@ -3,7 +3,7 @@ namespace LumenRTC;
 /// <summary>
 /// RTP transceiver combining sender and receiver.
 /// </summary>
-public sealed class RtpTransceiver : SafeHandle
+public sealed partial class RtpTransceiver : SafeHandle
 {
     private delegate int TransceiverErrorInvoker(IntPtr transceiver, IntPtr error, uint errorLen);
 
@@ -123,16 +123,7 @@ public sealed class RtpTransceiver : SafeHandle
             throw new InvalidOperationException(error ?? "Failed to stop transceiver.");
         }
     }
-
-    public override bool IsInvalid => handle == IntPtr.Zero;
-
-    protected override bool ReleaseHandle()
-    {
-        NativeMethods.lrtc_rtp_transceiver_release(handle);
-        return true;
-    }
-
-    private bool InvokeWithError(TransceiverErrorInvoker invoker, out string? error)
+private bool InvokeWithError(TransceiverErrorInvoker invoker, out string? error)
     {
         const int BufferSize = 512;
         var buffer = Marshal.AllocHGlobal(BufferSize);

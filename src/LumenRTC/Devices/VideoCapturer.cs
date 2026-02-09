@@ -3,7 +3,7 @@ namespace LumenRTC;
 /// <summary>
 /// Captures frames from a camera device.
 /// </summary>
-public sealed class VideoCapturer : SafeHandle
+public sealed partial class VideoCapturer : SafeHandle
 {
     internal VideoCapturer(IntPtr handle) : base(IntPtr.Zero, true)
     {
@@ -15,12 +15,4 @@ public sealed class VideoCapturer : SafeHandle
     public bool CaptureStarted() => NativeMethods.lrtc_video_capturer_capture_started(handle);
 
     public void Stop() => NativeMethods.lrtc_video_capturer_stop(handle);
-
-    public override bool IsInvalid => handle == IntPtr.Zero;
-
-    protected override bool ReleaseHandle()
-    {
-        NativeMethods.lrtc_video_capturer_release(handle);
-        return true;
-    }
 }

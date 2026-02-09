@@ -3,7 +3,7 @@ namespace LumenRTC;
 /// <summary>
 /// Represents a WebRTC peer connection.
 /// </summary>
-public sealed class PeerConnection : SafeHandle
+public sealed partial class PeerConnection : SafeHandle
 {
     private readonly PeerConnectionCallbacks _callbacks;
     private readonly List<Delegate> _keepAlive = new();
@@ -733,13 +733,5 @@ public sealed class PeerConnection : SafeHandle
             mimes.Pointer,
             (uint)mimes.Count);
         return result != 0;
-    }
-
-    public override bool IsInvalid => handle == IntPtr.Zero;
-
-    protected override bool ReleaseHandle()
-    {
-        NativeMethods.lrtc_peer_connection_release(handle);
-        return true;
     }
 }

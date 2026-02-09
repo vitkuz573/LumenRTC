@@ -295,6 +295,22 @@
               "{check}",
               "{dry_run}"
             ]
+          },
+          {
+            "name": "csharp_handles",
+            "kind": "external",
+            "command": [
+              "python3",
+              "{repo_root}/tools/abi_framework/generators/lumenrtc_csharp_handles.py",
+              "--idl",
+              "{idl}",
+              "--managed",
+              "{repo_root}/abi/bindings/lumenrtc.managed.json",
+              "--out",
+              "{repo_root}/src/LumenRTC/Interop/NativeHandles.g.cs",
+              "{check}",
+              "{dry_run}"
+            ]
           }
         ]
       },

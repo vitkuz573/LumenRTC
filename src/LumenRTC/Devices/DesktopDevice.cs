@@ -3,7 +3,7 @@ namespace LumenRTC;
 /// <summary>
 /// Enumerates desktop sources for screen/window capture.
 /// </summary>
-public sealed class DesktopDevice : SafeHandle
+public sealed partial class DesktopDevice : SafeHandle
 {
     internal DesktopDevice(IntPtr handle) : base(IntPtr.Zero, true)
     {
@@ -29,13 +29,5 @@ public sealed class DesktopDevice : SafeHandle
             throw new InvalidOperationException("Failed to create desktop capturer.");
         }
         return new DesktopCapturer(capturer);
-    }
-
-    public override bool IsInvalid => handle == IntPtr.Zero;
-
-    protected override bool ReleaseHandle()
-    {
-        NativeMethods.lrtc_desktop_device_release(handle);
-        return true;
     }
 }

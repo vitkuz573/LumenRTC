@@ -3,7 +3,7 @@ namespace LumenRTC;
 /// <summary>
 /// Snapshot list of desktop capture sources.
 /// </summary>
-public sealed class DesktopMediaList : SafeHandle
+public sealed partial class DesktopMediaList : SafeHandle
 {
     public DesktopType Type { get; }
 
@@ -28,13 +28,5 @@ public sealed class DesktopMediaList : SafeHandle
             throw new InvalidOperationException("Failed to get desktop media source.");
         }
         return new MediaSource(source);
-    }
-
-    public override bool IsInvalid => handle == IntPtr.Zero;
-
-    protected override bool ReleaseHandle()
-    {
-        NativeMethods.lrtc_desktop_media_list_release(handle);
-        return true;
     }
 }

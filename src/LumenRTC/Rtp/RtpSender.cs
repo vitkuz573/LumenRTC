@@ -3,7 +3,7 @@ namespace LumenRTC;
 /// <summary>
 /// RTP sender for a local media track.
 /// </summary>
-public sealed class RtpSender : SafeHandle
+public sealed partial class RtpSender : SafeHandle
 {
     internal RtpSender(IntPtr handle) : base(IntPtr.Zero, true)
     {
@@ -177,16 +177,7 @@ public sealed class RtpSender : SafeHandle
         var result = NativeMethods.lrtc_rtp_sender_set_stream_ids(handle, ids.Pointer, (uint)ids.Count);
         return result != 0;
     }
-
-    public override bool IsInvalid => handle == IntPtr.Zero;
-
-    protected override bool ReleaseHandle()
-    {
-        NativeMethods.lrtc_rtp_sender_release(handle);
-        return true;
-    }
-
-    private IReadOnlyList<string> GetStreamIds()
+private IReadOnlyList<string> GetStreamIds()
     {
         var count = NativeMethods.lrtc_rtp_sender_stream_id_count(handle);
         if (count == 0)

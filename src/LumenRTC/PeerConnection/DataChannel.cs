@@ -3,7 +3,7 @@ namespace LumenRTC;
 /// <summary>
 /// RTC data channel for arbitrary message transport.
 /// </summary>
-public sealed class DataChannel : SafeHandle
+public sealed partial class DataChannel : SafeHandle
 {
     private DataChannelCallbacks? _callbacks;
 
@@ -33,13 +33,5 @@ public sealed class DataChannel : SafeHandle
     public new void Close()
     {
         NativeMethods.lrtc_data_channel_close(handle);
-    }
-
-    public override bool IsInvalid => handle == IntPtr.Zero;
-
-    protected override bool ReleaseHandle()
-    {
-        NativeMethods.lrtc_data_channel_release(handle);
-        return true;
     }
 }

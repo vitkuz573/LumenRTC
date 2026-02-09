@@ -3,7 +3,7 @@ namespace LumenRTC;
 /// <summary>
 /// Local or remote video track.
 /// </summary>
-public sealed class VideoTrack : SafeHandle
+public sealed partial class VideoTrack : SafeHandle
 {
     internal VideoTrack(IntPtr handle) : base(IntPtr.Zero, true)
     {
@@ -48,13 +48,5 @@ public sealed class VideoTrack : SafeHandle
     {
         if (sink == null) throw new ArgumentNullException(nameof(sink));
         NativeMethods.lrtc_video_track_remove_sink(handle, sink.DangerousGetHandle());
-    }
-
-    public override bool IsInvalid => handle == IntPtr.Zero;
-
-    protected override bool ReleaseHandle()
-    {
-        NativeMethods.lrtc_video_track_release(handle);
-        return true;
     }
 }

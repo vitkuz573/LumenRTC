@@ -1,0 +1,165 @@
+{
+  "handles": [
+    {
+      "access": "public",
+      "c_handle_type": "lrtc_audio_device_t*",
+      "cs_type": "AudioDevice",
+      "namespace": "LumenRTC",
+      "release": "lrtc_audio_device_release"
+    },
+    {
+      "access": "public",
+      "c_handle_type": "lrtc_audio_sink_t*",
+      "cs_type": "AudioSink",
+      "namespace": "LumenRTC",
+      "release": "lrtc_audio_sink_release"
+    },
+    {
+      "access": "public",
+      "c_handle_type": "lrtc_audio_source_t*",
+      "cs_type": "AudioSource",
+      "namespace": "LumenRTC",
+      "release": "lrtc_audio_source_release"
+    },
+    {
+      "access": "public",
+      "c_handle_type": "lrtc_audio_track_t*",
+      "cs_type": "AudioTrack",
+      "namespace": "LumenRTC",
+      "release": "lrtc_audio_track_release"
+    },
+    {
+      "access": "public",
+      "c_handle_type": "lrtc_data_channel_t*",
+      "cs_type": "DataChannel",
+      "namespace": "LumenRTC",
+      "release": "lrtc_data_channel_release"
+    },
+    {
+      "access": "public",
+      "c_handle_type": "lrtc_desktop_capturer_t*",
+      "cs_type": "DesktopCapturer",
+      "namespace": "LumenRTC",
+      "release": "lrtc_desktop_capturer_release"
+    },
+    {
+      "access": "public",
+      "c_handle_type": "lrtc_desktop_device_t*",
+      "cs_type": "DesktopDevice",
+      "namespace": "LumenRTC",
+      "release": "lrtc_desktop_device_release"
+    },
+    {
+      "access": "public",
+      "c_handle_type": "lrtc_desktop_media_list_t*",
+      "cs_type": "DesktopMediaList",
+      "namespace": "LumenRTC",
+      "release": "lrtc_desktop_media_list_release"
+    },
+    {
+      "access": "public",
+      "c_handle_type": "lrtc_dtmf_sender_t*",
+      "cs_type": "DtmfSender",
+      "namespace": "LumenRTC",
+      "release": "lrtc_dtmf_sender_release"
+    },
+    {
+      "access": "public",
+      "c_handle_type": "lrtc_media_constraints_t*",
+      "cs_type": "MediaConstraints",
+      "namespace": "LumenRTC",
+      "release": "lrtc_media_constraints_release"
+    },
+    {
+      "access": "public",
+      "c_handle_type": "lrtc_media_source_t*",
+      "cs_type": "MediaSource",
+      "namespace": "LumenRTC",
+      "release": "lrtc_media_source_release"
+    },
+    {
+      "access": "public",
+      "c_handle_type": "lrtc_media_stream_t*",
+      "cs_type": "MediaStream",
+      "namespace": "LumenRTC",
+      "release": "lrtc_media_stream_release"
+    },
+    {
+      "access": "public",
+      "c_handle_type": "lrtc_peer_connection_t*",
+      "cs_type": "PeerConnection",
+      "namespace": "LumenRTC",
+      "release": "lrtc_peer_connection_release"
+    },
+    {
+      "access": "public",
+      "c_handle_type": "lrtc_factory_t*",
+      "cs_type": "PeerConnectionFactory",
+      "namespace": "LumenRTC",
+      "release": "lrtc_factory_release"
+    },
+    {
+      "access": "public",
+      "c_handle_type": "lrtc_rtp_receiver_t*",
+      "cs_type": "RtpReceiver",
+      "namespace": "LumenRTC",
+      "release": "lrtc_rtp_receiver_release"
+    },
+    {
+      "access": "public",
+      "c_handle_type": "lrtc_rtp_sender_t*",
+      "cs_type": "RtpSender",
+      "namespace": "LumenRTC",
+      "release": "lrtc_rtp_sender_release"
+    },
+    {
+      "access": "public",
+      "c_handle_type": "lrtc_rtp_transceiver_t*",
+      "cs_type": "RtpTransceiver",
+      "namespace": "LumenRTC",
+      "release": "lrtc_rtp_transceiver_release"
+    },
+    {
+      "access": "public",
+      "c_handle_type": "lrtc_video_capturer_t*",
+      "cs_type": "VideoCapturer",
+      "namespace": "LumenRTC",
+      "release": "lrtc_video_capturer_release"
+    },
+    {
+      "access": "public",
+      "c_handle_type": "lrtc_video_device_t*",
+      "cs_type": "VideoDevice",
+      "namespace": "LumenRTC",
+      "release": "lrtc_video_device_release"
+    },
+    {
+      "access": "public",
+      "c_handle_type": "lrtc_video_frame_t*",
+      "cs_type": "VideoFrame",
+      "namespace": "LumenRTC",
+      "release": "lrtc_video_frame_release"
+    },
+    {
+      "access": "public",
+      "c_handle_type": "lrtc_video_sink_t*",
+      "cs_type": "VideoSink",
+      "namespace": "LumenRTC",
+      "release": "lrtc_video_sink_release"
+    },
+    {
+      "access": "public",
+      "c_handle_type": "lrtc_video_source_t*",
+      "cs_type": "VideoSource",
+      "namespace": "LumenRTC",
+      "release": "lrtc_video_source_release"
+    },
+    {
+      "access": "public",
+      "c_handle_type": "lrtc_video_track_t*",
+      "cs_type": "VideoTrack",
+      "namespace": "LumenRTC",
+      "release": "lrtc_video_track_release"
+    }
+  ]
+}

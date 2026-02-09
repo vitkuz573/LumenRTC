@@ -3,7 +3,7 @@ namespace LumenRTC;
 /// <summary>
 /// RTP receiver for a remote media track.
 /// </summary>
-public sealed class RtpReceiver : SafeHandle
+public sealed partial class RtpReceiver : SafeHandle
 {
     internal RtpReceiver(IntPtr handle) : base(IntPtr.Zero, true)
     {
@@ -119,16 +119,7 @@ public sealed class RtpReceiver : SafeHandle
             info.ssl_cipher_suite,
             info.srtp_cipher_suite);
     }
-
-    public override bool IsInvalid => handle == IntPtr.Zero;
-
-    protected override bool ReleaseHandle()
-    {
-        NativeMethods.lrtc_rtp_receiver_release(handle);
-        return true;
-    }
-
-    private IReadOnlyList<string> GetStreamIds()
+private IReadOnlyList<string> GetStreamIds()
     {
         var count = NativeMethods.lrtc_rtp_receiver_stream_id_count(handle);
         if (count == 0)

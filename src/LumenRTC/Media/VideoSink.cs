@@ -3,7 +3,7 @@ namespace LumenRTC;
 /// <summary>
 /// Receives video frames from a track.
 /// </summary>
-public sealed class VideoSink : SafeHandle
+public sealed partial class VideoSink : SafeHandle
 {
     private readonly VideoSinkCallbacks _callbacks;
 
@@ -18,13 +18,5 @@ public sealed class VideoSink : SafeHandle
             throw new InvalidOperationException("Failed to create video sink.");
         }
         SetHandle(handle);
-    }
-
-    public override bool IsInvalid => handle == IntPtr.Zero;
-
-    protected override bool ReleaseHandle()
-    {
-        NativeMethods.lrtc_video_sink_release(handle);
-        return true;
     }
 }

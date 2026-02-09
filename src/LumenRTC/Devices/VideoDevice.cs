@@ -3,7 +3,7 @@ namespace LumenRTC;
 /// <summary>
 /// Enumerates and creates video capturers.
 /// </summary>
-public sealed class VideoDevice : SafeHandle
+public sealed partial class VideoDevice : SafeHandle
 {
     private const int MaxNameSize = 256;
     private const int MaxUniqueIdSize = 256;
@@ -44,13 +44,5 @@ public sealed class VideoDevice : SafeHandle
             throw new InvalidOperationException("Failed to create video capturer.");
         }
         return new VideoCapturer(capturer);
-    }
-
-    public override bool IsInvalid => handle == IntPtr.Zero;
-
-    protected override bool ReleaseHandle()
-    {
-        NativeMethods.lrtc_video_device_release(handle);
-        return true;
     }
 }

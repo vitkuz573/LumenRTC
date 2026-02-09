@@ -3,7 +3,7 @@ namespace LumenRTC;
 /// <summary>
 /// Receives audio frames from a track.
 /// </summary>
-public sealed class AudioSink : SafeHandle
+public sealed partial class AudioSink : SafeHandle
 {
     private readonly AudioSinkCallbacks _callbacks;
 
@@ -18,13 +18,5 @@ public sealed class AudioSink : SafeHandle
             throw new InvalidOperationException("Failed to create audio sink.");
         }
         SetHandle(handle);
-    }
-
-    public override bool IsInvalid => handle == IntPtr.Zero;
-
-    protected override bool ReleaseHandle()
-    {
-        NativeMethods.lrtc_audio_sink_release(handle);
-        return true;
     }
 }

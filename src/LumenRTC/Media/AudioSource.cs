@@ -3,7 +3,7 @@ namespace LumenRTC;
 /// <summary>
 /// Audio source used to create local audio tracks.
 /// </summary>
-public sealed class AudioSource : SafeHandle
+public sealed partial class AudioSource : SafeHandle
 {
     internal AudioSource(IntPtr handle) : base(IntPtr.Zero, true)
     {
@@ -20,13 +20,5 @@ public sealed class AudioSource : SafeHandle
                 NativeMethods.lrtc_audio_source_capture_frame(handle, (IntPtr)ptr, bitsPerSample, sampleRate, (nuint)channels, (nuint)frames);
             }
         }
-    }
-
-    public override bool IsInvalid => handle == IntPtr.Zero;
-
-    protected override bool ReleaseHandle()
-    {
-        NativeMethods.lrtc_audio_source_release(handle);
-        return true;
     }
 }

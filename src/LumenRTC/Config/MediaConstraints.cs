@@ -3,7 +3,7 @@ namespace LumenRTC;
 /// <summary>
 /// Media constraints used when creating offers, answers, or sources.
 /// </summary>
-public sealed class MediaConstraints : SafeHandle
+public sealed partial class MediaConstraints : SafeHandle
 {
     private MediaConstraints() : base(IntPtr.Zero, true) { }
 
@@ -31,13 +31,5 @@ public sealed class MediaConstraints : SafeHandle
         using var keyUtf8 = new Utf8String(key);
         using var valueUtf8 = new Utf8String(value);
         NativeMethods.lrtc_media_constraints_add_optional(handle, keyUtf8.Pointer, valueUtf8.Pointer);
-    }
-
-    public override bool IsInvalid => handle == IntPtr.Zero;
-
-    protected override bool ReleaseHandle()
-    {
-        NativeMethods.lrtc_media_constraints_release(handle);
-        return true;
     }
 }

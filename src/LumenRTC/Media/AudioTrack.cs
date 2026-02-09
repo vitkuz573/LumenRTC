@@ -3,7 +3,7 @@ namespace LumenRTC;
 /// <summary>
 /// Local or remote audio track.
 /// </summary>
-public sealed class AudioTrack : SafeHandle
+public sealed partial class AudioTrack : SafeHandle
 {
     internal AudioTrack(IntPtr handle) : base(IntPtr.Zero, true)
     {
@@ -53,13 +53,5 @@ public sealed class AudioTrack : SafeHandle
     {
         if (sink == null) throw new ArgumentNullException(nameof(sink));
         NativeMethods.lrtc_audio_track_remove_sink(handle, sink.DangerousGetHandle());
-    }
-
-    public override bool IsInvalid => handle == IntPtr.Zero;
-
-    protected override bool ReleaseHandle()
-    {
-        NativeMethods.lrtc_audio_track_release(handle);
-        return true;
     }
 }
