@@ -66,8 +66,7 @@ Native build:
 ```bash
 cmake -S native -B native/build \
   -DLIBWEBRTC_ROOT=/path/to/libwebrtc \
-  -DLIBWEBRTC_BUILD_DIR=/path/to/webrtc/out/Release \
-  -DLUMENRTC_ENABLE_DESKTOP_CAPTURE=ON
+  -DLIBWEBRTC_BUILD_DIR=/path/to/webrtc/out/Release
 cmake --build native/build -j
 ```
 
@@ -77,8 +76,7 @@ Managed build:
 dotnet build src/LumenRTC/LumenRTC.csproj -c Release
 ```
 
-If `libwebrtc` was built without desktop capture, use
-`-DLUMENRTC_ENABLE_DESKTOP_CAPTURE=OFF`.
+Desktop capture support is always compiled in for `lumenrtc`.
 
 ## One-Command Bootstrap
 
@@ -322,7 +320,7 @@ dotnet run --project samples/LumenRTC.Sample.LocalCamera.Convenience/LumenRTC.Sa
 dotnet run --project samples/LumenRTC.Sample.LocalCamera.Core/LumenRTC.Sample.LocalCamera.Core.csproj
 ```
 
-Screen share preview (requires SDL2 runtime and desktop capture enabled):
+Screen share preview (requires SDL2 runtime):
 
 ```bash
 # Core API

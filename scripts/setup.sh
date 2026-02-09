@@ -11,7 +11,6 @@ Options:
   --webrtc-branch <branch>     WebRTC ref (default: branch-heads/7151)
   --target-cpu <cpu>           Target CPU (default: x64)
   --build-type <Release|Debug> Build type (default: Release)
-  --desktop-capture <ON|OFF>   Enable desktop capture (default: ON)
   --skip-sync                  Skip gclient sync
   --skip-bootstrap             Skip building LumenRTC after libwebrtc
   -h, --help                   Show help
@@ -22,7 +21,6 @@ webrtc_root=""
 webrtc_branch="branch-heads/7151"
 target_cpu="x64"
 build_type="Release"
-desktop_capture="ON"
 skip_sync=false
 skip_bootstrap=false
 depot_tools_dir=""
@@ -74,10 +72,6 @@ while [[ $# -gt 0 ]]; do
       ;;
     --build-type)
       build_type="$2"
-      shift 2
-      ;;
-    --desktop-capture)
-      desktop_capture="$2"
       shift 2
       ;;
     --skip-sync)
@@ -185,20 +179,15 @@ if [[ "$build_type" == "Debug" ]]; then
 else
   is_debug=false
 fi
-if [[ "$desktop_capture" == "ON" ]]; then
-  desktop_capture_flag=true
-else
-  desktop_capture_flag=false
-fi
 
-gn gen "$out_dir" --args="target_os=\"linux\" target_cpu=\"$target_cpu\" is_debug=$is_debug rtc_include_tests=false rtc_use_h264=true ffmpeg_branding=\"Chrome\" is_component_build=false rtc_build_examples=false use_rtti=true use_custom_libcxx=false rtc_enable_protobuf=false libwebrtc_desktop_capture=$desktop_capture_flag"
+gn gen "$out_dir" --args="target_os=\"linux\" target_cpu=\"$target_cpu\" is_debug=$is_debug rtc_include_tests=false rtc_use_h264=true ffmpeg_branding=\"Chrome\" is_component_build=false rtc_build_examples=false use_rtti=true use_custom_libcxx=false rtc_enable_protobuf=false libwebrtc_desktop_capture=true"
 
 ninja -C "$out_dir" libwebrtc
 
 if [[ "$skip_bootstrap" == false ]]; then
   export LIBWEBRTC_ROOT="${src_dir}/libwebrtc"
   export LIBWEBRTC_BUILD_DIR="$out_dir"
-  "${repo_root}/scripts/bootstrap.sh" --libwebrtc-build-dir "$out_dir" --build-type "$build_type" --desktop-capture "$desktop_capture"
+  "${repo_root}/scripts/bootstrap.sh" --libwebrtc-build-dir "$out_dir" --build-type "$build_type"
 fi
 
 popd >/dev/null

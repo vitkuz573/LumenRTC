@@ -5,8 +5,6 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-option(LUMENRTC_ENABLE_DESKTOP_CAPTURE "Enable desktop capture support" ON)
-
 if(NOT LIBWEBRTC_ROOT)
   if(DEFINED ENV{LIBWEBRTC_ROOT})
     set(LIBWEBRTC_ROOT $ENV{LIBWEBRTC_ROOT})
@@ -50,10 +48,7 @@ target_include_directories(lumenrtc PUBLIC
   "${LIBWEBRTC_INCLUDE_DIR}"
 )
 
-target_compile_definitions(lumenrtc PRIVATE LUMENRTC_EXPORTS)
-if(LUMENRTC_ENABLE_DESKTOP_CAPTURE)
-  target_compile_definitions(lumenrtc PRIVATE RTC_DESKTOP_DEVICE)
-endif()
+target_compile_definitions(lumenrtc PRIVATE LUMENRTC_EXPORTS RTC_DESKTOP_DEVICE)
 
 if(WIN32)
   target_compile_definitions(lumenrtc PRIVATE LIB_WEBRTC_API_DLL)

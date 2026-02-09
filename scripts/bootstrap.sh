@@ -8,7 +8,6 @@ Usage: scripts/bootstrap.sh --libwebrtc-build-dir <path> [options]
 Options:
   --libwebrtc-build-dir <path>   Required. Path to libwebrtc build output (out/...)
   --cmake-build-dir <path>       CMake build output directory (default: native/build)
-  --desktop-capture <ON|OFF>     Enable desktop capture (default: ON)
   --build-type <Release|Debug>   Build type (default: Release)
   -h, --help                     Show help
 
@@ -20,7 +19,6 @@ EOF
 
 libwebrtc_build_dir=""
 cmake_build_dir="native/build"
-desktop_capture="ON"
 build_type="Release"
 
 detect_libwebrtc_build_dir() {
@@ -75,10 +73,6 @@ while [[ $# -gt 0 ]]; do
       cmake_build_dir="$2"
       shift 2
       ;;
-    --desktop-capture)
-      desktop_capture="$2"
-      shift 2
-      ;;
     --build-type)
       build_type="$2"
       shift 2
@@ -114,7 +108,6 @@ fi
 
 cmake_args=(
   -DLIBWEBRTC_BUILD_DIR="$libwebrtc_build_dir"
-  -DLUMENRTC_ENABLE_DESKTOP_CAPTURE="$desktop_capture"
   -DCMAKE_BUILD_TYPE="$build_type"
 )
 

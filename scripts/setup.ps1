@@ -20,10 +20,6 @@ Param(
   [string]$BuildType = "Release",
 
   [Parameter(Mandatory = $false)]
-  [ValidateSet("ON", "OFF")]
-  [string]$DesktopCapture = "ON",
-
-  [Parameter(Mandatory = $false)]
   [switch]$SkipSync,
 
   [Parameter(Mandatory = $false)]
@@ -477,7 +473,6 @@ try {
 
   $outDir = Join-PathSafe $srcDirRoot "out\\$BuildType"
   $isDebug = if ($BuildType -eq "Debug") { "true" } else { "false" }
-  $desktopCaptureFlag = if ($DesktopCapture -eq "ON") { "true" } else { "false" }
 
   New-Item -ItemType Directory -Force -Path $outDir | Out-Null
   $argsGnPath = Join-PathSafe $outDir "args.gn"
@@ -491,7 +486,7 @@ try {
     'ffmpeg_branding = "Chrome"',
     "rtc_include_tests = false",
     "rtc_build_examples = false",
-    "libwebrtc_desktop_capture = $desktopCaptureFlag"
+    "libwebrtc_desktop_capture = true"
   ) -join "`n"
 
   Set-Content -Path $argsGnPath -Value $argsContent -Encoding ASCII
@@ -511,7 +506,7 @@ try {
     $bootstrapScript = Join-PathSafe $scriptRoot "bootstrap.ps1"
     Push-Location $lumenRoot
     try {
-      & $bootstrapScript -LibWebRtcBuildDir $outDir -BuildType $BuildType -DesktopCapture $DesktopCapture
+      & $bootstrapScript -LibWebRtcBuildDir $outDir -BuildType $BuildType
     }
     finally {
       Pop-Location

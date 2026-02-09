@@ -6,10 +6,6 @@ Param(
   [string]$CMakeBuildDir = "native/build",
 
   [Parameter(Mandatory = $false)]
-  [ValidateSet("ON", "OFF")]
-  [string]$DesktopCapture = "ON",
-
-  [Parameter(Mandatory = $false)]
   [ValidateSet("Release", "Debug")]
   [string]$BuildType = "Release"
 )
@@ -158,8 +154,7 @@ if ([string]::IsNullOrWhiteSpace($LibWebRtcBuildDir)) {
 }
 
 $cmakeArgs = @(
-  "-DLIBWEBRTC_BUILD_DIR=$LibWebRtcBuildDir",
-  "-DLUMENRTC_ENABLE_DESKTOP_CAPTURE=$DesktopCapture"
+  "-DLIBWEBRTC_BUILD_DIR=$LibWebRtcBuildDir"
 )
 
 if (-not [string]::IsNullOrWhiteSpace($env:LIBWEBRTC_ROOT)) {
