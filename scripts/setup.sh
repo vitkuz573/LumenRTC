@@ -41,12 +41,15 @@ require_cmd() {
 cleanup_partial_sync_artifacts() {
   local root="$1"
   local instr_dir="${root}/src/third_party/instrumented_libs"
+  local status=0
   if [[ -d "$instr_dir" ]]; then
-    rm -rf "${instr_dir}/binaries" || true
+    rm -rf "${instr_dir}/binaries" || status=$?
     find "$instr_dir" -maxdepth 1 -type f \
       \( -name "*.tmp" -o -name "*.partial" -o -name "*.tar" -o -name "*.tar.*" \) \
-      -delete 2>/dev/null || true
+      -delete 2>/dev/null || status=$?
   fi
+
+  return "$status"
 }
 
 run_gclient_sync_with_retry() {
@@ -67,18 +70,33 @@ run_gclient_sync_with_retry() {
     fi
 
     echo "[setup] gclient sync attempt ${attempt}/${attempts}..."
-    if "${cmd[@]}"; then
+    set +e
+    "${cmd[@]}"
+    status=$?
+    set -e
+
+    if (( status == 0 )); then
       return 0
     fi
 
-    status=$?
     echo "[setup] gclient sync failed with exit code ${status}."
+    if (( status >= 128 )); then
+      echo "[setup] gclient sync terminated by signal $((status - 128))."
+    fi
     echo "[setup] Cleaning partial sync artifacts..."
-    cleanup_partial_sync_artifacts "$root"
+    if ! cleanup_partial_sync_artifacts "$root"; then
+      echo "[setup] Failed to clean partial sync artifacts due to filesystem I/O errors." >&2
+      echo "[setup] Abort retries, restart WSL and verify host disk health." >&2
+      return 90
+    fi
 
     if (( attempt < attempts )); then
       echo "[setup] Retrying in ${delay}s..."
-      sleep "$delay"
+      if ! sleep "$delay"; then
+        echo "[setup] sleep command failed due to filesystem/runtime I/O errors." >&2
+        echo "[setup] Abort retries, restart WSL and verify host disk health." >&2
+        return 91
+      fi
     fi
     ((attempt++))
   done
