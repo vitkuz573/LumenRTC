@@ -225,6 +225,19 @@ sender.SetDtmfToneChangeHandler(change =>
 });
 ```
 
+RTP transceiver direction orchestration:
+
+```csharp
+foreach (var tx in pc.GetTransceivers(MediaType.Video))
+{
+    tx.TrySetSendEnabled(false, out _);   // stop upstream video
+    tx.TrySetReceiveEnabled(true, out _); // keep downstream video
+}
+
+pc.TryPauseMedia(MediaType.Audio, out _);
+pc.TryResumeMedia(MediaType.Audio, out _);
+```
+
 DataChannel high-level handlers:
 
 ```csharp

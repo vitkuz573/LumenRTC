@@ -29,6 +29,19 @@ public sealed partial class RtpReceiver : SafeHandle
 
     public IReadOnlyList<MediaStream> Streams => GetStreams();
 
+    public bool IsAudio => MediaType == MediaType.Audio;
+
+    public bool IsVideo => MediaType == MediaType.Video;
+
+    public MediaStream? PrimaryStream
+    {
+        get
+        {
+            var streams = Streams;
+            return streams.Count > 0 ? streams[0] : null;
+        }
+    }
+
     public AudioTrack? AudioTrack
     {
         get
@@ -47,6 +60,39 @@ public sealed partial class RtpReceiver : SafeHandle
         }
     }
 
+    public bool TryGetAudioTrack([global::System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out AudioTrack? track)
+    {
+        track = AudioTrack;
+        return track != null;
+    }
+
+    public bool TryGetVideoTrack([global::System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out VideoTrack? track)
+    {
+        track = VideoTrack;
+        return track != null;
+    }
+
+    public bool TryGetStream(string streamId, [global::System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out MediaStream? stream)
+    {
+        if (string.IsNullOrWhiteSpace(streamId))
+        {
+            stream = null;
+            return false;
+        }
+
+        foreach (var item in Streams)
+        {
+            if (string.Equals(item.Id, streamId, StringComparison.Ordinal))
+            {
+                stream = item;
+                return true;
+            }
+        }
+
+        stream = null;
+        return false;
+    }
+
     public void SetJitterBufferMinimumDelay(double seconds)
     {
         if (seconds < 0)
@@ -63,6 +109,32 @@ public sealed partial class RtpReceiver : SafeHandle
     public void SetJitterBufferMinimumDelay(TimeSpan delay)
     {
         SetJitterBufferMinimumDelay(delay.TotalSeconds);
+    }
+
+    public bool TrySetJitterBufferMinimumDelay(double seconds, out string? error)
+    {
+        if (seconds < 0)
+        {
+            error = "Jitter buffer delay must be non-negative.";
+            return false;
+        }
+
+        try
+        {
+            SetJitterBufferMinimumDelay(seconds);
+            error = null;
+            return true;
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+            return false;
+        }
+    }
+
+    public bool TrySetJitterBufferMinimumDelay(TimeSpan delay, out string? error)
+    {
+        return TrySetJitterBufferMinimumDelay(delay.TotalSeconds, out error);
     }
 
     public IReadOnlyList<RtpEncodingInfo> GetEncodings()
@@ -119,7 +191,8 @@ public sealed partial class RtpReceiver : SafeHandle
             info.ssl_cipher_suite,
             info.srtp_cipher_suite);
     }
-private IReadOnlyList<string> GetStreamIds()
+
+    private IReadOnlyList<string> GetStreamIds()
     {
         var count = NativeMethods.lrtc_rtp_receiver_stream_id_count(handle);
         if (count == 0)

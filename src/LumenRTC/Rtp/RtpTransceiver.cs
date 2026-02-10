@@ -90,6 +90,62 @@ public sealed partial class RtpTransceiver : SafeHandle
         }
     }
 
+    public bool IsStoppedOrStopping => Stopped || Stopping;
+
+    public bool CanSendDesired
+    {
+        get
+        {
+            var direction = Direction;
+            return direction == RtpTransceiverDirection.SendRecv
+                || direction == RtpTransceiverDirection.SendOnly;
+        }
+    }
+
+    public bool CanReceiveDesired
+    {
+        get
+        {
+            var direction = Direction;
+            return direction == RtpTransceiverDirection.SendRecv
+                || direction == RtpTransceiverDirection.RecvOnly;
+        }
+    }
+
+    public bool CanSendCurrent
+    {
+        get
+        {
+            var direction = CurrentDirection;
+            return direction == RtpTransceiverDirection.SendRecv
+                || direction == RtpTransceiverDirection.SendOnly;
+        }
+    }
+
+    public bool CanReceiveCurrent
+    {
+        get
+        {
+            var direction = CurrentDirection;
+            return direction == RtpTransceiverDirection.SendRecv
+                || direction == RtpTransceiverDirection.RecvOnly;
+        }
+    }
+
+    public bool IsInactiveDesired => Direction == RtpTransceiverDirection.Inactive;
+
+    public bool TryGetSender([global::System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out RtpSender? sender)
+    {
+        sender = Sender;
+        return sender != null;
+    }
+
+    public bool TryGetReceiver([global::System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out RtpReceiver? receiver)
+    {
+        receiver = Receiver;
+        return receiver != null;
+    }
+
     public bool TrySetDirection(RtpTransceiverDirection direction, out string? error)
     {
         return InvokeWithError(
@@ -109,6 +165,66 @@ public sealed partial class RtpTransceiver : SafeHandle
         }
     }
 
+    public bool TrySetSendEnabled(bool enabled, out string? error)
+    {
+        try
+        {
+            var targetDirection = WithSendEnabled(Direction, enabled);
+            return TrySetDirection(targetDirection, out error);
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+            return false;
+        }
+    }
+
+    public void SetSendEnabled(bool enabled)
+    {
+        var targetDirection = WithSendEnabled(Direction, enabled);
+        SetDirection(targetDirection);
+    }
+
+    public bool TrySetReceiveEnabled(bool enabled, out string? error)
+    {
+        try
+        {
+            var targetDirection = WithReceiveEnabled(Direction, enabled);
+            return TrySetDirection(targetDirection, out error);
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+            return false;
+        }
+    }
+
+    public void SetReceiveEnabled(bool enabled)
+    {
+        var targetDirection = WithReceiveEnabled(Direction, enabled);
+        SetDirection(targetDirection);
+    }
+
+    public bool TryPause(out string? error)
+    {
+        return TrySetDirection(RtpTransceiverDirection.Inactive, out error);
+    }
+
+    public void Pause()
+    {
+        SetDirection(RtpTransceiverDirection.Inactive);
+    }
+
+    public bool TryResumeBidirectional(out string? error)
+    {
+        return TrySetDirection(RtpTransceiverDirection.SendRecv, out error);
+    }
+
+    public void ResumeBidirectional()
+    {
+        SetDirection(RtpTransceiverDirection.SendRecv);
+    }
+
     public bool TryStop(out string? error)
     {
         return InvokeWithError(
@@ -123,7 +239,50 @@ public sealed partial class RtpTransceiver : SafeHandle
             throw new InvalidOperationException(error ?? "Failed to stop transceiver.");
         }
     }
-private bool InvokeWithError(TransceiverErrorInvoker invoker, out string? error)
+
+    private static RtpTransceiverDirection WithSendEnabled(RtpTransceiverDirection direction, bool enabled)
+    {
+        if (direction == RtpTransceiverDirection.Stopped)
+        {
+            return direction;
+        }
+
+        return (direction, enabled) switch
+        {
+            (RtpTransceiverDirection.SendRecv, true) => RtpTransceiverDirection.SendRecv,
+            (RtpTransceiverDirection.SendOnly, true) => RtpTransceiverDirection.SendOnly,
+            (RtpTransceiverDirection.RecvOnly, true) => RtpTransceiverDirection.SendRecv,
+            (RtpTransceiverDirection.Inactive, true) => RtpTransceiverDirection.SendOnly,
+            (RtpTransceiverDirection.SendRecv, false) => RtpTransceiverDirection.RecvOnly,
+            (RtpTransceiverDirection.SendOnly, false) => RtpTransceiverDirection.Inactive,
+            (RtpTransceiverDirection.RecvOnly, false) => RtpTransceiverDirection.RecvOnly,
+            (RtpTransceiverDirection.Inactive, false) => RtpTransceiverDirection.Inactive,
+            _ => throw new ArgumentOutOfRangeException(nameof(direction), direction, "Unsupported transceiver direction."),
+        };
+    }
+
+    private static RtpTransceiverDirection WithReceiveEnabled(RtpTransceiverDirection direction, bool enabled)
+    {
+        if (direction == RtpTransceiverDirection.Stopped)
+        {
+            return direction;
+        }
+
+        return (direction, enabled) switch
+        {
+            (RtpTransceiverDirection.SendRecv, true) => RtpTransceiverDirection.SendRecv,
+            (RtpTransceiverDirection.SendOnly, true) => RtpTransceiverDirection.SendRecv,
+            (RtpTransceiverDirection.RecvOnly, true) => RtpTransceiverDirection.RecvOnly,
+            (RtpTransceiverDirection.Inactive, true) => RtpTransceiverDirection.RecvOnly,
+            (RtpTransceiverDirection.SendRecv, false) => RtpTransceiverDirection.SendOnly,
+            (RtpTransceiverDirection.SendOnly, false) => RtpTransceiverDirection.SendOnly,
+            (RtpTransceiverDirection.RecvOnly, false) => RtpTransceiverDirection.Inactive,
+            (RtpTransceiverDirection.Inactive, false) => RtpTransceiverDirection.Inactive,
+            _ => throw new ArgumentOutOfRangeException(nameof(direction), direction, "Unsupported transceiver direction."),
+        };
+    }
+
+    private bool InvokeWithError(TransceiverErrorInvoker invoker, out string? error)
     {
         const int BufferSize = 512;
         var buffer = Marshal.AllocHGlobal(BufferSize);

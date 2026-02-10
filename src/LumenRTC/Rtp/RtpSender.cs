@@ -29,6 +29,12 @@ public sealed partial class RtpSender : SafeHandle
 
     public IReadOnlyList<string> StreamIds => GetStreamIds();
 
+    public bool IsAudio => MediaType == MediaType.Audio;
+
+    public bool IsVideo => MediaType == MediaType.Video;
+
+    public bool HasTrack => AudioTrack != null || VideoTrack != null;
+
     public AudioTrack? AudioTrack
     {
         get
@@ -54,6 +60,18 @@ public sealed partial class RtpSender : SafeHandle
             var sender = NativeMethods.lrtc_rtp_sender_get_dtmf_sender(handle);
             return sender == IntPtr.Zero ? null : new DtmfSender(sender);
         }
+    }
+
+    public bool TryGetAudioTrack([global::System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out AudioTrack? track)
+    {
+        track = AudioTrack;
+        return track != null;
+    }
+
+    public bool TryGetVideoTrack([global::System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out VideoTrack? track)
+    {
+        track = VideoTrack;
+        return track != null;
     }
 
     public bool TryGetDtmfSender([global::System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out DtmfSender? sender)
@@ -136,6 +154,21 @@ public sealed partial class RtpSender : SafeHandle
         return result != 0;
     }
 
+    public bool TryReplaceTrack(AudioTrack? track, out string? error)
+    {
+        try
+        {
+            var replaced = ReplaceTrack(track);
+            error = replaced ? null : "Failed to replace audio track.";
+            return replaced;
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+            return false;
+        }
+    }
+
     public bool ReplaceTrack(VideoTrack? track)
     {
         var result = NativeMethods.lrtc_rtp_sender_replace_video_track(
@@ -144,11 +177,41 @@ public sealed partial class RtpSender : SafeHandle
         return result != 0;
     }
 
+    public bool TryReplaceTrack(VideoTrack? track, out string? error)
+    {
+        try
+        {
+            var replaced = ReplaceTrack(track);
+            error = replaced ? null : "Failed to replace video track.";
+            return replaced;
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+            return false;
+        }
+    }
+
     public bool ClearTrack()
     {
         return MediaType == MediaType.Audio
             ? ReplaceTrack((AudioTrack?)null)
             : ReplaceTrack((VideoTrack?)null);
+    }
+
+    public bool TryClearTrack(out string? error)
+    {
+        try
+        {
+            var cleared = ClearTrack();
+            error = cleared ? null : "Failed to clear sender track.";
+            return cleared;
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+            return false;
+        }
     }
 
     public bool SetEncodingParameters(RtpEncodingSettings settings)
@@ -164,6 +227,27 @@ public sealed partial class RtpSender : SafeHandle
         {
             rid?.Dispose();
             scalabilityMode?.Dispose();
+        }
+    }
+
+    public bool TrySetEncodingParameters(RtpEncodingSettings settings, out string? error)
+    {
+        if (settings == null)
+        {
+            error = "Encoding settings cannot be null.";
+            return false;
+        }
+
+        try
+        {
+            var applied = SetEncodingParameters(settings);
+            error = applied ? null : "Failed to set sender encoding parameters.";
+            return applied;
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+            return false;
         }
     }
 
@@ -184,6 +268,33 @@ public sealed partial class RtpSender : SafeHandle
         {
             rid?.Dispose();
             scalabilityMode?.Dispose();
+        }
+    }
+
+    public bool TrySetEncodingParameters(int encodingIndex, RtpEncodingSettings settings, out string? error)
+    {
+        if (encodingIndex < 0)
+        {
+            error = "Encoding index must be non-negative.";
+            return false;
+        }
+
+        if (settings == null)
+        {
+            error = "Encoding settings cannot be null.";
+            return false;
+        }
+
+        try
+        {
+            var applied = SetEncodingParameters(encodingIndex, settings);
+            error = applied ? null : $"Failed to set sender encoding parameters at index {encodingIndex}.";
+            return applied;
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+            return false;
         }
     }
 
@@ -249,7 +360,29 @@ public sealed partial class RtpSender : SafeHandle
         var result = NativeMethods.lrtc_rtp_sender_set_stream_ids(handle, ids.Pointer, (uint)ids.Count);
         return result != 0;
     }
-private IReadOnlyList<string> GetStreamIds()
+
+    public bool TrySetStreamIds(IReadOnlyList<string> streamIds, out string? error)
+    {
+        if (streamIds == null)
+        {
+            error = "Stream IDs cannot be null.";
+            return false;
+        }
+
+        try
+        {
+            var updated = SetStreamIds(streamIds);
+            error = updated ? null : "Failed to set sender stream IDs.";
+            return updated;
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+            return false;
+        }
+    }
+
+    private IReadOnlyList<string> GetStreamIds()
     {
         var count = NativeMethods.lrtc_rtp_sender_stream_id_count(handle);
         if (count == 0)
