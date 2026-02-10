@@ -56,6 +56,78 @@ public sealed partial class RtpSender : SafeHandle
         }
     }
 
+    public bool TryGetDtmfSender([global::System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out DtmfSender? sender)
+    {
+        sender = DtmfSender;
+        return sender != null;
+    }
+
+    public bool CanInsertDtmf => DtmfSender?.CanInsert == true;
+
+    public bool TryInsertDtmf(string tones, out string? error)
+    {
+        return TryInsertDtmf(tones, DtmfInsertOptions.Default, out error);
+    }
+
+    public bool TryInsertDtmf(char tone, out string? error)
+    {
+        return TryInsertDtmf(new string(tone, 1), DtmfInsertOptions.Default, out error);
+    }
+
+    public bool TryInsertDtmf(string tones, DtmfInsertOptions options, out string? error)
+    {
+        if (!TryGetDtmfSender(out var dtmf))
+        {
+            error = "RTP sender does not expose DTMF sender.";
+            return false;
+        }
+
+        return dtmf.TryInsert(tones, options, out error);
+    }
+
+    public bool TryInsertDtmf(char tone, DtmfInsertOptions options, out string? error)
+    {
+        return TryInsertDtmf(new string(tone, 1), options, out error);
+    }
+
+    public void InsertDtmf(string tones)
+    {
+        InsertDtmf(tones, DtmfInsertOptions.Default);
+    }
+
+    public void InsertDtmf(char tone)
+    {
+        InsertDtmf(new string(tone, 1), DtmfInsertOptions.Default);
+    }
+
+    public void InsertDtmf(string tones, DtmfInsertOptions options)
+    {
+        if (!TryInsertDtmf(tones, options, out var error))
+        {
+            throw new InvalidOperationException(error ?? "Failed to insert DTMF tones.");
+        }
+    }
+
+    public void InsertDtmf(char tone, DtmfInsertOptions options)
+    {
+        InsertDtmf(new string(tone, 1), options);
+    }
+
+    public void SetDtmfToneChangeHandler(Action<DtmfToneChange>? handler)
+    {
+        if (!TryGetDtmfSender(out var dtmf))
+        {
+            if (handler == null)
+            {
+                return;
+            }
+
+            throw new InvalidOperationException("RTP sender does not expose DTMF sender.");
+        }
+
+        dtmf.SetToneChangeHandler(handler);
+    }
+
     public bool ReplaceTrack(AudioTrack? track)
     {
         var result = NativeMethods.lrtc_rtp_sender_replace_audio_track(

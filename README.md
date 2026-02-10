@@ -194,6 +194,24 @@ var offer = await pc.CreateOfferAsync();
 await pc.SetLocalDescriptionAsync(offer);
 ```
 
+DTMF on an audio sender:
+
+```csharp
+if (sender.TryInsertDtmf("123#", out var err))
+{
+    Console.WriteLine("DTMF queued");
+}
+else
+{
+    Console.WriteLine(err);
+}
+
+sender.SetDtmfToneChangeHandler(change =>
+{
+    Console.WriteLine($"Tone={change.Tone}, Remaining={change.RemainingBuffer}");
+});
+```
+
 ## Quickstart (Core API)
 
 Minimal camera preview with explicit factory/device primitives:
