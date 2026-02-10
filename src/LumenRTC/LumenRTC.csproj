@@ -2,30 +2,33 @@
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <LumenRtcAbiIdlPath>$(MSBuildProjectDirectory)/../../abi/generated/lumenrtc/lumenrtc.idl.json</LumenRtcAbiIdlPath>
-    <LumenRtcAbiNamespace>LumenRTC.Interop</LumenRtcAbiNamespace>
-    <LumenRtcAbiClassName>NativeMethods</LumenRtcAbiClassName>
-    <LumenRtcAbiAccessModifier>internal</LumenRtcAbiAccessModifier>
-    <LumenRtcAbiCallingConvention>Cdecl</LumenRtcAbiCallingConvention>
-    <LumenRtcAbiLibraryExpression>LibName</LumenRtcAbiLibraryExpression>
-    <LumenRtcAbiManagedMetadataPath>$(MSBuildProjectDirectory)/../../abi/bindings/lumenrtc.managed.json</LumenRtcAbiManagedMetadataPath>
+    <AbiIdlPath>$(MSBuildProjectDirectory)/../../abi/generated/lumenrtc/lumenrtc.idl.json</AbiIdlPath>
+    <AbiNamespace>LumenRTC.Interop</AbiNamespace>
+    <AbiClassName>NativeMethods</AbiClassName>
+    <AbiAccessModifier>internal</AbiAccessModifier>
+    <AbiCallingConvention>Cdecl</AbiCallingConvention>
+    <AbiLibraryExpression>LibName</AbiLibraryExpression>
+    <AbiManagedMetadataPath>$(MSBuildProjectDirectory)/../../abi/bindings/lumenrtc.managed.json</AbiManagedMetadataPath>
+    <AbiManagedApiMetadataPath>$(MSBuildProjectDirectory)/../../abi/bindings/lumenrtc.managed_api.json</AbiManagedApiMetadataPath>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\tools\lumenrtc_roslyn_codegen\LumenRTC.Abi.RoslynGenerator.csproj"
                       OutputItemType="Analyzer"
                       ReferenceOutputAssembly="false" />
-    <AdditionalFiles Include="$(LumenRtcAbiIdlPath)" />
-    <AdditionalFiles Include="$(LumenRtcAbiManagedMetadataPath)" />
+    <AdditionalFiles Include="$(AbiIdlPath)" />
+    <AdditionalFiles Include="$(AbiManagedMetadataPath)" />
+    <AdditionalFiles Include="$(AbiManagedApiMetadataPath)" />
   </ItemGroup>
 
   <ItemGroup>
-    <CompilerVisibleProperty Include="LumenRtcAbiIdlPath" />
-    <CompilerVisibleProperty Include="LumenRtcAbiNamespace" />
-    <CompilerVisibleProperty Include="LumenRtcAbiClassName" />
-    <CompilerVisibleProperty Include="LumenRtcAbiAccessModifier" />
-    <CompilerVisibleProperty Include="LumenRtcAbiCallingConvention" />
-    <CompilerVisibleProperty Include="LumenRtcAbiLibraryExpression" />
-    <CompilerVisibleProperty Include="LumenRtcAbiManagedMetadataPath" />
+    <CompilerVisibleProperty Include="AbiIdlPath" />
+    <CompilerVisibleProperty Include="AbiNamespace" />
+    <CompilerVisibleProperty Include="AbiClassName" />
+    <CompilerVisibleProperty Include="AbiAccessModifier" />
+    <CompilerVisibleProperty Include="AbiCallingConvention" />
+    <CompilerVisibleProperty Include="AbiLibraryExpression" />
+    <CompilerVisibleProperty Include="AbiManagedMetadataPath" />
+    <CompilerVisibleProperty Include="AbiManagedApiMetadataPath" />
   </ItemGroup>
 </Project>

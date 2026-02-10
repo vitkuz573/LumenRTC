@@ -9,10 +9,4 @@ public sealed partial class VideoCapturer : SafeHandle
     {
         SetHandle(handle);
     }
-
-    public bool Start() => NativeMethods.lrtc_video_capturer_start(handle);
-
-    public bool CaptureStarted() => NativeMethods.lrtc_video_capturer_capture_started(handle);
-
-    public void Stop() => NativeMethods.lrtc_video_capturer_stop(handle);
 }

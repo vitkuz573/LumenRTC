@@ -1,0 +1,1030 @@
+{
+  "schema_version": 2,
+  "namespace": "LumenRTC",
+  "output_hints": {
+    "pattern": "{default}",
+    "prefix": "",
+    "suffix": ".g.cs",
+    "directory": "",
+    "apply_prefix_to_explicit": false,
+    "apply_directory_to_explicit": false,
+    "sections": {
+      "callbacks": "ManagedApi.Callbacks",
+      "builder": "ManagedApi.Builder",
+      "handle_api": "ManagedApi.HandleApi",
+      "peer_connection_async": "ManagedApi.PeerConnection.Async"
+    }
+  },
+  "required_native_functions": [
+    "lrtc_audio_track_add_sink",
+    "lrtc_audio_track_get_enabled",
+    "lrtc_audio_track_get_id",
+    "lrtc_audio_track_get_state",
+    "lrtc_audio_track_remove_sink",
+    "lrtc_audio_track_set_enabled",
+    "lrtc_audio_track_set_volume",
+    "lrtc_data_channel_close",
+    "lrtc_data_channel_send",
+    "lrtc_desktop_capturer_is_running",
+    "lrtc_desktop_capturer_start",
+    "lrtc_desktop_capturer_start_region",
+    "lrtc_desktop_capturer_stop",
+    "lrtc_dtmf_sender_can_insert",
+    "lrtc_dtmf_sender_comma_delay",
+    "lrtc_dtmf_sender_duration",
+    "lrtc_dtmf_sender_insert",
+    "lrtc_dtmf_sender_inter_tone_gap",
+    "lrtc_dtmf_sender_tones",
+    "lrtc_media_stream_add_audio_track",
+    "lrtc_media_stream_add_video_track",
+    "lrtc_media_stream_remove_audio_track",
+    "lrtc_media_stream_remove_video_track",
+    "lrtc_video_capturer_capture_started",
+    "lrtc_video_capturer_start",
+    "lrtc_video_capturer_stop",
+    "lrtc_video_track_add_sink",
+    "lrtc_video_track_get_enabled",
+    "lrtc_video_track_get_id",
+    "lrtc_video_track_get_state",
+    "lrtc_video_track_remove_sink",
+    "lrtc_video_track_set_enabled"
+  ],
+  "callbacks": [
+    {
+      "class": "AudioSinkCallbacks",
+      "summary": "Audio sink callbacks.",
+      "native_struct": "LrtcAudioSinkCallbacks",
+      "fields": [
+        {
+          "managed_name": "OnData",
+          "managed_type": "Action<AudioFrame>?",
+          "delegate_field": "_frameCb",
+          "delegate_type": "LrtcAudioFrameCb",
+          "native_field": "on_data",
+          "assignment_lines": [
+            "(ud, audioPtr, bitsPerSample, sampleRate, channels, frames) =>",
+            "{",
+            "    var channelsInt = (int)channels;",
+            "    var framesInt = (int)frames;",
+            "    if (audioPtr == IntPtr.Zero || bitsPerSample <= 0 || channelsInt <= 0 || framesInt <= 0)",
+            "    {",
+            "        OnData?.Invoke(new AudioFrame(ReadOnlyMemory<byte>.Empty, bitsPerSample, sampleRate, channelsInt, framesInt));",
+            "        return;",
+            "    }",
+            "",
+            "    var bytesPerSample = Math.Max(1, (bitsPerSample + 7) / 8);",
+            "    var totalBytes = (long)channelsInt * framesInt * bytesPerSample;",
+            "    if (totalBytes <= 0 || totalBytes > int.MaxValue)",
+            "    {",
+            "        OnData?.Invoke(new AudioFrame(ReadOnlyMemory<byte>.Empty, bitsPerSample, sampleRate, channelsInt, framesInt));",
+            "        return;",
+            "    }",
+            "",
+            "    var data = new byte[(int)totalBytes];",
+            "    Marshal.Copy(audioPtr, data, 0, (int)totalBytes);",
+            "    OnData?.Invoke(new AudioFrame(data, bitsPerSample, sampleRate, channelsInt, framesInt));",
+            "}"
+          ]
+        }
+      ]
+    },
+    {
+      "class": "DataChannelCallbacks",
+      "summary": "Data channel event callbacks.",
+      "native_struct": "LrtcDataChannelCallbacks",
+      "fields": [
+        {
+          "managed_name": "OnStateChange",
+          "managed_type": "Action<DataChannelState>?",
+          "delegate_field": "_stateCb",
+          "delegate_type": "LrtcDataChannelStateCb",
+          "native_field": "on_state_change",
+          "assignment_lines": [
+            "(ud, state) => OnStateChange?.Invoke((DataChannelState)state)"
+          ]
+        },
+        {
+          "managed_name": "OnMessage",
+          "managed_type": "Action<ReadOnlyMemory<byte>, bool>?",
+          "delegate_field": "_messageCb",
+          "delegate_type": "LrtcDataChannelMessageCb",
+          "native_field": "on_message",
+          "assignment_lines": [
+            "(ud, dataPtr, length, binary) =>",
+            "{",
+            "    if (dataPtr == IntPtr.Zero || length <= 0)",
+            "    {",
+            "        OnMessage?.Invoke(ReadOnlyMemory<byte>.Empty, binary != 0);",
+            "        return;",
+            "    }",
+            "    var managed = new byte[length];",
+            "    Marshal.Copy(dataPtr, managed, 0, length);",
+            "    OnMessage?.Invoke(managed, binary != 0);",
+            "}"
+          ]
+        }
+      ]
+    },
+    {
+      "class": "DtmfSenderCallbacks",
+      "summary": "DTMF sender event callbacks.",
+      "native_struct": "LrtcDtmfSenderCallbacks",
+      "fields": [
+        {
+          "managed_name": "OnToneChange",
+          "managed_type": "Action<string, string?>?",
+          "delegate_field": "_toneCb",
+          "delegate_type": "LrtcDtmfToneCb",
+          "native_field": "on_tone_change",
+          "assignment_lines": [
+            "(ud, tonePtr, toneBufferPtr) =>",
+            "{",
+            "    var tone = Utf8String.Read(tonePtr);",
+            "    var toneBuffer = Utf8String.Read(toneBufferPtr);",
+            "    OnToneChange?.Invoke(tone, string.IsNullOrEmpty(toneBuffer) ? null : toneBuffer);",
+            "}"
+          ]
+        }
+      ]
+    },
+    {
+      "class": "PeerConnectionCallbacks",
+      "summary": "Peer connection event callbacks.",
+      "native_struct": "LrtcPeerConnectionCallbacks",
+      "fields": [
+        {
+          "managed_name": "OnSignalingState",
+          "managed_type": "Action<SignalingState>?",
+          "delegate_field": "_signalingStateCb",
+          "delegate_type": "LrtcPeerConnectionStateCb",
+          "native_field": "on_signaling_state",
+          "assignment_lines": [
+            "(ud, state) => OnSignalingState?.Invoke((SignalingState)state)"
+          ]
+        },
+        {
+          "managed_name": "OnPeerConnectionState",
+          "managed_type": "Action<PeerConnectionState>?",
+          "delegate_field": "_pcStateCb",
+          "delegate_type": "LrtcPeerConnectionStateCb",
+          "native_field": "on_peer_connection_state",
+          "assignment_lines": [
+            "(ud, state) => OnPeerConnectionState?.Invoke((PeerConnectionState)state)"
+          ]
+        },
+        {
+          "managed_name": "OnIceGatheringState",
+          "managed_type": "Action<IceGatheringState>?",
+          "delegate_field": "_iceGatheringCb",
+          "delegate_type": "LrtcPeerConnectionStateCb",
+          "native_field": "on_ice_gathering_state",
+          "assignment_lines": [
+            "(ud, state) => OnIceGatheringState?.Invoke((IceGatheringState)state)"
+          ]
+        },
+        {
+          "managed_name": "OnIceConnectionState",
+          "managed_type": "Action<IceConnectionState>?",
+          "delegate_field": "_iceConnectionCb",
+          "delegate_type": "LrtcPeerConnectionStateCb",
+          "native_field": "on_ice_connection_state",
+          "assignment_lines": [
+            "(ud, state) => OnIceConnectionState?.Invoke((IceConnectionState)state)"
+          ]
+        },
+        {
+          "managed_name": "OnIceCandidate",
+          "managed_type": "Action<string, int, string>?",
+          "delegate_field": "_iceCandidateCb",
+          "delegate_type": "LrtcIceCandidateCb",
+          "native_field": "on_ice_candidate",
+          "assignment_lines": [
+            "(ud, mid, mline, cand) =>",
+            "OnIceCandidate?.Invoke(Utf8String.Read(mid), mline, Utf8String.Read(cand))"
+          ]
+        },
+        {
+          "managed_name": "OnDataChannel",
+          "managed_type": "Action<DataChannel>?",
+          "delegate_field": "_dataChannelCb",
+          "delegate_type": "LrtcDataChannelCreatedCb",
+          "native_field": "on_data_channel",
+          "assignment_lines": [
+            "(ud, ptr) => OnDataChannel?.Invoke(new DataChannel(ptr))"
+          ]
+        },
+        {
+          "managed_name": "OnVideoTrack",
+          "managed_type": "Action<VideoTrack>?",
+          "delegate_field": "_videoTrackCb",
+          "delegate_type": "LrtcVideoTrackCb",
+          "native_field": "on_video_track",
+          "assignment_lines": [
+            "(ud, ptr) => OnVideoTrack?.Invoke(new VideoTrack(ptr))"
+          ]
+        },
+        {
+          "managed_name": "OnAudioTrack",
+          "managed_type": "Action<AudioTrack>?",
+          "delegate_field": "_audioTrackCb",
+          "delegate_type": "LrtcAudioTrackCb",
+          "native_field": "on_audio_track",
+          "assignment_lines": [
+            "(ud, ptr) => OnAudioTrack?.Invoke(new AudioTrack(ptr))"
+          ]
+        },
+        {
+          "managed_name": "OnTrack",
+          "managed_type": "Action<RtpTransceiver, RtpReceiver>?",
+          "delegate_field": "_trackCb",
+          "delegate_type": "LrtcTrackCb",
+          "native_field": "on_track",
+          "assignment_lines": [
+            "(ud, leftPtr, rightPtr) =>",
+            "OnTrack?.Invoke(new RtpTransceiver(leftPtr), new RtpReceiver(rightPtr))"
+          ]
+        },
+        {
+          "managed_name": "OnRemoveTrack",
+          "managed_type": "Action<RtpReceiver>?",
+          "delegate_field": "_removeTrackCb",
+          "delegate_type": "LrtcTrackCb",
+          "native_field": "on_remove_track",
+          "assignment_lines": [
+            "(ud, transceiverPtr, receiverPtr) =>",
+            "{",
+            "    if (receiverPtr != IntPtr.Zero)",
+            "    {",
+            "        OnRemoveTrack?.Invoke(new RtpReceiver(receiverPtr));",
+            "    }",
+            "}"
+          ]
+        },
+        {
+          "managed_name": "OnRenegotiationNeeded",
+          "managed_type": "Action?",
+          "delegate_field": "_renegotiationCb",
+          "delegate_type": "LrtcVoidCb",
+          "native_field": "on_renegotiation_needed",
+          "assignment_lines": [
+            "ud => OnRenegotiationNeeded?.Invoke()"
+          ]
+        }
+      ]
+    },
+    {
+      "class": "VideoSinkCallbacks",
+      "summary": "Video sink callbacks.",
+      "native_struct": "LrtcVideoSinkCallbacks",
+      "fields": [
+        {
+          "managed_name": "OnFrame",
+          "managed_type": "Action<VideoFrame>?",
+          "delegate_field": "_frameCb",
+          "delegate_type": "LrtcVideoFrameCb",
+          "native_field": "on_frame",
+          "assignment_lines": [
+            "(ud, framePtr) =>",
+            "{",
+            "    if (framePtr == IntPtr.Zero) return;",
+            "    using var frame = new VideoFrame(framePtr);",
+            "    OnFrame?.Invoke(frame);",
+            "}"
+          ]
+        }
+      ]
+    }
+  ],
+  "builder": {
+    "class": "PeerConnectionBuilder",
+    "methods": [
+      {
+        "signature": "public PeerConnectionBuilder OnSignalingState(Action<SignalingState> handler)",
+        "body": [
+          "_callbacks.OnSignalingState = handler ?? throw new ArgumentNullException(nameof(handler));",
+          "return this;"
+        ]
+      },
+      {
+        "signature": "public PeerConnectionBuilder OnPeerConnectionState(Action<PeerConnectionState> handler)",
+        "body": [
+          "_callbacks.OnPeerConnectionState = handler ?? throw new ArgumentNullException(nameof(handler));",
+          "return this;"
+        ]
+      },
+      {
+        "signature": "public PeerConnectionBuilder OnIceGatheringState(Action<IceGatheringState> handler)",
+        "body": [
+          "_callbacks.OnIceGatheringState = handler ?? throw new ArgumentNullException(nameof(handler));",
+          "return this;"
+        ]
+      },
+      {
+        "signature": "public PeerConnectionBuilder OnIceConnectionState(Action<IceConnectionState> handler)",
+        "body": [
+          "_callbacks.OnIceConnectionState = handler ?? throw new ArgumentNullException(nameof(handler));",
+          "return this;"
+        ]
+      },
+      {
+        "signature": "public PeerConnectionBuilder OnIceCandidate(Action<IceCandidate> handler)",
+        "body": [
+          "if (handler == null) throw new ArgumentNullException(nameof(handler));",
+          "_callbacks.OnIceCandidate = (mid, index, cand) => handler(new IceCandidate(mid, index, cand));",
+          "return this;"
+        ]
+      },
+      {
+        "signature": "public PeerConnectionBuilder OnIceCandidate(Action<string, int, string> handler)",
+        "body": [
+          "_callbacks.OnIceCandidate = handler ?? throw new ArgumentNullException(nameof(handler));",
+          "return this;"
+        ]
+      },
+      {
+        "signature": "public PeerConnectionBuilder OnDataChannel(Action<DataChannel> handler)",
+        "body": [
+          "_callbacks.OnDataChannel = handler ?? throw new ArgumentNullException(nameof(handler));",
+          "return this;"
+        ]
+      },
+      {
+        "signature": "public PeerConnectionBuilder OnVideoTrack(Action<VideoTrack> handler)",
+        "body": [
+          "_callbacks.OnVideoTrack = handler ?? throw new ArgumentNullException(nameof(handler));",
+          "return this;"
+        ]
+      },
+      {
+        "signature": "public PeerConnectionBuilder OnAudioTrack(Action<AudioTrack> handler)",
+        "body": [
+          "_callbacks.OnAudioTrack = handler ?? throw new ArgumentNullException(nameof(handler));",
+          "return this;"
+        ]
+      },
+      {
+        "signature": "public PeerConnectionBuilder OnTrack(Action<RtpTransceiver, RtpReceiver> handler)",
+        "body": [
+          "_callbacks.OnTrack = handler ?? throw new ArgumentNullException(nameof(handler));",
+          "return this;"
+        ]
+      },
+      {
+        "signature": "public PeerConnectionBuilder OnRemoveTrack(Action<RtpReceiver> handler)",
+        "body": [
+          "_callbacks.OnRemoveTrack = handler ?? throw new ArgumentNullException(nameof(handler));",
+          "return this;"
+        ]
+      },
+      {
+        "signature": "public PeerConnectionBuilder OnRenegotiationNeeded(Action handler)",
+        "body": [
+          "_callbacks.OnRenegotiationNeeded = handler ?? throw new ArgumentNullException(nameof(handler));",
+          "return this;"
+        ]
+      }
+    ]
+  },
+  "handle_api": [
+    {
+      "class": "AudioTrack",
+      "members": [
+        {
+          "line": "public string Id => NativeString.GetString(handle, NativeMethods.lrtc_audio_track_get_id);"
+        },
+        {
+          "signature": "public TrackState State",
+          "body": [
+            "    get",
+            "    {",
+            "        var value = NativeMethods.lrtc_audio_track_get_state(handle);",
+            "        if (value < 0)",
+            "        {",
+            "            throw new InvalidOperationException(\"Failed to get audio track state.\");",
+            "        }",
+            "        return (TrackState)value;",
+            "    }"
+          ]
+        },
+        {
+          "signature": "public bool Enabled",
+          "body": [
+            "    get => NativeMethods.lrtc_audio_track_get_enabled(handle) != 0;",
+            "    set",
+            "    {",
+            "        var result = NativeMethods.lrtc_audio_track_set_enabled(handle, value ? 1 : 0);",
+            "        if (result == 0)",
+            "        {",
+            "            throw new InvalidOperationException(\"Failed to set audio track enabled state.\");",
+            "        }",
+            "    }"
+          ]
+        },
+        {
+          "signature": "public void SetVolume(double volume)",
+          "body": [
+            "    NativeMethods.lrtc_audio_track_set_volume(handle, volume);"
+          ]
+        },
+        {
+          "signature": "public void AddSink(AudioSink sink)",
+          "body": [
+            "    if (sink == null) throw new ArgumentNullException(nameof(sink));",
+            "    NativeMethods.lrtc_audio_track_add_sink(handle, sink.DangerousGetHandle());"
+          ]
+        },
+        {
+          "signature": "public void RemoveSink(AudioSink sink)",
+          "body": [
+            "    if (sink == null) throw new ArgumentNullException(nameof(sink));",
+            "    NativeMethods.lrtc_audio_track_remove_sink(handle, sink.DangerousGetHandle());"
+          ]
+        }
+      ]
+    },
+    {
+      "class": "VideoTrack",
+      "members": [
+        {
+          "line": "public string Id => NativeString.GetString(handle, NativeMethods.lrtc_video_track_get_id);"
+        },
+        {
+          "signature": "public TrackState State",
+          "body": [
+            "    get",
+            "    {",
+            "        var value = NativeMethods.lrtc_video_track_get_state(handle);",
+            "        if (value < 0)",
+            "        {",
+            "            throw new InvalidOperationException(\"Failed to get video track state.\");",
+            "        }",
+            "        return (TrackState)value;",
+            "    }"
+          ]
+        },
+        {
+          "signature": "public bool Enabled",
+          "body": [
+            "    get => NativeMethods.lrtc_video_track_get_enabled(handle) != 0;",
+            "    set",
+            "    {",
+            "        var result = NativeMethods.lrtc_video_track_set_enabled(handle, value ? 1 : 0);",
+            "        if (result == 0)",
+            "        {",
+            "            throw new InvalidOperationException(\"Failed to set video track enabled state.\");",
+            "        }",
+            "    }"
+          ]
+        },
+        {
+          "signature": "public void AddSink(VideoSink sink)",
+          "body": [
+            "    if (sink == null) throw new ArgumentNullException(nameof(sink));",
+            "    NativeMethods.lrtc_video_track_add_sink(handle, sink.DangerousGetHandle());"
+          ]
+        },
+        {
+          "signature": "public void RemoveSink(VideoSink sink)",
+          "body": [
+            "    if (sink == null) throw new ArgumentNullException(nameof(sink));",
+            "    NativeMethods.lrtc_video_track_remove_sink(handle, sink.DangerousGetHandle());"
+          ]
+        }
+      ]
+    },
+    {
+      "class": "MediaStream",
+      "members": [
+        {
+          "signature": "public bool AddAudioTrack(AudioTrack track)",
+          "body": [
+            "    if (track == null) throw new ArgumentNullException(nameof(track));",
+            "    return NativeMethods.lrtc_media_stream_add_audio_track(handle, track.DangerousGetHandle());"
+          ]
+        },
+        {
+          "signature": "public bool AddVideoTrack(VideoTrack track)",
+          "body": [
+            "    if (track == null) throw new ArgumentNullException(nameof(track));",
+            "    return NativeMethods.lrtc_media_stream_add_video_track(handle, track.DangerousGetHandle());"
+          ]
+        },
+        {
+          "signature": "public bool RemoveAudioTrack(AudioTrack track)",
+          "body": [
+            "    if (track == null) throw new ArgumentNullException(nameof(track));",
+            "    return NativeMethods.lrtc_media_stream_remove_audio_track(handle, track.DangerousGetHandle());"
+          ]
+        },
+        {
+          "signature": "public bool RemoveVideoTrack(VideoTrack track)",
+          "body": [
+            "    if (track == null) throw new ArgumentNullException(nameof(track));",
+            "    return NativeMethods.lrtc_media_stream_remove_video_track(handle, track.DangerousGetHandle());"
+          ]
+        }
+      ]
+    },
+    {
+      "class": "VideoCapturer",
+      "members": [
+        {
+          "line": "public bool Start() => NativeMethods.lrtc_video_capturer_start(handle);"
+        },
+        {
+          "line": "public bool CaptureStarted() => NativeMethods.lrtc_video_capturer_capture_started(handle);"
+        },
+        {
+          "line": "public void Stop() => NativeMethods.lrtc_video_capturer_stop(handle);"
+        }
+      ]
+    },
+    {
+      "class": "DesktopCapturer",
+      "members": [
+        {
+          "signature": "public DesktopCaptureState Start(uint fps)",
+          "body": [
+            "    return (DesktopCaptureState)NativeMethods.lrtc_desktop_capturer_start(handle, fps);"
+          ]
+        },
+        {
+          "signature": "public DesktopCaptureState Start(uint fps, uint x, uint y, uint width, uint height)",
+          "body": [
+            "    return (DesktopCaptureState)NativeMethods.lrtc_desktop_capturer_start_region(handle, fps, x, y, width, height);"
+          ]
+        },
+        {
+          "line": "public void Stop() => NativeMethods.lrtc_desktop_capturer_stop(handle);"
+        },
+        {
+          "line": "public bool IsRunning => NativeMethods.lrtc_desktop_capturer_is_running(handle);"
+        }
+      ]
+    },
+    {
+      "class": "DataChannel",
+      "members": [
+        {
+          "signature": "public void Send(ReadOnlySpan<byte> data, bool binary = true)",
+          "body": [
+            "    unsafe",
+            "    {",
+            "        fixed (byte* ptr = data)",
+            "        {",
+            "            NativeMethods.lrtc_data_channel_send(handle, (IntPtr)ptr, (uint)data.Length, binary ? 1 : 0);",
+            "        }",
+            "    }"
+          ]
+        },
+        {
+          "signature": "public new void Close()",
+          "body": [
+            "    NativeMethods.lrtc_data_channel_close(handle);"
+          ]
+        }
+      ]
+    },
+    {
+      "class": "DtmfSender",
+      "members": [
+        {
+          "line": "public bool CanInsert => NativeMethods.lrtc_dtmf_sender_can_insert(handle) != 0;"
+        },
+        {
+          "signature": "public bool InsertDtmf(string tones, int duration = 100, int interToneGap = 70, int commaDelay = -1)",
+          "body": [
+            "    if (tones == null) throw new ArgumentNullException(nameof(tones));",
+            "    using var utf8 = new Utf8String(tones);",
+            "    return NativeMethods.lrtc_dtmf_sender_insert(handle, utf8.Pointer, duration, interToneGap, commaDelay) != 0;"
+          ]
+        },
+        {
+          "line": "public string Tones => NativeString.GetString(handle, NativeMethods.lrtc_dtmf_sender_tones);"
+        },
+        {
+          "line": "public int Duration => NativeMethods.lrtc_dtmf_sender_duration(handle);"
+        },
+        {
+          "line": "public int InterToneGap => NativeMethods.lrtc_dtmf_sender_inter_tone_gap(handle);"
+        },
+        {
+          "line": "public int CommaDelay => NativeMethods.lrtc_dtmf_sender_comma_delay(handle);"
+        }
+      ]
+    }
+  ],
+  "peer_connection_async": {
+    "class": "PeerConnection",
+    "methods": [
+      {
+        "signature": "public Task<SessionDescription> CreateOfferAsync(CancellationToken cancellationToken = default)",
+        "body": [
+          "    var tcs = new TaskCompletionSource<SessionDescription>(TaskCreationOptions.RunContinuationsAsynchronously);",
+          "    CancellationTokenRegistration registration = default;",
+          "    if (cancellationToken.CanBeCanceled)",
+          "    {",
+          "        registration = cancellationToken.Register(() => tcs.TrySetCanceled(cancellationToken));",
+          "    }",
+          "",
+          "    CreateOffer(",
+          "        description =>",
+          "        {",
+          "            registration.Dispose();",
+          "            tcs.TrySetResult(description);",
+          "        },",
+          "        error =>",
+          "        {",
+          "            registration.Dispose();",
+          "            tcs.TrySetException(new InvalidOperationException(error));",
+          "        });",
+          "",
+          "    return tcs.Task;"
+        ]
+      },
+      {
+        "signature": "public Task<SessionDescription> CreateAnswerAsync(CancellationToken cancellationToken = default)",
+        "body": [
+          "    var tcs = new TaskCompletionSource<SessionDescription>(TaskCreationOptions.RunContinuationsAsynchronously);",
+          "    CancellationTokenRegistration registration = default;",
+          "    if (cancellationToken.CanBeCanceled)",
+          "    {",
+          "        registration = cancellationToken.Register(() => tcs.TrySetCanceled(cancellationToken));",
+          "    }",
+          "",
+          "    CreateAnswer(",
+          "        description =>",
+          "        {",
+          "            registration.Dispose();",
+          "            tcs.TrySetResult(description);",
+          "        },",
+          "        error =>",
+          "        {",
+          "            registration.Dispose();",
+          "            tcs.TrySetException(new InvalidOperationException(error));",
+          "        });",
+          "",
+          "    return tcs.Task;"
+        ]
+      },
+      {
+        "signature": "public Task SetLocalDescriptionAsync(string sdp, string type, CancellationToken cancellationToken = default)",
+        "body": [
+          "    var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);",
+          "    CancellationTokenRegistration registration = default;",
+          "    if (cancellationToken.CanBeCanceled)",
+          "    {",
+          "        registration = cancellationToken.Register(() => tcs.TrySetCanceled(cancellationToken));",
+          "    }",
+          "",
+          "    SetLocalDescription(",
+          "        sdp,",
+          "        type,",
+          "        () =>",
+          "        {",
+          "            registration.Dispose();",
+          "            tcs.TrySetResult(true);",
+          "        },",
+          "        error =>",
+          "        {",
+          "            registration.Dispose();",
+          "            tcs.TrySetException(new InvalidOperationException(error));",
+          "        });",
+          "",
+          "    return tcs.Task;"
+        ]
+      },
+      {
+        "signature": "public Task SetLocalDescriptionAsync(SessionDescription description, CancellationToken cancellationToken = default)",
+        "body": [
+          "    return SetLocalDescriptionAsync(description.Sdp, description.Type, cancellationToken);"
+        ]
+      },
+      {
+        "signature": "public Task SetRemoteDescriptionAsync(string sdp, string type, CancellationToken cancellationToken = default)",
+        "body": [
+          "    var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);",
+          "    CancellationTokenRegistration registration = default;",
+          "    if (cancellationToken.CanBeCanceled)",
+          "    {",
+          "        registration = cancellationToken.Register(() => tcs.TrySetCanceled(cancellationToken));",
+          "    }",
+          "",
+          "    SetRemoteDescription(",
+          "        sdp,",
+          "        type,",
+          "        () =>",
+          "        {",
+          "            registration.Dispose();",
+          "            tcs.TrySetResult(true);",
+          "        },",
+          "        error =>",
+          "        {",
+          "            registration.Dispose();",
+          "            tcs.TrySetException(new InvalidOperationException(error));",
+          "        });",
+          "",
+          "    return tcs.Task;"
+        ]
+      },
+      {
+        "signature": "public Task SetRemoteDescriptionAsync(SessionDescription description, CancellationToken cancellationToken = default)",
+        "body": [
+          "    return SetRemoteDescriptionAsync(description.Sdp, description.Type, cancellationToken);"
+        ]
+      },
+      {
+        "signature": "public Task<SessionDescription> GetLocalDescriptionAsync(CancellationToken cancellationToken = default)",
+        "body": [
+          "    var tcs = new TaskCompletionSource<SessionDescription>(TaskCreationOptions.RunContinuationsAsynchronously);",
+          "    CancellationTokenRegistration registration = default;",
+          "    if (cancellationToken.CanBeCanceled)",
+          "    {",
+          "        registration = cancellationToken.Register(() => tcs.TrySetCanceled(cancellationToken));",
+          "    }",
+          "",
+          "    GetLocalDescription(",
+          "        description =>",
+          "        {",
+          "            registration.Dispose();",
+          "            tcs.TrySetResult(description);",
+          "        },",
+          "        error =>",
+          "        {",
+          "            registration.Dispose();",
+          "            tcs.TrySetException(new InvalidOperationException(error));",
+          "        });",
+          "",
+          "    return tcs.Task;"
+        ]
+      },
+      {
+        "signature": "public Task<SessionDescription> GetRemoteDescriptionAsync(CancellationToken cancellationToken = default)",
+        "body": [
+          "    var tcs = new TaskCompletionSource<SessionDescription>(TaskCreationOptions.RunContinuationsAsynchronously);",
+          "    CancellationTokenRegistration registration = default;",
+          "    if (cancellationToken.CanBeCanceled)",
+          "    {",
+          "        registration = cancellationToken.Register(() => tcs.TrySetCanceled(cancellationToken));",
+          "    }",
+          "",
+          "    GetRemoteDescription(",
+          "        description =>",
+          "        {",
+          "            registration.Dispose();",
+          "            tcs.TrySetResult(description);",
+          "        },",
+          "        error =>",
+          "        {",
+          "            registration.Dispose();",
+          "            tcs.TrySetException(new InvalidOperationException(error));",
+          "        });",
+          "",
+          "    return tcs.Task;"
+        ]
+      },
+      {
+        "signature": "public Task<string> GetStatsAsync(CancellationToken cancellationToken = default)",
+        "body": [
+          "    var tcs = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);",
+          "    CancellationTokenRegistration registration = default;",
+          "    if (cancellationToken.CanBeCanceled)",
+          "    {",
+          "        registration = cancellationToken.Register(() => tcs.TrySetCanceled(cancellationToken));",
+          "    }",
+          "",
+          "    GetStats(",
+          "        json =>",
+          "        {",
+          "            registration.Dispose();",
+          "            tcs.TrySetResult(json);",
+          "        },",
+          "        error =>",
+          "        {",
+          "            registration.Dispose();",
+          "            tcs.TrySetException(new InvalidOperationException(error));",
+          "        });",
+          "",
+          "    return tcs.Task;"
+        ]
+      },
+      {
+        "signature": "public async Task<RtcStatsReport> GetStatsReportAsync(CancellationToken cancellationToken = default)",
+        "body": [
+          "    var json = await GetStatsAsync(cancellationToken).ConfigureAwait(false);",
+          "    return RtcStatsReport.Parse(json);"
+        ]
+      },
+      {
+        "signature": "public Task<string> GetSenderStatsAsync(RtpSender sender, CancellationToken cancellationToken = default)",
+        "body": [
+          "    var tcs = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);",
+          "    CancellationTokenRegistration registration = default;",
+          "    if (cancellationToken.CanBeCanceled)",
+          "    {",
+          "        registration = cancellationToken.Register(() => tcs.TrySetCanceled(cancellationToken));",
+          "    }",
+          "",
+          "    GetSenderStats(",
+          "        sender,",
+          "        json =>",
+          "        {",
+          "            registration.Dispose();",
+          "            tcs.TrySetResult(json);",
+          "        },",
+          "        error =>",
+          "        {",
+          "            registration.Dispose();",
+          "            tcs.TrySetException(new InvalidOperationException(error));",
+          "        });",
+          "",
+          "    return tcs.Task;"
+        ]
+      },
+      {
+        "signature": "public async Task<RtcStatsReport> GetSenderStatsReportAsync(RtpSender sender, CancellationToken cancellationToken = default)",
+        "body": [
+          "    var json = await GetSenderStatsAsync(sender, cancellationToken).ConfigureAwait(false);",
+          "    return RtcStatsReport.Parse(json);"
+        ]
+      },
+      {
+        "signature": "public Task<string> GetReceiverStatsAsync(RtpReceiver receiver, CancellationToken cancellationToken = default)",
+        "body": [
+          "    var tcs = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);",
+          "    CancellationTokenRegistration registration = default;",
+          "    if (cancellationToken.CanBeCanceled)",
+          "    {",
+          "        registration = cancellationToken.Register(() => tcs.TrySetCanceled(cancellationToken));",
+          "    }",
+          "",
+          "    GetReceiverStats(",
+          "        receiver,",
+          "        json =>",
+          "        {",
+          "            registration.Dispose();",
+          "            tcs.TrySetResult(json);",
+          "        },",
+          "        error =>",
+          "        {",
+          "            registration.Dispose();",
+          "            tcs.TrySetException(new InvalidOperationException(error));",
+          "        });",
+          "",
+          "    return tcs.Task;"
+        ]
+      },
+      {
+        "signature": "public async Task<RtcStatsReport> GetReceiverStatsReportAsync(RtpReceiver receiver, CancellationToken cancellationToken = default)",
+        "body": [
+          "    var json = await GetReceiverStatsAsync(receiver, cancellationToken).ConfigureAwait(false);",
+          "    return RtcStatsReport.Parse(json);"
+        ]
+      }
+    ]
+  },
+  "native_impl_handles": [
+    {
+      "name": "lrtc_factory_t",
+      "fields": [
+        "scoped_refptr<RTCPeerConnectionFactory> ref;"
+      ]
+    },
+    {
+      "name": "lrtc_media_constraints_t",
+      "fields": [
+        "scoped_refptr<RTCMediaConstraints> ref;"
+      ]
+    },
+    {
+      "name": "lrtc_audio_device_t",
+      "fields": [
+        "scoped_refptr<RTCAudioDevice> ref;"
+      ]
+    },
+    {
+      "name": "lrtc_video_device_t",
+      "fields": [
+        "scoped_refptr<RTCVideoDevice> ref;"
+      ]
+    },
+    {
+      "name": "lrtc_desktop_device_t",
+      "fields": [
+        "scoped_refptr<RTCDesktopDevice> ref;"
+      ]
+    },
+    {
+      "name": "lrtc_desktop_media_list_t",
+      "fields": [
+        "scoped_refptr<RTCDesktopMediaList> ref;"
+      ]
+    },
+    {
+      "name": "lrtc_media_source_t",
+      "fields": [
+        "scoped_refptr<MediaSource> ref;"
+      ]
+    },
+    {
+      "name": "lrtc_desktop_capturer_t",
+      "fields": [
+        "scoped_refptr<RTCDesktopCapturer> ref;"
+      ]
+    },
+    {
+      "name": "lrtc_video_capturer_t",
+      "fields": [
+        "scoped_refptr<RTCVideoCapturer> ref;"
+      ]
+    },
+    {
+      "name": "lrtc_video_source_t",
+      "fields": [
+        "scoped_refptr<RTCVideoSource> ref;"
+      ]
+    },
+    {
+      "name": "lrtc_audio_source_t",
+      "fields": [
+        "scoped_refptr<RTCAudioSource> ref;"
+      ]
+    },
+    {
+      "name": "lrtc_media_stream_t",
+      "fields": [
+        "scoped_refptr<RTCMediaStream> ref;"
+      ]
+    },
+    {
+      "name": "lrtc_peer_connection_t",
+      "fields": [
+        "scoped_refptr<RTCPeerConnection> ref;",
+        "scoped_refptr<RTCPeerConnectionFactory> factory;",
+        "class PeerConnectionObserverImpl* observer = nullptr;"
+      ]
+    },
+    {
+      "name": "lrtc_data_channel_t",
+      "fields": [
+        "scoped_refptr<RTCDataChannel> ref;",
+        "class DataChannelObserverImpl* observer = nullptr;"
+      ]
+    },
+    {
+      "name": "lrtc_video_track_t",
+      "fields": [
+        "scoped_refptr<RTCVideoTrack> ref;"
+      ]
+    },
+    {
+      "name": "lrtc_audio_track_t",
+      "fields": [
+        "scoped_refptr<RTCAudioTrack> ref;"
+      ]
+    },
+    {
+      "name": "lrtc_audio_sink_t",
+      "fields": [
+        "class AudioSinkImpl* sink = nullptr;"
+      ]
+    },
+    {
+      "name": "lrtc_video_sink_t",
+      "fields": [
+        "class VideoSinkImpl* renderer = nullptr;"
+      ]
+    },
+    {
+      "name": "lrtc_video_frame_t",
+      "fields": [
+        "scoped_refptr<RTCVideoFrame> ref;"
+      ]
+    },
+    {
+      "name": "lrtc_rtp_sender_t",
+      "fields": [
+        "scoped_refptr<libwebrtc::RTCRtpSender> ref;"
+      ]
+    },
+    {
+      "name": "lrtc_dtmf_sender_t",
+      "fields": [
+        "scoped_refptr<RTCDtmfSender> ref;",
+        "class DtmfSenderObserverImpl* observer = nullptr;"
+      ]
+    },
+    {
+      "name": "lrtc_rtp_receiver_t",
+      "fields": [
+        "scoped_refptr<libwebrtc::RTCRtpReceiver> ref;"
+      ]
+    },
+    {
+      "name": "lrtc_rtp_transceiver_t",
+      "fields": [
+        "scoped_refptr<libwebrtc::RTCRtpTransceiver> ref;"
+      ]
+    }
+  ]
+}

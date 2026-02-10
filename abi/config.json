@@ -281,6 +281,22 @@
               "{check}",
               "{dry_run}"
             ]
+          },
+          {
+            "name": "managed_api",
+            "kind": "external",
+            "command": [
+              "python3",
+              "{repo_root}/tools/lumenrtc_codegen/lumenrtc_managed_api_codegen.py",
+              "--idl",
+              "{idl}",
+              "--managed-api",
+              "{repo_root}/abi/bindings/lumenrtc.managed_api.json",
+              "--out-native-handles",
+              "{repo_root}/native/src/lumenrtc_impl_handles.generated.h",
+              "{check}",
+              "{dry_run}"
+            ]
           }
         ]
       },

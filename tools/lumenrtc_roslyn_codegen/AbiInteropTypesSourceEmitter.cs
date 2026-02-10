@@ -5,7 +5,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 
-namespace LumenRTC.Abi.RoslynGenerator;
+namespace Abi.RoslynGenerator;
 
 internal static class AbiInteropTypesSourceEmitter
 {

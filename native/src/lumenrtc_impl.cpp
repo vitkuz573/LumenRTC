@@ -79,6 +79,8 @@ using libwebrtc::scoped_refptr;
 using libwebrtc::string;
 using libwebrtc::vector;
 
+#include "lumenrtc_impl_handles.generated.h"
+
 #define LRTC_STRINGIFY_INNER(x) #x
 #define LRTC_STRINGIFY(x) LRTC_STRINGIFY_INNER(x)
 static const char* kLrtcAbiVersionString =
@@ -87,102 +89,6 @@ static const char* kLrtcAbiVersionString =
     LRTC_STRINGIFY(LUMENRTC_ABI_VERSION_PATCH);
 #undef LRTC_STRINGIFY
 #undef LRTC_STRINGIFY_INNER
-
-struct lrtc_factory_t {
-  scoped_refptr<RTCPeerConnectionFactory> ref;
-};
-
-struct lrtc_media_constraints_t {
-  scoped_refptr<RTCMediaConstraints> ref;
-};
-
-struct lrtc_audio_device_t {
-  scoped_refptr<RTCAudioDevice> ref;
-};
-
-struct lrtc_video_device_t {
-  scoped_refptr<RTCVideoDevice> ref;
-};
-
-struct lrtc_desktop_device_t {
-  scoped_refptr<RTCDesktopDevice> ref;
-};
-
-struct lrtc_desktop_media_list_t {
-  scoped_refptr<RTCDesktopMediaList> ref;
-};
-
-struct lrtc_media_source_t {
-  scoped_refptr<MediaSource> ref;
-};
-
-struct lrtc_desktop_capturer_t {
-  scoped_refptr<RTCDesktopCapturer> ref;
-};
-
-struct lrtc_video_capturer_t {
-  scoped_refptr<RTCVideoCapturer> ref;
-};
-
-struct lrtc_video_source_t {
-  scoped_refptr<RTCVideoSource> ref;
-};
-
-struct lrtc_audio_source_t {
-  scoped_refptr<RTCAudioSource> ref;
-};
-
-struct lrtc_media_stream_t {
-  scoped_refptr<RTCMediaStream> ref;
-};
-
-struct lrtc_peer_connection_t {
-  scoped_refptr<RTCPeerConnection> ref;
-  scoped_refptr<RTCPeerConnectionFactory> factory;
-  class PeerConnectionObserverImpl* observer = nullptr;
-};
-
-struct lrtc_data_channel_t {
-  scoped_refptr<RTCDataChannel> ref;
-  class DataChannelObserverImpl* observer = nullptr;
-};
-
-struct lrtc_video_track_t {
-  scoped_refptr<RTCVideoTrack> ref;
-};
-
-struct lrtc_audio_track_t {
-  scoped_refptr<RTCAudioTrack> ref;
-};
-
-struct lrtc_audio_sink_t {
-  class AudioSinkImpl* sink = nullptr;
-};
-
-struct lrtc_video_sink_t {
-  class VideoSinkImpl* renderer = nullptr;
-};
-
-struct lrtc_video_frame_t {
-  scoped_refptr<RTCVideoFrame> ref;
-};
-
-struct lrtc_rtp_sender_t {
-  scoped_refptr<libwebrtc::RTCRtpSender> ref;
-};
-
-struct lrtc_dtmf_sender_t {
-  scoped_refptr<RTCDtmfSender> ref;
-  class DtmfSenderObserverImpl* observer = nullptr;
-};
-
-struct lrtc_rtp_receiver_t {
-  scoped_refptr<libwebrtc::RTCRtpReceiver> ref;
-};
-
-struct lrtc_rtp_transceiver_t {
-  scoped_refptr<libwebrtc::RTCRtpTransceiver> ref;
-};
 
 static lrtc_result_t LrtcFailIfNull(const void* ptr) {
   return ptr ? LRTC_OK : LRTC_INVALID_ARG;

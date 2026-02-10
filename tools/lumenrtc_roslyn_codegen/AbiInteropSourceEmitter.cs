@@ -8,7 +8,7 @@ using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
-namespace LumenRTC.Abi.RoslynGenerator;
+namespace Abi.RoslynGenerator;
 
 internal static class AbiInteropSourceEmitter
 {
@@ -303,10 +303,10 @@ internal static class AbiInteropSourceEmitter
             parameters.Add(parameterSyntax);
         }
 
-        var libraryExpression = ParseExpression(options.LibraryExpression, "LumenRtcAbiLibraryExpression");
+        var libraryExpression = ParseExpression(options.LibraryExpression, "AbiLibraryExpression");
         var callingConventionExpression = ParseExpression(
             $"CallingConvention.{options.CallingConvention}",
-            "LumenRtcAbiCallingConvention"
+            "AbiCallingConvention"
         );
 
         var dllImportAttribute = SyntaxFactory.Attribute(SyntaxFactory.IdentifierName("DllImport"))
@@ -686,17 +686,19 @@ internal sealed class GeneratorOptions
             ? StringComparison.OrdinalIgnoreCase
             : StringComparison.Ordinal;
 
-    private const string DefaultIdlPath = "abi/generated/lumenrtc/lumenrtc.idl.json";
-    private const string DefaultNamespace = "LumenRTC.Interop";
+    private const string DefaultIdlPath = "abi/generated/abi.idl.json";
+    private const string DefaultNamespace = "Abi.Interop";
     private const string DefaultClassName = "NativeMethods";
     private const string DefaultAccessModifier = "internal";
     private const string DefaultCallingConvention = "Cdecl";
     private const string DefaultLibraryExpression = "LibName";
-    private const string DefaultManagedMetadataPath = "abi/bindings/lumenrtc.managed.json";
+    private const string DefaultManagedMetadataPath = "abi/bindings/abi.managed.json";
+    private const string DefaultManagedApiMetadataPath = "abi/bindings/abi.managed_api.json";
 
     public GeneratorOptions(
         string idlPath,
         string managedMetadataPath,
+        string managedApiMetadataPath,
         string namespaceName,
         string className,
         string accessModifier,
@@ -705,6 +707,7 @@ internal sealed class GeneratorOptions
     {
         IdlPath = idlPath;
         ManagedMetadataPath = managedMetadataPath;
+        ManagedApiMetadataPath = managedApiMetadataPath;
         NamespaceName = namespaceName;
         ClassName = className;
         AccessModifier = accessModifier;
@@ -715,6 +718,8 @@ internal sealed class GeneratorOptions
     public string IdlPath { get; }
 
     public string ManagedMetadataPath { get; }
+
+    public string ManagedApiMetadataPath { get; }
 
     public string NamespaceName { get; }
 
@@ -729,13 +734,38 @@ internal sealed class GeneratorOptions
     public static GeneratorOptions From(AnalyzerConfigOptions options)
     {
         return new GeneratorOptions(
-            idlPath: ReadBuildProperty(options, "LumenRtcAbiIdlPath", DefaultIdlPath),
-            managedMetadataPath: ReadBuildProperty(options, "LumenRtcAbiManagedMetadataPath", DefaultManagedMetadataPath),
-            namespaceName: ReadBuildProperty(options, "LumenRtcAbiNamespace", DefaultNamespace),
-            className: ReadBuildProperty(options, "LumenRtcAbiClassName", DefaultClassName),
-            accessModifier: ReadBuildProperty(options, "LumenRtcAbiAccessModifier", DefaultAccessModifier),
-            callingConvention: ReadBuildProperty(options, "LumenRtcAbiCallingConvention", DefaultCallingConvention),
-            libraryExpression: ReadBuildProperty(options, "LumenRtcAbiLibraryExpression", DefaultLibraryExpression)
+            idlPath: ReadBuildProperty(
+                options,
+                DefaultIdlPath,
+                "AbiIdlPath"),
+            managedMetadataPath: ReadBuildProperty(
+                options,
+                DefaultManagedMetadataPath,
+                "AbiManagedMetadataPath"),
+            managedApiMetadataPath: ReadBuildProperty(
+                options,
+                DefaultManagedApiMetadataPath,
+                "AbiManagedApiMetadataPath"),
+            namespaceName: ReadBuildProperty(
+                options,
+                DefaultNamespace,
+                "AbiNamespace"),
+            className: ReadBuildProperty(
+                options,
+                DefaultClassName,
+                "AbiClassName"),
+            accessModifier: ReadBuildProperty(
+                options,
+                DefaultAccessModifier,
+                "AbiAccessModifier"),
+            callingConvention: ReadBuildProperty(
+                options,
+                DefaultCallingConvention,
+                "AbiCallingConvention"),
+            libraryExpression: ReadBuildProperty(
+                options,
+                DefaultLibraryExpression,
+                "AbiLibraryExpression")
         );
     }
 
@@ -747,6 +777,11 @@ internal sealed class GeneratorOptions
     public bool MatchesManagedMetadataPath(string candidatePath)
     {
         return MatchesConfiguredPath(candidatePath, ManagedMetadataPath);
+    }
+
+    public bool MatchesManagedApiMetadataPath(string candidatePath)
+    {
+        return MatchesConfiguredPath(candidatePath, ManagedApiMetadataPath);
     }
 
     private static bool MatchesConfiguredPath(string candidatePath, string configuredPath)
@@ -778,12 +813,23 @@ internal sealed class GeneratorOptions
         return candidateNormalized.EndsWith("/" + configuredRelative, PathComparison);
     }
 
-    private static string ReadBuildProperty(AnalyzerConfigOptions options, string propertyName, string fallback)
+    private static string ReadBuildProperty(
+        AnalyzerConfigOptions options,
+        string fallback,
+        params string[] propertyNames)
     {
-        var key = "build_property." + propertyName;
-        if (options.TryGetValue(key, out var value) && !string.IsNullOrWhiteSpace(value))
+        foreach (var propertyName in propertyNames)
         {
-            return value.Trim();
+            if (string.IsNullOrWhiteSpace(propertyName))
+            {
+                continue;
+            }
+
+            var key = "build_property." + propertyName;
+            if (options.TryGetValue(key, out var value) && !string.IsNullOrWhiteSpace(value))
+            {
+                return value.Trim();
+            }
         }
 
         return fallback;

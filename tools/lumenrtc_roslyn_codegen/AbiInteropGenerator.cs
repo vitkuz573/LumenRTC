@@ -9,115 +9,142 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 
-namespace LumenRTC.Abi.RoslynGenerator;
+namespace Abi.RoslynGenerator;
 
 [Generator(LanguageNames.CSharp)]
-public sealed class LumenRtcAbiInteropGenerator : IIncrementalGenerator
+public sealed class AbiInteropGenerator : IIncrementalGenerator
 {
     private static readonly DiagnosticDescriptor MissingIdlDescriptor = new(
-        id: "LRTCABI001",
+        id: "ABIGEN001",
         title: "ABI IDL file not found",
-        messageFormat: "ABI IDL file '{0}' was not found in AdditionalFiles; configure AdditionalFiles and LumenRtcAbiIdlPath",
-        category: "LumenRTC.Abi.SourceGenerator",
+        messageFormat: "ABI IDL file '{0}' was not found in AdditionalFiles; configure AdditionalFiles and AbiIdlPath",
+        category: "Abi.SourceGenerator",
         DiagnosticSeverity.Error,
         isEnabledByDefault: true
     );
 
     private static readonly DiagnosticDescriptor MultipleIdlDescriptor = new(
-        id: "LRTCABI002",
+        id: "ABIGEN002",
         title: "Multiple ABI IDL files matched",
         messageFormat: "Multiple AdditionalFiles match ABI IDL path '{0}': {1}; keep exactly one match",
-        category: "LumenRTC.Abi.SourceGenerator",
+        category: "Abi.SourceGenerator",
         DiagnosticSeverity.Error,
         isEnabledByDefault: true
     );
 
     private static readonly DiagnosticDescriptor EmptyIdlDescriptor = new(
-        id: "LRTCABI003",
+        id: "ABIGEN003",
         title: "ABI IDL file is empty",
         messageFormat: "ABI IDL file '{0}' is empty or unreadable",
-        category: "LumenRTC.Abi.SourceGenerator",
+        category: "Abi.SourceGenerator",
         DiagnosticSeverity.Error,
         isEnabledByDefault: true
     );
 
     private static readonly DiagnosticDescriptor GenerationFailedDescriptor = new(
-        id: "LRTCABI004",
+        id: "ABIGEN004",
         title: "ABI source generation failed",
         messageFormat: "Failed to generate interop from '{0}' because {1}",
-        category: "LumenRTC.Abi.SourceGenerator",
+        category: "Abi.SourceGenerator",
         DiagnosticSeverity.Error,
         isEnabledByDefault: true
     );
 
     private static readonly DiagnosticDescriptor MissingManagedMetadataDescriptor = new(
-        id: "LRTCABI005",
+        id: "ABIGEN005",
         title: "Managed metadata file not found",
-        messageFormat: "Managed metadata file '{0}' was not found in AdditionalFiles; configure AdditionalFiles and LumenRtcAbiManagedMetadataPath",
-        category: "LumenRTC.Abi.SourceGenerator",
+        messageFormat: "Managed metadata file '{0}' was not found in AdditionalFiles; configure AdditionalFiles and AbiManagedMetadataPath",
+        category: "Abi.SourceGenerator",
         DiagnosticSeverity.Error,
         isEnabledByDefault: true
     );
 
     private static readonly DiagnosticDescriptor MultipleManagedMetadataDescriptor = new(
-        id: "LRTCABI006",
+        id: "ABIGEN006",
         title: "Multiple managed metadata files matched",
         messageFormat: "Multiple AdditionalFiles match managed metadata path '{0}': {1}; keep exactly one match",
-        category: "LumenRTC.Abi.SourceGenerator",
+        category: "Abi.SourceGenerator",
         DiagnosticSeverity.Error,
         isEnabledByDefault: true
     );
 
     private static readonly DiagnosticDescriptor EmptyManagedMetadataDescriptor = new(
-        id: "LRTCABI007",
+        id: "ABIGEN007",
         title: "Managed metadata file is empty",
         messageFormat: "Managed metadata file '{0}' is empty or unreadable",
-        category: "LumenRTC.Abi.SourceGenerator",
+        category: "Abi.SourceGenerator",
         DiagnosticSeverity.Error,
         isEnabledByDefault: true
     );
 
     private static readonly DiagnosticDescriptor MissingManagedHandleTypeDescriptor = new(
-        id: "LRTCABI008",
+        id: "ABIGEN008",
         title: "Managed handle base type not found",
         messageFormat: "Managed handle '{0}' was not found in compilation; declare a partial SafeHandle class with this full name",
-        category: "LumenRTC.Abi.SourceGenerator",
+        category: "Abi.SourceGenerator",
         DiagnosticSeverity.Error,
         isEnabledByDefault: true
     );
 
     private static readonly DiagnosticDescriptor InvalidManagedHandleTypeDescriptor = new(
-        id: "LRTCABI009",
+        id: "ABIGEN009",
         title: "Managed handle base type must be partial class",
         messageFormat: "Managed handle '{0}' must be declared as a partial class in project source",
-        category: "LumenRTC.Abi.SourceGenerator",
+        category: "Abi.SourceGenerator",
         DiagnosticSeverity.Error,
         isEnabledByDefault: true
     );
 
     private static readonly DiagnosticDescriptor ManagedHandleBaseTypeDescriptor = new(
-        id: "LRTCABI010",
+        id: "ABIGEN010",
         title: "Managed handle base type must inherit SafeHandle",
         messageFormat: "Managed handle '{0}' must derive from System.Runtime.InteropServices.SafeHandle",
-        category: "LumenRTC.Abi.SourceGenerator",
+        category: "Abi.SourceGenerator",
         DiagnosticSeverity.Error,
         isEnabledByDefault: true
     );
 
     private static readonly DiagnosticDescriptor ManagedHandleAccessMismatchDescriptor = new(
-        id: "LRTCABI011",
+        id: "ABIGEN011",
         title: "Managed handle accessibility mismatch",
         messageFormat: "Managed handle '{0}' metadata access '{1}' does not match declared accessibility '{2}'",
-        category: "LumenRTC.Abi.SourceGenerator",
+        category: "Abi.SourceGenerator",
         DiagnosticSeverity.Error,
         isEnabledByDefault: true
     );
 
     private static readonly DiagnosticDescriptor DuplicateManagedHandleDescriptor = new(
-        id: "LRTCABI012",
+        id: "ABIGEN012",
         title: "Duplicate managed handle metadata entry",
         messageFormat: "Managed metadata contains duplicate handle entry '{0}'",
-        category: "LumenRTC.Abi.SourceGenerator",
+        category: "Abi.SourceGenerator",
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true
+    );
+
+    private static readonly DiagnosticDescriptor MissingManagedApiMetadataDescriptor = new(
+        id: "ABIGEN013",
+        title: "Managed API metadata file not found",
+        messageFormat: "Managed API metadata file '{0}' was not found in AdditionalFiles; configure AdditionalFiles and AbiManagedApiMetadataPath",
+        category: "Abi.SourceGenerator",
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true
+    );
+
+    private static readonly DiagnosticDescriptor MultipleManagedApiMetadataDescriptor = new(
+        id: "ABIGEN014",
+        title: "Multiple managed API metadata files matched",
+        messageFormat: "Multiple AdditionalFiles match managed API metadata path '{0}': {1}; keep exactly one match",
+        category: "Abi.SourceGenerator",
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true
+    );
+
+    private static readonly DiagnosticDescriptor EmptyManagedApiMetadataDescriptor = new(
+        id: "ABIGEN015",
+        title: "Managed API metadata file is empty",
+        messageFormat: "Managed API metadata file '{0}' is empty or unreadable",
+        category: "Abi.SourceGenerator",
         DiagnosticSeverity.Error,
         isEnabledByDefault: true
     );
@@ -173,6 +200,19 @@ public sealed class LumenRtcAbiInteropGenerator : IIncrementalGenerator
             return;
         }
 
+        var matchedManagedApiFile = ResolveSingleAdditionalFile(
+            context,
+            files,
+            options.ManagedApiMetadataPath,
+            options.MatchesManagedApiMetadataPath,
+            MissingManagedApiMetadataDescriptor,
+            MultipleManagedApiMetadataDescriptor,
+            EmptyManagedApiMetadataDescriptor);
+        if (!matchedManagedApiFile.HasValue)
+        {
+            return;
+        }
+
         try
         {
             var model = AbiInteropSourceEmitter.ParseIdl(matchedIdlFile.Value.Content!);
@@ -200,6 +240,18 @@ public sealed class LumenRtcAbiInteropGenerator : IIncrementalGenerator
                 BuildHintName(options.ClassName, "Handles"),
                 SourceText.From(handlesSource, Encoding.UTF8)
             );
+
+            var managedApiModel = ManagedApiSourceEmitter.ParseManagedApiMetadata(
+                matchedManagedApiFile.Value.Content!,
+                model);
+            var managedApiSources = ManagedApiSourceEmitter.RenderSources(managedApiModel);
+            foreach (var generatedSource in managedApiSources)
+            {
+                context.AddSource(
+                    generatedSource.HintName,
+                    SourceText.From(generatedSource.SourceText, Encoding.UTF8)
+                );
+            }
         }
         catch (GeneratorException ex)
         {

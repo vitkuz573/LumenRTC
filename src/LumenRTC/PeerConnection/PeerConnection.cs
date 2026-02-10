@@ -63,30 +63,6 @@ public sealed partial class PeerConnection : SafeHandle
         CreateOffer((sdp, type) => onSuccess(new SessionDescription(sdp, type)), onFailure);
     }
 
-    public Task<SessionDescription> CreateOfferAsync(CancellationToken cancellationToken = default)
-    {
-        var tcs = new TaskCompletionSource<SessionDescription>(TaskCreationOptions.RunContinuationsAsynchronously);
-        CancellationTokenRegistration registration = default;
-        if (cancellationToken.CanBeCanceled)
-        {
-            registration = cancellationToken.Register(() => tcs.TrySetCanceled(cancellationToken));
-        }
-
-        CreateOffer(
-            description =>
-            {
-                registration.Dispose();
-                tcs.TrySetResult(description);
-            },
-            error =>
-            {
-                registration.Dispose();
-                tcs.TrySetException(new InvalidOperationException(error));
-            });
-
-        return tcs.Task;
-    }
-
     public void CreateAnswer(Action<string, string> onSuccess, Action<string> onFailure)
     {
         if (onSuccess == null) throw new ArgumentNullException(nameof(onSuccess));
@@ -106,30 +82,6 @@ public sealed partial class PeerConnection : SafeHandle
     {
         if (onSuccess == null) throw new ArgumentNullException(nameof(onSuccess));
         CreateAnswer((sdp, type) => onSuccess(new SessionDescription(sdp, type)), onFailure);
-    }
-
-    public Task<SessionDescription> CreateAnswerAsync(CancellationToken cancellationToken = default)
-    {
-        var tcs = new TaskCompletionSource<SessionDescription>(TaskCreationOptions.RunContinuationsAsynchronously);
-        CancellationTokenRegistration registration = default;
-        if (cancellationToken.CanBeCanceled)
-        {
-            registration = cancellationToken.Register(() => tcs.TrySetCanceled(cancellationToken));
-        }
-
-        CreateAnswer(
-            description =>
-            {
-                registration.Dispose();
-                tcs.TrySetResult(description);
-            },
-            error =>
-            {
-                registration.Dispose();
-                tcs.TrySetException(new InvalidOperationException(error));
-            });
-
-        return tcs.Task;
     }
 
     public void RestartIce()
@@ -157,37 +109,6 @@ public sealed partial class PeerConnection : SafeHandle
         SetLocalDescription(description.Sdp, description.Type, onSuccess, onFailure);
     }
 
-    public Task SetLocalDescriptionAsync(string sdp, string type, CancellationToken cancellationToken = default)
-    {
-        var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
-        CancellationTokenRegistration registration = default;
-        if (cancellationToken.CanBeCanceled)
-        {
-            registration = cancellationToken.Register(() => tcs.TrySetCanceled(cancellationToken));
-        }
-
-        SetLocalDescription(
-            sdp,
-            type,
-            () =>
-            {
-                registration.Dispose();
-                tcs.TrySetResult(true);
-            },
-            error =>
-            {
-                registration.Dispose();
-                tcs.TrySetException(new InvalidOperationException(error));
-            });
-
-        return tcs.Task;
-    }
-
-    public Task SetLocalDescriptionAsync(SessionDescription description, CancellationToken cancellationToken = default)
-    {
-        return SetLocalDescriptionAsync(description.Sdp, description.Type, cancellationToken);
-    }
-
     public void SetRemoteDescription(string sdp, string type, Action onSuccess, Action<string> onFailure)
     {
         using var sdpUtf8 = new Utf8String(sdp);
@@ -206,37 +127,6 @@ public sealed partial class PeerConnection : SafeHandle
     public void SetRemoteDescription(SessionDescription description, Action onSuccess, Action<string> onFailure)
     {
         SetRemoteDescription(description.Sdp, description.Type, onSuccess, onFailure);
-    }
-
-    public Task SetRemoteDescriptionAsync(string sdp, string type, CancellationToken cancellationToken = default)
-    {
-        var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
-        CancellationTokenRegistration registration = default;
-        if (cancellationToken.CanBeCanceled)
-        {
-            registration = cancellationToken.Register(() => tcs.TrySetCanceled(cancellationToken));
-        }
-
-        SetRemoteDescription(
-            sdp,
-            type,
-            () =>
-            {
-                registration.Dispose();
-                tcs.TrySetResult(true);
-            },
-            error =>
-            {
-                registration.Dispose();
-                tcs.TrySetException(new InvalidOperationException(error));
-            });
-
-        return tcs.Task;
-    }
-
-    public Task SetRemoteDescriptionAsync(SessionDescription description, CancellationToken cancellationToken = default)
-    {
-        return SetRemoteDescriptionAsync(description.Sdp, description.Type, cancellationToken);
     }
 
     public void GetLocalDescription(Action<string, string> onSuccess, Action<string> onFailure)
@@ -260,30 +150,6 @@ public sealed partial class PeerConnection : SafeHandle
         GetLocalDescription((sdp, type) => onSuccess(new SessionDescription(sdp, type)), onFailure);
     }
 
-    public Task<SessionDescription> GetLocalDescriptionAsync(CancellationToken cancellationToken = default)
-    {
-        var tcs = new TaskCompletionSource<SessionDescription>(TaskCreationOptions.RunContinuationsAsynchronously);
-        CancellationTokenRegistration registration = default;
-        if (cancellationToken.CanBeCanceled)
-        {
-            registration = cancellationToken.Register(() => tcs.TrySetCanceled(cancellationToken));
-        }
-
-        GetLocalDescription(
-            description =>
-            {
-                registration.Dispose();
-                tcs.TrySetResult(description);
-            },
-            error =>
-            {
-                registration.Dispose();
-                tcs.TrySetException(new InvalidOperationException(error));
-            });
-
-        return tcs.Task;
-    }
-
     public void GetRemoteDescription(Action<string, string> onSuccess, Action<string> onFailure)
     {
         if (onSuccess == null) throw new ArgumentNullException(nameof(onSuccess));
@@ -303,30 +169,6 @@ public sealed partial class PeerConnection : SafeHandle
     {
         if (onSuccess == null) throw new ArgumentNullException(nameof(onSuccess));
         GetRemoteDescription((sdp, type) => onSuccess(new SessionDescription(sdp, type)), onFailure);
-    }
-
-    public Task<SessionDescription> GetRemoteDescriptionAsync(CancellationToken cancellationToken = default)
-    {
-        var tcs = new TaskCompletionSource<SessionDescription>(TaskCreationOptions.RunContinuationsAsynchronously);
-        CancellationTokenRegistration registration = default;
-        if (cancellationToken.CanBeCanceled)
-        {
-            registration = cancellationToken.Register(() => tcs.TrySetCanceled(cancellationToken));
-        }
-
-        GetRemoteDescription(
-            description =>
-            {
-                registration.Dispose();
-                tcs.TrySetResult(description);
-            },
-            error =>
-            {
-                registration.Dispose();
-                tcs.TrySetException(new InvalidOperationException(error));
-            });
-
-        return tcs.Task;
     }
 
     public void AddIceCandidate(string sdpMid, int sdpMlineIndex, string candidate)
@@ -380,36 +222,6 @@ public sealed partial class PeerConnection : SafeHandle
         NativeMethods.lrtc_peer_connection_get_stats(handle, successCb, errorCb, IntPtr.Zero);
     }
 
-    public Task<string> GetStatsAsync(CancellationToken cancellationToken = default)
-    {
-        var tcs = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
-        CancellationTokenRegistration registration = default;
-        if (cancellationToken.CanBeCanceled)
-        {
-            registration = cancellationToken.Register(() => tcs.TrySetCanceled(cancellationToken));
-        }
-
-        GetStats(
-            json =>
-            {
-                registration.Dispose();
-                tcs.TrySetResult(json);
-            },
-            error =>
-            {
-                registration.Dispose();
-                tcs.TrySetException(new InvalidOperationException(error));
-            });
-
-        return tcs.Task;
-    }
-
-    public async Task<RtcStatsReport> GetStatsReportAsync(CancellationToken cancellationToken = default)
-    {
-        var json = await GetStatsAsync(cancellationToken).ConfigureAwait(false);
-        return RtcStatsReport.Parse(json);
-    }
-
     public void GetSenderStats(RtpSender sender, Action<string> onSuccess, Action<string> onFailure)
     {
         if (sender == null) throw new ArgumentNullException(nameof(sender));
@@ -430,39 +242,6 @@ public sealed partial class PeerConnection : SafeHandle
             IntPtr.Zero);
     }
 
-    public Task<string> GetSenderStatsAsync(RtpSender sender, CancellationToken cancellationToken = default)
-    {
-        var tcs = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
-        CancellationTokenRegistration registration = default;
-        if (cancellationToken.CanBeCanceled)
-        {
-            registration = cancellationToken.Register(() => tcs.TrySetCanceled(cancellationToken));
-        }
-
-        GetSenderStats(
-            sender,
-            json =>
-            {
-                registration.Dispose();
-                tcs.TrySetResult(json);
-            },
-            error =>
-            {
-                registration.Dispose();
-                tcs.TrySetException(new InvalidOperationException(error));
-            });
-
-        return tcs.Task;
-    }
-
-    public async Task<RtcStatsReport> GetSenderStatsReportAsync(
-        RtpSender sender,
-        CancellationToken cancellationToken = default)
-    {
-        var json = await GetSenderStatsAsync(sender, cancellationToken).ConfigureAwait(false);
-        return RtcStatsReport.Parse(json);
-    }
-
     public void GetReceiverStats(RtpReceiver receiver, Action<string> onSuccess, Action<string> onFailure)
     {
         if (receiver == null) throw new ArgumentNullException(nameof(receiver));
@@ -481,39 +260,6 @@ public sealed partial class PeerConnection : SafeHandle
             successCb,
             errorCb,
             IntPtr.Zero);
-    }
-
-    public Task<string> GetReceiverStatsAsync(RtpReceiver receiver, CancellationToken cancellationToken = default)
-    {
-        var tcs = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
-        CancellationTokenRegistration registration = default;
-        if (cancellationToken.CanBeCanceled)
-        {
-            registration = cancellationToken.Register(() => tcs.TrySetCanceled(cancellationToken));
-        }
-
-        GetReceiverStats(
-            receiver,
-            json =>
-            {
-                registration.Dispose();
-                tcs.TrySetResult(json);
-            },
-            error =>
-            {
-                registration.Dispose();
-                tcs.TrySetException(new InvalidOperationException(error));
-            });
-
-        return tcs.Task;
-    }
-
-    public async Task<RtcStatsReport> GetReceiverStatsReportAsync(
-        RtpReceiver receiver,
-        CancellationToken cancellationToken = default)
-    {
-        var json = await GetReceiverStatsAsync(receiver, cancellationToken).ConfigureAwait(false);
-        return RtcStatsReport.Parse(json);
     }
 
     public bool AddStream(MediaStream stream)

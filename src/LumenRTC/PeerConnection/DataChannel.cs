@@ -18,20 +18,4 @@ public sealed partial class DataChannel : SafeHandle
         var native = callbacks.BuildNative();
         NativeMethods.lrtc_data_channel_set_callbacks(handle, ref native, IntPtr.Zero);
     }
-
-    public void Send(ReadOnlySpan<byte> data, bool binary = true)
-    {
-        unsafe
-        {
-            fixed (byte* ptr = data)
-            {
-                NativeMethods.lrtc_data_channel_send(handle, (IntPtr)ptr, (uint)data.Length, binary ? 1 : 0);
-            }
-        }
-    }
-
-    public new void Close()
-    {
-        NativeMethods.lrtc_data_channel_close(handle);
-    }
 }
