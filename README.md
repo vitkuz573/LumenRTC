@@ -212,6 +212,15 @@ sender.SetDtmfToneChangeHandler(change =>
 });
 ```
 
+DataChannel high-level handlers:
+
+```csharp
+var dc = pc.CreateDataChannel("chat");
+dc.StateChanged += state => Console.WriteLine($"DC state: {state}");
+dc.SetTextMessageHandler(text => Console.WriteLine($"Incoming: {text}"));
+dc.SendText("{\"type\":\"ping\"}");
+```
+
 ## Quickstart (Core API)
 
 Minimal camera preview with explicit factory/device primitives:
