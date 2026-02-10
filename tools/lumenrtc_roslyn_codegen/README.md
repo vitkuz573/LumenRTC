@@ -1,4 +1,4 @@
-# lumenrtc_roslyn_codegen
+# abi_roslyn_codegen
 
 Roslyn source generator that converts ABI metadata into C# interop code
 during compilation.
