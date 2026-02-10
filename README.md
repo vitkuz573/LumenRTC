@@ -221,6 +221,14 @@ dc.SetTextMessageHandler(text => Console.WriteLine($"Incoming: {text}"));
 dc.SendText("{\"type\":\"ping\"}");
 ```
 
+Timeout-aware peer connection async:
+
+```csharp
+var offer = await pc.CreateOfferAsync(TimeSpan.FromSeconds(10), cancellationToken);
+await pc.SetLocalDescriptionAsync(offer, TimeSpan.FromSeconds(10), cancellationToken);
+var stats = await pc.GetStatsReportAsync(TimeSpan.FromSeconds(5), cancellationToken);
+```
+
 ## Quickstart (Core API)
 
 Minimal camera preview with explicit factory/device primitives:

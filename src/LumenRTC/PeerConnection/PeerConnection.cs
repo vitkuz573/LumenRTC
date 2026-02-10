@@ -6,6 +6,7 @@ namespace LumenRTC;
 public sealed partial class PeerConnection : SafeHandle
 {
     private readonly PeerConnectionCallbacks _callbacks;
+    private readonly object _keepAliveSync = new();
     private readonly List<Delegate> _keepAlive = new();
 
     internal PeerConnection(IntPtr handle, PeerConnectionCallbacks callbacks)
@@ -47,12 +48,22 @@ public sealed partial class PeerConnection : SafeHandle
         if (onSuccess == null) throw new ArgumentNullException(nameof(onSuccess));
         if (onFailure == null) throw new ArgumentNullException(nameof(onFailure));
 
-        LrtcSdpSuccessCb successCb = (_, sdpPtr, typePtr) =>
-            onSuccess(Utf8String.Read(sdpPtr), Utf8String.Read(typePtr));
-        LrtcSdpErrorCb errorCb = (_, errPtr) => onFailure(Utf8String.Read(errPtr));
+        LrtcSdpSuccessCb? successCb = null;
+        LrtcSdpErrorCb? errorCb = null;
 
-        _keepAlive.Add(successCb);
-        _keepAlive.Add(errorCb);
+        successCb = (_, sdpPtr, typePtr) =>
+        {
+            ReleaseCallbacks(successCb, errorCb);
+            onSuccess(Utf8String.Read(sdpPtr), Utf8String.Read(typePtr));
+        };
+        errorCb = (_, errPtr) =>
+        {
+            ReleaseCallbacks(successCb, errorCb);
+            onFailure(Utf8String.Read(errPtr));
+        };
+
+        KeepCallbackAlive(successCb);
+        KeepCallbackAlive(errorCb);
 
         NativeMethods.lrtc_peer_connection_create_offer(handle, successCb, errorCb, IntPtr.Zero, IntPtr.Zero);
     }
@@ -68,12 +79,22 @@ public sealed partial class PeerConnection : SafeHandle
         if (onSuccess == null) throw new ArgumentNullException(nameof(onSuccess));
         if (onFailure == null) throw new ArgumentNullException(nameof(onFailure));
 
-        LrtcSdpSuccessCb successCb = (_, sdpPtr, typePtr) =>
-            onSuccess(Utf8String.Read(sdpPtr), Utf8String.Read(typePtr));
-        LrtcSdpErrorCb errorCb = (_, errPtr) => onFailure(Utf8String.Read(errPtr));
+        LrtcSdpSuccessCb? successCb = null;
+        LrtcSdpErrorCb? errorCb = null;
 
-        _keepAlive.Add(successCb);
-        _keepAlive.Add(errorCb);
+        successCb = (_, sdpPtr, typePtr) =>
+        {
+            ReleaseCallbacks(successCb, errorCb);
+            onSuccess(Utf8String.Read(sdpPtr), Utf8String.Read(typePtr));
+        };
+        errorCb = (_, errPtr) =>
+        {
+            ReleaseCallbacks(successCb, errorCb);
+            onFailure(Utf8String.Read(errPtr));
+        };
+
+        KeepCallbackAlive(successCb);
+        KeepCallbackAlive(errorCb);
 
         NativeMethods.lrtc_peer_connection_create_answer(handle, successCb, errorCb, IntPtr.Zero, IntPtr.Zero);
     }
@@ -94,11 +115,22 @@ public sealed partial class PeerConnection : SafeHandle
         using var sdpUtf8 = new Utf8String(sdp);
         using var typeUtf8 = new Utf8String(type);
 
-        LrtcVoidCb successCb = _ => onSuccess?.Invoke();
-        LrtcSdpErrorCb errorCb = (_, errPtr) => onFailure?.Invoke(Utf8String.Read(errPtr));
+        LrtcVoidCb? successCb = null;
+        LrtcSdpErrorCb? errorCb = null;
 
-        _keepAlive.Add(successCb);
-        _keepAlive.Add(errorCb);
+        successCb = _ =>
+        {
+            ReleaseCallbacks(successCb, errorCb);
+            onSuccess?.Invoke();
+        };
+        errorCb = (_, errPtr) =>
+        {
+            ReleaseCallbacks(successCb, errorCb);
+            onFailure?.Invoke(Utf8String.Read(errPtr));
+        };
+
+        KeepCallbackAlive(successCb);
+        KeepCallbackAlive(errorCb);
 
         NativeMethods.lrtc_peer_connection_set_local_description(
             handle, sdpUtf8.Pointer, typeUtf8.Pointer, successCb, errorCb, IntPtr.Zero);
@@ -114,11 +146,22 @@ public sealed partial class PeerConnection : SafeHandle
         using var sdpUtf8 = new Utf8String(sdp);
         using var typeUtf8 = new Utf8String(type);
 
-        LrtcVoidCb successCb = _ => onSuccess?.Invoke();
-        LrtcSdpErrorCb errorCb = (_, errPtr) => onFailure?.Invoke(Utf8String.Read(errPtr));
+        LrtcVoidCb? successCb = null;
+        LrtcSdpErrorCb? errorCb = null;
 
-        _keepAlive.Add(successCb);
-        _keepAlive.Add(errorCb);
+        successCb = _ =>
+        {
+            ReleaseCallbacks(successCb, errorCb);
+            onSuccess?.Invoke();
+        };
+        errorCb = (_, errPtr) =>
+        {
+            ReleaseCallbacks(successCb, errorCb);
+            onFailure?.Invoke(Utf8String.Read(errPtr));
+        };
+
+        KeepCallbackAlive(successCb);
+        KeepCallbackAlive(errorCb);
 
         NativeMethods.lrtc_peer_connection_set_remote_description(
             handle, sdpUtf8.Pointer, typeUtf8.Pointer, successCb, errorCb, IntPtr.Zero);
@@ -134,12 +177,22 @@ public sealed partial class PeerConnection : SafeHandle
         if (onSuccess == null) throw new ArgumentNullException(nameof(onSuccess));
         if (onFailure == null) throw new ArgumentNullException(nameof(onFailure));
 
-        LrtcSdpSuccessCb successCb = (_, sdpPtr, typePtr) =>
-            onSuccess(Utf8String.Read(sdpPtr), Utf8String.Read(typePtr));
-        LrtcSdpErrorCb errorCb = (_, errPtr) => onFailure(Utf8String.Read(errPtr));
+        LrtcSdpSuccessCb? successCb = null;
+        LrtcSdpErrorCb? errorCb = null;
 
-        _keepAlive.Add(successCb);
-        _keepAlive.Add(errorCb);
+        successCb = (_, sdpPtr, typePtr) =>
+        {
+            ReleaseCallbacks(successCb, errorCb);
+            onSuccess(Utf8String.Read(sdpPtr), Utf8String.Read(typePtr));
+        };
+        errorCb = (_, errPtr) =>
+        {
+            ReleaseCallbacks(successCb, errorCb);
+            onFailure(Utf8String.Read(errPtr));
+        };
+
+        KeepCallbackAlive(successCb);
+        KeepCallbackAlive(errorCb);
 
         NativeMethods.lrtc_peer_connection_get_local_description(handle, successCb, errorCb, IntPtr.Zero);
     }
@@ -155,12 +208,22 @@ public sealed partial class PeerConnection : SafeHandle
         if (onSuccess == null) throw new ArgumentNullException(nameof(onSuccess));
         if (onFailure == null) throw new ArgumentNullException(nameof(onFailure));
 
-        LrtcSdpSuccessCb successCb = (_, sdpPtr, typePtr) =>
-            onSuccess(Utf8String.Read(sdpPtr), Utf8String.Read(typePtr));
-        LrtcSdpErrorCb errorCb = (_, errPtr) => onFailure(Utf8String.Read(errPtr));
+        LrtcSdpSuccessCb? successCb = null;
+        LrtcSdpErrorCb? errorCb = null;
 
-        _keepAlive.Add(successCb);
-        _keepAlive.Add(errorCb);
+        successCb = (_, sdpPtr, typePtr) =>
+        {
+            ReleaseCallbacks(successCb, errorCb);
+            onSuccess(Utf8String.Read(sdpPtr), Utf8String.Read(typePtr));
+        };
+        errorCb = (_, errPtr) =>
+        {
+            ReleaseCallbacks(successCb, errorCb);
+            onFailure(Utf8String.Read(errPtr));
+        };
+
+        KeepCallbackAlive(successCb);
+        KeepCallbackAlive(errorCb);
 
         NativeMethods.lrtc_peer_connection_get_remote_description(handle, successCb, errorCb, IntPtr.Zero);
     }
@@ -213,11 +276,22 @@ public sealed partial class PeerConnection : SafeHandle
         if (onSuccess == null) throw new ArgumentNullException(nameof(onSuccess));
         if (onFailure == null) throw new ArgumentNullException(nameof(onFailure));
 
-        LrtcStatsSuccessCb successCb = (_, jsonPtr) => onSuccess(Utf8String.Read(jsonPtr));
-        LrtcStatsFailureCb errorCb = (_, errPtr) => onFailure(Utf8String.Read(errPtr));
+        LrtcStatsSuccessCb? successCb = null;
+        LrtcStatsFailureCb? errorCb = null;
 
-        _keepAlive.Add(successCb);
-        _keepAlive.Add(errorCb);
+        successCb = (_, jsonPtr) =>
+        {
+            ReleaseCallbacks(successCb, errorCb);
+            onSuccess(Utf8String.Read(jsonPtr));
+        };
+        errorCb = (_, errPtr) =>
+        {
+            ReleaseCallbacks(successCb, errorCb);
+            onFailure(Utf8String.Read(errPtr));
+        };
+
+        KeepCallbackAlive(successCb);
+        KeepCallbackAlive(errorCb);
 
         NativeMethods.lrtc_peer_connection_get_stats(handle, successCb, errorCb, IntPtr.Zero);
     }
@@ -228,11 +302,22 @@ public sealed partial class PeerConnection : SafeHandle
         if (onSuccess == null) throw new ArgumentNullException(nameof(onSuccess));
         if (onFailure == null) throw new ArgumentNullException(nameof(onFailure));
 
-        LrtcStatsSuccessCb successCb = (_, jsonPtr) => onSuccess(Utf8String.Read(jsonPtr));
-        LrtcStatsFailureCb errorCb = (_, errPtr) => onFailure(Utf8String.Read(errPtr));
+        LrtcStatsSuccessCb? successCb = null;
+        LrtcStatsFailureCb? errorCb = null;
 
-        _keepAlive.Add(successCb);
-        _keepAlive.Add(errorCb);
+        successCb = (_, jsonPtr) =>
+        {
+            ReleaseCallbacks(successCb, errorCb);
+            onSuccess(Utf8String.Read(jsonPtr));
+        };
+        errorCb = (_, errPtr) =>
+        {
+            ReleaseCallbacks(successCb, errorCb);
+            onFailure(Utf8String.Read(errPtr));
+        };
+
+        KeepCallbackAlive(successCb);
+        KeepCallbackAlive(errorCb);
 
         NativeMethods.lrtc_peer_connection_get_sender_stats(
             handle,
@@ -248,11 +333,22 @@ public sealed partial class PeerConnection : SafeHandle
         if (onSuccess == null) throw new ArgumentNullException(nameof(onSuccess));
         if (onFailure == null) throw new ArgumentNullException(nameof(onFailure));
 
-        LrtcStatsSuccessCb successCb = (_, jsonPtr) => onSuccess(Utf8String.Read(jsonPtr));
-        LrtcStatsFailureCb errorCb = (_, errPtr) => onFailure(Utf8String.Read(errPtr));
+        LrtcStatsSuccessCb? successCb = null;
+        LrtcStatsFailureCb? errorCb = null;
 
-        _keepAlive.Add(successCb);
-        _keepAlive.Add(errorCb);
+        successCb = (_, jsonPtr) =>
+        {
+            ReleaseCallbacks(successCb, errorCb);
+            onSuccess(Utf8String.Read(jsonPtr));
+        };
+        errorCb = (_, errPtr) =>
+        {
+            ReleaseCallbacks(successCb, errorCb);
+            onFailure(Utf8String.Read(errPtr));
+        };
+
+        KeepCallbackAlive(successCb);
+        KeepCallbackAlive(errorCb);
 
         NativeMethods.lrtc_peer_connection_get_receiver_stats(
             handle,
@@ -479,5 +575,27 @@ public sealed partial class PeerConnection : SafeHandle
             mimes.Pointer,
             (uint)mimes.Count);
         return result != 0;
+    }
+
+    private void KeepCallbackAlive(Delegate callback)
+    {
+        lock (_keepAliveSync)
+        {
+            _keepAlive.Add(callback);
+        }
+    }
+
+    private void ReleaseCallbacks(params Delegate?[] callbacks)
+    {
+        lock (_keepAliveSync)
+        {
+            foreach (var callback in callbacks)
+            {
+                if (callback != null)
+                {
+                    _keepAlive.Remove(callback);
+                }
+            }
+        }
     }
 }
