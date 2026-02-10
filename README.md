@@ -178,6 +178,19 @@ camera.Track.AddSink(renderer.Sink);
 renderer.Run();
 ```
 
+Local track lifecycle helpers:
+
+```csharp
+if (!camera.IsRunning)
+{
+    camera.TryStart(out _);
+}
+
+camera.Mute();
+camera.Unmute();
+camera.TryStop(out _);
+```
+
 Async offer/answer flow:
 
 ```csharp

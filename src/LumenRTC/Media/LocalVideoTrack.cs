@@ -11,6 +11,7 @@ public sealed class LocalVideoTrack : IDisposable
     private readonly MediaSource? _desktopSource;
     private readonly uint _fps;
     private bool _disposed;
+    private LocalTrackLifecycleState _lifecycleState;
 
     internal LocalVideoTrack(
         VideoDevice device,
@@ -28,6 +29,9 @@ public sealed class LocalVideoTrack : IDisposable
         _fps = fps;
         TrackId = trackId;
         SourceLabel = sourceLabel;
+        _lifecycleState = capturer.CaptureStarted()
+            ? LocalTrackLifecycleState.Running
+            : LocalTrackLifecycleState.Created;
     }
 
     internal LocalVideoTrack(
@@ -50,6 +54,12 @@ public sealed class LocalVideoTrack : IDisposable
         _fps = fps;
         TrackId = trackId;
         SourceLabel = sourceLabel;
+        _lifecycleState = capturer.IsRunning
+            ? LocalTrackLifecycleState.Running
+            : LocalTrackLifecycleState.Created;
+        LastDesktopCaptureState = capturer.IsRunning
+            ? DesktopCaptureState.Running
+            : DesktopCaptureState.Stopped;
     }
 
     public VideoSource Source { get; }
@@ -66,56 +76,131 @@ public sealed class LocalVideoTrack : IDisposable
 
     public string SourceLabel { get; }
 
+    public LocalTrackLifecycleState LifecycleState => _lifecycleState;
+
+    public bool IsDisposed => _disposed;
+
+    public bool IsRunning => _lifecycleState == LocalTrackLifecycleState.Running;
+
+    public bool IsStopped => _lifecycleState == LocalTrackLifecycleState.Stopped;
+
     public bool IsCamera => CameraCapturer != null;
 
     public bool IsScreenShare => DesktopCapturer != null;
 
+    public bool IsEnabled
+    {
+        get
+        {
+            ThrowIfDisposed();
+            return Track.Enabled;
+        }
+        set
+        {
+            ThrowIfDisposed();
+            Track.Enabled = value;
+        }
+    }
+
+    public void Mute()
+    {
+        ThrowIfDisposed();
+        Track.Mute();
+    }
+
+    public void Unmute()
+    {
+        ThrowIfDisposed();
+        Track.Unmute();
+    }
+
+    public bool TrySetEnabled(bool enabled, out string? error)
+    {
+        ThrowIfDisposed();
+        return Track.TrySetEnabled(enabled, out error);
+    }
+
     public bool Start()
     {
-        if (CameraCapturer != null)
+        ThrowIfDisposed();
+        if (_lifecycleState == LocalTrackLifecycleState.Running)
         {
-            return CameraCapturer.Start();
+            return true;
         }
 
-        if (DesktopCapturer != null)
-        {
-            var state = DesktopCapturer.Start(_fps);
-            LastDesktopCaptureState = state;
-            return state == DesktopCaptureState.Running;
-        }
+        var started = StartCore();
+        _lifecycleState = started
+            ? LocalTrackLifecycleState.Running
+            : LocalTrackLifecycleState.Stopped;
+        return started;
+    }
 
-        return false;
+    public bool TryStart(out string? error)
+    {
+        try
+        {
+            var started = Start();
+            if (started)
+            {
+                error = null;
+                return true;
+            }
+
+            error = "Failed to start local video capture.";
+            return false;
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+            return false;
+        }
     }
 
     public void Stop()
     {
-        if (CameraCapturer != null)
-        {
-            if (CameraCapturer.CaptureStarted())
-            {
-                CameraCapturer.Stop();
-            }
-            return;
-        }
+        ThrowIfDisposed();
+        StopCore();
+    }
 
-        if (DesktopCapturer != null && DesktopCapturer.IsRunning)
+    public bool TryStop(out string? error)
+    {
+        try
         {
-            DesktopCapturer.Stop();
+            Stop();
+            error = null;
+            return true;
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+            return false;
         }
     }
 
     public bool AddTo(PeerConnection peerConnection, IReadOnlyList<string>? streamIds = null)
     {
+        ThrowIfDisposed();
         if (peerConnection == null) throw new ArgumentNullException(nameof(peerConnection));
         return peerConnection.AddVideoTrack(Track, streamIds);
     }
 
     public void Dispose()
     {
-        if (_disposed) return;
-        _disposed = true;
+        if (_disposed)
+        {
+            return;
+        }
 
-        Stop();
+        try
+        {
+            StopCore();
+        }
+        catch
+        {
+        }
+
+        _disposed = true;
+        _lifecycleState = LocalTrackLifecycleState.Disposed;
 
         Track.Dispose();
         Source.Dispose();
@@ -125,5 +210,66 @@ public sealed class LocalVideoTrack : IDisposable
         _desktopList?.Dispose();
         _desktopDevice?.Dispose();
         _videoDevice?.Dispose();
+    }
+
+    private bool StartCore()
+    {
+        if (CameraCapturer != null)
+        {
+            if (CameraCapturer.CaptureStarted())
+            {
+                return true;
+            }
+
+            return CameraCapturer.Start();
+        }
+
+        if (DesktopCapturer != null)
+        {
+            if (DesktopCapturer.IsRunning)
+            {
+                LastDesktopCaptureState = DesktopCaptureState.Running;
+                return true;
+            }
+
+            var state = DesktopCapturer.Start(_fps);
+            LastDesktopCaptureState = state;
+            return state == DesktopCaptureState.Running;
+        }
+
+        return false;
+    }
+
+    private void StopCore()
+    {
+        if (CameraCapturer != null)
+        {
+            if (CameraCapturer.CaptureStarted())
+            {
+                CameraCapturer.Stop();
+            }
+
+            _lifecycleState = LocalTrackLifecycleState.Stopped;
+            return;
+        }
+
+        if (DesktopCapturer != null)
+        {
+            if (DesktopCapturer.IsRunning)
+            {
+                DesktopCapturer.Stop();
+            }
+
+            LastDesktopCaptureState = DesktopCaptureState.Stopped;
+            _lifecycleState = LocalTrackLifecycleState.Stopped;
+            return;
+        }
+
+        _lifecycleState = LocalTrackLifecycleState.Stopped;
+    }
+
+    private void ThrowIfDisposed()
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
     }
 }
