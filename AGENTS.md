@@ -6,7 +6,7 @@
 - `native/`: C ABI bridge (`src/lumenrtc.cpp`) and CMake build files.
 - `abi/`: ABI config, baselines, governance docs, and generated IDL.
 - `tools/abi_framework/`: Python ABI governance CLI plus unit tests.
-- `tools/lumenrtc_roslyn_codegen/`: Roslyn source generator used by `src/LumenRTC`.
+- `tools/abi_roslyn_codegen/`: Roslyn source generator used by `src/LumenRTC`.
 - `samples/`: runnable demos (camera, screen share, signaling, streaming).
 - `scripts/`: bootstrap, ABI, packaging, and demo launcher scripts.
 

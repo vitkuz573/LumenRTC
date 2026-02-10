@@ -7,7 +7,7 @@ ABI governance applies to:
 - `native/include/lumenrtc.h`
 - `src/LumenRTC/Interop/*`
 - `tools/abi_framework/*`
-- `tools/lumenrtc_roslyn_codegen/*`
+- `tools/abi_roslyn_codegen/*`
 - `abi/*`
 
 ## Required Process

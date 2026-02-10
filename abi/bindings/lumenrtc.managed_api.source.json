@@ -992,39 +992,5 @@
         "scoped_refptr<libwebrtc::RTCRtpTransceiver> ref;"
       ]
     }
-  ],
-  "required_native_functions": [
-    "lrtc_audio_track_add_sink",
-    "lrtc_audio_track_get_enabled",
-    "lrtc_audio_track_get_id",
-    "lrtc_audio_track_get_state",
-    "lrtc_audio_track_remove_sink",
-    "lrtc_audio_track_set_enabled",
-    "lrtc_audio_track_set_volume",
-    "lrtc_data_channel_close",
-    "lrtc_data_channel_send",
-    "lrtc_desktop_capturer_is_running",
-    "lrtc_desktop_capturer_start",
-    "lrtc_desktop_capturer_start_region",
-    "lrtc_desktop_capturer_stop",
-    "lrtc_dtmf_sender_can_insert",
-    "lrtc_dtmf_sender_comma_delay",
-    "lrtc_dtmf_sender_duration",
-    "lrtc_dtmf_sender_insert",
-    "lrtc_dtmf_sender_inter_tone_gap",
-    "lrtc_dtmf_sender_tones",
-    "lrtc_media_stream_add_audio_track",
-    "lrtc_media_stream_add_video_track",
-    "lrtc_media_stream_remove_audio_track",
-    "lrtc_media_stream_remove_video_track",
-    "lrtc_video_capturer_capture_started",
-    "lrtc_video_capturer_start",
-    "lrtc_video_capturer_stop",
-    "lrtc_video_track_add_sink",
-    "lrtc_video_track_get_enabled",
-    "lrtc_video_track_get_id",
-    "lrtc_video_track_get_state",
-    "lrtc_video_track_remove_sink",
-    "lrtc_video_track_set_enabled"
   ]
 }

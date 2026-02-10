@@ -283,6 +283,22 @@
             ]
           },
           {
+            "name": "managed_api_metadata",
+            "kind": "external",
+            "command": [
+              "python3",
+              "{repo_root}/tools/lumenrtc_codegen/lumenrtc_managed_api_metadata_codegen.py",
+              "--idl",
+              "{idl}",
+              "--source",
+              "{repo_root}/abi/bindings/lumenrtc.managed_api.source.json",
+              "--out",
+              "{repo_root}/abi/bindings/lumenrtc.managed_api.json",
+              "{check}",
+              "{dry_run}"
+            ]
+          },
+          {
             "name": "managed_api",
             "kind": "external",
             "command": [
