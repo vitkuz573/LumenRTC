@@ -4,7 +4,66 @@
     "on_data_channel": "LrtcDataChannelCreatedCb",
     "on_video_track": "LrtcVideoTrackCb"
   },
-  "functions": {},
+  "functions": {
+    "lrtc_audio_device_microphone_volume": {
+      "parameters": {
+        "volume": {
+          "managed_type": "uint",
+          "modifier": "out"
+        }
+      }
+    },
+    "lrtc_audio_device_speaker_volume": {
+      "parameters": {
+        "volume": {
+          "managed_type": "uint",
+          "modifier": "out"
+        }
+      }
+    },
+    "lrtc_peer_connection_create": {
+      "parameters": {
+        "config": {
+          "managed_type": "IntPtr"
+        }
+      }
+    },
+    "lrtc_rtp_receiver_get_dtls_info": {
+      "parameters": {
+        "info": {
+          "modifier": "out"
+        }
+      }
+    },
+    "lrtc_rtp_receiver_get_encoding_info": {
+      "parameters": {
+        "info": {
+          "modifier": "out"
+        }
+      }
+    },
+    "lrtc_rtp_sender_get_dtls_info": {
+      "parameters": {
+        "info": {
+          "modifier": "out"
+        }
+      }
+    },
+    "lrtc_rtp_sender_get_encoding_info": {
+      "parameters": {
+        "info": {
+          "modifier": "out"
+        }
+      }
+    },
+    "lrtc_rtp_transceiver_set_direction": {
+      "parameters": {
+        "direction": {
+          "managed_type": "LrtcRtpTransceiverDirection"
+        }
+      }
+    }
+  },
   "opaque_types": {
     "lrtc_audio_device_t": {
       "release": "lrtc_audio_device_release"
@@ -78,6 +137,11 @@
     }
   },
   "string_encoding": "utf8",
+  "struct_layout_overrides": {
+    "lrtc_rtc_config_t": {
+      "pack": 8
+    }
+  },
   "struct_field_overrides": {
     "lrtc_rtp_transceiver_init_t.direction": "LrtcRtpTransceiverDirection"
   }

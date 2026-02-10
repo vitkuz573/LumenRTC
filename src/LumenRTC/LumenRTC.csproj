@@ -5,6 +5,7 @@
     <AbiIdlPath>$(MSBuildProjectDirectory)/../../abi/generated/lumenrtc/lumenrtc.idl.json</AbiIdlPath>
     <AbiNamespace>LumenRTC.Interop</AbiNamespace>
     <AbiClassName>NativeMethods</AbiClassName>
+    <AbiConstantsClassName>LrtcConstants</AbiConstantsClassName>
     <AbiAccessModifier>internal</AbiAccessModifier>
     <AbiCallingConvention>Cdecl</AbiCallingConvention>
     <AbiLibraryExpression>LibName</AbiLibraryExpression>
@@ -25,6 +26,7 @@
     <CompilerVisibleProperty Include="AbiIdlPath" />
     <CompilerVisibleProperty Include="AbiNamespace" />
     <CompilerVisibleProperty Include="AbiClassName" />
+    <CompilerVisibleProperty Include="AbiConstantsClassName" />
     <CompilerVisibleProperty Include="AbiAccessModifier" />
     <CompilerVisibleProperty Include="AbiCallingConvention" />
     <CompilerVisibleProperty Include="AbiLibraryExpression" />

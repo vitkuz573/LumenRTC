@@ -66,6 +66,63 @@ class InteropMetadataTests(unittest.TestCase):
         missing = sorted(name for name in overrides.keys() if name not in callback_fields)
         self.assertFalse(missing, f"Invalid callback_field_overrides entries: {missing}")
 
+    def test_function_parameter_overrides_reference_existing_items(self) -> None:
+        idl = load_json(IDL_PATH)
+        meta = load_json(META_PATH)
+
+        functions = {
+            item.get("name"): {param.get("name") for param in item.get("parameters", [])}
+            for item in idl.get("functions", [])
+            if isinstance(item, dict) and isinstance(item.get("name"), str)
+        }
+
+        overrides = meta.get("functions", {})
+        missing_functions = []
+        missing_parameters = []
+
+        for function_name, payload in overrides.items():
+            if function_name not in functions:
+                missing_functions.append(function_name)
+                continue
+
+            if not isinstance(payload, dict):
+                continue
+
+            parameters = payload.get("parameters", {})
+            if not isinstance(parameters, dict):
+                continue
+
+            known_parameters = functions[function_name]
+            for parameter_name in parameters.keys():
+                if parameter_name not in known_parameters:
+                    missing_parameters.append(f"{function_name}.{parameter_name}")
+
+        self.assertFalse(missing_functions, f"Function overrides reference unknown functions: {missing_functions}")
+        self.assertFalse(missing_parameters, f"Function overrides reference unknown parameters: {missing_parameters}")
+
+    def test_struct_layout_overrides_reference_existing_structs(self) -> None:
+        idl = load_json(IDL_PATH)
+        meta = load_json(META_PATH)
+
+        structs = idl.get("header_types", {}).get("structs", {})
+        overrides = meta.get("struct_layout_overrides", {})
+
+        missing_structs = sorted(name for name in overrides.keys() if name not in structs)
+        self.assertFalse(missing_structs, f"Invalid struct_layout_overrides entries: {missing_structs}")
+
+        invalid_pack = []
+        for name, payload in overrides.items():
+            pack_value = None
+            if isinstance(payload, int):
+                pack_value = payload
+            elif isinstance(payload, dict):
+                pack_value = payload.get("pack")
+
+            if pack_value is not None and (not isinstance(pack_value, int) or pack_value <= 0):
+                invalid_pack.append(name)
+
+        self.assertFalse(invalid_pack, f"struct_layout_overrides.pack must be positive integer: {invalid_pack}")
+
 
 if __name__ == "__main__":
     unittest.main()
