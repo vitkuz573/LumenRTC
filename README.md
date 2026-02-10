@@ -227,6 +227,10 @@ Timeout-aware peer connection async:
 var offer = await pc.CreateOfferAsync(TimeSpan.FromSeconds(10), cancellationToken);
 await pc.SetLocalDescriptionAsync(offer, TimeSpan.FromSeconds(10), cancellationToken);
 var stats = await pc.GetStatsReportAsync(TimeSpan.FromSeconds(5), cancellationToken);
+
+var selectedPair = stats.GetFirst(new RtcStatQuery(
+    Type: RtcStatTypes.CandidatePair,
+    Predicate: stat => stat.GetBoolOrNull("selected") == true));
 ```
 
 ## Quickstart (Core API)

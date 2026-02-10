@@ -18,10 +18,30 @@ public sealed class RtcStat
     public double TimestampUs { get; }
     public JsonElement Data { get; }
 
-    public bool TryGetString(string name, out string? value)
+    public bool Contains(string name)
+    {
+        return Data.ValueKind == JsonValueKind.Object &&
+               !string.IsNullOrWhiteSpace(name) &&
+               Data.TryGetProperty(name, out _);
+    }
+
+    public bool TryGetProperty(string name, out JsonElement value)
     {
         if (Data.ValueKind == JsonValueKind.Object &&
-            Data.TryGetProperty(name, out var prop) &&
+            !string.IsNullOrWhiteSpace(name) &&
+            Data.TryGetProperty(name, out var prop))
+        {
+            value = prop;
+            return true;
+        }
+
+        value = default;
+        return false;
+    }
+
+    public bool TryGetString(string name, out string? value)
+    {
+        if (TryGetProperty(name, out var prop) &&
             prop.ValueKind == JsonValueKind.String)
         {
             value = prop.GetString();
@@ -33,8 +53,7 @@ public sealed class RtcStat
 
     public bool TryGetDouble(string name, out double value)
     {
-        if (Data.ValueKind == JsonValueKind.Object &&
-            Data.TryGetProperty(name, out var prop) &&
+        if (TryGetProperty(name, out var prop) &&
             prop.ValueKind == JsonValueKind.Number)
         {
             return prop.TryGetDouble(out value);
@@ -45,8 +64,7 @@ public sealed class RtcStat
 
     public bool TryGetInt64(string name, out long value)
     {
-        if (Data.ValueKind == JsonValueKind.Object &&
-            Data.TryGetProperty(name, out var prop) &&
+        if (TryGetProperty(name, out var prop) &&
             prop.ValueKind == JsonValueKind.Number)
         {
             return prop.TryGetInt64(out value);
@@ -57,8 +75,7 @@ public sealed class RtcStat
 
     public bool TryGetBool(string name, out bool value)
     {
-        if (Data.ValueKind == JsonValueKind.Object &&
-            Data.TryGetProperty(name, out var prop) &&
+        if (TryGetProperty(name, out var prop) &&
             (prop.ValueKind == JsonValueKind.True || prop.ValueKind == JsonValueKind.False))
         {
             value = prop.GetBoolean();
@@ -70,8 +87,7 @@ public sealed class RtcStat
 
     public bool TryGetUInt32(string name, out uint value)
     {
-        if (Data.ValueKind == JsonValueKind.Object &&
-            Data.TryGetProperty(name, out var prop) &&
+        if (TryGetProperty(name, out var prop) &&
             prop.ValueKind == JsonValueKind.Number)
         {
             if (prop.TryGetUInt32(out value))
@@ -92,5 +108,61 @@ public sealed class RtcStat
         }
         value = 0;
         return false;
+    }
+
+    public bool TryGetStringArray(string name, out IReadOnlyList<string> values)
+    {
+        if (!TryGetProperty(name, out var prop) || prop.ValueKind != JsonValueKind.Array)
+        {
+            values = Array.Empty<string>();
+            return false;
+        }
+
+        var list = new List<string>();
+        foreach (var item in prop.EnumerateArray())
+        {
+            if (item.ValueKind == JsonValueKind.String)
+            {
+                var value = item.GetString();
+                if (!string.IsNullOrEmpty(value))
+                {
+                    list.Add(value);
+                }
+            }
+        }
+
+        values = list;
+        return true;
+    }
+
+    public string? GetStringOrDefault(string name, string? fallback = null)
+    {
+        return TryGetString(name, out var value) ? value : fallback;
+    }
+
+    public double? GetDoubleOrNull(string name)
+    {
+        return TryGetDouble(name, out var value) ? value : null;
+    }
+
+    public long? GetInt64OrNull(string name)
+    {
+        return TryGetInt64(name, out var value) ? value : null;
+    }
+
+    public uint? GetUInt32OrNull(string name)
+    {
+        return TryGetUInt32(name, out var value) ? value : null;
+    }
+
+    public bool? GetBoolOrNull(string name)
+    {
+        return TryGetBool(name, out var value) ? value : null;
+    }
+
+    public bool IsType(string type)
+    {
+        return !string.IsNullOrWhiteSpace(type) &&
+               string.Equals(Type, type, StringComparison.OrdinalIgnoreCase);
     }
 }
