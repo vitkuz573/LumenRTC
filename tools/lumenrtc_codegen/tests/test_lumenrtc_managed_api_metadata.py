@@ -25,6 +25,18 @@ class ManagedApiMetadataTests(unittest.TestCase):
         self.assertIsInstance(managed_api.get("namespace"), str)
         self.assertTrue(managed_api.get("namespace"))
 
+        output_hints = managed_api.get("output_hints", {})
+        self.assertIsInstance(output_hints, dict)
+        self.assertTrue(output_hints)
+        self.assertSetEqual(
+            set(output_hints.keys()),
+            {"pattern", "suffix"},
+            "managed_api output_hints must use canonical keys only",
+        )
+        pattern = output_hints.get("pattern")
+        self.assertIsInstance(pattern, str)
+        self.assertIn("{section_pascal}", pattern)
+
         idl_function_names = {
             item.get("name")
             for item in idl.get("functions", [])

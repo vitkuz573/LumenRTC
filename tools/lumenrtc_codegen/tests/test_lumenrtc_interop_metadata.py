@@ -28,6 +28,12 @@ class InteropMetadataTests(unittest.TestCase):
 
         output_hints = meta.get("output_hints", {})
         self.assertIsInstance(output_hints, dict)
+        self.assertTrue(output_hints)
+        self.assertSetEqual(
+            set(output_hints.keys()),
+            {"pattern", "suffix"},
+            "interop output_hints must use canonical keys only",
+        )
         pattern = output_hints.get("pattern")
         self.assertIsInstance(pattern, str)
         self.assertIn("{class}", pattern)
