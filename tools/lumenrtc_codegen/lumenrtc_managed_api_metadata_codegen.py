@@ -2,42 +2,21 @@
 from __future__ import annotations
 
 import argparse
-import difflib
 import json
-import re
+import sys
 from pathlib import Path
 from typing import Any
 
 
 TOOL_PATH = "tools/lumenrtc_codegen/lumenrtc_managed_api_metadata_codegen.py"
-NATIVE_CALL_PATTERN = re.compile(r"\bNativeMethods\.(lrtc_[a-z0-9_]+)\b")
+DEFAULT_NATIVE_CALL_PATTERN = r"\bNativeMethods\.([A-Za-z_][A-Za-z0-9_]*)\b"
 
+CORE_SRC = Path(__file__).resolve().parents[1] / "abi_codegen_core" / "src"
+if str(CORE_SRC) not in sys.path:
+    sys.path.insert(0, str(CORE_SRC))
 
-def load_json(path: Path) -> dict[str, Any]:
-    data = json.loads(path.read_text(encoding="utf-8"))
-    if not isinstance(data, dict):
-        raise SystemExit(f"JSON root in '{path}' must be an object")
-    return data
-
-
-def write_if_changed(path: Path, content: str, check: bool, dry_run: bool) -> int:
-    existing = path.read_text(encoding="utf-8") if path.exists() else ""
-    if existing == content:
-        return 0
-    if check:
-        diff = difflib.unified_diff(
-            existing.splitlines(),
-            content.splitlines(),
-            fromfile=f"a/{path}",
-            tofile=f"b/{path}",
-            lineterm="",
-        )
-        print("\n".join(diff))
-        return 1
-    if not dry_run:
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(content, encoding="utf-8")
-    return 0
+from abi_codegen_core.common import load_json_object, write_if_changed
+from abi_codegen_core.required_functions import derive_required_functions
 
 
 def collect_idl_function_names(idl: dict[str, Any]) -> set[str]:
@@ -56,32 +35,39 @@ def collect_idl_function_names(idl: dict[str, Any]) -> set[str]:
     return names
 
 
-def iter_strings(value: Any) -> list[str]:
-    if isinstance(value, str):
-        return [value]
-    if isinstance(value, list):
-        result: list[str] = []
-        for item in value:
-            result.extend(iter_strings(item))
-        return result
-    if isinstance(value, dict):
-        result: list[str] = []
-        for item in value.values():
-            result.extend(iter_strings(item))
-        return result
-    return []
+def resolve_discovery_rules(
+    payload: dict[str, Any],
+    cli_patterns: list[str],
+    cli_function_pattern: str | None,
+) -> tuple[list[str], str | None]:
+    patterns = list(cli_patterns)
+    function_name_pattern = cli_function_pattern
+
+    rules = payload.get("required_native_functions_rules")
+    if isinstance(rules, dict):
+        rules_patterns = rules.get("native_call_patterns")
+        if isinstance(rules_patterns, list):
+            for index, item in enumerate(rules_patterns):
+                if not isinstance(item, str) or not item:
+                    raise SystemExit(
+                        f"managed_api.required_native_functions_rules.native_call_patterns[{index}] must be non-empty string"
+                    )
+                patterns.append(item)
+        rules_function_pattern = rules.get("function_name_pattern")
+        if function_name_pattern is None and isinstance(rules_function_pattern, str) and rules_function_pattern:
+            function_name_pattern = rules_function_pattern
+
+    if not patterns:
+        patterns.append(DEFAULT_NATIVE_CALL_PATTERN)
+    return patterns, function_name_pattern
 
 
-def derive_required_native_functions(payload: dict[str, Any], idl_names: set[str]) -> list[str]:
-    discovered: set[str] = set()
-    for text in iter_strings(payload):
-        for match in NATIVE_CALL_PATTERN.findall(text):
-            if match in idl_names:
-                discovered.add(match)
-    return sorted(discovered)
-
-
-def normalize_payload(payload: dict[str, Any], idl_names: set[str]) -> dict[str, Any]:
+def normalize_payload(
+    payload: dict[str, Any],
+    idl_names: set[str],
+    native_call_patterns: list[str],
+    function_name_pattern: str | None,
+) -> dict[str, Any]:
     normalized = json.loads(json.dumps(payload))
     schema_version = normalized.get("schema_version")
     if schema_version != 2:
@@ -90,7 +76,12 @@ def normalize_payload(payload: dict[str, Any], idl_names: set[str]) -> dict[str,
     if not isinstance(namespace_name, str) or not namespace_name:
         raise SystemExit("managed_api.namespace must be a non-empty string")
 
-    required_native_functions = derive_required_native_functions(normalized, idl_names)
+    required_native_functions = derive_required_functions(
+        payload=normalized,
+        idl_names=idl_names,
+        native_call_patterns=native_call_patterns,
+        function_name_pattern=function_name_pattern,
+    )
     normalized["required_native_functions"] = required_native_functions
     return normalized
 
@@ -100,14 +91,26 @@ def main() -> int:
     parser.add_argument("--idl", required=True)
     parser.add_argument("--source", required=True)
     parser.add_argument("--out", required=True)
+    parser.add_argument("--native-call-pattern", action="append", default=[])
+    parser.add_argument("--function-name-pattern")
     parser.add_argument("--check", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
 
-    idl = load_json(Path(args.idl))
-    source_payload = load_json(Path(args.source))
+    idl = load_json_object(Path(args.idl))
+    source_payload = load_json_object(Path(args.source))
     idl_names = collect_idl_function_names(idl)
-    normalized_payload = normalize_payload(source_payload, idl_names)
+    discovery_patterns, function_name_pattern = resolve_discovery_rules(
+        source_payload,
+        cli_patterns=list(args.native_call_pattern),
+        cli_function_pattern=args.function_name_pattern,
+    )
+    normalized_payload = normalize_payload(
+        source_payload,
+        idl_names,
+        native_call_patterns=discovery_patterns,
+        function_name_pattern=function_name_pattern,
+    )
 
     output = json.dumps(normalized_payload, ensure_ascii=False, indent=2, sort_keys=False) + "\n"
     return write_if_changed(Path(args.out), output, args.check, args.dry_run)

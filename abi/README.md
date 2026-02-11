@@ -16,6 +16,8 @@
   metadata from:
   `abi/bindings/lumenrtc.managed_api.source.json`
   (normalized metadata: `abi/bindings/lumenrtc.managed_api.json`)
+- Shared target-agnostic generator primitives:
+  `tools/abi_codegen_core/`
 - Generated bindings symbol contract lockfile:
   `abi/bindings/lumenrtc.symbol_contract.json`
   (spec source: `abi/bindings/lumenrtc.symbol_contract.sources.json`)
@@ -38,6 +40,8 @@
    - Output: `abi/generated/lumenrtc/lumenrtc.idl.json`
 7. Run language generators from ABI IDL (plugin host):
    - `scripts/abi.sh codegen --skip-binary`
+   - Generators are bound through `bindings.generators[].manifest` + `plugin`
+     in `abi/config.json` (schema version 1).
    - Includes:
      - `abi/bindings/lumenrtc.symbol_contract.json`
      - `native/src/lumenrtc.exports.cpp`

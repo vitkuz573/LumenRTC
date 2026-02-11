@@ -13,6 +13,26 @@ def load_json(path: Path) -> dict:
 
 
 class InteropMetadataTests(unittest.TestCase):
+    def test_callback_typedef_and_struct_conventions_declared(self) -> None:
+        meta = load_json(META_PATH)
+
+        call_tokens = meta.get("callback_typedef_call_tokens", [])
+        self.assertIsInstance(call_tokens, list)
+        self.assertTrue(call_tokens, "callback_typedef_call_tokens must declare at least one token")
+        self.assertTrue(all(isinstance(item, str) and item for item in call_tokens))
+
+        callback_suffixes = meta.get("callback_struct_suffixes", [])
+        self.assertIsInstance(callback_suffixes, list)
+        self.assertTrue(callback_suffixes, "callback_struct_suffixes must declare at least one suffix")
+        self.assertTrue(all(isinstance(item, str) and item for item in callback_suffixes))
+
+    def test_callback_metadata_settings_are_embedded_in_idl(self) -> None:
+        idl = load_json(IDL_PATH)
+        interop = ((idl.get("bindings") or {}).get("interop") or {})
+
+        self.assertIn("callback_typedef_call_tokens", interop)
+        self.assertIn("callback_struct_suffixes", interop)
+
     def test_interop_metadata_covers_opaque_types(self) -> None:
         idl = load_json(IDL_PATH)
         meta = load_json(META_PATH)
@@ -54,8 +74,11 @@ class InteropMetadataTests(unittest.TestCase):
         meta = load_json(META_PATH)
 
         structs = idl.get("header_types", {}).get("structs", {})
+        callback_suffixes = meta.get("callback_struct_suffixes", ["_callbacks_t"])
         callback_structs = [
-            payload for name, payload in structs.items() if isinstance(name, str) and name.endswith("_callbacks_t")
+            payload
+            for name, payload in structs.items()
+            if isinstance(name, str) and any(name.endswith(suffix) for suffix in callback_suffixes)
         ]
         callback_fields = set()
         for struct in callback_structs:

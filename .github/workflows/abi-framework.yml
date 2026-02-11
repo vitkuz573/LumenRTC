@@ -9,6 +9,7 @@ on:
       - "src/LumenRTC/Interop/**"
       - "src/LumenRTC/LumenRTC.csproj"
       - "tools/abi_framework/**"
+      - "tools/abi_codegen_core/**"
       - "tools/lumenrtc_codegen/**"
       - "tools/abi_roslyn_codegen/**"
       - "scripts/abi_guardrails.sh"
@@ -23,6 +24,7 @@ on:
       - "src/LumenRTC/Interop/**"
       - "src/LumenRTC/LumenRTC.csproj"
       - "tools/abi_framework/**"
+      - "tools/abi_codegen_core/**"
       - "tools/lumenrtc_codegen/**"
       - "tools/abi_roslyn_codegen/**"
       - "scripts/abi_guardrails.sh"
@@ -60,9 +62,20 @@ jobs:
         run: |
           python3 -m unittest discover -s tools/abi_framework/tests -p "test_*.py"
 
+      - name: Unit tests (abi_codegen_core)
+        run: |
+          PYTHONPATH="tools/abi_codegen_core/src:${PYTHONPATH}" \
+          python3 -m unittest discover -s tools/abi_codegen_core/tests -p "test_*.py"
+
       - name: Unit tests (lumenrtc_codegen)
         run: |
           python3 -m unittest discover -s tools/lumenrtc_codegen/tests -p "test_*.py"
+
+      - name: Validate plugin manifests
+        run: |
+          python3 tools/abi_framework/abi_framework.py validate-plugin-manifest \
+            --repo-root . \
+            --config abi/config.json
 
       - name: Enforce generation guardrails
         run: |

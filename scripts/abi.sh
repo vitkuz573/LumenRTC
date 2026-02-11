@@ -24,6 +24,7 @@ Commands:
   waiver-audit  Audit waiver metadata/expiry policy
   benchmark     Benchmark ABI pipeline timings
   benchmark-gate Enforce benchmark report against budget
+  validate-plugin-manifest Validate plugin manifest JSON
   guardrails    Enforce generation architecture guardrails
   generate      Generate ABI IDL for configured targets
   codegen       Generate ABI IDL and run configured language generators
@@ -106,6 +107,12 @@ case "${COMMAND}" in
     ;;
   benchmark-gate)
     run_guard benchmark-gate "$@"
+    ;;
+  validate-plugin-manifest)
+    run_guard validate-plugin-manifest \
+      --repo-root "${REPO_ROOT}" \
+      --config "${ABI_CONFIG}" \
+      "$@"
     ;;
   guardrails)
     "${REPO_ROOT}/scripts/abi_guardrails.sh" "$@"

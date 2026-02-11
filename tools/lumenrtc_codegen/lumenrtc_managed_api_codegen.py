@@ -2,20 +2,19 @@
 from __future__ import annotations
 
 import argparse
-import difflib
 import json
+import sys
 from pathlib import Path
 from typing import Any
 
 
 TOOL_PATH = "tools/lumenrtc_codegen/lumenrtc_managed_api_codegen.py"
 
+CORE_SRC = Path(__file__).resolve().parents[1] / "abi_codegen_core" / "src"
+if str(CORE_SRC) not in sys.path:
+    sys.path.insert(0, str(CORE_SRC))
 
-def load_json(path: Path) -> dict[str, Any]:
-    data = json.loads(path.read_text(encoding="utf-8"))
-    if not isinstance(data, dict):
-        raise SystemExit(f"JSON root in '{path}' must be an object")
-    return data
+from abi_codegen_core.common import load_json_object, write_if_changed
 
 
 def require_str(obj: dict[str, Any], key: str, context: str) -> str:
@@ -40,26 +39,6 @@ def require_string_list(obj: dict[str, Any], key: str, context: str) -> list[str
             raise SystemExit(f"{context}.{key}[{index}] must be a string")
         result.append(item)
     return result
-
-
-def write_if_changed(path: Path, content: str, check: bool, dry_run: bool) -> int:
-    existing = path.read_text(encoding="utf-8") if path.exists() else ""
-    if existing == content:
-        return 0
-    if check:
-        diff = difflib.unified_diff(
-            existing.splitlines(),
-            content.splitlines(),
-            fromfile=f"a/{path}",
-            tofile=f"b/{path}",
-            lineterm="",
-        )
-        print("\n".join(diff))
-        return 1
-    if not dry_run:
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(content, encoding="utf-8")
-    return 0
 
 
 def indent(lines: list[str], spaces: int) -> list[str]:
@@ -383,8 +362,8 @@ def main() -> int:
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
 
-    idl = load_json(Path(args.idl))
-    schema = load_json(Path(args.managed_api))
+    idl = load_json_object(Path(args.idl))
+    schema = load_json_object(Path(args.managed_api))
 
     schema_version = schema.get("schema_version")
     if schema_version != 2:

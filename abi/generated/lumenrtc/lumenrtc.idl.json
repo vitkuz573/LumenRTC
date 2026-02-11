@@ -11,6 +11,12 @@
         "on_data_channel": "LrtcDataChannelCreatedCb",
         "on_video_track": "LrtcVideoTrackCb"
       },
+      "callback_struct_suffixes": [
+        "_callbacks_t"
+      ],
+      "callback_typedef_call_tokens": [
+        "LUMENRTC_CALL"
+      ],
       "functions": {
         "lrtc_audio_device_microphone_volume": {
           "parameters": {

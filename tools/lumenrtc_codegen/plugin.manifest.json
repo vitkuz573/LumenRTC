@@ -1,0 +1,217 @@
+{
+  "schema_version": 1,
+  "package": "lumenrtc.codegen",
+  "metadata": {
+    "description": "LumenRTC target plugins for abi_framework external generators."
+  },
+  "plugins": [
+    {
+      "name": "lumenrtc.native_exports",
+      "version": "1.0.0",
+      "description": "Render native export forwarding unit and impl header from IDL.",
+      "entrypoint": {
+        "kind": "external",
+        "command": [
+          "python3",
+          "{repo_root}/tools/lumenrtc_codegen/lumenrtc_native_exports.py",
+          "--idl",
+          "{idl}",
+          "--out",
+          "{repo_root}/native/src/lumenrtc.exports.cpp",
+          "--impl-header",
+          "{repo_root}/native/src/lumenrtc_impl.h",
+          "--header-include",
+          "lumenrtc.h",
+          "--impl-header-include",
+          "lumenrtc_impl.h",
+          "--api-macro",
+          "LUMENRTC_API",
+          "--call-macro",
+          "LUMENRTC_CALL",
+          "--impl-prefix",
+          "lrtc_impl_",
+          "--symbol-prefix",
+          "lrtc_",
+          "{check}",
+          "{dry_run}"
+        ]
+      },
+      "capabilities": {
+        "supports_check": true,
+        "supports_dry_run": true,
+        "deterministic_output": true,
+        "requires_repo_root": true,
+        "writes_managed_sources": false
+      },
+      "contracts": {
+        "inputs": [
+          {
+            "name": "idl",
+            "path_arg": "--idl",
+            "required": true,
+            "description": "ABI IDL JSON input."
+          }
+        ],
+        "outputs": [
+          {
+            "name": "native_exports_cpp",
+            "path_arg": "--out",
+            "required": true,
+            "description": "Generated native export forwarding file."
+          },
+          {
+            "name": "native_impl_header",
+            "path_arg": "--impl-header",
+            "required": true,
+            "description": "Generated impl header with lrtc_impl_* prototypes."
+          }
+        ]
+      },
+      "compatibility": {
+        "min_idl_schema_version": 1,
+        "max_idl_schema_version": 1,
+        "target_patterns": [
+          "^lumenrtc$"
+        ]
+      },
+      "diagnostics": {
+        "codes": [
+          "LRTCCODEGEN001"
+        ]
+      },
+      "owners": [
+        "@vitkuz573"
+      ]
+    },
+    {
+      "name": "lumenrtc.managed_api_metadata",
+      "version": "1.0.0",
+      "description": "Normalize managed API metadata and derive required_native_functions.",
+      "entrypoint": {
+        "kind": "external",
+        "command": [
+          "python3",
+          "{repo_root}/tools/lumenrtc_codegen/lumenrtc_managed_api_metadata_codegen.py",
+          "--idl",
+          "{idl}",
+          "--source",
+          "{repo_root}/abi/bindings/lumenrtc.managed_api.source.json",
+          "--out",
+          "{repo_root}/abi/bindings/lumenrtc.managed_api.json",
+          "--native-call-pattern",
+          "\\bNativeMethods\\.([A-Za-z_][A-Za-z0-9_]*)\\b",
+          "--function-name-pattern",
+          "^lrtc_[a-z0-9_]+$",
+          "{check}",
+          "{dry_run}"
+        ]
+      },
+      "capabilities": {
+        "supports_check": true,
+        "supports_dry_run": true,
+        "deterministic_output": true,
+        "requires_repo_root": true,
+        "writes_managed_sources": false
+      },
+      "contracts": {
+        "inputs": [
+          {
+            "name": "idl",
+            "path_arg": "--idl",
+            "required": true
+          },
+          {
+            "name": "managed_api_source",
+            "path_arg": "--source",
+            "required": true
+          }
+        ],
+        "outputs": [
+          {
+            "name": "managed_api_normalized",
+            "path_arg": "--out",
+            "required": true
+          }
+        ]
+      },
+      "compatibility": {
+        "min_idl_schema_version": 1,
+        "max_idl_schema_version": 1,
+        "target_patterns": [
+          "^lumenrtc$"
+        ]
+      },
+      "diagnostics": {
+        "codes": [
+          "LRTCCODEGEN002"
+        ]
+      },
+      "owners": [
+        "@vitkuz573"
+      ]
+    },
+    {
+      "name": "lumenrtc.managed_api",
+      "version": "1.0.0",
+      "description": "Validate managed API metadata and render native handle boilerplate.",
+      "entrypoint": {
+        "kind": "external",
+        "command": [
+          "python3",
+          "{repo_root}/tools/lumenrtc_codegen/lumenrtc_managed_api_codegen.py",
+          "--idl",
+          "{idl}",
+          "--managed-api",
+          "{repo_root}/abi/bindings/lumenrtc.managed_api.json",
+          "--out-native-handles",
+          "{repo_root}/native/src/lumenrtc_impl_handles.generated.h",
+          "{check}",
+          "{dry_run}"
+        ]
+      },
+      "capabilities": {
+        "supports_check": true,
+        "supports_dry_run": true,
+        "deterministic_output": true,
+        "requires_repo_root": true,
+        "writes_managed_sources": false
+      },
+      "contracts": {
+        "inputs": [
+          {
+            "name": "idl",
+            "path_arg": "--idl",
+            "required": true
+          },
+          {
+            "name": "managed_api",
+            "path_arg": "--managed-api",
+            "required": true
+          }
+        ],
+        "outputs": [
+          {
+            "name": "native_impl_handles_header",
+            "path_arg": "--out-native-handles",
+            "required": true
+          }
+        ]
+      },
+      "compatibility": {
+        "min_idl_schema_version": 1,
+        "max_idl_schema_version": 1,
+        "target_patterns": [
+          "^lumenrtc$"
+        ]
+      },
+      "diagnostics": {
+        "codes": [
+          "LRTCCODEGEN003"
+        ]
+      },
+      "owners": [
+        "@vitkuz573"
+      ]
+    }
+  ]
+}

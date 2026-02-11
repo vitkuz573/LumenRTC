@@ -4,6 +4,8 @@ Project-specific ABI generators and metadata validation for LumenRTC.
 
 This folder intentionally contains LumenRTC-specific codegen plugins that run via
 `abi_framework` external generator hooks.
+Shared, target-agnostic primitives are factored into:
+`tools/abi_codegen_core/`.
 
 - `lumenrtc_native_exports.py`: renders C ABI export forwarding units from ABI IDL.
 - `lumenrtc_managed_api_metadata_codegen.py`: generates normalized
@@ -17,5 +19,20 @@ This folder intentionally contains LumenRTC-specific codegen plugins that run vi
 - `abi/bindings/lumenrtc.symbol_contract.sources.json`: declarative source spec for
   the universal symbol contract generator (`tools/abi_framework/generator_sdk/symbol_contract_generator.py`).
 - `tests/`: LumenRTC metadata integrity tests (`interop`/`managed` JSON files).
+- `plugin.manifest.json`: plugin contract metadata for this package.
 
-`abi_framework` stays target-agnostic and executes these via configured external commands.
+`abi_framework` stays target-agnostic and executes these via
+`bindings.generators[].manifest` + `bindings.generators[].plugin` bindings in `abi/config.json`.
+
+Validate manifest contract:
+
+```bash
+python3 tools/abi_framework/abi_framework.py validate-plugin-manifest \
+  --manifest tools/lumenrtc_codegen/plugin.manifest.json
+
+# or discover from configured generators:
+python3 tools/abi_framework/abi_framework.py validate-plugin-manifest \
+  --repo-root . \
+  --config abi/config.json \
+  --target lumenrtc
+```

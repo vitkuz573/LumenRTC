@@ -65,66 +65,26 @@
           {
             "name": "symbol_contract",
             "kind": "external",
-            "command": [
-              "python3",
-              "{repo_root}/tools/abi_framework/generator_sdk/symbol_contract_generator.py",
-              "--idl",
-              "{idl}",
-              "--spec",
-              "{repo_root}/abi/bindings/lumenrtc.symbol_contract.sources.json",
-              "--out",
-              "{repo_root}/abi/bindings/lumenrtc.symbol_contract.json",
-              "{check}",
-              "{dry_run}"
-            ]
+            "manifest": "{repo_root}/tools/abi_framework/generator_sdk/plugin.manifest.json",
+            "plugin": "abi_framework.symbol_contract"
           },
           {
             "name": "native_exports",
             "kind": "external",
-            "command": [
-              "python3",
-              "{repo_root}/tools/lumenrtc_codegen/lumenrtc_native_exports.py",
-              "--idl",
-              "{idl}",
-              "--out",
-              "{repo_root}/native/src/lumenrtc.exports.cpp",
-              "--impl-header",
-              "{repo_root}/native/src/lumenrtc_impl.h",
-              "{check}",
-              "{dry_run}"
-            ]
+            "manifest": "{repo_root}/tools/lumenrtc_codegen/plugin.manifest.json",
+            "plugin": "lumenrtc.native_exports"
           },
           {
             "name": "managed_api_metadata",
             "kind": "external",
-            "command": [
-              "python3",
-              "{repo_root}/tools/lumenrtc_codegen/lumenrtc_managed_api_metadata_codegen.py",
-              "--idl",
-              "{idl}",
-              "--source",
-              "{repo_root}/abi/bindings/lumenrtc.managed_api.source.json",
-              "--out",
-              "{repo_root}/abi/bindings/lumenrtc.managed_api.json",
-              "{check}",
-              "{dry_run}"
-            ]
+            "manifest": "{repo_root}/tools/lumenrtc_codegen/plugin.manifest.json",
+            "plugin": "lumenrtc.managed_api_metadata"
           },
           {
             "name": "managed_api",
             "kind": "external",
-            "command": [
-              "python3",
-              "{repo_root}/tools/lumenrtc_codegen/lumenrtc_managed_api_codegen.py",
-              "--idl",
-              "{idl}",
-              "--managed-api",
-              "{repo_root}/abi/bindings/lumenrtc.managed_api.json",
-              "--out-native-handles",
-              "{repo_root}/native/src/lumenrtc_impl_handles.generated.h",
-              "{check}",
-              "{dry_run}"
-            ]
+            "manifest": "{repo_root}/tools/lumenrtc_codegen/plugin.manifest.json",
+            "plugin": "lumenrtc.managed_api"
           }
         ]
       },

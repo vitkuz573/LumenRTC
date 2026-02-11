@@ -1,6 +1,6 @@
 param(
     [Parameter(Position = 0)]
-    [ValidateSet("snapshot", "baseline", "baseline-all", "regen", "regen-baselines", "doctor", "waiver-audit", "benchmark", "benchmark-gate", "guardrails", "generate", "codegen", "sync", "release-prepare", "changelog", "verify", "check", "verify-all", "check-all", "list-targets", "init-target", "diff")]
+    [ValidateSet("snapshot", "baseline", "baseline-all", "regen", "regen-baselines", "doctor", "waiver-audit", "benchmark", "benchmark-gate", "validate-plugin-manifest", "guardrails", "generate", "codegen", "sync", "release-prepare", "changelog", "verify", "check", "verify-all", "check-all", "list-targets", "init-target", "diff")]
     [string]$Command = "check",
 
     [Parameter(ValueFromRemainingArguments = $true)]
@@ -124,6 +124,11 @@ switch ($Command) {
     }
     "benchmark-gate" {
         $guardArgs = @("benchmark-gate") + $extraArgs
+        Invoke-Guard -GuardArgs $guardArgs
+        break
+    }
+    "validate-plugin-manifest" {
+        $guardArgs = @("validate-plugin-manifest", "--repo-root", $repoRoot, "--config", $config) + $extraArgs
         Invoke-Guard -GuardArgs $guardArgs
         break
     }

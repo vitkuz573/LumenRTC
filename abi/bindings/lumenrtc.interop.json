@@ -1,4 +1,10 @@
 {
+  "callback_typedef_call_tokens": [
+    "LUMENRTC_CALL"
+  ],
+  "callback_struct_suffixes": [
+    "_callbacks_t"
+  ],
   "callback_field_overrides": {
     "on_audio_track": "LrtcAudioTrackCb",
     "on_data_channel": "LrtcDataChannelCreatedCb",
