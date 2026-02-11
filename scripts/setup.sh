@@ -260,7 +260,7 @@ if not path.exists():
 text = path.read_text()
 if "//libwebrtc" in text:
     raise SystemExit(0)
-pattern = r"deps\\s*=\\s*\\[\\s*\\\":webrtc\\\"\\s*\\]"
+pattern = r'deps\\s*=\\s*\\[\\s*":webrtc"\\s*\\]'
 m = re.search(pattern, text)
 if not m:
     print("WARN: Could not auto-update BUILD.gn. Please add //libwebrtc to group(\"default\").")
@@ -277,14 +277,17 @@ else
   is_debug=false
 fi
 
+pushd "$src_dir" >/dev/null
 gn gen "$out_dir" --args="target_os=\"linux\" target_cpu=\"$target_cpu\" is_debug=$is_debug rtc_include_tests=false rtc_use_h264=true ffmpeg_branding=\"Chrome\" is_component_build=false rtc_build_examples=false use_rtti=true use_custom_libcxx=false rtc_enable_protobuf=false libwebrtc_desktop_capture=true"
-
 ninja -C "$out_dir" libwebrtc
+popd >/dev/null
 
 if [[ "$skip_bootstrap" == false ]]; then
   export LIBWEBRTC_ROOT="${src_dir}/libwebrtc"
   export LIBWEBRTC_BUILD_DIR="$out_dir"
+  pushd "$repo_root" >/dev/null
   "${repo_root}/scripts/bootstrap.sh" --libwebrtc-build-dir "$out_dir" --build-type "$build_type"
+  popd >/dev/null
 fi
 
 popd >/dev/null
