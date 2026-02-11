@@ -16,6 +16,9 @@
   metadata from:
   `abi/bindings/lumenrtc.managed_api.source.json`
   (normalized metadata: `abi/bindings/lumenrtc.managed_api.json`)
+- Generated bindings symbol contract lockfile:
+  `abi/bindings/lumenrtc.symbol_contract.json`
+  (spec source: `abi/bindings/lumenrtc.symbol_contract.sources.json`)
 - Runtime resolver and ABI guard logic:
   `src/LumenRTC/Interop/NativeMethods.Core.cs`
 
@@ -36,6 +39,7 @@
 7. Run language generators from ABI IDL (plugin host):
    - `scripts/abi.sh codegen --skip-binary`
    - Includes:
+     - `abi/bindings/lumenrtc.symbol_contract.json`
      - `native/src/lumenrtc.exports.cpp`
      - `native/src/lumenrtc_impl.h`
      - `native/src/lumenrtc_impl_handles.generated.h`
@@ -71,7 +75,7 @@ Do not edit them manually.
 - Enum value changes/removals are breaking.
 - Struct layout changes are breaking by default (`struct_tail_addition_is_breaking`).
 - Binary exports must match header ABI symbols.
-- Optional bindings symbol policy (`bindings.expected_symbols`) can enforce parity between ABI IDL and language binding expectations.
+- Optional bindings symbol contract (`bindings.symbol_contract`) can enforce parity between ABI IDL and language binding expectations.
 - Policy rules and waivers are supported (`policy.rules`, `policy.waivers`).
 - Waiver governance is policy-driven through `policy.waiver_requirements`.
 - For strict mode, waivers should include `created_utc`, `expires_utc`, `owner`, `approved_by`, `ticket`, and `reason`.
@@ -92,7 +96,7 @@ See also:
 
 - header path + API/CALL macros + symbol prefix
 - type policy (`enum`/`struct` patterns and exceptions)
-- optional `bindings.expected_symbols`
+- optional `bindings.symbol_contract`
 - optional baseline path override
 - optional binary export path
 

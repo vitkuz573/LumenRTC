@@ -14,6 +14,8 @@ This folder intentionally contains LumenRTC-specific codegen plugins that run vi
 - `abi/bindings/lumenrtc.managed_api.json`: normalized metadata consumed by
   Roslyn source generator (for C#) and by `lumenrtc_managed_api_codegen.py` (for native handle boilerplate).
   `required_native_functions` is derived from metadata + IDL.
+- `abi/bindings/lumenrtc.symbol_contract.sources.json`: declarative source spec for
+  the universal symbol contract generator (`tools/abi_framework/generator_sdk/symbol_contract_generator.py`).
 - `tests/`: LumenRTC metadata integrity tests (`interop`/`managed` JSON files).
 
 `abi_framework` stays target-agnostic and executes these via configured external commands.

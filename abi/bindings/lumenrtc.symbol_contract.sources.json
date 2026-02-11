@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "target": "lumenrtc",
+  "mode": "strict",
+  "require_full_coverage": true,
+  "sources": [
+    {
+      "kind": "json_array",
+      "path": "{repo_root}/abi/bindings/lumenrtc.managed_api.json",
+      "pointer": "/required_native_functions"
+    },
+    {
+      "kind": "json_object_fields",
+      "path": "{repo_root}/abi/bindings/lumenrtc.managed.json",
+      "pointer": "/handles",
+      "fields": [
+        "release",
+        "retain"
+      ]
+    },
+    {
+      "kind": "regex_scan",
+      "root": "{repo_root}/src/LumenRTC",
+      "include": [
+        "**/*.cs"
+      ],
+      "exclude": [
+        "**/obj/**",
+        "**/bin/**"
+      ],
+      "pattern": "NativeMethods\\.(lrtc_[A-Za-z0-9_]+)\\b",
+      "group": 1
+    }
+  ]
+}

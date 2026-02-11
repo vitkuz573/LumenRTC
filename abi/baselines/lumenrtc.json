@@ -19,7 +19,8 @@
   },
   "bindings": {
     "available": true,
-    "source": "config.bindings.expected_symbols",
+    "mode": "strict",
+    "source": "bindings.symbol_contract(path:abi/bindings/lumenrtc.symbol_contract.json)",
     "symbol_count": 206,
     "symbols": [
       "lrtc_abi_version_major",
@@ -230,7 +231,7 @@
       "lrtc_video_track_set_enabled"
     ]
   },
-  "generated_at_utc": "2026-02-09T03:12:41.537383+00:00",
+  "generated_at_utc": "2026-02-10T17:52:22.877930+00:00",
   "header": {
     "callback_typedefs": [
       {
@@ -1921,36 +1922,13 @@
       "lrtc_dtmf_sender_t"
     ],
     "parser": {
-      "backend": "clang_preprocess",
+      "backend": "regex",
       "backend_requested": "clang_preprocess",
       "details": {
-        "backend": "clang_preprocess",
-        "command": "/usr/bin/clang -E -P -x c -std=c11 /home/vitaly/LumenRTC/native/include/lumenrtc.h",
-        "compiler_candidates": [
-          "clang",
-          "clang-20",
-          "clang-19",
-          "clang-18",
-          "clang-17",
-          "clang-16",
-          "clang++",
-          "clang-cl",
-          "clang.exe",
-          "clang-15",
-          "clang-14",
-          "clang++-20",
-          "clang++-19",
-          "clang++-18",
-          "clang++-17",
-          "clang++-16"
-        ],
-        "compiler_requested": "clang",
-        "compiler_resolved": "/usr/bin/clang",
-        "compiler_selected": "clang",
-        "elapsed_ms": 192.563
+        "fallback_reason": "header.parser compiler not found; tried: clang, clang-20, clang-19, clang-18, clang-17, clang-16, clang++, clang-cl, clang.exe, clang-15, clang-14, clang++-20, clang++-19, clang++-18, clang++-17, clang++-16. Configure header.parser.compiler/header.parser.compiler_candidates or set ABI_CLANG."
       },
-      "fallback_used": false,
-      "parse_mode": "prefix_symbols_from_preprocessed_header"
+      "fallback_used": true,
+      "parse_mode": "api_call_macro_match"
     },
     "path": "native/include/lumenrtc.h",
     "struct_count": 12,
