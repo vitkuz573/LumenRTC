@@ -150,21 +150,22 @@ internal static partial class NativeMethods
 
     private static IEnumerable<string> EnumerateNativeCandidates()
     {
-        var fileName = OperatingSystem.IsWindows()
-            ? "lumenrtc.dll"
-            : OperatingSystem.IsMacOS() ? "liblumenrtc.dylib" : "liblumenrtc.so";
+        // On Windows, prefer a non-colliding filename for NuGet publish (LumenRTC.dll vs lumenrtc.dll on case-insensitive paths).
+        var fileNames = OperatingSystem.IsWindows()
+            ? new[] { "lumenrtc_native.dll", "lumenrtc.dll" }
+            : OperatingSystem.IsMacOS() ? new[] { "liblumenrtc.dylib" } : new[] { "liblumenrtc.so" };
         var seen = new HashSet<string>(OperatingSystem.IsWindows() ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal);
         var candidates = new List<string>();
 
-        AddNativeCandidate(candidates, seen, Environment.GetEnvironmentVariable("LumenRtcNativeDir"), fileName);
-        AddNativeCandidate(candidates, seen, Environment.GetEnvironmentVariable("LUMENRTC_NATIVE_DIR"), fileName);
-        AddNativeCandidate(candidates, seen, Path.Combine(AppContext.BaseDirectory, "native"), fileName);
-        AddNativeCandidate(candidates, seen, Path.Combine(AppContext.BaseDirectory, "runtimes", RuntimeInformation.RuntimeIdentifier, "native"), fileName);
-        AddNativeCandidate(candidates, seen, AppContext.BaseDirectory, fileName);
-        AddNativeCandidate(candidates, seen, Path.Combine(Path.GetDirectoryName(typeof(NativeMethods).Assembly.Location) ?? string.Empty, "native"), fileName);
-        AddNativeCandidate(candidates, seen, Path.GetDirectoryName(typeof(NativeMethods).Assembly.Location), fileName);
-        AddNativeCandidate(candidates, seen, Path.Combine(Environment.CurrentDirectory, "native", "build"), fileName);
-        AddNativeCandidate(candidates, seen, Path.Combine(Environment.CurrentDirectory, "native", "build", "Release"), fileName);
+        AddNativeCandidate(candidates, seen, Environment.GetEnvironmentVariable("LumenRtcNativeDir"), fileNames);
+        AddNativeCandidate(candidates, seen, Environment.GetEnvironmentVariable("LUMENRTC_NATIVE_DIR"), fileNames);
+        AddNativeCandidate(candidates, seen, Path.Combine(AppContext.BaseDirectory, "native"), fileNames);
+        AddNativeCandidate(candidates, seen, Path.Combine(AppContext.BaseDirectory, "runtimes", RuntimeInformation.RuntimeIdentifier, "native"), fileNames);
+        AddNativeCandidate(candidates, seen, AppContext.BaseDirectory, fileNames);
+        AddNativeCandidate(candidates, seen, Path.Combine(Path.GetDirectoryName(typeof(NativeMethods).Assembly.Location) ?? string.Empty, "native"), fileNames);
+        AddNativeCandidate(candidates, seen, Path.GetDirectoryName(typeof(NativeMethods).Assembly.Location), fileNames);
+        AddNativeCandidate(candidates, seen, Path.Combine(Environment.CurrentDirectory, "native", "build"), fileNames);
+        AddNativeCandidate(candidates, seen, Path.Combine(Environment.CurrentDirectory, "native", "build", "Release"), fileNames);
 
         foreach (var path in candidates)
         {
@@ -172,17 +173,20 @@ internal static partial class NativeMethods
         }
     }
 
-    private static void AddNativeCandidate(List<string> candidates, HashSet<string> seen, string? directory, string fileName)
+    private static void AddNativeCandidate(List<string> candidates, HashSet<string> seen, string? directory, string[] fileNames)
     {
         if (string.IsNullOrWhiteSpace(directory))
         {
             return;
         }
 
-        var fullPath = Path.GetFullPath(Path.Combine(directory, fileName));
-        if (seen.Add(fullPath))
+        foreach (var fileName in fileNames)
         {
-            candidates.Add(fullPath);
+            var fullPath = Path.GetFullPath(Path.Combine(directory, fileName));
+            if (seen.Add(fullPath))
+            {
+                candidates.Add(fullPath);
+            }
         }
     }
 

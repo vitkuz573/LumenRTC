@@ -338,6 +338,10 @@ $env:NUGET_API_KEY = "<nuget-api-key>"
 pwsh -File .\scripts\release-local.ps1 -Version 1.0.2 -BuildType Release
 ```
 
+Note: Windows native asset is packed as `runtimes/win-x64/native/lumenrtc_native.dll` to avoid
+publish collisions on case-insensitive filesystems (`LumenRTC.dll` vs `lumenrtc.dll`). Local native
+build outputs may still be named `lumenrtc.dll`; the managed resolver supports both names.
+
 Useful options:
 
 - `-SkipNuGetPush` to only create `.nupkg` locally
@@ -353,30 +357,15 @@ SDL renderer runtime (optional):
 ## AppVeyor (Hosted, Quota-Friendly)
 
 Building `libwebrtc` from source on free hosted CI usually exceeds quotas.
-Use AppVeyor only for final packing/publishing, and provide prebuilt native
-archives produced elsewhere.
+Use AppVeyor only for ABI checks in this repository.
 
-Required environment variables in AppVeyor project settings:
+AppVeyor runs:
 
-- `WIN_NATIVE_URL`: URL to a `.zip` containing:
-  - `lumenrtc.dll`
-  - `libwebrtc.dll`
-- `LINUX_NATIVE_URL`: URL to a `.tar.gz` containing:
-  - `liblumenrtc.so`
-  - `libwebrtc.so`
-- `NUGET_API_KEY`: NuGet.org API key (secure variable)
-
-Optional:
-
-- `ASSET_AUTH_HEADER`: header for private asset download,
-  e.g. `Authorization: Bearer <token>`
-
-Release trigger:
-
-```bash
-git tag v1.0.1
-git push origin v1.0.1
-```
+- ABI-related unit tests for `tools/abi_framework`, `tools/abi_codegen_core`, `tools/lumenrtc_codegen`
+- `scripts/abi_guardrails.sh`
+- ABI generate/codegen checks with `--check --fail-on-sync`
+- managed build validation (`dotnet build src/LumenRTC/LumenRTC.csproj`)
+- ABI verification/audit reports into `artifacts/abi`
 
 ## SDL Renderer
 

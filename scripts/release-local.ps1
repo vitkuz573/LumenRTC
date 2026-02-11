@@ -428,7 +428,7 @@ if (-not (Test-Path $nupkgPath)) {
 }
 
 Assert-PackageContainsEntries -PackagePath $nupkgPath -ExpectedEntries @(
-  "runtimes/win-x64/native/lumenrtc.dll"
+  "runtimes/win-x64/native/lumenrtc_native.dll"
   "runtimes/win-x64/native/libwebrtc.dll"
   "runtimes/linux-x64/native/liblumenrtc.so"
   "runtimes/linux-x64/native/libwebrtc.so"

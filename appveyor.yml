@@ -1,7 +1,5 @@
 version: "{build}"
 
-skip_non_tags: true
-
 max_jobs: 1
 
 image: Ubuntu2204
@@ -26,85 +24,59 @@ install:
       export PATH="$HOME/.dotnet:$PATH"
       dotnet --info
 
+      if ! command -v clang >/dev/null 2>&1; then
+        sudo apt-get update
+        sudo apt-get install -y clang
+      fi
+      clang --version
+      python3 --version
+
 build_script:
   - sh: |
       set -euo pipefail
       export PATH="$HOME/.dotnet:$PATH"
+      mkdir -p artifacts/abi
 
-      if [[ "${APPVEYOR_REPO_TAG:-false}" != "true" ]]; then
-        echo "Non-tag build, skipping release pack."
-        exit 0
-      fi
+      python3 -m unittest discover -s tools/abi_framework/tests -p "test_*.py"
+      PYTHONPATH="tools/abi_codegen_core/src:${PYTHONPATH}" python3 -m unittest discover -s tools/abi_codegen_core/tests -p "test_*.py"
+      python3 -m unittest discover -s tools/lumenrtc_codegen/tests -p "test_*.py"
 
-      if [[ -z "${WIN_NATIVE_URL:-}" ]]; then
-        echo "WIN_NATIVE_URL is required. It must point to a ZIP with lumenrtc.dll and libwebrtc.dll."
-        exit 1
-      fi
+      python3 tools/abi_framework/abi_framework.py validate-plugin-manifest \
+        --repo-root . \
+        --config abi/config.json
 
-      if [[ -z "${LINUX_NATIVE_URL:-}" ]]; then
-        echo "LINUX_NATIVE_URL is required. It must point to a TAR.GZ with liblumenrtc.so and libwebrtc.so."
-        exit 1
-      fi
+      scripts/abi_guardrails.sh
 
-      mkdir -p .ci/downloads .ci/extract/win-x64 .ci/extract/linux-x64 .ci/native/win-x64 .ci/native/linux-x64 artifacts/nuget
+      python3 tools/abi_framework/abi_framework.py generate \
+        --repo-root . \
+        --config abi/config.json \
+        --skip-binary \
+        --check \
+        --fail-on-sync \
+        --report-json artifacts/abi/generate.report.json
 
-      auth_args=()
-      if [[ -n "${ASSET_AUTH_HEADER:-}" ]]; then
-        auth_args=(-H "${ASSET_AUTH_HEADER}")
-      fi
+      python3 tools/abi_framework/abi_framework.py codegen \
+        --repo-root . \
+        --config abi/config.json \
+        --skip-binary \
+        --check \
+        --fail-on-sync \
+        --report-json artifacts/abi/codegen.report.json
 
-      curl -fL "${auth_args[@]}" "${WIN_NATIVE_URL}" -o .ci/downloads/native-win-x64.zip
-      curl -fL "${auth_args[@]}" "${LINUX_NATIVE_URL}" -o .ci/downloads/native-linux-x64.tar.gz
+      dotnet build src/LumenRTC/LumenRTC.csproj -v minimal
 
-      unzip -o .ci/downloads/native-win-x64.zip -d .ci/extract/win-x64
-      tar -xzf .ci/downloads/native-linux-x64.tar.gz -C .ci/extract/linux-x64
+      python3 tools/abi_framework/abi_framework.py verify-all \
+        --repo-root . \
+        --config abi/config.json \
+        --skip-binary \
+        --output-dir artifacts/abi
 
-      win_lumenrtc="$(find .ci/extract/win-x64 -type f -name lumenrtc.dll | head -n1 || true)"
-      win_libwebrtc="$(find .ci/extract/win-x64 -type f -name libwebrtc.dll | head -n1 || true)"
-      linux_lumenrtc="$(find .ci/extract/linux-x64 -type f -name liblumenrtc.so | head -n1 || true)"
-      linux_libwebrtc="$(find .ci/extract/linux-x64 -type f -name libwebrtc.so | head -n1 || true)"
-
-      [[ -n "$win_lumenrtc" ]] || { echo "lumenrtc.dll not found in WIN_NATIVE_URL archive"; exit 1; }
-      [[ -n "$win_libwebrtc" ]] || { echo "libwebrtc.dll not found in WIN_NATIVE_URL archive"; exit 1; }
-      [[ -n "$linux_lumenrtc" ]] || { echo "liblumenrtc.so not found in LINUX_NATIVE_URL archive"; exit 1; }
-      [[ -n "$linux_libwebrtc" ]] || { echo "libwebrtc.so not found in LINUX_NATIVE_URL archive"; exit 1; }
-
-      cp -f "$win_lumenrtc" .ci/native/win-x64/lumenrtc.dll
-      cp -f "$win_libwebrtc" .ci/native/win-x64/libwebrtc.dll
-      cp -f "$linux_lumenrtc" .ci/native/linux-x64/liblumenrtc.so
-      cp -f "$linux_libwebrtc" .ci/native/linux-x64/libwebrtc.so
-
-      if [[ "${APPVEYOR_REPO_TAG_NAME}" =~ ^v(.+)$ ]]; then
-        PACKAGE_VERSION="${BASH_REMATCH[1]}"
-      else
-        PACKAGE_VERSION="${APPVEYOR_REPO_TAG_NAME}"
-      fi
-
-      RIDS=win-x64,linux-x64 \
-      WIN_LUMENRTC_NATIVE_DIR="$APPVEYOR_BUILD_FOLDER/.ci/native/win-x64" \
-      WIN_LIBWEBRTC_BUILD_DIR="$APPVEYOR_BUILD_FOLDER/.ci/native/win-x64" \
-      LINUX_LUMENRTC_NATIVE_DIR="$APPVEYOR_BUILD_FOLDER/.ci/native/linux-x64" \
-      LINUX_LIBWEBRTC_BUILD_DIR="$APPVEYOR_BUILD_FOLDER/.ci/native/linux-x64" \
-      PACKAGE_VERSION="$PACKAGE_VERSION" \
-      OUTPUT="$APPVEYOR_BUILD_FOLDER/artifacts/nuget" \
-      ./scripts/pack-all.sh
-
-      unzip -l "artifacts/nuget/LumenRTC.${PACKAGE_VERSION}.nupkg" | grep "runtimes/win-x64/native/lumenrtc.dll"
-      unzip -l "artifacts/nuget/LumenRTC.${PACKAGE_VERSION}.nupkg" | grep "runtimes/win-x64/native/libwebrtc.dll"
-      unzip -l "artifacts/nuget/LumenRTC.${PACKAGE_VERSION}.nupkg" | grep "runtimes/linux-x64/native/liblumenrtc.so"
-      unzip -l "artifacts/nuget/LumenRTC.${PACKAGE_VERSION}.nupkg" | grep "runtimes/linux-x64/native/libwebrtc.so"
-
-      if [[ -n "${NUGET_API_KEY:-}" ]]; then
-        dotnet nuget push "artifacts/nuget/LumenRTC.${PACKAGE_VERSION}.nupkg" \
-          --source "https://api.nuget.org/v3/index.json" \
-          --api-key "${NUGET_API_KEY}" \
-          --skip-duplicate
-      else
-        echo "NUGET_API_KEY is not set; package is built but not pushed to nuget.org."
-      fi
+      python3 tools/abi_framework/abi_framework.py waiver-audit \
+        --config abi/config.json \
+        --output artifacts/abi/waiver.audit.report.json \
+        --fail-on-expired \
+        --fail-on-missing-metadata
 
 artifacts:
-  - path: artifacts/nuget/*.nupkg
-    name: nupkg
-  - path: artifacts/nuget/*.snupkg
-    name: snupkg
+  - path: artifacts/abi/**
+    name: abi-report

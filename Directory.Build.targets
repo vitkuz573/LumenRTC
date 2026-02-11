@@ -75,8 +75,16 @@
     <LumenRtcPackIncludeLinuxX64>false</LumenRtcPackIncludeLinuxX64>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(LumenRtcWindowsPackageNativeFileName)'==''">
+    <LumenRtcWindowsPackageNativeFileName>lumenrtc_native.dll</LumenRtcWindowsPackageNativeFileName>
+  </PropertyGroup>
+
   <PropertyGroup Condition="'$(LumenRtcPackNative)'=='true' and '$(LumenRtcPackRid)'=='' and '$(RuntimeIdentifier)'!=''">
     <LumenRtcPackRid>$(RuntimeIdentifier)</LumenRtcPackRid>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(LumenRtcPackRid)'!=''">
+    <LumenRtcPackRidIsWindows>$([System.String]::Copy('$(LumenRtcPackRid)').StartsWith('win-'))</LumenRtcPackRidIsWindows>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -99,7 +107,14 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(LumenRtcPackNative)'=='true' and '$(MSBuildProjectName)'=='LumenRTC'">
-    <None Include="$(LumenRtcNativeFile)" Condition="Exists('$(LumenRtcNativeFile)')" Pack="true" PackagePath="runtimes/$(LumenRtcPackRid)/native/" />
+    <None Include="$(LumenRtcNativeFile)"
+          Condition="Exists('$(LumenRtcNativeFile)') and '$(LumenRtcPackRidIsWindows)'=='True'"
+          Pack="true"
+          PackagePath="runtimes/$(LumenRtcPackRid)/native/$(LumenRtcWindowsPackageNativeFileName)" />
+    <None Include="$(LumenRtcNativeFile)"
+          Condition="Exists('$(LumenRtcNativeFile)') and '$(LumenRtcPackRidIsWindows)'!='True'"
+          Pack="true"
+          PackagePath="runtimes/$(LumenRtcPackRid)/native/" />
     <None Include="$(LibWebRtcNativeFile)" Condition="Exists('$(LibWebRtcNativeFile)')" Pack="true" PackagePath="runtimes/$(LumenRtcPackRid)/native/" />
   </ItemGroup>
 
@@ -107,7 +122,7 @@
     <None Include="$(LumenRtcWinNativeDir)\lumenrtc.dll"
           Condition="Exists('$(LumenRtcWinNativeDir)\lumenrtc.dll')"
           Pack="true"
-          PackagePath="runtimes/win-x64/native/" />
+          PackagePath="runtimes/win-x64/native/$(LumenRtcWindowsPackageNativeFileName)" />
     <None Include="$(LibWebRtcWinBuildDir)\libwebrtc.dll"
           Condition="Exists('$(LibWebRtcWinBuildDir)\libwebrtc.dll')"
           Pack="true"
