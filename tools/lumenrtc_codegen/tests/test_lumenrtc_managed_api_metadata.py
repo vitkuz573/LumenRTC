@@ -51,7 +51,7 @@ class ManagedApiMetadataTests(unittest.TestCase):
         self.assertEqual(public_facade.get("class_suffix"), "_abi_facade")
         self.assertEqual(public_facade.get("method_prefix"), "Raw")
         self.assertEqual(public_facade.get("section_suffix"), "_abi_facade")
-        self.assertIn("allow_int_ptr", public_facade)
+        self.assertTrue(public_facade.get("allow_int_ptr"))
 
         idl_function_names = {
             item.get("name")

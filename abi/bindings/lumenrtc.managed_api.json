@@ -15,7 +15,7 @@
       "class_suffix": "_abi_facade",
       "method_prefix": "Raw",
       "section_suffix": "_abi_facade",
-      "allow_int_ptr": false
+      "allow_int_ptr": true
     }
   },
   "callbacks": [
