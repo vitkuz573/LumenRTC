@@ -9,14 +9,29 @@
     "enabled": true,
     "method_prefix": "Abi",
     "section_suffix": "_abi_surface",
+    "global_section": "global",
+    "global_class": "Global",
     "include_deprecated": false,
+    "coverage": {
+      "strict": true,
+      "waived_functions": []
+    },
     "public_facade": {
       "enabled": true,
       "class_suffix": "_abi_facade",
       "method_prefix": "Raw",
       "typed_method_prefix": "Typed",
       "section_suffix": "_abi_facade",
-      "allow_int_ptr": true
+      "allow_int_ptr": true,
+      "safe_facade": {
+        "enabled": true,
+        "class_suffix": "_abi_safe",
+        "method_prefix": "",
+        "try_method_prefix": "Try",
+        "async_method_suffix": "Async",
+        "section_suffix": "_abi_safe",
+        "exception_type": "global::System.InvalidOperationException"
+      }
     }
   },
   "callbacks": [

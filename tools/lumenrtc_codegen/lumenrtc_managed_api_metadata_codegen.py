@@ -19,20 +19,34 @@ from abi_codegen_core.common import load_json_object, write_if_changed
 from abi_codegen_core.required_functions import derive_required_functions
 
 
-def collect_idl_function_names(idl: dict[str, Any]) -> set[str]:
+def collect_idl_functions(idl: dict[str, Any]) -> list[dict[str, Any]]:
     functions = idl.get("functions")
     if not isinstance(functions, list):
         raise SystemExit("IDL missing array 'functions'")
 
-    names: set[str] = set()
+    normalized: list[dict[str, Any]] = []
     for index, item in enumerate(functions):
         if not isinstance(item, dict):
             raise SystemExit(f"IDL function at index {index} must be object")
         name = item.get("name")
         if not isinstance(name, str) or not name:
             raise SystemExit(f"IDL function at index {index} missing non-empty 'name'")
-        names.add(name)
-    return names
+        deprecated = bool(item.get("deprecated", False))
+        normalized.append(
+            {
+                "name": name,
+                "deprecated": deprecated,
+            }
+        )
+    return normalized
+
+
+def collect_idl_function_names(idl_functions: list[dict[str, Any]]) -> set[str]:
+    return {
+        item["name"]
+        for item in idl_functions
+        if isinstance(item.get("name"), str)
+    }
 
 
 def resolve_discovery_rules(
@@ -62,12 +76,70 @@ def resolve_discovery_rules(
     return patterns, function_name_pattern
 
 
+def collect_auto_surface_waived_functions(auto_surface: dict[str, Any]) -> set[str]:
+    coverage = auto_surface.get("coverage")
+    if not isinstance(coverage, dict):
+        return set()
+
+    waived = coverage.get("waived_functions")
+    if waived is None:
+        return set()
+    if not isinstance(waived, list):
+        raise SystemExit("managed_api.auto_abi_surface.coverage.waived_functions must be an array")
+
+    result: set[str] = set()
+    for index, item in enumerate(waived):
+        context = f"managed_api.auto_abi_surface.coverage.waived_functions[{index}]"
+        if isinstance(item, str):
+            if not item:
+                raise SystemExit(f"{context} must be non-empty string")
+            result.add(item)
+            continue
+
+        if isinstance(item, dict):
+            name = item.get("name")
+            if not isinstance(name, str) or not name:
+                raise SystemExit(f"{context}.name must be non-empty string")
+            result.add(name)
+            continue
+
+        raise SystemExit(f"{context} must be string or object")
+
+    return result
+
+
+def collect_auto_surface_required_functions(
+    payload: dict[str, Any],
+    idl_functions: list[dict[str, Any]],
+) -> set[str]:
+    auto_surface = payload.get("auto_abi_surface")
+    if not isinstance(auto_surface, dict):
+        return set()
+    if not bool(auto_surface.get("enabled", True)):
+        return set()
+
+    include_deprecated = bool(auto_surface.get("include_deprecated", False))
+    waived_functions = collect_auto_surface_waived_functions(auto_surface)
+    required: set[str] = set()
+    for function in idl_functions:
+        name = function.get("name")
+        if not isinstance(name, str) or not name:
+            continue
+        if name in waived_functions:
+            continue
+        if not include_deprecated and bool(function.get("deprecated", False)):
+            continue
+        required.add(name)
+    return required
+
+
 def normalize_payload(
     payload: dict[str, Any],
-    idl_names: set[str],
+    idl_functions: list[dict[str, Any]],
     native_call_patterns: list[str],
     function_name_pattern: str | None,
 ) -> dict[str, Any]:
+    idl_names = collect_idl_function_names(idl_functions)
     normalized = json.loads(json.dumps(payload))
     schema_version = normalized.get("schema_version")
     if schema_version != 2:
@@ -82,7 +154,14 @@ def normalize_payload(
         native_call_patterns=native_call_patterns,
         function_name_pattern=function_name_pattern,
     )
-    normalized["required_native_functions"] = required_native_functions
+    required_native_functions_set = set(required_native_functions)
+    required_native_functions_set.update(
+        collect_auto_surface_required_functions(
+            normalized,
+            idl_functions,
+        )
+    )
+    normalized["required_native_functions"] = sorted(required_native_functions_set)
     return normalized
 
 
@@ -99,7 +178,7 @@ def main() -> int:
 
     idl = load_json_object(Path(args.idl))
     source_payload = load_json_object(Path(args.source))
-    idl_names = collect_idl_function_names(idl)
+    idl_functions = collect_idl_functions(idl)
     discovery_patterns, function_name_pattern = resolve_discovery_rules(
         source_payload,
         cli_patterns=list(args.native_call_pattern),
@@ -107,7 +186,7 @@ def main() -> int:
     )
     normalized_payload = normalize_payload(
         source_payload,
-        idl_names,
+        idl_functions,
         native_call_patterns=discovery_patterns,
         function_name_pattern=function_name_pattern,
     )

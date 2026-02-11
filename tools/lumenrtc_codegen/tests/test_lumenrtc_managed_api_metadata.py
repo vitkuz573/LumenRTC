@@ -43,7 +43,14 @@ class ManagedApiMetadataTests(unittest.TestCase):
         self.assertTrue(auto_abi_surface.get("enabled"))
         self.assertEqual(auto_abi_surface.get("method_prefix"), "Abi")
         self.assertEqual(auto_abi_surface.get("section_suffix"), "_abi_surface")
+        self.assertEqual(auto_abi_surface.get("global_section"), "global")
+        self.assertEqual(auto_abi_surface.get("global_class"), "Global")
         self.assertIn("include_deprecated", auto_abi_surface)
+        coverage = auto_abi_surface.get("coverage", {})
+        self.assertIsInstance(coverage, dict)
+        self.assertTrue(coverage)
+        self.assertTrue(coverage.get("strict"))
+        self.assertEqual(coverage.get("waived_functions"), [])
         public_facade = auto_abi_surface.get("public_facade", {})
         self.assertIsInstance(public_facade, dict)
         self.assertTrue(public_facade)
@@ -53,6 +60,14 @@ class ManagedApiMetadataTests(unittest.TestCase):
         self.assertEqual(public_facade.get("typed_method_prefix"), "Typed")
         self.assertEqual(public_facade.get("section_suffix"), "_abi_facade")
         self.assertTrue(public_facade.get("allow_int_ptr"))
+        safe_facade = public_facade.get("safe_facade", {})
+        self.assertIsInstance(safe_facade, dict)
+        self.assertTrue(safe_facade)
+        self.assertTrue(safe_facade.get("enabled"))
+        self.assertEqual(safe_facade.get("class_suffix"), "_abi_safe")
+        self.assertEqual(safe_facade.get("try_method_prefix"), "Try")
+        self.assertEqual(safe_facade.get("async_method_suffix"), "Async")
+        self.assertEqual(safe_facade.get("section_suffix"), "_abi_safe")
 
         idl_function_names = {
             item.get("name")
@@ -66,6 +81,17 @@ class ManagedApiMetadataTests(unittest.TestCase):
 
         missing = sorted(name for name in required_native if name not in idl_function_names)
         self.assertFalse(missing, f"required_native_functions missing from IDL: {missing}")
+        idl_non_deprecated = {
+            item.get("name")
+            for item in idl.get("functions", [])
+            if isinstance(item, dict)
+            and isinstance(item.get("name"), str)
+            and not bool(item.get("deprecated", False))
+        }
+        self.assertFalse(
+            sorted(idl_non_deprecated - set(required_native)),
+            "required_native_functions must include all non-deprecated ABI functions when auto_abi_surface is enabled",
+        )
 
     def test_managed_api_metadata_codegen_check_is_clean(self) -> None:
         command = [
