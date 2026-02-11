@@ -149,6 +149,10 @@
           "release": "lrtc_video_track_release"
         }
       },
+      "output_hints": {
+        "pattern": "{class}.{section_pascal}.{target}",
+        "suffix": ".g.cs"
+      },
       "string_encoding": "utf8",
       "struct_field_overrides": {
         "lrtc_rtp_transceiver_init_t.direction": "LrtcRtpTransceiverDirection"

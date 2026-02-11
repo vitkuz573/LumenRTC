@@ -26,12 +26,21 @@ class InteropMetadataTests(unittest.TestCase):
         self.assertTrue(callback_suffixes, "callback_struct_suffixes must declare at least one suffix")
         self.assertTrue(all(isinstance(item, str) and item for item in callback_suffixes))
 
+        output_hints = meta.get("output_hints", {})
+        self.assertIsInstance(output_hints, dict)
+        pattern = output_hints.get("pattern")
+        self.assertIsInstance(pattern, str)
+        self.assertIn("{class}", pattern)
+        self.assertIn("{section_pascal}", pattern)
+        self.assertIn("{target}", pattern)
+
     def test_callback_metadata_settings_are_embedded_in_idl(self) -> None:
         idl = load_json(IDL_PATH)
         interop = ((idl.get("bindings") or {}).get("interop") or {})
 
         self.assertIn("callback_typedef_call_tokens", interop)
         self.assertIn("callback_struct_suffixes", interop)
+        self.assertIn("output_hints", interop)
 
     def test_interop_metadata_covers_opaque_types(self) -> None:
         idl = load_json(IDL_PATH)

@@ -2,18 +2,8 @@
   "schema_version": 2,
   "namespace": "LumenRTC",
   "output_hints": {
-    "pattern": "{default}",
-    "prefix": "",
-    "suffix": ".g.cs",
-    "directory": "",
-    "apply_prefix_to_explicit": false,
-    "apply_directory_to_explicit": false,
-    "sections": {
-      "callbacks": "ManagedApi.Callbacks",
-      "builder": "ManagedApi.Builder",
-      "handle_api": "ManagedApi.HandleApi",
-      "peer_connection_async": "ManagedApi.PeerConnection.Async"
-    }
+    "pattern": "ManagedApi.{section_pascal}",
+    "suffix": ".g.cs"
   },
   "callbacks": [
     {

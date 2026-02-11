@@ -5,6 +5,10 @@
   "callback_struct_suffixes": [
     "_callbacks_t"
   ],
+  "output_hints": {
+    "pattern": "{class}.{section_pascal}.{target}",
+    "suffix": ".g.cs"
+  },
   "callback_field_overrides": {
     "on_audio_track": "LrtcAudioTrackCb",
     "on_data_channel": "LrtcDataChannelCreatedCb",
