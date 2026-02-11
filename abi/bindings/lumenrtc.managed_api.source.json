@@ -9,7 +9,14 @@
     "enabled": true,
     "method_prefix": "Abi",
     "section_suffix": "_abi_surface",
-    "include_deprecated": false
+    "include_deprecated": false,
+    "public_facade": {
+      "enabled": true,
+      "class_suffix": "_abi_facade",
+      "method_prefix": "Raw",
+      "section_suffix": "_abi_facade",
+      "allow_int_ptr": false
+    }
   },
   "callbacks": [
     {

@@ -44,6 +44,14 @@ class ManagedApiMetadataTests(unittest.TestCase):
         self.assertEqual(auto_abi_surface.get("method_prefix"), "Abi")
         self.assertEqual(auto_abi_surface.get("section_suffix"), "_abi_surface")
         self.assertIn("include_deprecated", auto_abi_surface)
+        public_facade = auto_abi_surface.get("public_facade", {})
+        self.assertIsInstance(public_facade, dict)
+        self.assertTrue(public_facade)
+        self.assertTrue(public_facade.get("enabled"))
+        self.assertEqual(public_facade.get("class_suffix"), "_abi_facade")
+        self.assertEqual(public_facade.get("method_prefix"), "Raw")
+        self.assertEqual(public_facade.get("section_suffix"), "_abi_facade")
+        self.assertIn("allow_int_ptr", public_facade)
 
         idl_function_names = {
             item.get("name")
