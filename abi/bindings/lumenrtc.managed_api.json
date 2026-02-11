@@ -14,6 +14,7 @@
       "enabled": true,
       "class_suffix": "_abi_facade",
       "method_prefix": "Raw",
+      "typed_method_prefix": "Typed",
       "section_suffix": "_abi_facade",
       "allow_int_ptr": true
     }

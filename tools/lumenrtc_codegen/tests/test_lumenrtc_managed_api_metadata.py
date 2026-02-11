@@ -50,6 +50,7 @@ class ManagedApiMetadataTests(unittest.TestCase):
         self.assertTrue(public_facade.get("enabled"))
         self.assertEqual(public_facade.get("class_suffix"), "_abi_facade")
         self.assertEqual(public_facade.get("method_prefix"), "Raw")
+        self.assertEqual(public_facade.get("typed_method_prefix"), "Typed")
         self.assertEqual(public_facade.get("section_suffix"), "_abi_facade")
         self.assertTrue(public_facade.get("allow_int_ptr"))
 
