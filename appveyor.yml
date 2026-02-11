@@ -38,7 +38,7 @@ build_script:
       mkdir -p artifacts/abi
 
       python3 -m unittest discover -s tools/abi_framework/tests -p "test_*.py"
-      PYTHONPATH="tools/abi_codegen_core/src:${PYTHONPATH}" python3 -m unittest discover -s tools/abi_codegen_core/tests -p "test_*.py"
+      PYTHONPATH="tools/abi_codegen_core/src:${PYTHONPATH:-}" python3 -m unittest discover -s tools/abi_codegen_core/tests -p "test_*.py"
       python3 -m unittest discover -s tools/lumenrtc_codegen/tests -p "test_*.py"
 
       python3 tools/abi_framework/abi_framework.py validate-plugin-manifest \
