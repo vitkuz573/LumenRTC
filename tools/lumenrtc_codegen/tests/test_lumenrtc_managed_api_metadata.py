@@ -37,6 +37,14 @@ class ManagedApiMetadataTests(unittest.TestCase):
         self.assertIsInstance(pattern, str)
         self.assertIn("{section_pascal}", pattern)
 
+        auto_abi_surface = managed_api.get("auto_abi_surface", {})
+        self.assertIsInstance(auto_abi_surface, dict)
+        self.assertTrue(auto_abi_surface)
+        self.assertTrue(auto_abi_surface.get("enabled"))
+        self.assertEqual(auto_abi_surface.get("method_prefix"), "Abi")
+        self.assertEqual(auto_abi_surface.get("section_suffix"), "_abi_surface")
+        self.assertIn("include_deprecated", auto_abi_surface)
+
         idl_function_names = {
             item.get("name")
             for item in idl.get("functions", [])

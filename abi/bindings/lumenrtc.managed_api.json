@@ -5,6 +5,12 @@
     "pattern": "ManagedApi.{section_pascal}",
     "suffix": ".g.cs"
   },
+  "auto_abi_surface": {
+    "enabled": true,
+    "method_prefix": "Abi",
+    "section_suffix": "_abi_surface",
+    "include_deprecated": false
+  },
   "callbacks": [
     {
       "class": "AudioSinkCallbacks",
