@@ -2,9 +2,11 @@
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <AbiRoslynGeneratorPlatformSegment Condition="'$(Platform)'!=''">$(Platform)/</AbiRoslynGeneratorPlatformSegment>
+    <ShouldUnsetParentConfigurationAndPlatform>false</ShouldUnsetParentConfigurationAndPlatform>
     <AbiRoslynGeneratorProjectPath>$(MSBuildProjectDirectory)/../../tools/abi_roslyn_codegen/Abi.RoslynGenerator.csproj</AbiRoslynGeneratorProjectPath>
-    <AbiRoslynGeneratorDllPath>$(MSBuildProjectDirectory)/../../tools/abi_roslyn_codegen/bin/$(AbiRoslynGeneratorPlatformSegment)$(Configuration)/netstandard2.0/Abi.RoslynGenerator.dll</AbiRoslynGeneratorDllPath>
+    <AbiRoslynGeneratorDllPathDefault>$(MSBuildProjectDirectory)/../../tools/abi_roslyn_codegen/bin/$(Configuration)/netstandard2.0/Abi.RoslynGenerator.dll</AbiRoslynGeneratorDllPathDefault>
+    <AbiRoslynGeneratorDllPathWithPlatform Condition="'$(Platform)'!=''">$(MSBuildProjectDirectory)/../../tools/abi_roslyn_codegen/bin/$(Platform)/$(Configuration)/netstandard2.0/Abi.RoslynGenerator.dll</AbiRoslynGeneratorDllPathWithPlatform>
+    <AbiRoslynGeneratorDllPresent Condition="Exists('$(AbiRoslynGeneratorDllPathDefault)') or Exists('$(AbiRoslynGeneratorDllPathWithPlatform)')">true</AbiRoslynGeneratorDllPresent>
     <AbiIdlPath>$(MSBuildProjectDirectory)/../../abi/generated/lumenrtc/lumenrtc.idl.json</AbiIdlPath>
     <AbiNamespace>LumenRTC.Interop</AbiNamespace>
     <AbiClassName>NativeMethods</AbiClassName>
@@ -30,7 +32,7 @@
   <!-- VS Publish can compile with BuildProjectReferences=false; ensure analyzer exists in that mode. -->
   <Target Name="EnsureAbiRoslynGeneratorBuilt"
           BeforeTargets="CoreCompile"
-          Condition="'$(DesignTimeBuild)'!='true' and !Exists('$(AbiRoslynGeneratorDllPath)')">
+          Condition="'$(DesignTimeBuild)'!='true' and '$(AbiRoslynGeneratorDllPresent)'!='true'">
     <MSBuild Projects="$(AbiRoslynGeneratorProjectPath)"
              Targets="Build"
              Properties="Configuration=$(Configuration);Platform=$(Platform)" />
