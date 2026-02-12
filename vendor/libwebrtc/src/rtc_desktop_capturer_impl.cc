@@ -19,6 +19,7 @@
 #include "api/sequence_checker.h"
 #include "rtc_base/checks.h"
 #include "rtc_base/logging.h"
+#include "rtc_base/time_utils.h"
 #include "third_party/libyuv/include/libyuv.h"
 #ifdef WEBRTC_WIN
 #include "modules/desktop_capture/win/window_capture_utils.h"
@@ -110,7 +111,7 @@ RTCDesktopCapturerImpl::CaptureState RTCDesktopCapturerImpl::Start(
   y_ = y;
   w_ = w;
   h_ = h;
-  if (!w_ || !h) {
+  if (!w_ || !h_) {
     x_ = 0;
     y_ = 0;
   }
@@ -242,8 +243,13 @@ void RTCDesktopCapturerImpl::OnCaptureResult(
 #endif
                           width, height, libyuv::kRotate0, libyuv::FOURCC_ARGB);
 
-    OnFrame(webrtc::VideoFrame(i420_buffer_, 0, webrtc::TimeMillis(),
-                               webrtc::kVideoRotation_0));
+    // Build a frame with an explicit microsecond timestamp.
+    // This avoids unit ambiguity for downstream encoders (notably OpenH264).
+    OnFrame(webrtc::VideoFrame::Builder()
+                .set_video_frame_buffer(i420_buffer_)
+                .set_timestamp_us(webrtc::TimeMicros())
+                .set_rotation(webrtc::kVideoRotation_0)
+                .build());
   }
 #ifdef WEBRTC_WIN
   __except (filterException(GetExceptionCode(), GetExceptionInformation())) {
