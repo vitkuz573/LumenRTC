@@ -2,8 +2,9 @@
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AbiRoslynGeneratorPlatformSegment Condition="'$(Platform)'!=''">$(Platform)/</AbiRoslynGeneratorPlatformSegment>
     <AbiRoslynGeneratorProjectPath>$(MSBuildProjectDirectory)/../../tools/abi_roslyn_codegen/Abi.RoslynGenerator.csproj</AbiRoslynGeneratorProjectPath>
-    <AbiRoslynGeneratorDllPath>$(MSBuildProjectDirectory)/../../tools/abi_roslyn_codegen/bin/$(Configuration)/netstandard2.0/Abi.RoslynGenerator.dll</AbiRoslynGeneratorDllPath>
+    <AbiRoslynGeneratorDllPath>$(MSBuildProjectDirectory)/../../tools/abi_roslyn_codegen/bin/$(AbiRoslynGeneratorPlatformSegment)$(Configuration)/netstandard2.0/Abi.RoslynGenerator.dll</AbiRoslynGeneratorDllPath>
     <AbiIdlPath>$(MSBuildProjectDirectory)/../../abi/generated/lumenrtc/lumenrtc.idl.json</AbiIdlPath>
     <AbiNamespace>LumenRTC.Interop</AbiNamespace>
     <AbiClassName>NativeMethods</AbiClassName>
@@ -17,7 +18,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\tools\abi_roslyn_codegen\Abi.RoslynGenerator.csproj"
-                      AdditionalProperties="Configuration=$(Configuration)"
+                      SetConfiguration="Configuration=$(Configuration)"
+                      SetPlatform="Platform=$(Platform)"
                       OutputItemType="Analyzer"
                       ReferenceOutputAssembly="false" />
     <AdditionalFiles Include="$(AbiIdlPath)" />
@@ -31,7 +33,7 @@
           Condition="'$(DesignTimeBuild)'!='true' and !Exists('$(AbiRoslynGeneratorDllPath)')">
     <MSBuild Projects="$(AbiRoslynGeneratorProjectPath)"
              Targets="Build"
-             Properties="Configuration=$(Configuration)" />
+             Properties="Configuration=$(Configuration);Platform=$(Platform)" />
   </Target>
 
   <ItemGroup>
