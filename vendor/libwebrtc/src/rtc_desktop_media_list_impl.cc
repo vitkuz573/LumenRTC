@@ -18,16 +18,42 @@
 
 #include "internal/jpeg_util.h"
 #include "rtc_base/checks.h"
+#include "rtc_base/logging.h"
 #include "third_party/libyuv/include/libyuv.h"
 
 #ifdef WEBRTC_WIN
 #include "modules/desktop_capture/win/window_capture_utils.h"
+#include <windows.h>
 #endif
 
 #include <fstream>
 #include <iostream>
 
 namespace libwebrtc {
+
+#ifdef WEBRTC_WIN
+namespace {
+bool TryBindCurrentThreadToInputDesktop() {
+  HDESK input_desktop =
+      ::OpenInputDesktop(0, FALSE, DESKTOP_READOBJECTS | DESKTOP_SWITCHDESKTOP);
+  if (input_desktop == nullptr) {
+    RTC_LOG(LS_WARNING) << "OpenInputDesktop failed: " << ::GetLastError();
+    return false;
+  }
+
+  const BOOL set_result = ::SetThreadDesktop(input_desktop);
+  const DWORD set_error = set_result ? ERROR_SUCCESS : ::GetLastError();
+  ::CloseDesktop(input_desktop);
+
+  if (!set_result) {
+    RTC_LOG(LS_WARNING) << "SetThreadDesktop failed: " << set_error;
+    return false;
+  }
+
+  return true;
+}
+}  // namespace
+#endif
 
 RTCDesktopMediaListImpl::RTCDesktopMediaListImpl(DesktopType type,
                                                  webrtc::Thread* signaling_thread)
@@ -48,6 +74,10 @@ RTCDesktopMediaListImpl::RTCDesktopMediaListImpl(DesktopType type,
 #endif
   callback_ = std::make_unique<CallbackProxy>();
   thread_->BlockingCall([this, type] {
+#ifdef WEBRTC_WIN
+    RTC_LOG_IF(LS_WARNING, !TryBindCurrentThreadToInputDesktop())
+        << "Desktop media list thread could not bind to input desktop.";
+#endif
     if (type == kScreen) {
       capturer_ = webrtc::DesktopCapturer::CreateScreenCapturer(options_);
     } else {
