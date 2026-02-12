@@ -28,11 +28,22 @@
 
 #include <fstream>
 #include <iostream>
+#include <limits>
 
 namespace libwebrtc {
 
 #ifdef WEBRTC_WIN
 namespace {
+bool IsServiceSession() {
+  DWORD session_id = std::numeric_limits<DWORD>::max();
+  if (!::ProcessIdToSessionId(::GetCurrentProcessId(), &session_id)) {
+    RTC_LOG(LS_WARNING) << "ProcessIdToSessionId failed: " << ::GetLastError();
+    return false;
+  }
+
+  return session_id == 0;
+}
+
 bool TryBindCurrentThreadToInputDesktop() {
   HDESK input_desktop =
       ::OpenInputDesktop(0, FALSE, DESKTOP_READOBJECTS | DESKTOP_SWITCHDESKTOP);
@@ -75,8 +86,15 @@ RTCDesktopMediaListImpl::RTCDesktopMediaListImpl(DesktopType type,
   callback_ = std::make_unique<CallbackProxy>();
   thread_->BlockingCall([this, type] {
 #ifdef WEBRTC_WIN
-    RTC_LOG_IF(LS_WARNING, !TryBindCurrentThreadToInputDesktop())
-        << "Desktop media list thread could not bind to input desktop.";
+    const bool in_service_session = IsServiceSession();
+    const bool desktop_bound = TryBindCurrentThreadToInputDesktop();
+    if (in_service_session || !desktop_bound) {
+      options_.set_allow_directx_capturer(false);
+      RTC_LOG(LS_WARNING)
+          << "Desktop media list forcing GDI path (allow_directx_capturer=false). "
+          << "service_session=" << in_service_session
+          << ", desktop_bound=" << desktop_bound;
+    }
 #endif
     if (type == kScreen) {
       capturer_ = webrtc::DesktopCapturer::CreateScreenCapturer(options_);
