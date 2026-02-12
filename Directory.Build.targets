@@ -3,6 +3,12 @@
     <LumenRtcCopyNative>true</LumenRtcCopyNative>
   </PropertyGroup>
 
+  <!-- When LumenRTC is built as a top-level solution project (e.g. VS Publish), it may not receive
+       LumenRtcCopyNative via ProjectReference metadata. Enable native copy automatically if native outputs exist. -->
+  <PropertyGroup Condition="'$(LumenRtcCopyNative)'=='' and '$(MSBuildProjectName)'=='LumenRTC' and (Exists('$(LumenRtcRoot)native\\build\\lumenrtc.dll') or Exists('$(LumenRtcRoot)native\\build\\Release\\lumenrtc.dll') or Exists('$(LumenRtcRoot)native\\build\\liblumenrtc.so') or Exists('$(LumenRtcRoot)native\\build\\Release\\liblumenrtc.so'))">
+    <LumenRtcCopyNative>true</LumenRtcCopyNative>
+  </PropertyGroup>
+
   <PropertyGroup Condition="'$(LumenRtcRoot)'==''">
     <LumenRtcRoot>$(MSBuildThisFileDirectory)</LumenRtcRoot>
   </PropertyGroup>

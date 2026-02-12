@@ -40,15 +40,25 @@ internal static partial class NativeMethods
         }
 
         string? lastValidationError = null;
+        var loadFailures = new List<string>();
+        var candidatePaths = new List<string>();
         foreach (var candidate in EnumerateNativeCandidates())
         {
+            candidatePaths.Add(candidate);
+
             if (!File.Exists(candidate))
             {
                 continue;
             }
 
-            if (!NativeLibrary.TryLoad(candidate, out var handle))
+            nint handle;
+            try
             {
+                handle = NativeLibrary.Load(candidate);
+            }
+            catch (Exception ex)
+            {
+                loadFailures.Add($"{candidate}: {ex.Message}");
                 continue;
             }
 
@@ -61,23 +71,33 @@ internal static partial class NativeMethods
             NativeLibrary.Free(handle);
         }
 
-        if (NativeLibrary.TryLoad(libraryName, assembly, searchPath, out var fallbackHandle))
-        {
-            if (ValidateLibraryHandle(fallbackHandle, libraryName, out var validationError))
-            {
-                return fallbackHandle;
-            }
-
-            lastValidationError = validationError;
-            NativeLibrary.Free(fallbackHandle);
-        }
-
         if (!string.IsNullOrWhiteSpace(lastValidationError))
         {
-            throw new DllNotFoundException(lastValidationError);
+            throw new DllNotFoundException(BuildDetailedLoadError(lastValidationError, candidatePaths, loadFailures));
         }
 
-        return IntPtr.Zero;
+        throw new DllNotFoundException(BuildDetailedLoadError("No compatible native library candidates were loaded.", candidatePaths, loadFailures));
+    }
+
+    private static string BuildDetailedLoadError(string rootError, IReadOnlyCollection<string> candidatePaths, IReadOnlyCollection<string> loadFailures)
+    {
+        var message = new System.Text.StringBuilder();
+        message.Append(rootError);
+
+        if (candidatePaths.Count > 0)
+        {
+            message.Append(" Candidates: ");
+            message.Append(string.Join(", ", candidatePaths));
+            message.Append('.');
+        }
+
+        if (loadFailures.Count > 0)
+        {
+            message.Append(" Load failures: ");
+            message.Append(string.Join(" | ", loadFailures));
+        }
+
+        return message.ToString();
     }
 
     private static bool ValidateLibraryHandle(nint handle, string source, out string? error)
