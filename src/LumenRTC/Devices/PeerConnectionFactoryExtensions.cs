@@ -121,6 +121,19 @@ public static class PeerConnectionFactoryExtensions
 
             mediaSource = list.GetSource(options.SourceIndex);
             capturer = device.CreateCapturer(mediaSource, options.ShowCursor);
+
+            // Keep the desktop capture startup order aligned with the known-good low-level path:
+            // CreateCapturer -> Start -> CreateDesktopSource -> CreateVideoTrack.
+            // This avoids sessions where the capturer reports Running but no frames are produced.
+            if (options.AutoStart)
+            {
+                var state = capturer.Start(options.Fps);
+                if (state != DesktopCaptureState.Running)
+                {
+                    throw new InvalidOperationException($"Failed to start desktop capture ({state}).");
+                }
+            }
+
             source = factory.CreateDesktopSource(capturer, sourceLabel, options.Constraints);
             track = factory.CreateVideoTrack(source, trackId);
 
@@ -131,13 +144,6 @@ public static class PeerConnectionFactoryExtensions
             capturer = null;
             source = null;
             track = null;
-
-            if (options.AutoStart && !localTrack.Start())
-            {
-                var state = localTrack.LastDesktopCaptureState;
-                localTrack.Dispose();
-                throw new InvalidOperationException($"Failed to start desktop capture ({state}).");
-            }
 
             return localTrack;
         }
