@@ -2,6 +2,8 @@
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AbiRoslynGeneratorProjectPath>$(MSBuildProjectDirectory)/../../tools/abi_roslyn_codegen/Abi.RoslynGenerator.csproj</AbiRoslynGeneratorProjectPath>
+    <AbiRoslynGeneratorDllPath>$(MSBuildProjectDirectory)/../../tools/abi_roslyn_codegen/bin/$(Configuration)/netstandard2.0/Abi.RoslynGenerator.dll</AbiRoslynGeneratorDllPath>
     <AbiIdlPath>$(MSBuildProjectDirectory)/../../abi/generated/lumenrtc/lumenrtc.idl.json</AbiIdlPath>
     <AbiNamespace>LumenRTC.Interop</AbiNamespace>
     <AbiClassName>NativeMethods</AbiClassName>
@@ -15,12 +17,22 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\tools\abi_roslyn_codegen\Abi.RoslynGenerator.csproj"
+                      AdditionalProperties="Configuration=$(Configuration)"
                       OutputItemType="Analyzer"
                       ReferenceOutputAssembly="false" />
     <AdditionalFiles Include="$(AbiIdlPath)" />
     <AdditionalFiles Include="$(AbiManagedMetadataPath)" />
     <AdditionalFiles Include="$(AbiManagedApiMetadataPath)" />
   </ItemGroup>
+
+  <!-- VS Publish can compile with BuildProjectReferences=false; ensure analyzer exists in that mode. -->
+  <Target Name="EnsureAbiRoslynGeneratorBuilt"
+          BeforeTargets="CoreCompile"
+          Condition="'$(DesignTimeBuild)'!='true' and !Exists('$(AbiRoslynGeneratorDllPath)')">
+    <MSBuild Projects="$(AbiRoslynGeneratorProjectPath)"
+             Targets="Build"
+             Properties="Configuration=$(Configuration)" />
+  </Target>
 
   <ItemGroup>
     <CompilerVisibleProperty Include="AbiIdlPath" />
