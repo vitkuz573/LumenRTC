@@ -57,12 +57,29 @@
     <LibWebRtcBuildDir>$(LumenRtcRoot)webrtc_build\src\out\Default</LibWebRtcBuildDir>
   </PropertyGroup>
 
+  <!-- Support building from parent repo root (e.g. RemoteMaster/webrtc_build) when LumenRTC is a submodule. -->
+  <PropertyGroup Condition="'$(LibWebRtcBuildDir)'=='' and Exists('$(LumenRtcRoot)..\\..\\webrtc_build\\src\\out\\Release\\libwebrtc.dll')">
+    <LibWebRtcBuildDir>$(LumenRtcRoot)..\..\webrtc_build\src\out\Release</LibWebRtcBuildDir>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(LibWebRtcBuildDir)'=='' and Exists('$(LumenRtcRoot)..\\..\\webrtc_build\\src\\out\\Default\\libwebrtc.dll')">
+    <LibWebRtcBuildDir>$(LumenRtcRoot)..\..\webrtc_build\src\out\Default</LibWebRtcBuildDir>
+  </PropertyGroup>
+
   <PropertyGroup Condition="'$(LibWebRtcBuildDir)'=='' and Exists('$(LumenRtcRoot)webrtc_build/src/out/Release/libwebrtc.so')">
     <LibWebRtcBuildDir>$(LumenRtcRoot)webrtc_build/src/out/Release</LibWebRtcBuildDir>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(LibWebRtcBuildDir)'=='' and Exists('$(LumenRtcRoot)webrtc_build/src/out/Default/libwebrtc.so')">
     <LibWebRtcBuildDir>$(LumenRtcRoot)webrtc_build/src/out/Default</LibWebRtcBuildDir>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(LibWebRtcBuildDir)'=='' and Exists('$(LumenRtcRoot)../../webrtc_build/src/out/Release/libwebrtc.so')">
+    <LibWebRtcBuildDir>$(LumenRtcRoot)../../webrtc_build/src/out/Release</LibWebRtcBuildDir>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(LibWebRtcBuildDir)'=='' and Exists('$(LumenRtcRoot)../../webrtc_build/src/out/Default/libwebrtc.so')">
+    <LibWebRtcBuildDir>$(LumenRtcRoot)../../webrtc_build/src/out/Default</LibWebRtcBuildDir>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(LumenRtcPackNative)'==''">
