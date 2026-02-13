@@ -5,11 +5,6 @@ namespace LumenRTC;
 /// </summary>
 public sealed partial class PeerConnectionFactory : SafeHandle
 {
-    private static readonly JsonSerializerOptions s_rtpCapabilitiesJsonOptions = new()
-    {
-        PropertyNameCaseInsensitive = true,
-    };
-
     private PeerConnectionFactory() : base(IntPtr.Zero, true) { }
 
     public static PeerConnectionFactory Create()
@@ -188,7 +183,7 @@ public sealed partial class PeerConnectionFactory : SafeHandle
             return Array.Empty<string>();
         }
 
-        return JsonSerializer.Deserialize<string[]>(json) ?? Array.Empty<string>();
+        return JsonSerializer.Deserialize(json, LumenRtcJsonContext.Default.StringArray) ?? Array.Empty<string>();
     }
 
     public RtpCapabilities GetRtpSenderCapabilities(MediaType mediaType)
@@ -242,7 +237,7 @@ public sealed partial class PeerConnectionFactory : SafeHandle
             return RtpCapabilities.Empty;
         }
 
-        var dto = JsonSerializer.Deserialize<RtpCapabilitiesDto>(json, s_rtpCapabilitiesJsonOptions);
+        var dto = JsonSerializer.Deserialize(json, LumenRtcJsonContext.Default.RtpCapabilitiesDto);
         if (dto == null)
         {
             return RtpCapabilities.Empty;

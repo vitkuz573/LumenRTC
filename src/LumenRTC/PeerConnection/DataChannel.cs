@@ -1,3 +1,7 @@
+using System.Diagnostics.CodeAnalysis;
+using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
+
 namespace LumenRTC;
 
 /// <summary>
@@ -172,6 +176,18 @@ public sealed partial class DataChannel : SafeHandle
         Send(bytes, binary: false);
     }
 
+    public void SendJson<T>(T value, JsonTypeInfo<T> jsonTypeInfo)
+    {
+        if (jsonTypeInfo == null)
+        {
+            throw new ArgumentNullException(nameof(jsonTypeInfo));
+        }
+
+        SendText(JsonSerializer.Serialize(value, jsonTypeInfo));
+    }
+
+    [RequiresDynamicCode("JSON serialization might require runtime code generation. Use the JsonTypeInfo<T> overload for NativeAOT.")]
+    [RequiresUnreferencedCode("JSON serialization for arbitrary T might require types that cannot be statically analyzed. Use the JsonTypeInfo<T> overload for trimming/AOT.")]
     public void SendJson<T>(T value, JsonSerializerOptions? options = null)
     {
         SendText(JsonSerializer.Serialize(value, options));
@@ -224,6 +240,23 @@ public sealed partial class DataChannel : SafeHandle
         }
     }
 
+    public bool TrySendJson<T>(T value, JsonTypeInfo<T> jsonTypeInfo, out string? error)
+    {
+        try
+        {
+            SendJson(value, jsonTypeInfo);
+            error = null;
+            return true;
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+            return false;
+        }
+    }
+
+    [RequiresDynamicCode("JSON serialization might require runtime code generation. Use the JsonTypeInfo<T> overload for NativeAOT.")]
+    [RequiresUnreferencedCode("JSON serialization for arbitrary T might require types that cannot be statically analyzed. Use the JsonTypeInfo<T> overload for trimming/AOT.")]
     public bool TrySendJson<T>(T value, out string? error, JsonSerializerOptions? options = null)
     {
         try

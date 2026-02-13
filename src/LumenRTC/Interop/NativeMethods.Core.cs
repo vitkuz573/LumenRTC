@@ -182,8 +182,7 @@ internal static partial class NativeMethods
         AddNativeCandidate(candidates, seen, Path.Combine(AppContext.BaseDirectory, "native"), fileNames);
         AddNativeCandidate(candidates, seen, Path.Combine(AppContext.BaseDirectory, "runtimes", RuntimeInformation.RuntimeIdentifier, "native"), fileNames);
         AddNativeCandidate(candidates, seen, AppContext.BaseDirectory, fileNames);
-        AddNativeCandidate(candidates, seen, Path.Combine(Path.GetDirectoryName(typeof(NativeMethods).Assembly.Location) ?? string.Empty, "native"), fileNames);
-        AddNativeCandidate(candidates, seen, Path.GetDirectoryName(typeof(NativeMethods).Assembly.Location), fileNames);
+        AddNativeCandidate(candidates, seen, Path.GetDirectoryName(Environment.ProcessPath), fileNames);
         AddNativeCandidate(candidates, seen, Path.Combine(Environment.CurrentDirectory, "native", "build"), fileNames);
         AddNativeCandidate(candidates, seen, Path.Combine(Environment.CurrentDirectory, "native", "build", "Release"), fileNames);
 

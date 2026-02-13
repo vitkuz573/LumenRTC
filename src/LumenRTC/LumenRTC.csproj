@@ -2,6 +2,7 @@
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <IsAotCompatible>true</IsAotCompatible>
     <ShouldUnsetParentConfigurationAndPlatform>false</ShouldUnsetParentConfigurationAndPlatform>
     <AbiRoslynGeneratorProjectPath>$(MSBuildProjectDirectory)/../../tools/abi_roslyn_codegen/Abi.RoslynGenerator.csproj</AbiRoslynGeneratorProjectPath>
     <AbiRoslynGeneratorDllPathDefault>$(MSBuildProjectDirectory)/../../tools/abi_roslyn_codegen/bin/$(Configuration)/netstandard2.0/Abi.RoslynGenerator.dll</AbiRoslynGeneratorDllPathDefault>
@@ -22,6 +23,7 @@
     <ProjectReference Include="..\..\tools\abi_roslyn_codegen\Abi.RoslynGenerator.csproj"
                       SetConfiguration="Configuration=$(Configuration)"
                       SetPlatform="Platform=$(Platform)"
+                      GlobalPropertiesToRemove="PublishAot;IsAotCompatible;EnableAotAnalyzer;RuntimeIdentifier;SelfContained;PublishTrimmed;TrimMode"
                       OutputItemType="Analyzer"
                       ReferenceOutputAssembly="false" />
     <AdditionalFiles Include="$(AbiIdlPath)" />
@@ -35,7 +37,8 @@
           Condition="'$(DesignTimeBuild)'!='true' and '$(AbiRoslynGeneratorDllPresent)'!='true'">
     <MSBuild Projects="$(AbiRoslynGeneratorProjectPath)"
              Targets="Build"
-             Properties="Configuration=$(Configuration);Platform=$(Platform)" />
+             Properties="Configuration=$(Configuration);Platform=$(Platform)"
+             RemoveProperties="PublishAot;IsAotCompatible;EnableAotAnalyzer;RuntimeIdentifier;SelfContained;PublishTrimmed;TrimMode" />
   </Target>
 
   <ItemGroup>
