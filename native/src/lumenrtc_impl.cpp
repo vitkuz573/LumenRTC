@@ -2630,8 +2630,12 @@ int LUMENRTC_CALL lrtc_impl_rtp_sender_set_encoding_parameters(
     return 0;
   }
 
-  scoped_refptr<libwebrtc::RTCRtpEncodingParameters> encoding = list[0];
-  if (encoding.get()) {
+  for (size_t i = 0; i < list.size(); ++i) {
+    scoped_refptr<libwebrtc::RTCRtpEncodingParameters> encoding = list[i];
+    if (!encoding.get()) {
+      continue;
+    }
+
     if (settings->max_bitrate_bps >= 0) {
       encoding->set_max_bitrate_bps(settings->max_bitrate_bps);
     }
