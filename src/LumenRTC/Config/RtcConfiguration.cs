@@ -24,6 +24,13 @@ public sealed class RtcConfiguration
     public int ScreencastMinBitrate { get; set; } = -1;
     public bool EnableDscp { get; set; } = false;
     public bool UseRtpMux { get; set; } = true;
-    public uint LocalAudioBandwidth { get; set; } = 128;
-    public uint LocalVideoBandwidth { get; set; } = 512;
+    /// <summary>
+    /// Optional audio bandwidth cap in kbps. Set to 0 to leave bitrate unconstrained.
+    /// </summary>
+    public uint LocalAudioBandwidth { get; set; } = 0;
+
+    /// <summary>
+    /// Optional video bandwidth cap in kbps. Set to 0 to leave bitrate unconstrained.
+    /// </summary>
+    public uint LocalVideoBandwidth { get; set; } = 0;
 }
