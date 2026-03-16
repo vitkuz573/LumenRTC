@@ -16,7 +16,7 @@ public sealed partial class PeerConnection : SafeHandle
         SetHandle(handle);
     }
 
-    public new void Close()
+    public void Disconnect()
     {
         NativeMethods.lrtc_peer_connection_close(handle);
     }

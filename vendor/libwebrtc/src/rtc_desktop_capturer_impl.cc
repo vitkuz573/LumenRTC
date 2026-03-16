@@ -129,10 +129,14 @@ RTCDesktopCapturerImpl::CaptureState RTCDesktopCapturerImpl::Start(
     return capture_state_;
   }
 
-  if (fps >= 60) {
-    capture_delay_ = uint32_t(1000.0 / 60.0);
-  } else {
-    capture_delay_ = uint32_t(1000.0 / fps);
+  uint32_t bounded_fps = fps;
+  if (bounded_fps > 240) {
+    bounded_fps = 240;
+  }
+
+  capture_delay_ = static_cast<uint32_t>(1000.0 / bounded_fps);
+  if (capture_delay_ == 0) {
+    capture_delay_ = 1;
   }
 
   if (source_id_ != -1) {

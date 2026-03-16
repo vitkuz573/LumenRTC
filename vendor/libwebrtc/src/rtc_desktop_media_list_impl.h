@@ -17,6 +17,9 @@
 #ifndef LIBWEBRTC_RTC_DESKTOP_MEDIA_LIST_IMPL_HXX
 #define LIBWEBRTC_RTC_DESKTOP_MEDIA_LIST_IMPL_HXX
 
+#include <deque>
+#include <functional>
+
 #include "api/video/i420_buffer.h"
 #include "api/video/video_frame.h"
 #include "modules/desktop_capture/desktop_capture_options.h"
@@ -96,6 +99,16 @@ class RTCDesktopMediaListImpl : public RTCDesktopMediaList {
                     bool notify = false) override;
 
  private:
+  struct PendingThumbnailRequest {
+    scoped_refptr<MediaSourceImpl> source;
+    bool notify;
+  };
+
+  void TryStartNextThumbnailCapture();
+  void OnThumbnailCaptureResult(
+      webrtc::DesktopCapturer::Result result,
+      std::unique_ptr<webrtc::DesktopFrame> frame);
+
   class CallbackProxy : public webrtc::DesktopCapturer::Callback {
    public:
     CallbackProxy() {}
@@ -122,6 +135,8 @@ class RTCDesktopMediaListImpl : public RTCDesktopMediaList {
   std::unique_ptr<webrtc::DesktopCapturer> capturer_;
   std::unique_ptr<webrtc::Thread> thread_;
   std::vector<scoped_refptr<MediaSourceImpl>> sources_;
+  std::deque<PendingThumbnailRequest> pending_thumbnail_requests_;
+  bool thumbnail_capture_in_flight_ = false;
   MediaListObserver* observer_ = nullptr;
   DesktopType type_;
   webrtc::Thread* signaling_thread_ = nullptr;

@@ -35,6 +35,7 @@
 #include <cstring>
 #include <mutex>
 #include <string>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -445,7 +446,8 @@ BuildCodecPreferences(
     return vector<scoped_refptr<RTCRtpCodecCapability>>();
   }
   std::vector<scoped_refptr<RTCRtpCodecCapability>> selected;
-  selected.reserve(count);
+  selected.reserve(codecs.size());
+  std::unordered_set<const RTCRtpCodecCapability*> seen;
   for (uint32_t i = 0; i < count; ++i) {
     const char* mime = mime_types[i];
     if (!mime) {
@@ -457,8 +459,9 @@ BuildCodecPreferences(
         continue;
       }
       if (MimeEquals(codec->mime_type(), mime)) {
-        selected.push_back(codec);
-        break;
+        if (seen.insert(codec.get()).second) {
+          selected.push_back(codec);
+        }
       }
     }
   }
@@ -1720,6 +1723,9 @@ void LUMENRTC_CALL lrtc_impl_peer_connection_create_offer(
     lrtc_sdp_error_cb failure, void* user_data,
     lrtc_media_constraints_t* constraints) {
   if (!pc || !pc->ref.get()) {
+    if (failure) {
+      failure(user_data, "invalid arguments");
+    }
     return;
   }
   scoped_refptr<RTCMediaConstraints> mc;
@@ -1749,6 +1755,9 @@ void LUMENRTC_CALL lrtc_impl_peer_connection_create_answer(
     lrtc_sdp_error_cb failure, void* user_data,
     lrtc_media_constraints_t* constraints) {
   if (!pc || !pc->ref.get()) {
+    if (failure) {
+      failure(user_data, "invalid arguments");
+    }
     return;
   }
   scoped_refptr<RTCMediaConstraints> mc;
@@ -2017,17 +2026,17 @@ int LUMENRTC_CALL lrtc_impl_peer_connection_add_ice_candidate_ex(
     }
     return 0;
   }
-  libwebrtc::SdpParseError parse_error;
-  scoped_refptr<RTCIceCandidate> parsed = RTCIceCandidate::Create(
-      string(candidate), string(sdp_mid), sdp_mline_index, &parse_error);
-  if (!parsed.get()) {
-    if (trace_ice_native) {
+  if (trace_ice_native) {
+    libwebrtc::SdpParseError parse_error;
+    scoped_refptr<RTCIceCandidate> parsed = RTCIceCandidate::Create(
+        string(candidate), string(sdp_mid), sdp_mline_index, &parse_error);
+    if (!parsed.get()) {
       std::fprintf(
           stderr,
           "[lumenrtc:ice] add candidate parse failed: mid=%s mline=%d err=%s\n",
           sdp_mid, sdp_mline_index, parse_error.description.c_string());
+      return 0;
     }
-    return 0;
   }
 
   const bool applied =

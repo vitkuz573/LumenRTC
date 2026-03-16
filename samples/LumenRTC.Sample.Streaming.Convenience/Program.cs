@@ -523,7 +523,7 @@ internal static class Program
             }
             firstFrameProbeSink?.Dispose();
             renderer?.Dispose();
-            pc.Close();
+            pc.Disconnect();
             pc.Dispose();
         await receiveTask.ConfigureAwait(false);
     }

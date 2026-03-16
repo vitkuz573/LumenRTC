@@ -26,9 +26,6 @@
 #include <windows.h>
 #endif
 
-#include <fstream>
-#include <iostream>
-
 namespace libwebrtc {
 
 #ifdef WEBRTC_WIN
@@ -55,6 +52,10 @@ bool TryBindCurrentThreadToInputDesktop() {
 }  // namespace
 #endif
 
+namespace {
+constexpr int kThumbnailMaxEdge = 320;
+}
+
 RTCDesktopMediaListImpl::RTCDesktopMediaListImpl(DesktopType type,
                                                  webrtc::Thread* signaling_thread)
     : thread_(webrtc::Thread::Create()),
@@ -73,6 +74,11 @@ RTCDesktopMediaListImpl::RTCDesktopMediaListImpl(DesktopType type,
   }
 #endif
   callback_ = std::make_unique<CallbackProxy>();
+  callback_->SetCallback(
+      [this](webrtc::DesktopCapturer::Result result,
+             std::unique_ptr<webrtc::DesktopFrame> frame) {
+        OnThumbnailCaptureResult(result, std::move(frame));
+      });
   thread_->BlockingCall([this, type] {
 #ifdef WEBRTC_WIN
     const bool desktop_bound = TryBindCurrentThreadToInputDesktop();
@@ -88,6 +94,11 @@ RTCDesktopMediaListImpl::RTCDesktopMediaListImpl(DesktopType type,
     } else {
       capturer_ = webrtc::DesktopCapturer::CreateWindowCapturer(options_);
     }
+    if (!capturer_) {
+      RTC_LOG(LS_ERROR) << "Failed to create desktop media list capturer.";
+      return;
+    }
+
     capturer_->Start(callback_.get());
   });
 }
@@ -142,7 +153,7 @@ int32_t RTCDesktopMediaListImpl::UpdateSourceList(bool force_reload,
         auto source =
             new RefCountedObject<MediaSourceImpl>(this, new_sources[i], type_);
         sources_.insert(sources_.begin() + i, source);
-        GetThumbnail(source, true);
+        GetThumbnail(source, get_thumbnail);
         if (observer_) {
           signaling_thread_->BlockingCall(
               [&, source]() { observer_->OnMediaSourceAdded(source); });
@@ -194,20 +205,18 @@ int32_t RTCDesktopMediaListImpl::UpdateSourceList(bool force_reload,
 bool RTCDesktopMediaListImpl::GetThumbnail(scoped_refptr<MediaSource> source,
                                            bool notify) {
   thread_->PostTask([this, source, notify] {
-    MediaSourceImpl* source_impl = static_cast<MediaSourceImpl*>(source.get());
-    if (capturer_->SelectSource(source_impl->source_id())) {
-      callback_->SetCallback([&](webrtc::DesktopCapturer::Result result,
-                                 std::unique_ptr<webrtc::DesktopFrame> frame) {
-        auto old_thumbnail = source_impl->thumbnail();
-        source_impl->SaveCaptureResult(result, std::move(frame));
-        if (observer_ && notify) {
-          signaling_thread_->BlockingCall([&, source_impl]() {
-            observer_->OnMediaSourceThumbnailChanged(source_impl);
-          });
-        }
-      });
-      capturer_->CaptureFrame();
+    if (!capturer_) {
+      return;
     }
+
+    MediaSourceImpl* source_impl = static_cast<MediaSourceImpl*>(source.get());
+    if (!source_impl) {
+      return;
+    }
+
+    pending_thumbnail_requests_.push_back(
+        {scoped_refptr<MediaSourceImpl>(source_impl), notify});
+    TryStartNextThumbnailCapture();
   });
   return true;
 }
@@ -215,7 +224,62 @@ bool RTCDesktopMediaListImpl::GetThumbnail(scoped_refptr<MediaSource> source,
 int RTCDesktopMediaListImpl::GetSourceCount() const { return sources_.size(); }
 
 scoped_refptr<MediaSource> RTCDesktopMediaListImpl::GetSource(int index) {
+  if (index < 0 || index >= static_cast<int>(sources_.size())) {
+    return nullptr;
+  }
   return sources_[index];
+}
+
+void RTCDesktopMediaListImpl::TryStartNextThumbnailCapture() {
+  if (!capturer_ || thumbnail_capture_in_flight_ ||
+      pending_thumbnail_requests_.empty()) {
+    return;
+  }
+
+  while (!pending_thumbnail_requests_.empty()) {
+    auto& request = pending_thumbnail_requests_.front();
+    if (!request.source.get()) {
+      pending_thumbnail_requests_.pop_front();
+      continue;
+    }
+
+    if (!capturer_->SelectSource(request.source->source_id())) {
+      pending_thumbnail_requests_.pop_front();
+      continue;
+    }
+
+    thumbnail_capture_in_flight_ = true;
+    capturer_->CaptureFrame();
+    return;
+  }
+}
+
+void RTCDesktopMediaListImpl::OnThumbnailCaptureResult(
+    webrtc::DesktopCapturer::Result result,
+    std::unique_ptr<webrtc::DesktopFrame> frame) {
+  if (pending_thumbnail_requests_.empty()) {
+    thumbnail_capture_in_flight_ = false;
+    return;
+  }
+
+  PendingThumbnailRequest request = pending_thumbnail_requests_.front();
+  pending_thumbnail_requests_.pop_front();
+  thumbnail_capture_in_flight_ = false;
+
+  if (request.source.get()) {
+    request.source->SaveCaptureResult(result, std::move(frame));
+
+    if (observer_ && request.notify) {
+      MediaSourceImpl* source = request.source.get();
+      signaling_thread_->BlockingCall([this, source]() {
+        if (observer_) {
+          observer_->OnMediaSourceThumbnailChanged(source);
+        }
+      });
+    }
+  }
+
+  TryStartNextThumbnailCapture();
 }
 
 bool MediaSourceImpl::UpdateThumbnail() {
@@ -265,12 +329,41 @@ void MediaSourceImpl::SaveCaptureResult(
     webrtc::VideoFrame input_frame(i420_buffer_, 0, 0,
                                    webrtc::kVideoRotation_0);
 
+    int thumbnail_width = input_frame.width();
+    int thumbnail_height = input_frame.height();
+    webrtc::scoped_refptr<webrtc::I420BufferInterface> thumbnail_buffer =
+        i420_buffer_;
+
+    const int source_max_edge =
+        thumbnail_width > thumbnail_height ? thumbnail_width : thumbnail_height;
+    if (source_max_edge > kThumbnailMaxEdge) {
+      const double scale =
+          static_cast<double>(kThumbnailMaxEdge) / source_max_edge;
+      thumbnail_width = static_cast<int>(thumbnail_width * scale);
+      thumbnail_height = static_cast<int>(thumbnail_height * scale);
+      if (thumbnail_width < 1) {
+        thumbnail_width = 1;
+      }
+      if (thumbnail_height < 1) {
+        thumbnail_height = 1;
+      }
+
+      webrtc::scoped_refptr<webrtc::I420Buffer> scaled_buffer =
+          webrtc::I420Buffer::Create(thumbnail_width, thumbnail_height);
+      scaled_buffer->ScaleFrom(*i420_buffer_);
+      thumbnail_buffer = scaled_buffer;
+    }
+
+    webrtc::VideoFrame thumbnail_frame(thumbnail_buffer, 0, 0,
+                                       webrtc::kVideoRotation_0);
+
     const int kColorPlanes = 3;  // R, G and B.
-    size_t rgb_len = input_frame.height() * input_frame.width() * kColorPlanes;
+    size_t rgb_len = thumbnail_frame.height() * thumbnail_frame.width() *
+                     kColorPlanes;
     std::unique_ptr<uint8_t[]> rgb_buf(new uint8_t[rgb_len]);
 
     // kRGB24 actually corresponds to FourCC 24BG which is 24-bit BGR.
-    if (ConvertFromI420(input_frame, webrtc::VideoType::kRGB24, 0,
+    if (ConvertFromI420(thumbnail_frame, webrtc::VideoType::kRGB24, 0,
                         rgb_buf.get()) < 0) {
       RTC_LOG(LS_ERROR) << "Could not convert input frame to RGB.";
       return;
@@ -278,7 +371,8 @@ void MediaSourceImpl::SaveCaptureResult(
 
     // Create a thumbnail image from the captured frame.
     thumbnail_ = EncodeRGBToJpeg((const unsigned char*)rgb_buf.get(),
-                                 input_frame.width(), input_frame.height(),
+                                 thumbnail_frame.width(),
+                                 thumbnail_frame.height(),
                                  kColorPlanes, 75);
   }
 #ifdef WEBRTC_WIN

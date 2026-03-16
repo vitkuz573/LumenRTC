@@ -424,6 +424,7 @@ bool RTCPeerConnectionImpl::Initialize() {
       tcp_candidate_policy_map[configuration_.tcp_candidate_policy];
   config.type = ice_transport_type_map[configuration_.type];
   config.rtcp_mux_policy = rtcp_mux_policy_map[configuration_.rtcp_mux_policy];
+  config.ice_candidate_pool_size = configuration_.ice_candidate_pool_size;
 
   offer_answer_options_.offer_to_receive_audio =
       configuration_.offer_to_receive_audio;
@@ -432,7 +433,7 @@ bool RTCPeerConnectionImpl::Initialize() {
 
   offer_answer_options_.use_rtp_mux = configuration_.use_rtp_mux;
 
-  // config.disable_ipv6 = configuration_.disable_ipv6;
+  config.disable_ipv6 = configuration_.disable_ipv6;
   config.disable_ipv6_on_wifi = configuration_.disable_ipv6_on_wifi;
   config.disable_link_local_networks =
       configuration_.disable_link_local_networks;
@@ -506,6 +507,9 @@ void RTCPeerConnectionImpl::SetLocalDescription(const string sdp,
   std::optional<webrtc::SdpType> maybe_type =
       webrtc::SdpTypeFromString(to_std_string(type));
   if (!maybe_type) {
+    if (failure) {
+      failure("Invalid session description type.");
+    }
     return;
   }
   std::unique_ptr<webrtc::SessionDescriptionInterface> session_description(
@@ -529,12 +533,16 @@ void RTCPeerConnectionImpl::SetRemoteDescription(const string sdp,
                                                  const string type,
                                                  OnSetSdpSuccess success,
                                                  OnSetSdpFailure failure) {
-  RTC_LOG(LS_INFO) << " Received session description :" << to_std_string(sdp);
+  RTC_LOG(LS_INFO) << "Received session description. Type="
+                   << to_std_string(type) << ", Length="
+                   << static_cast<int>(sdp.size());
   webrtc::SdpParseError error;
-  webrtc::SdpParseError sdp_error;
   std::optional<webrtc::SdpType> maybe_type =
       webrtc::SdpTypeFromString(type.std_string());
   if (!maybe_type) {
+    if (failure) {
+      failure("Invalid session description type.");
+    }
     return;
   }
   std::unique_ptr<webrtc::SessionDescriptionInterface> session_description(
@@ -555,6 +563,15 @@ void RTCPeerConnectionImpl::SetRemoteDescription(const string sdp,
   if (media_content_desc && configuration_.local_video_bandwidth > 0)
     media_content_desc->set_bandwidth(configuration_.local_video_bandwidth *
                                       1000);
+
+  webrtc::MediaContentDescription* audio_content_desc =
+      session_description->description()->GetContentDescriptionByName("audio");
+  webrtc::MediaContentDescription* audio_media_content_desc =
+      static_cast<webrtc::MediaContentDescription*>(audio_content_desc);
+  if (audio_media_content_desc && configuration_.local_audio_bandwidth > 0) {
+    audio_media_content_desc->set_bandwidth(
+        configuration_.local_audio_bandwidth * 1000);
+  }
   webrtc::scoped_refptr<webrtc::SetRemoteDescriptionObserverInterface>
       observer = webrtc::make_ref_counted<SetSessionDescriptionObserverProxy>(
           success, failure);
