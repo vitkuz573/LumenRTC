@@ -437,7 +437,6 @@ bool RTCPeerConnectionImpl::Initialize() {
 
   offer_answer_options_.use_rtp_mux = configuration_.use_rtp_mux;
 
-  config.disable_ipv6 = configuration_.disable_ipv6;
   config.disable_ipv6_on_wifi = configuration_.disable_ipv6_on_wifi;
   config.disable_link_local_networks =
       configuration_.disable_link_local_networks;
@@ -539,7 +538,7 @@ void RTCPeerConnectionImpl::SetRemoteDescription(const string sdp,
                                                  OnSetSdpFailure failure) {
   RTC_LOG(LS_INFO) << "Received session description. Type="
                    << to_std_string(type) << ", Length="
-                   << static_cast<int>(sdp.size());
+                   << static_cast<int>(sdp.std_string().size());
   webrtc::SdpParseError error;
   std::optional<webrtc::SdpType> maybe_type =
       webrtc::SdpTypeFromString(type.std_string());
