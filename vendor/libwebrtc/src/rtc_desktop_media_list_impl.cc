@@ -103,10 +103,20 @@ RTCDesktopMediaListImpl::RTCDesktopMediaListImpl(DesktopType type,
   });
 }
 
-RTCDesktopMediaListImpl::~RTCDesktopMediaListImpl() { thread_->Stop(); }
+RTCDesktopMediaListImpl::~RTCDesktopMediaListImpl() {
+  if (callback_) {
+    callback_->SetCallback(nullptr);
+  }
+  thread_->Stop();
+}
 
 int32_t RTCDesktopMediaListImpl::UpdateSourceList(bool force_reload,
                                                   bool get_thumbnail) {
+  if (!capturer_) {
+    RTC_LOG(LS_ERROR) << "Desktop media list capturer is not initialized.";
+    return -1;
+  }
+
   if (force_reload) {
     for (auto source : sources_) {
       if (observer_) {
@@ -119,8 +129,18 @@ int32_t RTCDesktopMediaListImpl::UpdateSourceList(bool force_reload,
   }
 
   webrtc::DesktopCapturer::SourceList new_sources;
-  thread_->BlockingCall(
-      [this, &new_sources] { capturer_->GetSourceList(&new_sources); });
+  bool source_list_retrieved = false;
+  thread_->BlockingCall([this, &new_sources, &source_list_retrieved] {
+    if (!capturer_) {
+      return;
+    }
+    source_list_retrieved = capturer_->GetSourceList(&new_sources);
+  });
+
+  if (!source_list_retrieved) {
+    RTC_LOG(LS_WARNING) << "Failed to retrieve desktop source list.";
+    return -1;
+  }
 
   typedef std::set<webrtc::DesktopCapturer::SourceId> SourceSet;
   SourceSet new_source_set;
@@ -293,7 +313,7 @@ extern int filterException(int code, PEXCEPTION_POINTERS ex);
 void MediaSourceImpl::SaveCaptureResult(
     webrtc::DesktopCapturer::Result result,
     std::unique_ptr<webrtc::DesktopFrame> frame) {
-  if (result != webrtc::DesktopCapturer::Result::SUCCESS) {
+  if (result != webrtc::DesktopCapturer::Result::SUCCESS || !frame) {
     return;
   }
 
@@ -315,16 +335,22 @@ void MediaSourceImpl::SaveCaptureResult(
       i420_buffer_ = webrtc::I420Buffer::Create(width, height);
     }
 
-    libyuv::ConvertToI420(frame->data(), 0, i420_buffer_->MutableDataY(),
-                          i420_buffer_->StrideY(), i420_buffer_->MutableDataU(),
-                          i420_buffer_->StrideU(), i420_buffer_->MutableDataV(),
-                          i420_buffer_->StrideV(), 0, 0,
+    const int convert_result = libyuv::ConvertToI420(
+        frame->data(), 0, i420_buffer_->MutableDataY(),
+        i420_buffer_->StrideY(), i420_buffer_->MutableDataU(),
+        i420_buffer_->StrideU(), i420_buffer_->MutableDataV(),
+        i420_buffer_->StrideV(), 0, 0,
 #ifdef WEBRTC_WIN
-                          rect_.width(), rect_.height(),
+        rect_.width(), rect_.height(),
 #else
-                          width, height,
+        width, height,
 #endif
-                          width, height, libyuv::kRotate0, libyuv::FOURCC_ARGB);
+        width, height, libyuv::kRotate0, libyuv::FOURCC_ARGB);
+
+    if (convert_result < 0) {
+      RTC_LOG(LS_WARNING) << "Failed to convert thumbnail frame to I420.";
+      return;
+    }
 
     webrtc::VideoFrame input_frame(i420_buffer_, 0, 0,
                                    webrtc::kVideoRotation_0);

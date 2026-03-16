@@ -86,16 +86,31 @@ RTCDesktopCapturerImpl::RTCDesktopCapturerImpl(
     }
 #endif
     if (type == kScreen) {
+      std::unique_ptr<webrtc::DesktopCapturer> base_capturer =
+          webrtc::DesktopCapturer::CreateScreenCapturer(options_);
+      if (!base_capturer) {
+        RTC_LOG(LS_ERROR) << "Failed to create screen capturer.";
+        return;
+      }
+
       if (showCursor) {
         capturer_ = std::make_unique<webrtc::DesktopAndCursorComposer>(
-            webrtc::DesktopCapturer::CreateScreenCapturer(options_), options_);
+            std::move(base_capturer), options_);
       } else {
-        capturer_ = webrtc::DesktopAndCursorComposer::CreateWithoutMouseCursorMonitor(
-                webrtc::DesktopCapturer::CreateScreenCapturer(options_));
+        capturer_ =
+            webrtc::DesktopAndCursorComposer::CreateWithoutMouseCursorMonitor(
+                std::move(base_capturer));
       }
     } else {
+      std::unique_ptr<webrtc::DesktopCapturer> base_capturer =
+          webrtc::DesktopCapturer::CreateWindowCapturer(options_);
+      if (!base_capturer) {
+        RTC_LOG(LS_ERROR) << "Failed to create window capturer.";
+        return;
+      }
+
       capturer_ = std::make_unique<webrtc::DesktopAndCursorComposer>(
-          webrtc::DesktopCapturer::CreateWindowCapturer(options_), options_);
+          std::move(base_capturer), options_);
     }
   });
 }
@@ -125,6 +140,12 @@ RTCDesktopCapturerImpl::CaptureState RTCDesktopCapturerImpl::Start(
   }
 
   if (fps == 0) {
+    capture_state_ = CS_FAILED;
+    return capture_state_;
+  }
+
+  if (!capturer_) {
+    RTC_LOG(LS_ERROR) << "Desktop capturer is not initialized.";
     capture_state_ = CS_FAILED;
     return capture_state_;
   }
@@ -217,6 +238,11 @@ void RTCDesktopCapturerImpl::OnCaptureResult(
     return;
   }
 
+  if (!frame) {
+    RTC_LOG(LS_WARNING) << "Desktop capturer returned empty frame.";
+    return;
+  }
+
   int width = frame->size().width();
   int height = frame->size().height();
 #ifdef WEBRTC_WIN
@@ -236,16 +262,22 @@ void RTCDesktopCapturerImpl::OnCaptureResult(
       i420_buffer_ = webrtc::I420Buffer::Create(width, height);
     }
 
-    libyuv::ConvertToI420(frame->data(), 0, i420_buffer_->MutableDataY(),
-                          i420_buffer_->StrideY(), i420_buffer_->MutableDataU(),
-                          i420_buffer_->StrideU(), i420_buffer_->MutableDataV(),
-                          i420_buffer_->StrideV(), x_, y_,
+    const int convert_result = libyuv::ConvertToI420(
+        frame->data(), 0, i420_buffer_->MutableDataY(),
+        i420_buffer_->StrideY(), i420_buffer_->MutableDataU(),
+        i420_buffer_->StrideU(), i420_buffer_->MutableDataV(),
+        i420_buffer_->StrideV(), x_, y_,
 #ifdef WEBRTC_WIN
-                          rect_.width(), rect_.height(),
+        rect_.width(), rect_.height(),
 #else
-                          width, height,
+        width, height,
 #endif
-                          width, height, libyuv::kRotate0, libyuv::FOURCC_ARGB);
+        width, height, libyuv::kRotate0, libyuv::FOURCC_ARGB);
+
+    if (convert_result < 0) {
+      RTC_LOG(LS_WARNING) << "Failed to convert desktop frame to I420.";
+      return;
+    }
 
     // Build a frame with an explicit microsecond timestamp.
     // This avoids unit ambiguity for downstream encoders (notably OpenH264).
@@ -264,6 +296,12 @@ void RTCDesktopCapturerImpl::OnCaptureResult(
 void RTCDesktopCapturerImpl::CaptureFrame() {
   RTC_DCHECK_RUN_ON(thread_.get());
   if (capture_state_ == CS_RUNNING) {
+    if (!capturer_) {
+      RTC_LOG(LS_ERROR) << "Desktop capturer is not initialized.";
+      capture_state_ = CS_FAILED;
+      return;
+    }
+
     capturer_->CaptureFrame();
     thread_->PostDelayedHighPrecisionTask(
         [this]() { CaptureFrame(); },

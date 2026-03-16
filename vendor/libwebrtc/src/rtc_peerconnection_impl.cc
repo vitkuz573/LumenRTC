@@ -338,6 +338,10 @@ void RTCPeerConnectionImpl::OnSignalingChange(
 
 bool RTCPeerConnectionImpl::AddCandidate(const string mid, int mid_mline_index,
                                          const string cand_sdp) {
+  if (!rtc_peerconnection_) {
+    return false;
+  }
+
   webrtc::SdpParseError error;
   std::unique_ptr<webrtc::IceCandidateInterface> candidate(
       webrtc::CreateIceCandidate(
@@ -378,8 +382,8 @@ void RTCPeerConnectionImpl::OnIceCandidate(
   }
 
   RTC_LOG(LS_INFO) << __FUNCTION__ << ", mid " << candidate->sdp_mid()
-                   << ", mline " << candidate->sdp_mline_index() << ", sdp"
-                   << cand_sdp;
+                   << ", mline " << candidate->sdp_mline_index()
+                   << ", sdp_length " << cand_sdp.size();
 }
 
 void RTCPeerConnectionImpl::RegisterRTCPeerConnectionObserver(
@@ -672,6 +676,7 @@ void RTCPeerConnectionImpl::RestartIce() {
 void RTCPeerConnectionImpl::Close() {
   RTC_LOG(LS_INFO) << __FUNCTION__;
   if (rtc_peerconnection_.get()) {
+    rtc_peerconnection_->Close();
     rtc_peerconnection_ = nullptr;
     data_channel_ = nullptr;
     local_streams_.clear();
