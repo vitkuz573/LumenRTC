@@ -285,26 +285,22 @@ public sealed partial class RtpTransceiver : SafeHandle
     private bool InvokeWithError(TransceiverErrorInvoker invoker, out string? error)
     {
         const int BufferSize = 512;
-        var buffer = Marshal.AllocHGlobal(BufferSize);
-        try
+        Span<byte> buffer = stackalloc byte[BufferSize];
+        buffer.Clear();
+        unsafe
         {
-            unsafe
+            fixed (byte* ptr = buffer)
             {
-                new Span<byte>((void*)buffer, BufferSize).Clear();
+                var result = invoker(handle, (IntPtr)ptr, BufferSize);
+                if (result != 0)
+                {
+                    error = null;
+                    return true;
+                }
+                var message = Utf8String.Read((IntPtr)ptr);
+                error = string.IsNullOrWhiteSpace(message) ? null : message;
+                return false;
             }
-            var result = invoker(handle, buffer, (uint)BufferSize);
-            if (result != 0)
-            {
-                error = null;
-                return true;
-            }
-            var message = Utf8String.Read(buffer);
-            error = string.IsNullOrWhiteSpace(message) ? null : message;
-            return false;
-        }
-        finally
-        {
-            Marshal.FreeHGlobal(buffer);
         }
     }
 }

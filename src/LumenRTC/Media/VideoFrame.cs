@@ -29,9 +29,33 @@ public sealed partial class VideoFrame : SafeHandle
         var yRows = height;
         var uvRows = (height + 1) / 2;
 
-        CopyPlane(DataY, StrideY, yPlane, yRowWidth, yRows, nameof(yPlane));
-        CopyPlane(DataU, StrideU, uPlane, uvRowWidth, uvRows, nameof(uPlane));
-        CopyPlane(DataV, StrideV, vPlane, uvRowWidth, uvRows, nameof(vPlane));
+        var requiredY = checked(yRowWidth * yRows);
+        var requiredUV = checked(uvRowWidth * uvRows);
+
+        if (yPlane.Length < requiredY)
+        {
+            throw new ArgumentException(
+                $"Destination plane '{nameof(yPlane)}' is too small. Expected at least {requiredY} bytes, got {yPlane.Length}.",
+                nameof(yPlane));
+        }
+
+        if (uPlane.Length < requiredUV)
+        {
+            throw new ArgumentException(
+                $"Destination plane '{nameof(uPlane)}' is too small. Expected at least {requiredUV} bytes, got {uPlane.Length}.",
+                nameof(uPlane));
+        }
+
+        if (vPlane.Length < requiredUV)
+        {
+            throw new ArgumentException(
+                $"Destination plane '{nameof(vPlane)}' is too small. Expected at least {requiredUV} bytes, got {vPlane.Length}.",
+                nameof(vPlane));
+        }
+
+        // Delegate to the native copy path (libyuv SIMD) with packed strides
+        // instead of an 8-call P/Invoke sequence followed by a managed row-by-row loop.
+        CopyToI420(yPlane, yRowWidth, uPlane, uvRowWidth, vPlane, uvRowWidth);
     }
 
     public void CopyToI420(Span<byte> y, int strideY, Span<byte> u, int strideU, Span<byte> v, int strideV)
@@ -73,41 +97,4 @@ public sealed partial class VideoFrame : SafeHandle
         return new VideoFrame(retained);
     }
 
-    private static void CopyPlane(
-        IntPtr source,
-        int sourceStride,
-        Span<byte> destination,
-        int rowWidth,
-        int rowCount,
-        string destinationName)
-    {
-        if (source == IntPtr.Zero)
-        {
-            throw new InvalidOperationException("Video frame plane pointer is null.");
-        }
-
-        if (sourceStride < rowWidth)
-        {
-            throw new InvalidOperationException(
-                $"Plane stride ({sourceStride}) is smaller than row width ({rowWidth}).");
-        }
-
-        var requiredBytes = checked(rowWidth * rowCount);
-        if (destination.Length < requiredBytes)
-        {
-            throw new ArgumentException(
-                $"Destination plane '{destinationName}' is too small. Expected at least {requiredBytes} bytes, got {destination.Length}.",
-                destinationName);
-        }
-
-        unsafe
-        {
-            var src = (byte*)source.ToPointer();
-            for (var row = 0; row < rowCount; row++)
-            {
-                var srcRow = new ReadOnlySpan<byte>(src + row * sourceStride, rowWidth);
-                srcRow.CopyTo(destination.Slice(row * rowWidth, rowWidth));
-            }
-        }
-    }
 }
