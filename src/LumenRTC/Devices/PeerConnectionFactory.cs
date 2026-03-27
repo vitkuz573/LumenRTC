@@ -5,6 +5,11 @@ namespace LumenRTC;
 /// </summary>
 public sealed partial class PeerConnectionFactory : SafeHandle
 {
+    // Codec capabilities are determined by the libwebrtc binary and never change at runtime.
+    // Cache per media type to avoid repeated native calls and JSON parsing on every peer setup.
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<LrtcMediaType, IReadOnlyList<string>>
+        _codecMimeTypeCache = new();
+
     private PeerConnectionFactory() : base(IntPtr.Zero, true) { }
 
     public static PeerConnectionFactory Create()
@@ -166,12 +171,18 @@ public sealed partial class PeerConnectionFactory : SafeHandle
 
     public IReadOnlyList<string> GetRtpSenderCodecMimeTypes(MediaType mediaType)
     {
+        var nativeType = (LrtcMediaType)mediaType;
+        return _codecMimeTypeCache.GetOrAdd(nativeType, QueryCodecMimeTypes);
+    }
+
+    private IReadOnlyList<string> QueryCodecMimeTypes(LrtcMediaType nativeType)
+    {
         string? json = null;
         string? error = null;
         LrtcStatsSuccessCb success = (_, jsonPtr) => json = Utf8String.Read(jsonPtr);
         LrtcStatsFailureCb failure = (_, errPtr) => error = Utf8String.Read(errPtr);
 
-        NativeMethods.lrtc_factory_get_rtp_sender_codec_mime_types(handle, (LrtcMediaType)mediaType, success, failure, IntPtr.Zero);
+        NativeMethods.lrtc_factory_get_rtp_sender_codec_mime_types(handle, nativeType, success, failure, IntPtr.Zero);
 
         if (!string.IsNullOrEmpty(error))
         {

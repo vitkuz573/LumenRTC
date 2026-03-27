@@ -7,7 +7,7 @@ public sealed partial class PeerConnection : SafeHandle
 {
     private readonly PeerConnectionCallbacks _callbacks;
     private readonly object _keepAliveSync = new();
-    private readonly List<Delegate> _keepAlive = new();
+    private readonly HashSet<Delegate> _keepAlive = [];
 
     internal PeerConnection(IntPtr handle, PeerConnectionCallbacks callbacks)
         : base(IntPtr.Zero, true)
@@ -585,17 +585,12 @@ public sealed partial class PeerConnection : SafeHandle
         }
     }
 
-    private void ReleaseCallbacks(params Delegate?[] callbacks)
+    private void ReleaseCallbacks(Delegate? a, Delegate? b)
     {
         lock (_keepAliveSync)
         {
-            foreach (var callback in callbacks)
-            {
-                if (callback != null)
-                {
-                    _keepAlive.Remove(callback);
-                }
-            }
+            if (a != null) _keepAlive.Remove(a);
+            if (b != null) _keepAlive.Remove(b);
         }
     }
 }

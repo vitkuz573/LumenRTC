@@ -5,7 +5,7 @@ internal sealed class RtpTransceiverInitMarshaler : IDisposable
     private readonly Utf8StringArray _streamIds;
     private readonly IntPtr _encodingsPtr;
     private readonly uint _encodingCount;
-    private readonly List<Utf8String> _encodingStrings = new();
+    private readonly List<Utf8String> _encodingStrings;
 
     public LrtcRtpTransceiverInit Native { get; }
 
@@ -14,6 +14,8 @@ internal sealed class RtpTransceiverInitMarshaler : IDisposable
         if (init == null) throw new ArgumentNullException(nameof(init));
 
         _streamIds = new Utf8StringArray(init.StreamIds);
+        // 2 strings per encoding: rid + scalabilityMode
+        _encodingStrings = new List<Utf8String>(init.SendEncodings.Count * 2);
         if (init.SendEncodings.Count > 0)
         {
             _encodingCount = (uint)init.SendEncodings.Count;

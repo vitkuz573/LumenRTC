@@ -2,7 +2,7 @@ namespace LumenRTC.Internal;
 
 internal sealed class RtcConfigurationMarshaler : IDisposable
 {
-    private readonly List<Utf8String> _strings = new();
+    private readonly List<Utf8String> _strings;
     private IntPtr _ptr;
 
     public IntPtr Pointer => _ptr;
@@ -10,6 +10,8 @@ internal sealed class RtcConfigurationMarshaler : IDisposable
     public RtcConfigurationMarshaler(RtcConfiguration config)
     {
         if (config == null) throw new ArgumentNullException(nameof(config));
+        var iceServerCount = Math.Min(config.IceServers.Count, LrtcConstants.MaxIceServers);
+        _strings = new List<Utf8String>(iceServerCount * 3);
 
         var native = new LrtcRtcConfig
         {
@@ -36,8 +38,7 @@ internal sealed class RtcConfigurationMarshaler : IDisposable
             local_video_bandwidth = config.LocalVideoBandwidth,
         };
 
-        var max = Math.Min(config.IceServers.Count, LrtcConstants.MaxIceServers);
-        for (var i = 0; i < max; i++)
+        for (var i = 0; i < iceServerCount; i++)
         {
             var server = config.IceServers[i];
             var uri = new Utf8String(server.Uri);
@@ -53,7 +54,7 @@ internal sealed class RtcConfigurationMarshaler : IDisposable
                 password = password.Pointer,
             };
         }
-        native.ice_server_count = (uint)max;
+        native.ice_server_count = (uint)iceServerCount;
 
         _ptr = Marshal.AllocHGlobal(Marshal.SizeOf<LrtcRtcConfig>());
         Marshal.StructureToPtr(native, _ptr, false);

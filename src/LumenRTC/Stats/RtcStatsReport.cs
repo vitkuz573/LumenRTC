@@ -9,12 +9,11 @@ public sealed class RtcStatsReport : IDisposable
     private readonly Dictionary<string, RtcStat> _statsById;
     private readonly Dictionary<string, List<RtcStat>> _statsByType;
 
-    private RtcStatsReport(JsonDocument document, List<RtcStat> stats, string rawJson)
+    private RtcStatsReport(JsonDocument document, List<RtcStat> stats)
     {
         _document = document;
         Stats = stats;
-        RawJson = rawJson;
-        _statsById = new Dictionary<string, RtcStat>(StringComparer.Ordinal);
+        _statsById = new Dictionary<string, RtcStat>(stats.Count, StringComparer.Ordinal);
         _statsByType = new Dictionary<string, List<RtcStat>>(StringComparer.OrdinalIgnoreCase);
 
         for (var i = 0; i < stats.Count; i++)
@@ -40,7 +39,6 @@ public sealed class RtcStatsReport : IDisposable
         }
     }
 
-    public string RawJson { get; }
     public IReadOnlyList<RtcStat> Stats { get; }
     public int Count => Stats.Count;
     public IReadOnlyCollection<string> Types => _statsByType.Keys;
@@ -218,7 +216,7 @@ public sealed class RtcStatsReport : IDisposable
         var stats = new List<RtcStat>();
         ParseStatsContainer(document.RootElement, stats);
 
-        return new RtcStatsReport(document, stats, raw);
+        return new RtcStatsReport(document, stats);
     }
 
     public void Dispose()
