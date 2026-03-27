@@ -1,5 +1,7 @@
 # LumenRTC
 
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/vitkuz573/LumenRTC)
+
 LumenRTC is a native C ABI + .NET (`net10.0`) wrapper over `libwebrtc`.
 Canonical upstream for WebRTC is `https://webrtc.googlesource.com/src.git`.
 
