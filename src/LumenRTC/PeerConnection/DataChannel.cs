@@ -10,6 +10,7 @@ namespace LumenRTC;
 public sealed partial class DataChannel : SafeHandle
 {
     private readonly object _callbacksSync = new();
+    private readonly Action<ReadOnlyMemory<byte>, bool> _messageDelegate;
     private DataChannelCallbacks? _userCallbacks;
     private DataChannelCallbacks? _effectiveCallbacks;
     private Action<DataChannelState>? _stateHandler;
@@ -21,6 +22,7 @@ public sealed partial class DataChannel : SafeHandle
     internal DataChannel(IntPtr handle) : base(IntPtr.Zero, true)
     {
         SetHandle(handle);
+        _messageDelegate = (payload, isBinary) => HandleMessage(new DataChannelMessage(payload, isBinary));
     }
 
     public DataChannelState State
@@ -172,8 +174,19 @@ public sealed partial class DataChannel : SafeHandle
             throw new ArgumentNullException(nameof(text));
         }
 
-        var bytes = System.Text.Encoding.UTF8.GetBytes(text);
-        Send(bytes, binary: false);
+        const int StackAllocThreshold = 512;
+        var maxByteCount = System.Text.Encoding.UTF8.GetMaxByteCount(text.Length);
+        if (maxByteCount <= StackAllocThreshold)
+        {
+            Span<byte> buffer = stackalloc byte[maxByteCount];
+            var written = System.Text.Encoding.UTF8.GetBytes(text, buffer);
+            Send(buffer[..written], binary: false);
+        }
+        else
+        {
+            var bytes = System.Text.Encoding.UTF8.GetBytes(text);
+            Send(bytes, binary: false);
+        }
     }
 
     public void SendJson<T>(T value, JsonTypeInfo<T> jsonTypeInfo)
@@ -303,7 +316,7 @@ public sealed partial class DataChannel : SafeHandle
         var effectiveCallbacks = new DataChannelCallbacks
         {
             OnStateChange = HandleStateChange,
-            OnMessage = (payload, isBinary) => HandleMessage(new DataChannelMessage(payload, isBinary)),
+            OnMessage = _messageDelegate,
         };
         _effectiveCallbacks = effectiveCallbacks;
 
@@ -359,15 +372,8 @@ public sealed partial class DataChannel : SafeHandle
         messageReceived?.Invoke(message);
     }
 
-    private static DataChannelState NormalizeState(DataChannelState state)
-    {
-        return state switch
-        {
-            DataChannelState.Connecting => DataChannelState.Connecting,
-            DataChannelState.Open => DataChannelState.Open,
-            DataChannelState.Closing => DataChannelState.Closing,
-            DataChannelState.Closed => DataChannelState.Closed,
-            _ => DataChannelState.Connecting,
-        };
-    }
+    private static DataChannelState NormalizeState(DataChannelState state) =>
+        state is >= DataChannelState.Connecting and <= DataChannelState.Closed
+            ? state
+            : DataChannelState.Connecting;
 }

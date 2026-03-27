@@ -5,51 +5,38 @@ namespace LumenRTC;
 /// </summary>
 public static class LumenRtc
 {
-    public static uint AbiVersionMajor => NativeMethods.lrtc_abi_version_major();
-    public static uint AbiVersionMinor => NativeMethods.lrtc_abi_version_minor();
-    public static uint AbiVersionPatch => NativeMethods.lrtc_abi_version_patch();
+    private static readonly Lazy<uint> _abiVersionMajor = new(NativeMethods.lrtc_abi_version_major);
+    private static readonly Lazy<uint> _abiVersionMinor = new(NativeMethods.lrtc_abi_version_minor);
+    private static readonly Lazy<uint> _abiVersionPatch = new(NativeMethods.lrtc_abi_version_patch);
+    private static readonly Lazy<Version> _abiVersion = new(() =>
+        new(checked((int)AbiVersionMajor), checked((int)AbiVersionMinor), checked((int)AbiVersionPatch)));
+    private static readonly Lazy<string> _abiVersionString = new(ReadAbiVersionString);
 
-    public static Version AbiVersion =>
-        new(checked((int)AbiVersionMajor), checked((int)AbiVersionMinor), checked((int)AbiVersionPatch));
+    public static uint AbiVersionMajor => _abiVersionMajor.Value;
+    public static uint AbiVersionMinor => _abiVersionMinor.Value;
+    public static uint AbiVersionPatch => _abiVersionPatch.Value;
+    public static Version AbiVersion => _abiVersion.Value;
+    public static string AbiVersionString => _abiVersionString.Value;
 
-    public static string AbiVersionString
+    private static string ReadAbiVersionString()
     {
-        get
+        const int BufferSize = 128;
+        Span<byte> buffer = stackalloc byte[BufferSize];
+        unsafe
         {
-            const int maxAttempts = 4;
-            var bufferSize = 64;
-
-            for (var attempt = 0; attempt < maxAttempts; attempt++)
+            fixed (byte* ptr = buffer)
             {
-                var buffer = Marshal.AllocHGlobal(bufferSize);
-                try
+                var written = NativeMethods.lrtc_abi_version_string((IntPtr)ptr, BufferSize);
+                if (written > 0 && written < BufferSize)
                 {
-                    var written = NativeMethods.lrtc_abi_version_string(buffer, (uint)bufferSize);
-                    if (written <= 0)
-                    {
-                        return $"{AbiVersionMajor}.{AbiVersionMinor}.{AbiVersionPatch}";
-                    }
-
-                    if (written >= bufferSize)
-                    {
-                        bufferSize = checked(bufferSize * 2);
-                        continue;
-                    }
-
-                    var bytes = new byte[written];
-                    Marshal.Copy(buffer, bytes, 0, written);
-                    var zeroIndex = Array.IndexOf(bytes, (byte)0);
-                    var textLength = zeroIndex >= 0 ? zeroIndex : bytes.Length;
-                    return System.Text.Encoding.UTF8.GetString(bytes, 0, textLength);
-                }
-                finally
-                {
-                    Marshal.FreeHGlobal(buffer);
+                    var span = buffer[..written];
+                    var zeroIndex = span.IndexOf((byte)0);
+                    var textLength = zeroIndex >= 0 ? zeroIndex : written;
+                    return System.Text.Encoding.UTF8.GetString(buffer[..textLength]);
                 }
             }
-
-            return $"{AbiVersionMajor}.{AbiVersionMinor}.{AbiVersionPatch}";
         }
+        return $"{AbiVersionMajor}.{AbiVersionMinor}.{AbiVersionPatch}";
     }
 
     public static void Initialize()
