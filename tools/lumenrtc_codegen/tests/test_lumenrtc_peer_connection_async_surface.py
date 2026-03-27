@@ -15,7 +15,7 @@ class PeerConnectionAsyncSurfaceTests(unittest.TestCase):
             "KeepCallbackAlive(",
             "ReleaseCallbacks(",
             "private void KeepCallbackAlive(Delegate callback)",
-            "private void ReleaseCallbacks(params Delegate?[] callbacks)",
+            "private void ReleaseCallbacks(Delegate? a, Delegate? b)",
         ]
         missing = [item for item in expected_snippets if item not in text]
         self.assertFalse(

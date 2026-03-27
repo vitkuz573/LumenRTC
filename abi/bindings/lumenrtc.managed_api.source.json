@@ -65,7 +65,7 @@
             "        return;",
             "    }",
             "",
-            "    var data = new byte[(int)totalBytes];",
+            "    var data = GC.AllocateUninitializedArray<byte>((int)totalBytes);",
             "    Marshal.Copy(audioPtr, data, 0, (int)totalBytes);",
             "    OnData?.Invoke(new AudioFrame(data, bitsPerSample, sampleRate, channelsInt, framesInt));",
             "}"
@@ -102,7 +102,7 @@
             "        OnMessage?.Invoke(ReadOnlyMemory<byte>.Empty, binary != 0);",
             "        return;",
             "    }",
-            "    var managed = new byte[length];",
+            "    var managed = GC.AllocateUninitializedArray<byte>(length);",
             "    Marshal.Copy(dataPtr, managed, 0, length);",
             "    OnMessage?.Invoke(managed, binary != 0);",
             "}"
