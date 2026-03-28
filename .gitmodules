@@ -1,0 +1,3 @@
+[submodule "tools/abi_framework"]
+	path = tools/abi_framework
+	url = https://github.com/vitkuz573/abi-forge.git

@@ -4,9 +4,9 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <IsAotCompatible>true</IsAotCompatible>
     <ShouldUnsetParentConfigurationAndPlatform>false</ShouldUnsetParentConfigurationAndPlatform>
-    <AbiRoslynGeneratorProjectPath>$(MSBuildProjectDirectory)/../../tools/abi_roslyn_codegen/Abi.RoslynGenerator.csproj</AbiRoslynGeneratorProjectPath>
-    <AbiRoslynGeneratorDllPathDefault>$(MSBuildProjectDirectory)/../../tools/abi_roslyn_codegen/bin/$(Configuration)/netstandard2.0/Abi.RoslynGenerator.dll</AbiRoslynGeneratorDllPathDefault>
-    <AbiRoslynGeneratorDllPathWithPlatform Condition="'$(Platform)'!=''">$(MSBuildProjectDirectory)/../../tools/abi_roslyn_codegen/bin/$(Platform)/$(Configuration)/netstandard2.0/Abi.RoslynGenerator.dll</AbiRoslynGeneratorDllPathWithPlatform>
+    <AbiRoslynGeneratorProjectPath>$(MSBuildProjectDirectory)/../../tools/abi_framework/abi_roslyn_codegen/Abi.RoslynGenerator.csproj</AbiRoslynGeneratorProjectPath>
+    <AbiRoslynGeneratorDllPathDefault>$(MSBuildProjectDirectory)/../../tools/abi_framework/abi_roslyn_codegen/bin/$(Configuration)/netstandard2.0/Abi.RoslynGenerator.dll</AbiRoslynGeneratorDllPathDefault>
+    <AbiRoslynGeneratorDllPathWithPlatform Condition="'$(Platform)'!=''">$(MSBuildProjectDirectory)/../../tools/abi_framework/abi_roslyn_codegen/bin/$(Platform)/$(Configuration)/netstandard2.0/Abi.RoslynGenerator.dll</AbiRoslynGeneratorDllPathWithPlatform>
     <AbiRoslynGeneratorDllPresent Condition="Exists('$(AbiRoslynGeneratorDllPathDefault)') or Exists('$(AbiRoslynGeneratorDllPathWithPlatform)')">true</AbiRoslynGeneratorDllPresent>
     <AbiIdlPath>$(MSBuildProjectDirectory)/../../abi/generated/lumenrtc/lumenrtc.idl.json</AbiIdlPath>
     <AbiNamespace>LumenRTC.Interop</AbiNamespace>
@@ -20,7 +20,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\tools\abi_roslyn_codegen\Abi.RoslynGenerator.csproj"
+    <ProjectReference Include="..\..\tools\abi_framework\abi_roslyn_codegen\Abi.RoslynGenerator.csproj"
                       SetConfiguration="Configuration=$(Configuration)"
                       SetPlatform="Platform=$(Platform)"
                       GlobalPropertiesToRemove="PublishAot;IsAotCompatible;EnableAotAnalyzer;RuntimeIdentifier;SelfContained;PublishTrimmed;TrimMode"

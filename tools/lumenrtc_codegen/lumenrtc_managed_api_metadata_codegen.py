@@ -11,7 +11,7 @@ from typing import Any
 TOOL_PATH = "tools/lumenrtc_codegen/lumenrtc_managed_api_metadata_codegen.py"
 DEFAULT_NATIVE_CALL_PATTERN = r"\bNativeMethods\.([A-Za-z_][A-Za-z0-9_]*)\b"
 
-CORE_SRC = Path(__file__).resolve().parents[1] / "abi_codegen_core" / "src"
+CORE_SRC = Path(__file__).resolve().parents[1] / "abi_framework" / "abi_codegen_core" / "src"
 if str(CORE_SRC) not in sys.path:
     sys.path.insert(0, str(CORE_SRC))
 
