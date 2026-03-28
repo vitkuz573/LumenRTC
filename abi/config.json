@@ -65,25 +65,21 @@
           {
             "name": "symbol_contract",
             "kind": "external",
-            "manifest": "{repo_root}/tools/abi_framework/generator_sdk/plugin.manifest.json",
             "plugin": "abi_framework.symbol_contract"
           },
           {
             "name": "native_exports",
             "kind": "external",
-            "manifest": "{repo_root}/tools/abi_framework/generator_sdk/plugin.manifest.json",
             "plugin": "abi_framework.native_exports"
           },
           {
             "name": "managed_api_metadata",
             "kind": "external",
-            "manifest": "{repo_root}/tools/abi_framework/generator_sdk/plugin.manifest.json",
             "plugin": "abi_framework.managed_api_metadata"
           },
           {
             "name": "managed_api",
             "kind": "external",
-            "manifest": "{repo_root}/tools/abi_framework/generator_sdk/plugin.manifest.json",
             "plugin": "abi_framework.managed_api"
           }
         ]

@@ -50,7 +50,7 @@ COMMAND="$1"
 shift || true
 
 run_guard() {
-  "${PYTHON_BIN}" "${REPO_ROOT}/tools/abi_framework/abi_framework.py" "$@"
+  abi_framework "$@"
 }
 
 case "${COMMAND}" in

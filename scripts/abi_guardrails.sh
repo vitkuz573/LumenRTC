@@ -14,14 +14,6 @@ if [[ -n "${tracked_generated}" ]]; then
   exit 1
 fi
 
-echo "[abi-guardrails] checking abi_framework generator isolation"
-unexpected_generators="$(find tools/abi_framework/generators -mindepth 1 -type f ! -name '.gitkeep' -print 2>/dev/null || true)"
-if [[ -n "${unexpected_generators}" ]]; then
-  echo "ERROR: tools/abi_framework/generators must remain target-agnostic and empty."
-  echo "${unexpected_generators}"
-  exit 1
-fi
-
 echo "[abi-guardrails] checking external generator commands for managed-source writes"
 python3 - <<'PY'
 import json

@@ -4,10 +4,6 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <IsAotCompatible>true</IsAotCompatible>
     <ShouldUnsetParentConfigurationAndPlatform>false</ShouldUnsetParentConfigurationAndPlatform>
-    <AbiRoslynGeneratorProjectPath>$(MSBuildProjectDirectory)/../../tools/abi_framework/generator_sdk/csharp/Abi.RoslynGenerator.csproj</AbiRoslynGeneratorProjectPath>
-    <AbiRoslynGeneratorDllPathDefault>$(MSBuildProjectDirectory)/../../tools/abi_framework/generator_sdk/csharp/bin/$(Configuration)/netstandard2.0/Abi.RoslynGenerator.dll</AbiRoslynGeneratorDllPathDefault>
-    <AbiRoslynGeneratorDllPathWithPlatform Condition="'$(Platform)'!=''">$(MSBuildProjectDirectory)/../../tools/abi_framework/generator_sdk/csharp/bin/$(Platform)/$(Configuration)/netstandard2.0/Abi.RoslynGenerator.dll</AbiRoslynGeneratorDllPathWithPlatform>
-    <AbiRoslynGeneratorDllPresent Condition="Exists('$(AbiRoslynGeneratorDllPathDefault)') or Exists('$(AbiRoslynGeneratorDllPathWithPlatform)')">true</AbiRoslynGeneratorDllPresent>
     <AbiIdlPath>$(MSBuildProjectDirectory)/../../abi/generated/lumenrtc/lumenrtc.idl.json</AbiIdlPath>
     <AbiNamespace>LumenRTC.Interop</AbiNamespace>
     <AbiClassName>NativeMethods</AbiClassName>
@@ -20,26 +16,14 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\tools\abi_framework\generator_sdk\csharp\Abi.RoslynGenerator.csproj"
-                      SetConfiguration="Configuration=$(Configuration)"
-                      SetPlatform="Platform=$(Platform)"
-                      GlobalPropertiesToRemove="PublishAot;IsAotCompatible;EnableAotAnalyzer;RuntimeIdentifier;SelfContained;PublishTrimmed;TrimMode"
+    <PackageReference Include="Abi.RoslynGenerator" Version="1.0.0"
                       OutputItemType="Analyzer"
-                      ReferenceOutputAssembly="false" />
+                      ReferenceOutputAssembly="false"
+                      PrivateAssets="all" />
     <AdditionalFiles Include="$(AbiIdlPath)" />
     <AdditionalFiles Include="$(AbiManagedMetadataPath)" />
     <AdditionalFiles Include="$(AbiManagedApiMetadataPath)" />
   </ItemGroup>
-
-  <!-- VS Publish can compile with BuildProjectReferences=false; ensure analyzer exists in that mode. -->
-  <Target Name="EnsureAbiRoslynGeneratorBuilt"
-          BeforeTargets="CoreCompile"
-          Condition="'$(DesignTimeBuild)'!='true' and '$(AbiRoslynGeneratorDllPresent)'!='true'">
-    <MSBuild Projects="$(AbiRoslynGeneratorProjectPath)"
-             Targets="Build"
-             Properties="Configuration=$(Configuration);Platform=$(Platform)"
-             RemoveProperties="PublishAot;IsAotCompatible;EnableAotAnalyzer;RuntimeIdentifier;SelfContained;PublishTrimmed;TrimMode" />
-  </Target>
 
   <ItemGroup>
     <CompilerVisibleProperty Include="AbiIdlPath" />
