@@ -12,9 +12,15 @@ MANAGED_HANDLES_PATH = REPO_ROOT / "abi" / "bindings" / "lumenrtc.managed.json"
 SYMBOL_CONTRACT_SPEC_PATH = REPO_ROOT / "abi" / "bindings" / "lumenrtc.symbol_contract.sources.json"
 SYMBOL_CONTRACT_PATH = REPO_ROOT / "abi" / "bindings" / "lumenrtc.symbol_contract.json"
 SRC_ROOT = REPO_ROOT / "src" / "LumenRTC"
-SYMBOL_CONTRACT_GENERATOR_PATH = (
-    REPO_ROOT / "tools" / "abi_framework" / "generator_sdk" / "symbol_contract_generator.py"
-)
+def _sdk_path() -> Path:
+    try:
+        import abi_forge_sdk as _sdk  # type: ignore[import]
+        return Path(_sdk.__file__).resolve().parent
+    except ImportError:
+        return REPO_ROOT / "tools" / "abi_framework" / "generator_sdk"
+
+
+SYMBOL_CONTRACT_GENERATOR_PATH = _sdk_path() / "symbol_contract_generator.py"
 
 
 def load_json(path: Path) -> dict:

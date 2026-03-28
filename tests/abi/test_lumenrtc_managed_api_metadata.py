@@ -8,8 +8,17 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 IDL_PATH = REPO_ROOT / "abi" / "generated" / "lumenrtc" / "lumenrtc.idl.json"
 MANAGED_API_PATH = REPO_ROOT / "abi" / "bindings" / "lumenrtc.managed_api.json"
 MANAGED_API_SOURCE_PATH = REPO_ROOT / "abi" / "bindings" / "lumenrtc.managed_api.source.json"
-METADATA_GENERATOR_PATH = REPO_ROOT / "tools" / "abi_framework" / "generator_sdk" / "managed_api_metadata_generator.py"
-GENERATOR_PATH = REPO_ROOT / "tools" / "abi_framework" / "generator_sdk" / "managed_api_codegen.py"
+def _sdk_path() -> Path:
+    try:
+        import abi_forge_sdk as _sdk  # type: ignore[import]
+        return Path(_sdk.__file__).resolve().parent
+    except ImportError:
+        return REPO_ROOT / "tools" / "abi_framework" / "generator_sdk"
+
+
+_SDK = _sdk_path()
+METADATA_GENERATOR_PATH = _SDK / "managed_api_metadata_generator.py"
+GENERATOR_PATH = _SDK / "managed_api_codegen.py"
 
 
 def load_json(path: Path) -> dict:
