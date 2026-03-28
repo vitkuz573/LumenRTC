@@ -2,7 +2,7 @@ import unittest
 from pathlib import Path
 
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
+REPO_ROOT = Path(__file__).resolve().parents[2]
 PEER_CONNECTION_PATH = REPO_ROOT / "src" / "LumenRTC" / "PeerConnection" / "PeerConnection.cs"
 PEER_CONNECTION_TIMEOUTS_PATH = REPO_ROOT / "src" / "LumenRTC" / "PeerConnection" / "PeerConnection.Timeouts.cs"
 

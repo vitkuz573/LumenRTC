@@ -83,8 +83,8 @@
           {
             "name": "managed_api",
             "kind": "external",
-            "manifest": "{repo_root}/tools/lumenrtc_codegen/plugin.manifest.json",
-            "plugin": "lumenrtc.managed_api"
+            "manifest": "{repo_root}/tools/abi_framework/generator_sdk/plugin.manifest.json",
+            "plugin": "abi_framework.managed_api"
           }
         ]
       },

@@ -2,7 +2,7 @@ import unittest
 from pathlib import Path
 
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
+REPO_ROOT = Path(__file__).resolve().parents[2]
 MEDIA_ROOT = REPO_ROOT / "src" / "LumenRTC" / "Media"
 AUDIO_TRACK_PATH = MEDIA_ROOT / "AudioTrack.cs"
 VIDEO_TRACK_PATH = MEDIA_ROOT / "VideoTrack.cs"

@@ -2,7 +2,7 @@ import unittest
 from pathlib import Path
 
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
+REPO_ROOT = Path(__file__).resolve().parents[2]
 SRC_ROOT = REPO_ROOT / "src" / "LumenRTC"
 RTP_TRANSCEIVER_PATH = SRC_ROOT / "Rtp" / "RtpTransceiver.cs"
 RTP_SENDER_PATH = SRC_ROOT / "Rtp" / "RtpSender.cs"
