@@ -16,7 +16,7 @@ install:
   - sh: |
       set -euo pipefail
 
-      pip install abi-forge==1.0.3 --break-system-packages
+      pip install abi-forge==1.0.4 --break-system-packages
 
       if ! dotnet --list-sdks | grep -q '^10\.'; then
         curl -fsSL https://dot.net/v1/dotnet-install.sh -o /tmp/dotnet-install.sh
@@ -31,7 +31,7 @@ install:
       mkdir -p /tmp/local-nuget-feed
       dotnet pack "$ABI_SDK_PATH/csharp/Abi.RoslynGenerator.csproj" \
         -c Release \
-        /p:Version="1.0.3" \
+        /p:Version="1.0.4" \
         --output /tmp/local-nuget-feed
       dotnet nuget add source /tmp/local-nuget-feed --name abi-forge-local
 
