@@ -16,7 +16,7 @@ install:
   - sh: |
       set -euo pipefail
 
-      pip install abi-forge==1.0.2 --break-system-packages
+      pip install abi-forge==1.0.3 --break-system-packages
 
       if ! dotnet --list-sdks | grep -q '^10\.'; then
         curl -fsSL https://dot.net/v1/dotnet-install.sh -o /tmp/dotnet-install.sh
