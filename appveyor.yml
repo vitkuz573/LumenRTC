@@ -16,6 +16,8 @@ install:
   - sh: |
       set -euo pipefail
 
+      git submodule update --init --recursive
+
       if ! dotnet --list-sdks | grep -q '^10\.'; then
         curl -fsSL https://dot.net/v1/dotnet-install.sh -o /tmp/dotnet-install.sh
         bash /tmp/dotnet-install.sh --channel 10.0 --install-dir "$HOME/.dotnet"
