@@ -167,7 +167,10 @@
   "codegen": {
     "enabled": true,
     "exclude_symbols": [],
-    "include_symbols": []
+    "include_symbols": [],
+    "native_api_macro": "LUMENRTC_API",
+    "native_call_macro": "LUMENRTC_CALL",
+    "symbol_prefix": "lrtc_"
   },
   "content_fingerprint": "c2af15f045bfab2fc7349add166a2f5203f14c5ad7a34e01af489bc883ee750b",
   "functions": [
