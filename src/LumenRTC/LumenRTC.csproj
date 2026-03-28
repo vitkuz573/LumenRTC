@@ -16,7 +16,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Abi.RoslynGenerator" Version="1.0.0"
+    <PackageReference Include="Abi.RoslynGenerator" Version="1.0.1"
                       OutputItemType="Analyzer"
                       ReferenceOutputAssembly="false"
                       PrivateAssets="all" />
