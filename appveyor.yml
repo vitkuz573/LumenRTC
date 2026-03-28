@@ -26,6 +26,15 @@ install:
       export PATH="$HOME/.dotnet:$PATH"
       dotnet --info
 
+      # Pack Abi.RoslynGenerator from the installed abi_forge_sdk and add as local NuGet source
+      ABI_SDK_PATH="$(python3 -c "import abi_forge_sdk, pathlib; print(pathlib.Path(abi_forge_sdk.__file__).parent)")"
+      mkdir -p /tmp/local-nuget-feed
+      dotnet pack "$ABI_SDK_PATH/csharp/Abi.RoslynGenerator.csproj" \
+        -c Release \
+        /p:Version="1.0.3" \
+        --output /tmp/local-nuget-feed
+      dotnet nuget add source /tmp/local-nuget-feed --name abi-forge-local
+
       if ! command -v clang >/dev/null 2>&1; then
         sudo apt-get update
         sudo apt-get install -y clang
