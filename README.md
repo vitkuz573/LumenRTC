@@ -5,6 +5,15 @@
 LumenRTC is a native C ABI + .NET (`net10.0`) wrapper over `libwebrtc`.
 Canonical upstream for WebRTC is `https://webrtc.googlesource.com/src.git`.
 
+The repository also ships a reusable **ABI framework** (`tools/abi_framework/`) that
+can govern, snapshot, and generate bindings for *any* C shared library — not just
+libwebrtc. From a single IDL snapshot the framework generates:
+- C# P/Invoke + managed wrapper (via Roslyn source generator)
+- Python ctypes module
+- Rust FFI (`extern "C"` block)
+- TypeScript/Node.js module (ffi-napi)
+- Go cgo package
+
 Source-of-truth runbooks:
 - Upstream sync: `docs/WEBRTC_UPSTREAM_SYNC.md`
 - ABI governance workflow: `abi/README.md`
@@ -24,7 +33,8 @@ macOS is not currently wired as a first-class build target in this repository.
 - `src/LumenRTC.Rendering.Sdl/`: optional SDL2 renderer helper.
 - `samples/`: local camera, screen share, streaming, signaling examples.
 - `abi/`: ABI config, baselines, generated IDL, changelog/governance docs.
-- `tools/abi_framework/`: reusable ABI framework.
+- `tools/abi_framework/`: reusable ABI framework (governance, snapshot, multi-language codegen).
+  - `generator_sdk/`: language generators — Python ctypes, Rust FFI, TypeScript ffi-napi, Go cgo.
 - `tools/abi_codegen_core/`: target-agnostic codegen primitives shared by generators.
 - `tools/lumenrtc_codegen/`: project-specific ABI codegen plugins/metadata tests.
 - `tools/abi_roslyn_codegen/`: Roslyn source generator for managed interop.
@@ -138,6 +148,19 @@ scripts\abi.ps1 generate --skip-binary
 scripts\abi.ps1 codegen --skip-binary
 scripts\abi.ps1 sync --skip-binary
 scripts\abi.ps1 release-prepare --skip-binary --release-tag vX.Y.Z
+```
+
+Binding generation (multi-language, LumenRTC target):
+
+```bash
+# Regenerate IDL from header
+scripts/abi.sh generate --skip-binary
+
+# Re-run all downstream code generators (C#, Python, Rust, TypeScript, Go)
+scripts/abi.sh codegen --skip-binary
+
+# Snapshot current IDL as the new baseline (after a deliberate ABI change)
+python3 tools/abi_framework/abi_framework.py generate-baseline --target lumenrtc
 ```
 
 For full command list:
@@ -501,3 +524,9 @@ Optional STUN:
 - Peer connection, ICE, data channels, RTP senders/receivers/transceivers
 - Camera and desktop capture, plus optional SDL2 rendering
 - ABI governance pipeline with generation, codegen, verify, sync, and release prep
+- Multi-language binding generation from a single IDL snapshot:
+  - Python ctypes (`abi/generated/lumenrtc/lumenrtc_ctypes.py`)
+  - Rust FFI (`abi/generated/lumenrtc/lumenrtc_ffi.rs`)
+  - TypeScript/Node.js ffi-napi (`abi/generated/lumenrtc/lumenrtc_ffi.ts`)
+  - Go cgo (`abi/generated/lumenrtc/lumenrtc_ffi.go`)
+- Reusable ABI framework applicable to *any* C shared library (`tools/abi_framework/`)
