@@ -5,10 +5,10 @@
 LumenRTC is a native C ABI + .NET (`net10.0`) wrapper over `libwebrtc`.
 Canonical upstream for WebRTC is `https://webrtc.googlesource.com/src.git`.
 
-The repository also ships a reusable **ABI framework** (`tools/abi_framework/`) that
-can govern, snapshot, and generate bindings for *any* C shared library — not just
-libwebrtc. From a single IDL snapshot the framework generates:
-- C# P/Invoke + managed wrapper (via Roslyn source generator)
+The repository uses [abi-forge](https://github.com/vitkuz573/abi-forge) (installed
+via pip) to govern, snapshot, and generate bindings for the C ABI. From a single
+IDL snapshot the framework generates:
+- C# P/Invoke + managed wrapper (via `AbiForge.RoslynGenerator` NuGet)
 - Python ctypes module
 - Rust FFI (`extern "C"` block)
 - TypeScript/Node.js module (ffi-napi)
@@ -32,18 +32,18 @@ macOS is not currently wired as a first-class build target in this repository.
 - `src/LumenRTC/`: managed wrapper and public API.
 - `src/LumenRTC.Rendering.Sdl/`: optional SDL2 renderer helper.
 - `samples/`: local camera, screen share, streaming, signaling examples.
-- `abi/`: ABI config, baselines, generated IDL, changelog/governance docs.
-- `tools/abi_framework/`: reusable ABI framework (governance, snapshot, multi-language codegen).
-  - `generator_sdk/`: language generators — Python ctypes, Rust FFI, TypeScript ffi-napi, Go cgo.
+- `abi/`: ABI config, baselines, generated IDL, bindings metadata, governance docs.
+- `tests/abi/`: ABI governance test suite (Python unittest).
 - `tools/abi_codegen_core/`: target-agnostic codegen primitives shared by generators.
-- `tools/lumenrtc_codegen/`: project-specific ABI codegen plugins/metadata tests.
-- `tools/abi_roslyn_codegen/`: Roslyn source generator for managed interop.
+- `tools/lumenrtc_codegen/`: LumenRTC-specific codegen tests.
+- `tools/abi_roslyn_codegen/`: local build of the Roslyn source generator (project uses `AbiForge.RoslynGenerator` NuGet).
 
 ## Prerequisites
 
 - .NET SDK 10
 - CMake + Ninja
-- Python 3
+- Python 3 + `pip install abi-forge` (for ABI governance tooling)
+- clang (for ABI header parsing)
 - Git
 - `depot_tools` (`gclient`, `gn`, `ninja`) for setup/sync scripts
 
@@ -156,17 +156,17 @@ Binding generation (multi-language, LumenRTC target):
 # Regenerate IDL from header
 scripts/abi.sh generate --skip-binary
 
-# Re-run all downstream code generators (C#, Python, Rust, TypeScript, Go)
+# Re-run all downstream code generators (Python, Rust, TypeScript, Go, C++ headers)
 scripts/abi.sh codegen --skip-binary
 
+# Watch mode: re-run codegen automatically on header/metadata changes
+scripts/abi.sh watch
+
 # Snapshot current IDL as the new baseline (after a deliberate ABI change)
-python3 tools/abi_framework/abi_framework.py generate-baseline --target lumenrtc
+scripts/abi.sh baseline
 ```
 
-For full command list:
-- `scripts/abi.sh`
-- `scripts/abi.ps1`
-- `python3 tools/abi_framework/abi_framework.py --help`
+For full command list: `scripts/abi.sh` or `abi_framework --help`
 
 Current ABI facts:
 - ABI IDL schema: v1 (`abi/generated/lumenrtc/lumenrtc.idl.json`)
@@ -386,7 +386,7 @@ Use AppVeyor only for ABI checks in this repository.
 
 AppVeyor runs:
 
-- ABI-related unit tests for `tools/abi_framework`, `tools/abi_codegen_core`, `tools/lumenrtc_codegen`
+- ABI governance tests from `tests/abi/` (Python unittest)
 - `scripts/abi_guardrails.sh`
 - ABI generate/codegen checks with `--check --fail-on-sync`
 - managed build validation (`dotnet build src/LumenRTC/LumenRTC.csproj`)
@@ -529,4 +529,4 @@ Optional STUN:
   - Rust FFI (`abi/generated/lumenrtc/lumenrtc_ffi.rs`)
   - TypeScript/Node.js ffi-napi (`abi/generated/lumenrtc/lumenrtc_ffi.ts`)
   - Go cgo (`abi/generated/lumenrtc/lumenrtc_ffi.go`)
-- Reusable ABI framework applicable to *any* C shared library (`tools/abi_framework/`)
+- ABI governance via [abi-forge](https://github.com/vitkuz573/abi-forge) with incremental generator cache and watch mode
