@@ -18,7 +18,7 @@ def _sdk_path() -> Path:
 
 _SDK = _sdk_path()
 METADATA_GENERATOR_PATH = _SDK / "managed_api_metadata_generator.py"
-GENERATOR_PATH = _SDK / "managed_api_codegen.py"
+GENERATOR_PATH = _SDK / "native_impl_handles_generator.py"
 
 
 def load_json(path: Path) -> dict:
@@ -119,22 +119,20 @@ class ManagedApiMetadataTests(unittest.TestCase):
             combined = (result.stdout + "\n" + result.stderr).strip()
             self.fail(f"managed API metadata codegen --check failed:\n{combined}")
 
-    def test_managed_api_codegen_check_is_clean(self) -> None:
+    def test_native_impl_handles_check_is_clean(self) -> None:
         command = [
             "python3",
             str(GENERATOR_PATH),
-            "--idl",
-            str(IDL_PATH),
             "--managed-api",
             str(MANAGED_API_PATH),
-            "--out-native-handles",
+            "--out",
             str(REPO_ROOT / "native" / "src" / "lumenrtc_impl_handles.generated.h"),
             "--check",
         ]
         result = subprocess.run(command, cwd=REPO_ROOT, capture_output=True, text=True)
         if result.returncode != 0:
             combined = (result.stdout + "\n" + result.stderr).strip()
-            self.fail(f"managed API codegen --check failed:\n{combined}")
+            self.fail(f"native_impl_handles_generator --check failed:\n{combined}")
 
 
 if __name__ == "__main__":
