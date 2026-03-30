@@ -78,9 +78,9 @@
             "plugin": "abi_framework.managed_api_metadata"
           },
           {
-            "name": "managed_api",
+            "name": "native_impl_handles",
             "kind": "external",
-            "plugin": "abi_framework.managed_api"
+            "plugin": "abi_framework.native_impl_handles"
           }
         ]
       },
