@@ -81,6 +81,11 @@
             "name": "native_impl_handles",
             "kind": "external",
             "plugin": "abi_framework.native_impl_handles"
+          },
+          {
+            "name": "layout_probe",
+            "kind": "external",
+            "plugin": "abi_framework.layout_probe"
           }
         ]
       },

@@ -41,38 +41,16 @@ build_script:
 
       python3 -m unittest discover -s tests/abi -p "test_*.py"
 
-      abi_framework validate-plugin-manifest \
-        --repo-root . \
-        --config abi/config.json
-
       scripts/abi_guardrails.sh
 
-      abi_framework generate \
-        --repo-root . \
-        --config abi/config.json \
+      abi_framework check \
         --skip-binary \
-        --check \
-        --fail-on-sync \
-        --report-json artifacts/abi/generate.report.json
-
-      abi_framework codegen \
-        --repo-root . \
-        --config abi/config.json \
-        --skip-binary \
-        --check \
-        --fail-on-sync \
+        --output-dir artifacts/abi \
         --report-json artifacts/abi/codegen.report.json
 
       dotnet build src/LumenRTC/LumenRTC.csproj -v minimal
 
-      abi_framework verify-all \
-        --repo-root . \
-        --config abi/config.json \
-        --skip-binary \
-        --output-dir artifacts/abi
-
       abi_framework waiver-audit \
-        --config abi/config.json \
         --output artifacts/abi/waiver.audit.report.json \
         --fail-on-expired \
         --fail-on-missing-metadata
