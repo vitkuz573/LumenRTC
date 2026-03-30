@@ -75,7 +75,7 @@ sed -n '1,120p' ../webrtc_build/.gclient
 3. ABI framework regeneration after upstream sync:
 
 ```bash
-scripts/abi.sh release-prepare --skip-binary --update-baselines --release-tag <tag>
+abi_framework release-prepare --skip-binary --update-baselines --release-tag <tag>
 ```
 
 ## Notes

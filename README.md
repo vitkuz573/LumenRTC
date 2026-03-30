@@ -126,47 +126,32 @@ The managed layer validates ABI major compatibility before first P/Invoke.
 
 ### ABI Tooling
 
-Bash:
-
 ```bash
-scripts/abi.sh baseline
-scripts/abi.sh check --skip-binary
-scripts/abi.sh check-all --skip-binary
-scripts/abi.sh generate --skip-binary
-scripts/abi.sh codegen --skip-binary
-scripts/abi.sh sync --skip-binary
-scripts/abi.sh release-prepare --skip-binary --release-tag vX.Y.Z
-```
-
-PowerShell:
-
-```powershell
-scripts\abi.ps1 baseline
-scripts\abi.ps1 check --skip-binary
-scripts\abi.ps1 check-all --skip-binary
-scripts\abi.ps1 generate --skip-binary
-scripts\abi.ps1 codegen --skip-binary
-scripts\abi.ps1 sync --skip-binary
-scripts\abi.ps1 release-prepare --skip-binary --release-tag vX.Y.Z
+abi_framework generate-baseline              # snapshot current IDL as new baseline
+abi_framework verify-all --skip-binary       # check for ABI regressions
+abi_framework generate --skip-binary         # regenerate IDL from header
+abi_framework codegen --skip-binary          # re-run all downstream code generators
+abi_framework sync --skip-binary             # sync generated artifacts
+abi_framework release-prepare --skip-binary --release-tag vX.Y.Z
 ```
 
 Binding generation (multi-language, LumenRTC target):
 
 ```bash
 # Regenerate IDL from header
-scripts/abi.sh generate --skip-binary
+abi_framework generate --skip-binary
 
 # Re-run all downstream code generators (Python, Rust, TypeScript, Go, C++ headers)
-scripts/abi.sh codegen --skip-binary
+abi_framework codegen --skip-binary
 
 # Watch mode: re-run codegen automatically on header/metadata changes
-scripts/abi.sh watch
+abi_framework watch
 
 # Snapshot current IDL as the new baseline (after a deliberate ABI change)
-scripts/abi.sh baseline
+abi_framework generate-baseline
 ```
 
-For full command list: `scripts/abi.sh` or `abi_framework --help`
+For full command list: `abi_framework --help`
 
 Current ABI facts:
 - ABI IDL schema: v1 (`abi/generated/lumenrtc/lumenrtc.idl.json`)
