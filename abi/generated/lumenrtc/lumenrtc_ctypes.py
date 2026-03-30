@@ -285,16 +285,16 @@ class PeerConnectionCallbacks(ctypes.Structure):
 
 class RtcConfig(ctypes.Structure):
     _fields_: list = [
-        ("ice_servers", ctypes.c_void_p),
+        ("ice_servers", IceServer * 8),
         ("ice_server_count", ctypes.c_uint32),
-        ("ice_transports_type", ctypes.c_void_p),
-        ("bundle_policy", ctypes.c_void_p),
-        ("rtcp_mux_policy", ctypes.c_void_p),
-        ("candidate_network_policy", ctypes.c_void_p),
-        ("tcp_candidate_policy", ctypes.c_void_p),
+        ("ice_transports_type", ctypes.c_int),
+        ("bundle_policy", ctypes.c_int),
+        ("rtcp_mux_policy", ctypes.c_int),
+        ("candidate_network_policy", ctypes.c_int),
+        ("tcp_candidate_policy", ctypes.c_int),
         ("ice_candidate_pool_size", ctypes.c_int),
-        ("srtp_type", ctypes.c_void_p),
-        ("sdp_semantics", ctypes.c_void_p),
+        ("srtp_type", ctypes.c_int),
+        ("sdp_semantics", ctypes.c_int),
         ("offer_to_receive_audio", ctypes.c_bool),
         ("offer_to_receive_video", ctypes.c_bool),
         ("disable_ipv6", ctypes.c_bool),
@@ -343,7 +343,7 @@ class RtpTransceiverInit(ctypes.Structure):
         ("direction", ctypes.c_int),
         ("stream_ids", ctypes.c_char_p),
         ("stream_id_count", ctypes.c_uint32),
-        ("send_encodings", ctypes.POINTER(LrtcRtpEncodingSettings)),
+        ("send_encodings", ctypes.POINTER(RtpEncodingSettings)),
         ("send_encoding_count", ctypes.c_uint32),
     ]
 
@@ -389,7 +389,7 @@ def _bind_all(lib: ctypes.CDLL) -> None:
     lib.lrtc_audio_device_speaker_volume.restype = ctypes.c_int32
     lib.lrtc_audio_device_speaker_volume.argtypes = [AudioDeviceHandle, ctypes.POINTER(ctypes.c_uint32)]
     lib.lrtc_audio_sink_create.restype = AudioSinkHandle
-    lib.lrtc_audio_sink_create.argtypes = [ctypes.POINTER(LrtcAudioSinkCallbacks), ctypes.c_void_p]
+    lib.lrtc_audio_sink_create.argtypes = [ctypes.POINTER(AudioSinkCallbacks), ctypes.c_void_p]
     lib.lrtc_audio_sink_release.restype = None
     lib.lrtc_audio_sink_release.argtypes = [AudioSinkHandle]
     lib.lrtc_audio_source_capture_frame.restype = None
@@ -419,21 +419,21 @@ def _bind_all(lib: ctypes.CDLL) -> None:
     lib.lrtc_data_channel_send.restype = None
     lib.lrtc_data_channel_send.argtypes = [DataChannelHandle, ctypes.POINTER(ctypes.c_uint8), ctypes.c_uint32, ctypes.c_int]
     lib.lrtc_data_channel_set_callbacks.restype = None
-    lib.lrtc_data_channel_set_callbacks.argtypes = [DataChannelHandle, ctypes.POINTER(LrtcDataChannelCallbacks), ctypes.c_void_p]
+    lib.lrtc_data_channel_set_callbacks.argtypes = [DataChannelHandle, ctypes.POINTER(DataChannelCallbacks), ctypes.c_void_p]
     lib.lrtc_desktop_capturer_is_running.restype = ctypes.c_bool
     lib.lrtc_desktop_capturer_is_running.argtypes = [DesktopCapturerHandle]
     lib.lrtc_desktop_capturer_release.restype = None
     lib.lrtc_desktop_capturer_release.argtypes = [DesktopCapturerHandle]
-    lib.lrtc_desktop_capturer_start.restype = ctypes.c_void_p
+    lib.lrtc_desktop_capturer_start.restype = ctypes.c_int
     lib.lrtc_desktop_capturer_start.argtypes = [DesktopCapturerHandle, ctypes.c_uint32]
-    lib.lrtc_desktop_capturer_start_region.restype = ctypes.c_void_p
+    lib.lrtc_desktop_capturer_start_region.restype = ctypes.c_int
     lib.lrtc_desktop_capturer_start_region.argtypes = [DesktopCapturerHandle, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_uint32]
     lib.lrtc_desktop_capturer_stop.restype = None
     lib.lrtc_desktop_capturer_stop.argtypes = [DesktopCapturerHandle]
     lib.lrtc_desktop_device_create_capturer.restype = DesktopCapturerHandle
     lib.lrtc_desktop_device_create_capturer.argtypes = [DesktopDeviceHandle, MediaSourceHandle, ctypes.c_bool]
     lib.lrtc_desktop_device_get_media_list.restype = DesktopMediaListHandle
-    lib.lrtc_desktop_device_get_media_list.argtypes = [DesktopDeviceHandle, ctypes.c_void_p]
+    lib.lrtc_desktop_device_get_media_list.argtypes = [DesktopDeviceHandle, ctypes.c_int]
     lib.lrtc_desktop_device_release.restype = None
     lib.lrtc_desktop_device_release.argtypes = [DesktopDeviceHandle]
     lib.lrtc_desktop_media_list_get_source.restype = MediaSourceHandle
@@ -457,13 +457,13 @@ def _bind_all(lib: ctypes.CDLL) -> None:
     lib.lrtc_dtmf_sender_release.restype = None
     lib.lrtc_dtmf_sender_release.argtypes = [DtmfSenderHandle]
     lib.lrtc_dtmf_sender_set_callbacks.restype = None
-    lib.lrtc_dtmf_sender_set_callbacks.argtypes = [DtmfSenderHandle, ctypes.POINTER(LrtcDtmfSenderCallbacks), ctypes.c_void_p]
+    lib.lrtc_dtmf_sender_set_callbacks.argtypes = [DtmfSenderHandle, ctypes.POINTER(DtmfSenderCallbacks), ctypes.c_void_p]
     lib.lrtc_dtmf_sender_tones.restype = ctypes.c_int32
     lib.lrtc_dtmf_sender_tones.argtypes = [DtmfSenderHandle, ctypes.c_char_p, ctypes.c_uint32]
     lib.lrtc_factory_create.restype = FactoryHandle
     lib.lrtc_factory_create.argtypes = []
     lib.lrtc_factory_create_audio_source.restype = AudioSourceHandle
-    lib.lrtc_factory_create_audio_source.argtypes = [FactoryHandle, ctypes.c_char_p, ctypes.c_void_p, ctypes.POINTER(LrtcAudioOptions)]
+    lib.lrtc_factory_create_audio_source.argtypes = [FactoryHandle, ctypes.c_char_p, ctypes.c_int, ctypes.POINTER(AudioOptions)]
     lib.lrtc_factory_create_audio_track.restype = AudioTrackHandle
     lib.lrtc_factory_create_audio_track.argtypes = [FactoryHandle, AudioSourceHandle, ctypes.c_char_p]
     lib.lrtc_factory_create_desktop_source.restype = VideoSourceHandle
@@ -479,20 +479,20 @@ def _bind_all(lib: ctypes.CDLL) -> None:
     lib.lrtc_factory_get_desktop_device.restype = DesktopDeviceHandle
     lib.lrtc_factory_get_desktop_device.argtypes = [FactoryHandle]
     lib.lrtc_factory_get_rtp_receiver_capabilities.restype = None
-    lib.lrtc_factory_get_rtp_receiver_capabilities.argtypes = [FactoryHandle, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p]
+    lib.lrtc_factory_get_rtp_receiver_capabilities.argtypes = [FactoryHandle, ctypes.c_int, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p]
     lib.lrtc_factory_get_rtp_sender_capabilities.restype = None
-    lib.lrtc_factory_get_rtp_sender_capabilities.argtypes = [FactoryHandle, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p]
+    lib.lrtc_factory_get_rtp_sender_capabilities.argtypes = [FactoryHandle, ctypes.c_int, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p]
     lib.lrtc_factory_get_rtp_sender_codec_mime_types.restype = None
-    lib.lrtc_factory_get_rtp_sender_codec_mime_types.argtypes = [FactoryHandle, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p]
+    lib.lrtc_factory_get_rtp_sender_codec_mime_types.argtypes = [FactoryHandle, ctypes.c_int, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p]
     lib.lrtc_factory_get_video_device.restype = VideoDeviceHandle
     lib.lrtc_factory_get_video_device.argtypes = [FactoryHandle]
-    lib.lrtc_factory_initialize.restype = ctypes.c_void_p
+    lib.lrtc_factory_initialize.restype = ctypes.c_int
     lib.lrtc_factory_initialize.argtypes = [FactoryHandle]
     lib.lrtc_factory_release.restype = None
     lib.lrtc_factory_release.argtypes = [FactoryHandle]
     lib.lrtc_factory_terminate.restype = None
     lib.lrtc_factory_terminate.argtypes = [FactoryHandle]
-    lib.lrtc_initialize.restype = ctypes.c_void_p
+    lib.lrtc_initialize.restype = ctypes.c_int
     lib.lrtc_initialize.argtypes = []
     lib.lrtc_logging_remove_callback.restype = None
     lib.lrtc_logging_remove_callback.argtypes = []
@@ -537,7 +537,7 @@ def _bind_all(lib: ctypes.CDLL) -> None:
     lib.lrtc_peer_connection_add_audio_track_transceiver.restype = RtpTransceiverHandle
     lib.lrtc_peer_connection_add_audio_track_transceiver.argtypes = [PeerConnectionHandle, AudioTrackHandle]
     lib.lrtc_peer_connection_add_audio_track_transceiver_with_init.restype = RtpTransceiverHandle
-    lib.lrtc_peer_connection_add_audio_track_transceiver_with_init.argtypes = [PeerConnectionHandle, AudioTrackHandle, ctypes.POINTER(LrtcRtpTransceiverInit)]
+    lib.lrtc_peer_connection_add_audio_track_transceiver_with_init.argtypes = [PeerConnectionHandle, AudioTrackHandle, ctypes.POINTER(RtpTransceiverInit)]
     lib.lrtc_peer_connection_add_ice_candidate.restype = None
     lib.lrtc_peer_connection_add_ice_candidate.argtypes = [PeerConnectionHandle, ctypes.c_char_p, ctypes.c_int, ctypes.c_char_p]
     lib.lrtc_peer_connection_add_ice_candidate_ex.restype = ctypes.c_int
@@ -545,9 +545,9 @@ def _bind_all(lib: ctypes.CDLL) -> None:
     lib.lrtc_peer_connection_add_stream.restype = ctypes.c_bool
     lib.lrtc_peer_connection_add_stream.argtypes = [PeerConnectionHandle, MediaStreamHandle]
     lib.lrtc_peer_connection_add_transceiver.restype = RtpTransceiverHandle
-    lib.lrtc_peer_connection_add_transceiver.argtypes = [PeerConnectionHandle, ctypes.c_void_p]
+    lib.lrtc_peer_connection_add_transceiver.argtypes = [PeerConnectionHandle, ctypes.c_int]
     lib.lrtc_peer_connection_add_transceiver_with_init.restype = RtpTransceiverHandle
-    lib.lrtc_peer_connection_add_transceiver_with_init.argtypes = [PeerConnectionHandle, ctypes.c_void_p, ctypes.POINTER(LrtcRtpTransceiverInit)]
+    lib.lrtc_peer_connection_add_transceiver_with_init.argtypes = [PeerConnectionHandle, ctypes.c_int, ctypes.POINTER(RtpTransceiverInit)]
     lib.lrtc_peer_connection_add_video_track.restype = ctypes.c_int
     lib.lrtc_peer_connection_add_video_track.argtypes = [PeerConnectionHandle, VideoTrackHandle, ctypes.c_char_p, ctypes.c_uint32]
     lib.lrtc_peer_connection_add_video_track_sender.restype = RtpSenderHandle
@@ -555,11 +555,11 @@ def _bind_all(lib: ctypes.CDLL) -> None:
     lib.lrtc_peer_connection_add_video_track_transceiver.restype = RtpTransceiverHandle
     lib.lrtc_peer_connection_add_video_track_transceiver.argtypes = [PeerConnectionHandle, VideoTrackHandle]
     lib.lrtc_peer_connection_add_video_track_transceiver_with_init.restype = RtpTransceiverHandle
-    lib.lrtc_peer_connection_add_video_track_transceiver_with_init.argtypes = [PeerConnectionHandle, VideoTrackHandle, ctypes.POINTER(LrtcRtpTransceiverInit)]
+    lib.lrtc_peer_connection_add_video_track_transceiver_with_init.argtypes = [PeerConnectionHandle, VideoTrackHandle, ctypes.POINTER(RtpTransceiverInit)]
     lib.lrtc_peer_connection_close.restype = None
     lib.lrtc_peer_connection_close.argtypes = [PeerConnectionHandle]
     lib.lrtc_peer_connection_create.restype = PeerConnectionHandle
-    lib.lrtc_peer_connection_create.argtypes = [FactoryHandle, ctypes.POINTER(LrtcRtcConfig), MediaConstraintsHandle, ctypes.POINTER(LrtcPeerConnectionCallbacks), ctypes.c_void_p]
+    lib.lrtc_peer_connection_create.argtypes = [FactoryHandle, ctypes.POINTER(RtcConfig), MediaConstraintsHandle, ctypes.POINTER(PeerConnectionCallbacks), ctypes.c_void_p]
     lib.lrtc_peer_connection_create_answer.restype = None
     lib.lrtc_peer_connection_create_answer.argtypes = [PeerConnectionHandle, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, MediaConstraintsHandle]
     lib.lrtc_peer_connection_create_data_channel.restype = DataChannelHandle
@@ -595,9 +595,9 @@ def _bind_all(lib: ctypes.CDLL) -> None:
     lib.lrtc_peer_connection_sender_count.restype = ctypes.c_uint32
     lib.lrtc_peer_connection_sender_count.argtypes = [PeerConnectionHandle]
     lib.lrtc_peer_connection_set_callbacks.restype = None
-    lib.lrtc_peer_connection_set_callbacks.argtypes = [PeerConnectionHandle, ctypes.POINTER(LrtcPeerConnectionCallbacks), ctypes.c_void_p]
+    lib.lrtc_peer_connection_set_callbacks.argtypes = [PeerConnectionHandle, ctypes.POINTER(PeerConnectionCallbacks), ctypes.c_void_p]
     lib.lrtc_peer_connection_set_codec_preferences.restype = ctypes.c_int
-    lib.lrtc_peer_connection_set_codec_preferences.argtypes = [PeerConnectionHandle, ctypes.c_void_p, ctypes.c_char_p, ctypes.c_uint32]
+    lib.lrtc_peer_connection_set_codec_preferences.argtypes = [PeerConnectionHandle, ctypes.c_int, ctypes.c_char_p, ctypes.c_uint32]
     lib.lrtc_peer_connection_set_local_description.restype = None
     lib.lrtc_peer_connection_set_local_description.argtypes = [PeerConnectionHandle, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p]
     lib.lrtc_peer_connection_set_remote_description.restype = None
@@ -613,9 +613,9 @@ def _bind_all(lib: ctypes.CDLL) -> None:
     lib.lrtc_rtp_receiver_get_degradation_preference.restype = ctypes.c_int
     lib.lrtc_rtp_receiver_get_degradation_preference.argtypes = [RtpReceiverHandle]
     lib.lrtc_rtp_receiver_get_dtls_info.restype = ctypes.c_int
-    lib.lrtc_rtp_receiver_get_dtls_info.argtypes = [RtpReceiverHandle, ctypes.POINTER(LrtcDtlsTransportInfo)]
+    lib.lrtc_rtp_receiver_get_dtls_info.argtypes = [RtpReceiverHandle, ctypes.POINTER(DtlsTransportInfo)]
     lib.lrtc_rtp_receiver_get_encoding_info.restype = ctypes.c_int
-    lib.lrtc_rtp_receiver_get_encoding_info.argtypes = [RtpReceiverHandle, ctypes.c_uint32, ctypes.POINTER(LrtcRtpEncodingInfo)]
+    lib.lrtc_rtp_receiver_get_encoding_info.argtypes = [RtpReceiverHandle, ctypes.c_uint32, ctypes.POINTER(RtpEncodingInfo)]
     lib.lrtc_rtp_receiver_get_encoding_rid.restype = ctypes.c_int32
     lib.lrtc_rtp_receiver_get_encoding_rid.argtypes = [RtpReceiverHandle, ctypes.c_uint32, ctypes.c_char_p, ctypes.c_uint32]
     lib.lrtc_rtp_receiver_get_encoding_scalability_mode.restype = ctypes.c_int32
@@ -647,11 +647,11 @@ def _bind_all(lib: ctypes.CDLL) -> None:
     lib.lrtc_rtp_sender_get_degradation_preference.restype = ctypes.c_int
     lib.lrtc_rtp_sender_get_degradation_preference.argtypes = [RtpSenderHandle]
     lib.lrtc_rtp_sender_get_dtls_info.restype = ctypes.c_int
-    lib.lrtc_rtp_sender_get_dtls_info.argtypes = [RtpSenderHandle, ctypes.POINTER(LrtcDtlsTransportInfo)]
+    lib.lrtc_rtp_sender_get_dtls_info.argtypes = [RtpSenderHandle, ctypes.POINTER(DtlsTransportInfo)]
     lib.lrtc_rtp_sender_get_dtmf_sender.restype = DtmfSenderHandle
     lib.lrtc_rtp_sender_get_dtmf_sender.argtypes = [RtpSenderHandle]
     lib.lrtc_rtp_sender_get_encoding_info.restype = ctypes.c_int
-    lib.lrtc_rtp_sender_get_encoding_info.argtypes = [RtpSenderHandle, ctypes.c_uint32, ctypes.POINTER(LrtcRtpEncodingInfo)]
+    lib.lrtc_rtp_sender_get_encoding_info.argtypes = [RtpSenderHandle, ctypes.c_uint32, ctypes.POINTER(RtpEncodingInfo)]
     lib.lrtc_rtp_sender_get_encoding_rid.restype = ctypes.c_int32
     lib.lrtc_rtp_sender_get_encoding_rid.argtypes = [RtpSenderHandle, ctypes.c_uint32, ctypes.c_char_p, ctypes.c_uint32]
     lib.lrtc_rtp_sender_get_encoding_scalability_mode.restype = ctypes.c_int32
@@ -675,9 +675,9 @@ def _bind_all(lib: ctypes.CDLL) -> None:
     lib.lrtc_rtp_sender_replace_video_track.restype = ctypes.c_int
     lib.lrtc_rtp_sender_replace_video_track.argtypes = [RtpSenderHandle, VideoTrackHandle]
     lib.lrtc_rtp_sender_set_encoding_parameters.restype = ctypes.c_int
-    lib.lrtc_rtp_sender_set_encoding_parameters.argtypes = [RtpSenderHandle, ctypes.POINTER(LrtcRtpEncodingSettings)]
+    lib.lrtc_rtp_sender_set_encoding_parameters.argtypes = [RtpSenderHandle, ctypes.POINTER(RtpEncodingSettings)]
     lib.lrtc_rtp_sender_set_encoding_parameters_at.restype = ctypes.c_int
-    lib.lrtc_rtp_sender_set_encoding_parameters_at.argtypes = [RtpSenderHandle, ctypes.c_uint32, ctypes.POINTER(LrtcRtpEncodingSettings)]
+    lib.lrtc_rtp_sender_set_encoding_parameters_at.argtypes = [RtpSenderHandle, ctypes.c_uint32, ctypes.POINTER(RtpEncodingSettings)]
     lib.lrtc_rtp_sender_set_stream_ids.restype = ctypes.c_int
     lib.lrtc_rtp_sender_set_stream_ids.argtypes = [RtpSenderHandle, ctypes.c_char_p, ctypes.c_uint32]
     lib.lrtc_rtp_sender_stream_id_count.restype = ctypes.c_uint32
@@ -751,7 +751,7 @@ def _bind_all(lib: ctypes.CDLL) -> None:
     lib.lrtc_video_frame_width.restype = ctypes.c_int
     lib.lrtc_video_frame_width.argtypes = [VideoFrameHandle]
     lib.lrtc_video_sink_create.restype = VideoSinkHandle
-    lib.lrtc_video_sink_create.argtypes = [ctypes.POINTER(LrtcVideoSinkCallbacks), ctypes.c_void_p]
+    lib.lrtc_video_sink_create.argtypes = [ctypes.POINTER(VideoSinkCallbacks), ctypes.c_void_p]
     lib.lrtc_video_sink_release.restype = None
     lib.lrtc_video_sink_release.argtypes = [VideoSinkHandle]
     lib.lrtc_video_source_release.restype = None
