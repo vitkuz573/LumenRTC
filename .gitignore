@@ -17,3 +17,6 @@ artifacts/
 # Python
 __pycache__/
 *.pyc
+
+# abi-forge generator cache
+.abi-forge-cache/

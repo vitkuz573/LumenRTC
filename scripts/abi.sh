@@ -38,6 +38,7 @@ Commands:
   list-targets  List configured targets
   init-target   Initialize a new target in config
   diff          Compare two snapshot files (pass raw abi_framework diff args)
+  watch         Watch header/metadata files and re-run codegen on change
 EOF
 }
 
@@ -172,6 +173,12 @@ case "${COMMAND}" in
     ;;
   diff)
     run_guard diff "$@"
+    ;;
+  watch)
+    run_guard watch \
+      --repo-root "${REPO_ROOT}" \
+      --config "${ABI_CONFIG}" \
+      "$@"
     ;;
   *)
     echo "Unknown command: ${COMMAND}"
