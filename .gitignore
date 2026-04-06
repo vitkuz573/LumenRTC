@@ -20,3 +20,4 @@ __pycache__/
 
 # abi-forge generator cache
 .abi-forge-cache/
+abi/generated/**/*.idl.cache
