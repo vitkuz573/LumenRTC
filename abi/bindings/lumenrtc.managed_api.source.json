@@ -272,7 +272,7 @@
             "(ud, framePtr) =>",
             "{",
             "    if (framePtr == IntPtr.Zero) return;",
-            "    using var frame = new VideoFrame(framePtr);",
+            "    using var frame = VideoFrame.Rent(framePtr);",
             "    OnFrame?.Invoke(frame);",
             "}"
           ]

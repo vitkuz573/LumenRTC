@@ -27,6 +27,7 @@
 #include "rtc_video_source.h"
 #include "rtc_video_track.h"
 #include "rtc_video_renderer.h"
+#include "third_party/libyuv/include/libyuv.h"
 
 #include <algorithm>
 #include <cctype>
@@ -90,6 +91,39 @@ static const char* kLrtcAbiVersionString =
     LRTC_STRINGIFY(LUMENRTC_ABI_VERSION_PATCH);
 #undef LRTC_STRINGIFY
 #undef LRTC_STRINGIFY_INNER
+
+// ---------------------------------------------------------------------------
+// Video frame handle pool
+// Avoids heap alloc/free on every frame (up to 60/s per track). Handles are
+// recycled: AllocateVideoFrameHandle pops from the pool or news a fresh one;
+// FreeVideoFrameHandle clears the WebRTC ref and pushes back into the pool.
+// Pool is bounded to kVideoFramePoolMaxSize to cap memory.
+// ---------------------------------------------------------------------------
+static constexpr size_t kVideoFramePoolMaxSize = 16;
+static std::vector<lrtc_video_frame_t*> g_video_frame_pool;
+static std::mutex g_video_frame_pool_mutex;
+
+static lrtc_video_frame_t* AllocateVideoFrameHandle() {
+  std::lock_guard<std::mutex> lock(g_video_frame_pool_mutex);
+  if (!g_video_frame_pool.empty()) {
+    auto* h = g_video_frame_pool.back();
+    g_video_frame_pool.pop_back();
+    return h;
+  }
+  return new lrtc_video_frame_t();
+}
+
+static void FreeVideoFrameHandle(lrtc_video_frame_t* frame) {
+  if (!frame) return;
+  frame->ref = nullptr;  // release the underlying WebRTC buffer
+  std::lock_guard<std::mutex> lock(g_video_frame_pool_mutex);
+  if (g_video_frame_pool.size() < kVideoFramePoolMaxSize) {
+    g_video_frame_pool.push_back(frame);
+  } else {
+    delete frame;
+  }
+}
+// ---------------------------------------------------------------------------
 
 static lrtc_result_t LrtcFailIfNull(const void* ptr) {
   return ptr ? LRTC_OK : LRTC_INVALID_ARG;
@@ -822,7 +856,7 @@ class VideoSinkImpl : public RTCVideoRenderer<scoped_refptr<RTCVideoFrame>> {
     if (!callbacks.on_frame || !frame.get()) {
       return;
     }
-    auto handle = new lrtc_video_frame_t();
+    auto handle = AllocateVideoFrameHandle();
     handle->ref = frame;
     callbacks.on_frame(user_data, handle);
   }
@@ -2547,30 +2581,14 @@ int LUMENRTC_CALL lrtc_impl_video_frame_copy_i420(
   if (!src_y || !src_u || !src_v || !dst_y || !dst_u || !dst_v) {
     return 0;
   }
-  const int width = frame->ref->width();
-  const int height = frame->ref->height();
-  const int src_stride_y = frame->ref->StrideY();
-  const int src_stride_u = frame->ref->StrideU();
-  const int src_stride_v = frame->ref->StrideV();
-
-  for (int y = 0; y < height; ++y) {
-    std::memcpy(dst_y + y * dst_stride_y,
-                src_y + y * src_stride_y,
-                static_cast<size_t>(width));
-  }
-
-  const int chroma_width = (width + 1) / 2;
-  const int chroma_height = (height + 1) / 2;
-
-  for (int y = 0; y < chroma_height; ++y) {
-    std::memcpy(dst_u + y * dst_stride_u,
-                src_u + y * src_stride_u,
-                static_cast<size_t>(chroma_width));
-    std::memcpy(dst_v + y * dst_stride_v,
-                src_v + y * src_stride_v,
-                static_cast<size_t>(chroma_width));
-  }
-  return 1;
+  
+  return libyuv::I420Copy(src_y, frame->ref->StrideY(),
+                          src_u, frame->ref->StrideU(),
+                          src_v, frame->ref->StrideV(),
+                          dst_y, dst_stride_y,
+                          dst_u, dst_stride_u,
+                          dst_v, dst_stride_v,
+                          frame->ref->width(), frame->ref->height()) == 0 ? 1 : 0;
 }
 
 int LUMENRTC_CALL lrtc_impl_video_frame_to_argb(
@@ -2589,13 +2607,13 @@ lrtc_video_frame_t* LUMENRTC_CALL lrtc_impl_video_frame_retain(
   if (!frame || !frame->ref.get()) {
     return nullptr;
   }
-  auto handle = new lrtc_video_frame_t();
+  auto handle = AllocateVideoFrameHandle();
   handle->ref = frame->ref;
   return handle;
 }
 
 void LUMENRTC_CALL lrtc_impl_video_frame_release(lrtc_video_frame_t* frame) {
-  delete frame;
+  FreeVideoFrameHandle(frame);
 }
 
 int LUMENRTC_CALL lrtc_impl_rtp_sender_set_encoding_parameters(

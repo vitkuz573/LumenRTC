@@ -302,10 +302,17 @@ void RTCDesktopCapturerImpl::CaptureFrame() {
       return;
     }
 
+    int64_t start_time = rtc::TimeMillis();
     capturer_->CaptureFrame();
+    int64_t capture_time = rtc::TimeMillis() - start_time;
+    int64_t next_delay = static_cast<int64_t>(capture_delay_) - capture_time;
+    if (next_delay < 0) {
+      next_delay = 0;
+    }
+
     thread_->PostDelayedHighPrecisionTask(
         [this]() { CaptureFrame(); },
-        webrtc::TimeDelta::Millis(capture_delay_));
+        webrtc::TimeDelta::Millis(static_cast<uint32_t>(next_delay)));
   }
 }
 

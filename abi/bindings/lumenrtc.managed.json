@@ -133,13 +133,7 @@
       "namespace": "LumenRTC",
       "release": "lrtc_video_device_release"
     },
-    {
-      "access": "public",
-      "c_handle_type": "lrtc_video_frame_t*",
-      "cs_type": "VideoFrame",
-      "namespace": "LumenRTC",
-      "release": "lrtc_video_frame_release"
-    },
+
     {
       "access": "public",
       "c_handle_type": "lrtc_video_sink_t*",
