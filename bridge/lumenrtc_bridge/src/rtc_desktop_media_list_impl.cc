@@ -16,6 +16,9 @@
 
 #include "rtc_desktop_media_list_impl.h"
 
+#include <unordered_map>
+#include <unordered_set>
+
 #include "internal/jpeg_util.h"
 #include "rtc_base/checks.h"
 #include "rtc_base/logging.h"
@@ -118,9 +121,9 @@ int32_t RTCDesktopMediaListImpl::UpdateSourceList(bool force_reload,
   }
 
   if (force_reload) {
-    for (auto source : sources_) {
+    for (const auto& source : sources_) {
       if (observer_) {
-        auto source_ptr = source.get();
+        auto* source_ptr = source.get();
         signaling_thread_->BlockingCall(
             [&, source_ptr]() { observer_->OnMediaSourceRemoved(source_ptr); });
       }
@@ -142,84 +145,73 @@ int32_t RTCDesktopMediaListImpl::UpdateSourceList(bool force_reload,
     return -1;
   }
 
-  typedef std::set<webrtc::DesktopCapturer::SourceId> SourceSet;
-  SourceSet new_source_set;
   for (size_t i = 0; i < new_sources.size(); ++i) {
-    if (type_ == kScreen && new_sources[i].title.length() == 0) {
+    if (type_ == kScreen && new_sources[i].title.empty()) {
       new_sources[i].title = std::string("Screen " + std::to_string(i + 1));
     }
-    new_source_set.insert(new_sources[i].id);
   }
-  // Iterate through the old sources to find the removed sources.
-  for (size_t i = 0; i < sources_.size(); ++i) {
-    if (new_source_set.find(sources_[i]->source_id()) == new_source_set.end()) {
+
+  std::unordered_map<webrtc::DesktopCapturer::SourceId,
+                     scoped_refptr<MediaSourceImpl>> existing_by_id;
+  existing_by_id.reserve(sources_.size());
+  for (const auto& source : sources_) {
+    existing_by_id.emplace(source->source_id(), source);
+  }
+
+  std::unordered_set<webrtc::DesktopCapturer::SourceId> new_ids;
+  new_ids.reserve(new_sources.size());
+
+  std::vector<scoped_refptr<MediaSourceImpl>> reordered_sources;
+  reordered_sources.reserve(new_sources.size());
+
+  for (const auto& new_source : new_sources) {
+    new_ids.insert(new_source.id);
+    auto existing = existing_by_id.find(new_source.id);
+    if (existing == existing_by_id.end()) {
+      auto source = scoped_refptr<MediaSourceImpl>(
+          new RefCountedObject<MediaSourceImpl>(this, new_source, type_));
+      reordered_sources.push_back(source);
+      GetThumbnail(source, get_thumbnail);
       if (observer_) {
-        auto source = (*(sources_.begin() + i)).get();
         signaling_thread_->BlockingCall(
-            [&, source]() { observer_->OnMediaSourceRemoved(source); });
+            [&, source]() { observer_->OnMediaSourceAdded(source); });
       }
-      sources_.erase(sources_.begin() + i);
-      --i;
-    }
-  }
-  // Iterate through the new sources to find the added sources.
-  if (new_sources.size() > sources_.size()) {
-    SourceSet old_source_set;
-    for (size_t i = 0; i < sources_.size(); ++i) {
-      old_source_set.insert(sources_[i]->source_id());
-    }
-    for (size_t i = 0; i < new_sources.size(); ++i) {
-      if (old_source_set.find(new_sources[i].id) == old_source_set.end()) {
-        auto source =
-            new RefCountedObject<MediaSourceImpl>(this, new_sources[i], type_);
-        sources_.insert(sources_.begin() + i, source);
-        GetThumbnail(source, get_thumbnail);
-        if (observer_) {
-          signaling_thread_->BlockingCall(
-              [&, source]() { observer_->OnMediaSourceAdded(source); });
-        }
-      }
-    }
-  }
-
-  RTC_DCHECK_EQ(new_sources.size(), sources_.size());
-
-  // Find the moved/changed sources.
-  size_t pos = 0;
-  while (pos < sources_.size()) {
-    if (!(sources_[pos]->source_id() == new_sources[pos].id)) {
-      // Find the source that should be moved to |pos|, starting from |pos + 1|
-      // of |sources_|, because entries before |pos| should have been sorted.
-      size_t old_pos = pos + 1;
-      for (; old_pos < sources_.size(); ++old_pos) {
-        if (sources_[old_pos]->source_id() == new_sources[pos].id) break;
-      }
-      RTC_DCHECK(sources_[old_pos]->source_id() == new_sources[pos].id);
-
-      // Move the source from |old_pos| to |pos|.
-      auto temp = sources_[old_pos];
-      sources_.erase(sources_.begin() + old_pos);
-      sources_.insert(sources_.begin() + pos, temp);
-      // if(observer_) observer_->OnMediaSourceMoved:old_pos newIndex:pos];
+      continue;
     }
 
-    if (sources_[pos]->source.title != new_sources[pos].title) {
-      sources_[pos]->source.title = new_sources[pos].title;
+    auto source = existing->second;
+    if (source->source.title != new_source.title) {
+      source->source.title = new_source.title;
       if (observer_) {
-        auto source = sources_[pos].get();
         signaling_thread_->BlockingCall(
             [&, source]() { observer_->OnMediaSourceNameChanged(source); });
       }
     }
-    ++pos;
+
+    reordered_sources.push_back(source);
   }
 
+  for (const auto& source : sources_) {
+    if (new_ids.find(source->source_id()) != new_ids.end()) {
+      continue;
+    }
+
+    if (observer_) {
+      auto* source_ptr = source.get();
+      signaling_thread_->BlockingCall(
+          [&, source_ptr]() { observer_->OnMediaSourceRemoved(source_ptr); });
+    }
+  }
+
+  sources_ = std::move(reordered_sources);
+
   if (get_thumbnail) {
-    for (auto source : sources_) {
+    for (const auto& source : sources_) {
       GetThumbnail(source.get(), true);
     }
   }
-  return sources_.size();
+
+  return static_cast<int32_t>(sources_.size());
 }
 
 bool RTCDesktopMediaListImpl::GetThumbnail(scoped_refptr<MediaSource> source,

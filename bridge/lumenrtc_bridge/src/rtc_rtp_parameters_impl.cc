@@ -9,7 +9,64 @@ RTCRtpEncodingParameters::Create() {
   return new RefCountedObject<RTCRtpEncodingParametersImpl>();
 }
 
-RTCRtpEncodingParametersImpl::RTCRtpEncodingParametersImpl() {}
+namespace {
+
+template <typename T>
+portable::vector<T> ToPortableVector(const std::vector<T>& values) {
+  return portable::vector<T>(values);
+}
+
+template <typename TPortable, typename TNative, typename TFactory>
+portable::vector<scoped_refptr<TPortable>> ToPortableRefVector(
+    const std::vector<TNative>& values,
+    TFactory&& factory) {
+  std::vector<scoped_refptr<TPortable>> converted;
+  converted.reserve(values.size());
+  for (const auto& value : values) {
+    converted.push_back(factory(value));
+  }
+  return portable::vector<scoped_refptr<TPortable>>(converted);
+}
+
+RTCDegradationPreference ToBridgeDegradationPreference(
+    const std::optional<webrtc::DegradationPreference>& value) {
+  if (!value.has_value()) {
+    return RTCDegradationPreference::BALANCED;
+  }
+
+  switch (*value) {
+    case webrtc::DegradationPreference::DISABLED:
+      return RTCDegradationPreference::DISABLED;
+    case webrtc::DegradationPreference::MAINTAIN_FRAMERATE:
+      return RTCDegradationPreference::MAINTAIN_FRAMERATE;
+    case webrtc::DegradationPreference::MAINTAIN_RESOLUTION:
+      return RTCDegradationPreference::MAINTAIN_RESOLUTION;
+    case webrtc::DegradationPreference::BALANCED:
+      return RTCDegradationPreference::BALANCED;
+  }
+
+  return RTCDegradationPreference::BALANCED;
+}
+
+webrtc::DegradationPreference ToNativeDegradationPreference(
+    RTCDegradationPreference value) {
+  switch (value) {
+    case RTCDegradationPreference::DISABLED:
+      return webrtc::DegradationPreference::DISABLED;
+    case RTCDegradationPreference::MAINTAIN_FRAMERATE:
+      return webrtc::DegradationPreference::MAINTAIN_FRAMERATE;
+    case RTCDegradationPreference::MAINTAIN_RESOLUTION:
+      return webrtc::DegradationPreference::MAINTAIN_RESOLUTION;
+    case RTCDegradationPreference::BALANCED:
+      return webrtc::DegradationPreference::BALANCED;
+  }
+
+  return webrtc::DegradationPreference::BALANCED;
+}
+
+}  // namespace
+
+RTCRtpEncodingParametersImpl::RTCRtpEncodingParametersImpl() = default;
 
 RTCRtpEncodingParametersImpl::RTCRtpEncodingParametersImpl(
     webrtc::RtpEncodingParameters& rtp_encoding_parameters)
@@ -150,11 +207,12 @@ void RTCRtpParametersImpl::set_mid(const string mid) {
 
 const vector<scoped_refptr<RTCRtpCodecParameters>>
 RTCRtpParametersImpl::codecs() {
-  std::vector<scoped_refptr<RTCRtpCodecParameters>> vec;
-  for (auto item : rtp_parameters_.codecs) {
-    vec.push_back(new RefCountedObject<RTCRtpCodecParametersImpl>(item));
-  }
-  return vec;
+  return ToPortableRefVector<RTCRtpCodecParameters>(
+      rtp_parameters_.codecs,
+      [](const webrtc::RtpCodecParameters& item) {
+        return scoped_refptr<RTCRtpCodecParameters>(
+            new RefCountedObject<RTCRtpCodecParametersImpl>(item));
+      });
 }
 
 void RTCRtpParametersImpl::set_codecs(
@@ -169,11 +227,12 @@ void RTCRtpParametersImpl::set_codecs(
 
 const vector<scoped_refptr<RTCRtpExtension>>
 RTCRtpParametersImpl::header_extensions() {
-  std::vector<scoped_refptr<RTCRtpExtension>> vec;
-  for (auto item : rtp_parameters_.header_extensions) {
-    vec.push_back(new RefCountedObject<RTCRtpExtensionImpl>(item));
-  }
-  return vec;
+  return ToPortableRefVector<RTCRtpExtension>(
+      rtp_parameters_.header_extensions,
+      [](const webrtc::RtpExtension& item) {
+        return scoped_refptr<RTCRtpExtension>(
+            new RefCountedObject<RTCRtpExtensionImpl>(item));
+      });
 }
 
 void RTCRtpParametersImpl::set_header_extensions(
@@ -188,11 +247,13 @@ void RTCRtpParametersImpl::set_header_extensions(
 
 const vector<scoped_refptr<RTCRtpEncodingParameters>>
 RTCRtpParametersImpl::encodings() {
-  std::vector<scoped_refptr<RTCRtpEncodingParameters>> vec;
-  for (auto item : rtp_parameters_.encodings) {
-    vec.push_back(new RefCountedObject<RTCRtpEncodingParametersImpl>(item));
-  }
-  return vec;
+  return ToPortableRefVector<RTCRtpEncodingParameters>(
+      rtp_parameters_.encodings,
+      [](const webrtc::RtpEncodingParameters& item) {
+        auto copy = item;
+        return scoped_refptr<RTCRtpEncodingParameters>(
+            new RefCountedObject<RTCRtpEncodingParametersImpl>(copy));
+      });
 }
 
 void RTCRtpParametersImpl::set_encodings(
@@ -225,41 +286,12 @@ bool RTCRtpParametersImpl::operator!=(scoped_refptr<RTCRtpParameters> o) const {
 }
 
 RTCDegradationPreference RTCRtpParametersImpl::GetDegradationPreference() {
-  if (!rtp_parameters_.degradation_preference.has_value()) {
-    return RTCDegradationPreference::BALANCED;
-  }
-  switch (rtp_parameters_.degradation_preference.value()) {
-    case webrtc::DegradationPreference::DISABLED:
-      return RTCDegradationPreference::DISABLED;
-    case webrtc::DegradationPreference::MAINTAIN_FRAMERATE:
-      return RTCDegradationPreference::MAINTAIN_FRAMERATE;
-    case webrtc::DegradationPreference::MAINTAIN_RESOLUTION:
-      return RTCDegradationPreference::MAINTAIN_RESOLUTION;
-    case webrtc::DegradationPreference::BALANCED:
-      return RTCDegradationPreference::BALANCED;
-  }
+  return ToBridgeDegradationPreference(rtp_parameters_.degradation_preference);
 }
 
 void RTCRtpParametersImpl::SetDegradationPreference(
     RTCDegradationPreference value) {
-  switch (value) {
-    case RTCDegradationPreference::DISABLED:
-      rtp_parameters_.degradation_preference =
-          webrtc::DegradationPreference::DISABLED;
-      break;
-    case RTCDegradationPreference::MAINTAIN_FRAMERATE:
-      rtp_parameters_.degradation_preference =
-          webrtc::DegradationPreference::MAINTAIN_FRAMERATE;
-      break;
-    case RTCDegradationPreference::MAINTAIN_RESOLUTION:
-      rtp_parameters_.degradation_preference =
-          webrtc::DegradationPreference::MAINTAIN_RESOLUTION;
-      break;
-    case RTCDegradationPreference::BALANCED:
-      rtp_parameters_.degradation_preference =
-          webrtc::DegradationPreference::BALANCED;
-      break;
-  }
+  rtp_parameters_.degradation_preference = ToNativeDegradationPreference(value);
 }
 
 RTCRtcpParametersImpl::RTCRtcpParametersImpl(

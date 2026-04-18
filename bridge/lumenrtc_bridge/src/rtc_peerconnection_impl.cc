@@ -1,6 +1,7 @@
 #include "rtc_peerconnection_impl.h"
 
 #include <functional>
+#include <optional>
 #include <utility>
 #include <vector>
 
@@ -18,120 +19,204 @@
 
 using webrtc::Thread;
 
-static std::map<lumenrtc_bridge::RtcpMuxPolicy,
-                webrtc::PeerConnectionInterface::RtcpMuxPolicy>
-    rtcp_mux_policy_map = {
-        {lumenrtc_bridge::RtcpMuxPolicy::kRtcpMuxPolicyNegotiate,
-         webrtc::PeerConnectionInterface::kRtcpMuxPolicyNegotiate},
-        {lumenrtc_bridge::RtcpMuxPolicy::kRtcpMuxPolicyRequire,
-         webrtc::PeerConnectionInterface::kRtcpMuxPolicyRequire}};
-
-static std::map<lumenrtc_bridge::SdpSemantics, webrtc::SdpSemantics>
-    sdp_semantics_map = {{lumenrtc_bridge::SdpSemantics::kPlanB,
-                          webrtc::SdpSemantics::kPlanB_DEPRECATED},
-                         {lumenrtc_bridge::SdpSemantics::kUnifiedPlan,
-                          webrtc::SdpSemantics::kUnifiedPlan}};
-
-static std::map<lumenrtc_bridge::CandidateNetworkPolicy,
-                webrtc::PeerConnectionInterface::CandidateNetworkPolicy>
-    candidate_network_policy_map = {
-        {lumenrtc_bridge::CandidateNetworkPolicy::kCandidateNetworkPolicyAll,
-         webrtc::PeerConnectionInterface::kCandidateNetworkPolicyAll},
-        {lumenrtc_bridge::CandidateNetworkPolicy::kCandidateNetworkPolicyLowCost,
-         webrtc::PeerConnectionInterface::kCandidateNetworkPolicyLowCost}};
-
-static std::map<lumenrtc_bridge::BundlePolicy,
-  webrtc::PeerConnectionInterface::BundlePolicy>
-    bundle_policy_map = {
-        {lumenrtc_bridge::kBundlePolicyBalanced,
-        webrtc::PeerConnectionInterface::kBundlePolicyBalanced},
-        {lumenrtc_bridge::kBundlePolicyMaxBundle,
-        webrtc::PeerConnectionInterface::kBundlePolicyMaxBundle},
-        {lumenrtc_bridge::kBundlePolicyMaxCompat,
-        webrtc::PeerConnectionInterface::kBundlePolicyMaxCompat}};
-
-static std::map<lumenrtc_bridge::IceTransportsType,
-                webrtc::PeerConnectionInterface::IceTransportsType>
-    ice_transport_type_map = {{lumenrtc_bridge::IceTransportsType::kAll,
-                               webrtc::PeerConnectionInterface::kAll},
-                              {lumenrtc_bridge::IceTransportsType::kNoHost,
-                               webrtc::PeerConnectionInterface::kNoHost},
-                              {lumenrtc_bridge::IceTransportsType::kNone,
-                               webrtc::PeerConnectionInterface::kNone},
-                              {lumenrtc_bridge::IceTransportsType::kRelay,
-                               webrtc::PeerConnectionInterface::kRelay}};
-
-static std::map<lumenrtc_bridge::TcpCandidatePolicy,
-                webrtc::PeerConnectionInterface::TcpCandidatePolicy>
-    tcp_candidate_policy_map = {
-        {lumenrtc_bridge::TcpCandidatePolicy::kTcpCandidatePolicyDisabled,
-         webrtc::PeerConnectionInterface::kTcpCandidatePolicyDisabled},
-        {lumenrtc_bridge::TcpCandidatePolicy::kTcpCandidatePolicyEnabled,
-         webrtc::PeerConnectionInterface::kTcpCandidatePolicyEnabled}};
-
-static std::map<webrtc::PeerConnectionInterface::PeerConnectionState,
-                lumenrtc_bridge::RTCPeerConnectionState>
-    peer_connection_state_map = {
-        {webrtc::PeerConnectionInterface::PeerConnectionState::kNew,
-         lumenrtc_bridge::RTCPeerConnectionState::RTCPeerConnectionStateNew},
-        {webrtc::PeerConnectionInterface::PeerConnectionState::kConnecting,
-         lumenrtc_bridge::RTCPeerConnectionState::RTCPeerConnectionStateConnecting},
-        {webrtc::PeerConnectionInterface::PeerConnectionState::kConnected,
-         lumenrtc_bridge::RTCPeerConnectionState::RTCPeerConnectionStateConnected},
-        {webrtc::PeerConnectionInterface::PeerConnectionState::kDisconnected,
-         lumenrtc_bridge::RTCPeerConnectionState::RTCPeerConnectionStateDisconnected},
-        {webrtc::PeerConnectionInterface::PeerConnectionState::kClosed,
-         lumenrtc_bridge::RTCPeerConnectionState::RTCPeerConnectionStateClosed},
-        {webrtc::PeerConnectionInterface::PeerConnectionState::kFailed,
-         lumenrtc_bridge::RTCPeerConnectionState::RTCPeerConnectionStateFailed}};
-
-static std::map<webrtc::PeerConnectionInterface::IceGatheringState,
-                lumenrtc_bridge::RTCIceGatheringState>
-    ice_gathering_state_map = {
-        {webrtc::PeerConnectionInterface::kIceGatheringNew,
-         lumenrtc_bridge::RTCIceGatheringState::RTCIceGatheringStateNew},
-        {webrtc::PeerConnectionInterface::kIceGatheringGathering,
-         lumenrtc_bridge::RTCIceGatheringState::RTCIceGatheringStateGathering},
-        {webrtc::PeerConnectionInterface::kIceGatheringComplete,
-         lumenrtc_bridge::RTCIceGatheringState::RTCIceGatheringStateComplete}};
-
-static std::map<webrtc::PeerConnectionInterface::IceConnectionState,
-                lumenrtc_bridge::RTCIceConnectionState>
-    ice_connection_state_map = {
-        {webrtc::PeerConnectionInterface::kIceConnectionNew,
-         lumenrtc_bridge::RTCIceConnectionState::RTCIceConnectionStateNew},
-        {webrtc::PeerConnectionInterface::kIceConnectionChecking,
-         lumenrtc_bridge::RTCIceConnectionState::RTCIceConnectionStateChecking},
-        {webrtc::PeerConnectionInterface::kIceConnectionCompleted,
-         lumenrtc_bridge::RTCIceConnectionState::RTCIceConnectionStateCompleted},
-        {webrtc::PeerConnectionInterface::kIceConnectionConnected,
-         lumenrtc_bridge::RTCIceConnectionState::RTCIceConnectionStateConnected},
-        {webrtc::PeerConnectionInterface::kIceConnectionDisconnected,
-         lumenrtc_bridge::RTCIceConnectionState::RTCIceConnectionStateDisconnected},
-        {webrtc::PeerConnectionInterface::kIceConnectionFailed,
-         lumenrtc_bridge::RTCIceConnectionState::RTCIceConnectionStateFailed},
-        {webrtc::PeerConnectionInterface::kIceConnectionClosed,
-         lumenrtc_bridge::RTCIceConnectionState::RTCIceConnectionStateClosed},
-        {webrtc::PeerConnectionInterface::kIceConnectionMax,
-         lumenrtc_bridge::RTCIceConnectionState::RTCIceConnectionStateMax}};
-
-static std::map<webrtc::PeerConnectionInterface::SignalingState,
-                lumenrtc_bridge::RTCSignalingState>
-    signaling_state_map = {
-        {webrtc::PeerConnectionInterface::kStable,
-         lumenrtc_bridge::RTCSignalingState::RTCSignalingStateStable},
-        {webrtc::PeerConnectionInterface::kHaveLocalOffer,
-         lumenrtc_bridge::RTCSignalingState::RTCSignalingStateHaveLocalOffer},
-        {webrtc::PeerConnectionInterface::kHaveLocalPrAnswer,
-         lumenrtc_bridge::RTCSignalingState::RTCSignalingStateHaveLocalPrAnswer},
-        {webrtc::PeerConnectionInterface::kHaveRemoteOffer,
-         lumenrtc_bridge::RTCSignalingState::RTCSignalingStateHaveRemoteOffer},
-        {webrtc::PeerConnectionInterface::kHaveRemotePrAnswer,
-         lumenrtc_bridge::RTCSignalingState::RTCSignalingStateHaveRemotePrAnswer},
-        {webrtc::PeerConnectionInterface::kClosed,
-         lumenrtc_bridge::RTCSignalingState::RTCSignalingStateClosed}};
-
 namespace lumenrtc_bridge {
+namespace {
+
+webrtc::PeerConnectionInterface::RtcpMuxPolicy ToNativeRtcpMuxPolicy(
+    RtcpMuxPolicy value) {
+  switch (value) {
+    case RtcpMuxPolicy::kRtcpMuxPolicyNegotiate:
+      return webrtc::PeerConnectionInterface::kRtcpMuxPolicyNegotiate;
+    case RtcpMuxPolicy::kRtcpMuxPolicyRequire:
+      return webrtc::PeerConnectionInterface::kRtcpMuxPolicyRequire;
+  }
+
+  return webrtc::PeerConnectionInterface::kRtcpMuxPolicyRequire;
+}
+
+webrtc::SdpSemantics ToNativeSdpSemantics(SdpSemantics value) {
+  switch (value) {
+    case SdpSemantics::kPlanB:
+      return webrtc::SdpSemantics::kPlanB_DEPRECATED;
+    case SdpSemantics::kUnifiedPlan:
+      return webrtc::SdpSemantics::kUnifiedPlan;
+  }
+
+  return webrtc::SdpSemantics::kUnifiedPlan;
+}
+
+webrtc::PeerConnectionInterface::CandidateNetworkPolicy ToNativeCandidateNetworkPolicy(
+    CandidateNetworkPolicy value) {
+  switch (value) {
+    case CandidateNetworkPolicy::kCandidateNetworkPolicyAll:
+      return webrtc::PeerConnectionInterface::kCandidateNetworkPolicyAll;
+    case CandidateNetworkPolicy::kCandidateNetworkPolicyLowCost:
+      return webrtc::PeerConnectionInterface::kCandidateNetworkPolicyLowCost;
+  }
+
+  return webrtc::PeerConnectionInterface::kCandidateNetworkPolicyAll;
+}
+
+webrtc::PeerConnectionInterface::BundlePolicy ToNativeBundlePolicy(
+    BundlePolicy value) {
+  switch (value) {
+    case kBundlePolicyBalanced:
+      return webrtc::PeerConnectionInterface::kBundlePolicyBalanced;
+    case kBundlePolicyMaxBundle:
+      return webrtc::PeerConnectionInterface::kBundlePolicyMaxBundle;
+    case kBundlePolicyMaxCompat:
+      return webrtc::PeerConnectionInterface::kBundlePolicyMaxCompat;
+  }
+
+  return webrtc::PeerConnectionInterface::kBundlePolicyBalanced;
+}
+
+webrtc::PeerConnectionInterface::IceTransportsType ToNativeIceTransportType(
+    IceTransportsType value) {
+  switch (value) {
+    case IceTransportsType::kAll:
+      return webrtc::PeerConnectionInterface::kAll;
+    case IceTransportsType::kNoHost:
+      return webrtc::PeerConnectionInterface::kNoHost;
+    case IceTransportsType::kNone:
+      return webrtc::PeerConnectionInterface::kNone;
+    case IceTransportsType::kRelay:
+      return webrtc::PeerConnectionInterface::kRelay;
+  }
+
+  return webrtc::PeerConnectionInterface::kAll;
+}
+
+webrtc::PeerConnectionInterface::TcpCandidatePolicy ToNativeTcpCandidatePolicy(
+    TcpCandidatePolicy value) {
+  switch (value) {
+    case TcpCandidatePolicy::kTcpCandidatePolicyDisabled:
+      return webrtc::PeerConnectionInterface::kTcpCandidatePolicyDisabled;
+    case TcpCandidatePolicy::kTcpCandidatePolicyEnabled:
+      return webrtc::PeerConnectionInterface::kTcpCandidatePolicyEnabled;
+  }
+
+  return webrtc::PeerConnectionInterface::kTcpCandidatePolicyEnabled;
+}
+
+RTCPeerConnectionState ToBridgePeerConnectionState(
+    webrtc::PeerConnectionInterface::PeerConnectionState value) {
+  switch (value) {
+    case webrtc::PeerConnectionInterface::PeerConnectionState::kNew:
+      return RTCPeerConnectionState::RTCPeerConnectionStateNew;
+    case webrtc::PeerConnectionInterface::PeerConnectionState::kConnecting:
+      return RTCPeerConnectionState::RTCPeerConnectionStateConnecting;
+    case webrtc::PeerConnectionInterface::PeerConnectionState::kConnected:
+      return RTCPeerConnectionState::RTCPeerConnectionStateConnected;
+    case webrtc::PeerConnectionInterface::PeerConnectionState::kDisconnected:
+      return RTCPeerConnectionState::RTCPeerConnectionStateDisconnected;
+    case webrtc::PeerConnectionInterface::PeerConnectionState::kFailed:
+      return RTCPeerConnectionState::RTCPeerConnectionStateFailed;
+    case webrtc::PeerConnectionInterface::PeerConnectionState::kClosed:
+      return RTCPeerConnectionState::RTCPeerConnectionStateClosed;
+  }
+
+  return RTCPeerConnectionState::RTCPeerConnectionStateNew;
+}
+
+RTCIceGatheringState ToBridgeIceGatheringState(
+    webrtc::PeerConnectionInterface::IceGatheringState value) {
+  switch (value) {
+    case webrtc::PeerConnectionInterface::kIceGatheringNew:
+      return RTCIceGatheringState::RTCIceGatheringStateNew;
+    case webrtc::PeerConnectionInterface::kIceGatheringGathering:
+      return RTCIceGatheringState::RTCIceGatheringStateGathering;
+    case webrtc::PeerConnectionInterface::kIceGatheringComplete:
+      return RTCIceGatheringState::RTCIceGatheringStateComplete;
+  }
+
+  return RTCIceGatheringState::RTCIceGatheringStateNew;
+}
+
+RTCIceConnectionState ToBridgeIceConnectionState(
+    webrtc::PeerConnectionInterface::IceConnectionState value) {
+  switch (value) {
+    case webrtc::PeerConnectionInterface::kIceConnectionNew:
+      return RTCIceConnectionState::RTCIceConnectionStateNew;
+    case webrtc::PeerConnectionInterface::kIceConnectionChecking:
+      return RTCIceConnectionState::RTCIceConnectionStateChecking;
+    case webrtc::PeerConnectionInterface::kIceConnectionCompleted:
+      return RTCIceConnectionState::RTCIceConnectionStateCompleted;
+    case webrtc::PeerConnectionInterface::kIceConnectionConnected:
+      return RTCIceConnectionState::RTCIceConnectionStateConnected;
+    case webrtc::PeerConnectionInterface::kIceConnectionFailed:
+      return RTCIceConnectionState::RTCIceConnectionStateFailed;
+    case webrtc::PeerConnectionInterface::kIceConnectionDisconnected:
+      return RTCIceConnectionState::RTCIceConnectionStateDisconnected;
+    case webrtc::PeerConnectionInterface::kIceConnectionClosed:
+      return RTCIceConnectionState::RTCIceConnectionStateClosed;
+    case webrtc::PeerConnectionInterface::kIceConnectionMax:
+      return RTCIceConnectionState::RTCIceConnectionStateMax;
+  }
+
+  return RTCIceConnectionState::RTCIceConnectionStateNew;
+}
+
+RTCSignalingState ToBridgeSignalingState(
+    webrtc::PeerConnectionInterface::SignalingState value) {
+  switch (value) {
+    case webrtc::PeerConnectionInterface::kStable:
+      return RTCSignalingState::RTCSignalingStateStable;
+    case webrtc::PeerConnectionInterface::kHaveLocalOffer:
+      return RTCSignalingState::RTCSignalingStateHaveLocalOffer;
+    case webrtc::PeerConnectionInterface::kHaveRemoteOffer:
+      return RTCSignalingState::RTCSignalingStateHaveRemoteOffer;
+    case webrtc::PeerConnectionInterface::kHaveLocalPrAnswer:
+      return RTCSignalingState::RTCSignalingStateHaveLocalPrAnswer;
+    case webrtc::PeerConnectionInterface::kHaveRemotePrAnswer:
+      return RTCSignalingState::RTCSignalingStateHaveRemotePrAnswer;
+    case webrtc::PeerConnectionInterface::kClosed:
+      return RTCSignalingState::RTCSignalingStateClosed;
+  }
+
+  return RTCSignalingState::RTCSignalingStateStable;
+}
+
+webrtc::PeerConnectionInterface::IceServer ToNativeIceServer(
+    const IceServer& value) {
+  webrtc::PeerConnectionInterface::IceServer server;
+  server.uri = to_std_string(value.uri);
+  server.username = to_std_string(value.username);
+  server.password = to_std_string(value.password);
+  return server;
+}
+
+webrtc::MediaType ToNativeMediaType(RTCMediaType media_type) {
+  switch (media_type) {
+    case RTCMediaType::AUDIO:
+      return webrtc::MediaType::AUDIO;
+    case RTCMediaType::VIDEO:
+      return webrtc::MediaType::VIDEO;
+    default:
+      return webrtc::MediaType::UNSUPPORTED;
+  }
+}
+
+webrtc::scoped_refptr<webrtc::MediaStreamTrackInterface> ToNativeTrack(
+    const scoped_refptr<RTCMediaTrack>& track) {
+  if (!track) {
+    return nullptr;
+  }
+
+  const auto kind = to_std_string(track->kind());
+  if (kind == webrtc::MediaStreamTrackInterface::kVideoKind) {
+    auto* impl = static_cast<VideoTrackImpl*>(track.get());
+    return impl->rtc_track();
+  }
+  if (kind == webrtc::MediaStreamTrackInterface::kAudioKind) {
+    auto* impl = static_cast<AudioTrackImpl*>(track.get());
+    return impl->rtc_track();
+  }
+
+  return nullptr;
+}
+
+}  // namespace
 class SetSessionDescriptionObserverProxy
     : public webrtc::SetLocalDescriptionObserverInterface,
       public webrtc::SetRemoteDescriptionObserverInterface {
@@ -316,24 +401,24 @@ void RTCPeerConnectionImpl::OnRenegotiationNeeded() {
 void RTCPeerConnectionImpl::OnConnectionChange(
     webrtc::PeerConnectionInterface::PeerConnectionState new_state) {
   if (observer_)
-    observer_->OnPeerConnectionState(peer_connection_state_map[new_state]);
+    observer_->OnPeerConnectionState(ToBridgePeerConnectionState(new_state));
 }
 
 void RTCPeerConnectionImpl::OnIceGatheringChange(
     webrtc::PeerConnectionInterface::IceGatheringState new_state) {
   if (observer_)
-    observer_->OnIceGatheringState(ice_gathering_state_map[new_state]);
+    observer_->OnIceGatheringState(ToBridgeIceGatheringState(new_state));
 }
 
 void RTCPeerConnectionImpl::OnIceConnectionChange(
     webrtc::PeerConnectionInterface::IceConnectionState new_state) {
   if (observer_)
-    observer_->OnIceConnectionState(ice_connection_state_map[new_state]);
+    observer_->OnIceConnectionState(ToBridgeIceConnectionState(new_state));
 }
 
 void RTCPeerConnectionImpl::OnSignalingChange(
     webrtc::PeerConnectionInterface::SignalingState new_state) {
-  if (observer_) observer_->OnSignalingState(signaling_state_map[new_state]);
+  if (observer_) observer_->OnSignalingState(ToBridgeSignalingState(new_state));
 }
 
 bool RTCPeerConnectionImpl::AddCandidate(const string mid, int mid_mline_index,
@@ -398,73 +483,62 @@ void RTCPeerConnectionImpl::DeRegisterRTCPeerConnectionObserver() {
 }
 
 bool RTCPeerConnectionImpl::Initialize() {
-  RTC_DCHECK(rtc_peerconnection_factory_.get() != nullptr);
-  RTC_DCHECK(rtc_peerconnection_.get() == nullptr);
+  RTC_DCHECK(rtc_peerconnection_factory_ != nullptr);
+  RTC_DCHECK(rtc_peerconnection_ == nullptr);
 
   webrtc::PeerConnectionInterface::RTCConfiguration config;
-  webrtc::PeerConnectionInterface::IceServers servers;
-
-  config.rtcp_mux_policy =
-      webrtc::PeerConnectionInterface::kRtcpMuxPolicyNegotiate;
-
-  config.candidate_network_policy =
-      webrtc::PeerConnectionInterface::kCandidateNetworkPolicyAll;
-
-  for (int i = 0; i < kMaxIceServerSize; i++) {
-    IceServer ice_server = configuration_.ice_servers[i];
-    if (ice_server.uri.size() > 0) {
-      webrtc::PeerConnectionInterface::IceServer server;
-      server.uri = to_std_string(ice_server.uri);
-      server.username = to_std_string(ice_server.username);
-      server.password = to_std_string(ice_server.password);
-      config.servers.push_back(server);
+  for (int i = 0; i < kMaxIceServerSize; ++i) {
+    const IceServer& ice_server = configuration_.ice_servers[i];
+    if (ice_server.uri.size() == 0) {
+      continue;
     }
+
+    config.servers.push_back(ToNativeIceServer(ice_server));
   }
-  config.bundle_policy = bundle_policy_map[configuration_.bundle_policy];
-  config.sdp_semantics = sdp_semantics_map[configuration_.sdp_semantics];
-  config.candidate_network_policy =
-      candidate_network_policy_map[configuration_.candidate_network_policy];
+
+  config.bundle_policy = ToNativeBundlePolicy(configuration_.bundle_policy);
+  config.sdp_semantics = ToNativeSdpSemantics(configuration_.sdp_semantics);
+  config.candidate_network_policy = ToNativeCandidateNetworkPolicy(
+      configuration_.candidate_network_policy);
   config.tcp_candidate_policy =
-      tcp_candidate_policy_map[configuration_.tcp_candidate_policy];
-  config.type = ice_transport_type_map[configuration_.type];
-  config.rtcp_mux_policy = rtcp_mux_policy_map[configuration_.rtcp_mux_policy];
+      ToNativeTcpCandidatePolicy(configuration_.tcp_candidate_policy);
+  config.type = ToNativeIceTransportType(configuration_.type);
+  config.rtcp_mux_policy = ToNativeRtcpMuxPolicy(configuration_.rtcp_mux_policy);
   config.ice_candidate_pool_size = configuration_.ice_candidate_pool_size;
+  config.disable_ipv6_on_wifi = configuration_.disable_ipv6_on_wifi;
+  config.disable_link_local_networks =
+      configuration_.disable_link_local_networks;
+  config.max_ipv6_networks = configuration_.max_ipv6_networks;
+  if (configuration_.screencast_min_bitrate > 0) {
+    config.screencast_min_bitrate = configuration_.screencast_min_bitrate;
+  }
+  config.set_dscp(configuration_.enable_dscp);
 
   offer_answer_options_.offer_to_receive_audio =
       configuration_.offer_to_receive_audio;
   offer_answer_options_.offer_to_receive_video =
       configuration_.offer_to_receive_video;
-
   offer_answer_options_.use_rtp_mux = configuration_.use_rtp_mux;
 
-  config.disable_ipv6_on_wifi = configuration_.disable_ipv6_on_wifi;
-  config.disable_link_local_networks =
-      configuration_.disable_link_local_networks;
-  config.max_ipv6_networks = configuration_.max_ipv6_networks;
-
-  if (configuration_.screencast_min_bitrate > 0)
-    config.screencast_min_bitrate = configuration_.screencast_min_bitrate;
-
-  config.set_dscp(configuration_.enable_dscp);
-
-  RTCMediaConstraintsImpl* media_constraints =
-      static_cast<RTCMediaConstraintsImpl*>(constraints_.get());
-  webrtc::MediaConstraints rtc_constraints(media_constraints->GetMandatory(),
-                                           media_constraints->GetOptional());
-  CopyConstraintsIntoRtcConfiguration(&rtc_constraints, &config);
+  if (constraints_) {
+    auto* media_constraints =
+        static_cast<RTCMediaConstraintsImpl*>(constraints_.get());
+    webrtc::MediaConstraints rtc_constraints(
+        media_constraints->GetMandatory(), media_constraints->GetOptional());
+    CopyConstraintsIntoRtcConfiguration(&rtc_constraints, &config);
+  }
 
   webrtc::PeerConnectionFactoryInterface::Options options;
   options.disable_encryption =
-      (configuration_.srtp_type == MediaSecurityType::kSRTP_None);
-  // options.network_ignore_mask |= ADAPTER_TYPE_CELLULAR;
+      configuration_.srtp_type == MediaSecurityType::kSRTP_None;
   rtc_peerconnection_factory_->SetOptions(options);
 
   webrtc::PeerConnectionDependencies dependencies(this);
   auto result = rtc_peerconnection_factory_->CreatePeerConnectionOrError(
       config, std::move(dependencies));
-
   if (!result.ok()) {
-    RTC_LOG(LS_WARNING) << "CreatePeerConnection failed";
+    RTC_LOG(LS_WARNING) << "CreatePeerConnection failed: "
+                        << result.error().message();
     Close();
     return false;
   }
@@ -558,22 +632,16 @@ void RTCPeerConnectionImpl::SetRemoteDescription(const string sdp,
     return;
   }
 
-  webrtc::MediaContentDescription* content_desc =
-      session_description->description()->GetContentDescriptionByName("video");
-  webrtc::MediaContentDescription* media_content_desc =
-      (webrtc::MediaContentDescription*)content_desc;
+  auto* video_content = static_cast<webrtc::MediaContentDescription*>(
+      session_description->description()->GetContentDescriptionByName("video"));
+  if (video_content && configuration_.local_video_bandwidth > 0) {
+    video_content->set_bandwidth(configuration_.local_video_bandwidth * 1000);
+  }
 
-  if (media_content_desc && configuration_.local_video_bandwidth > 0)
-    media_content_desc->set_bandwidth(configuration_.local_video_bandwidth *
-                                      1000);
-
-  webrtc::MediaContentDescription* audio_content_desc =
-      session_description->description()->GetContentDescriptionByName("audio");
-  webrtc::MediaContentDescription* audio_media_content_desc =
-      static_cast<webrtc::MediaContentDescription*>(audio_content_desc);
-  if (audio_media_content_desc && configuration_.local_audio_bandwidth > 0) {
-    audio_media_content_desc->set_bandwidth(
-        configuration_.local_audio_bandwidth * 1000);
+  auto* audio_content = static_cast<webrtc::MediaContentDescription*>(
+      session_description->description()->GetContentDescriptionByName("audio"));
+  if (audio_content && configuration_.local_audio_bandwidth > 0) {
+    audio_content->set_bandwidth(configuration_.local_audio_bandwidth * 1000);
   }
   webrtc::scoped_refptr<webrtc::SetRemoteDescriptionObserverInterface>
       observer = webrtc::make_ref_counted<SetSessionDescriptionObserverProxy>(
@@ -789,108 +857,106 @@ void RTCPeerConnectionImpl::GetStats(OnStatsCollectorSuccess success,
 scoped_refptr<RTCRtpTransceiver> RTCPeerConnectionImpl::AddTransceiver(
     scoped_refptr<RTCMediaTrack> track,
     scoped_refptr<RTCRtpTransceiverInit> init) {
-  RTCRtpTransceiverInitImpl* initImpl =
-      static_cast<RTCRtpTransceiverInitImpl*>(init.get());
-
-  webrtc::RTCErrorOr<webrtc::scoped_refptr<webrtc::RtpTransceiverInterface>>
-      errorOr;
-  std::string kind = to_std_string(track->kind());
-  if (0 == kind.compare(webrtc::MediaStreamTrackInterface::kVideoKind)) {
-    VideoTrackImpl* impl = static_cast<VideoTrackImpl*>(track.get());
-    errorOr = rtc_peerconnection_->AddTransceiver(
-        impl->rtc_track(), initImpl->rtp_transceiver_init());
-  } else if (0 == kind.compare(webrtc::MediaStreamTrackInterface::kAudioKind)) {
-    AudioTrackImpl* impl = static_cast<AudioTrackImpl*>(track.get());
-    errorOr = rtc_peerconnection_->AddTransceiver(
-        impl->rtc_track(), initImpl->rtp_transceiver_init());
+  if (!track || !init || !rtc_peerconnection_) {
+    return scoped_refptr<RTCRtpTransceiver>();
   }
 
-  if (errorOr.ok()) {
-    return new RefCountedObject<RTCRtpTransceiverImpl>(errorOr.value());
+  auto* initImpl = static_cast<RTCRtpTransceiverInitImpl*>(init.get());
+  auto native_track = ToNativeTrack(track);
+  if (!native_track) {
+    return scoped_refptr<RTCRtpTransceiver>();
   }
 
-  return scoped_refptr<RTCRtpTransceiver>();
+  auto errorOr = rtc_peerconnection_->AddTransceiver(
+      native_track, initImpl->rtp_transceiver_init());
+  if (!errorOr.ok()) {
+    return scoped_refptr<RTCRtpTransceiver>();
+  }
+
+  return new RefCountedObject<RTCRtpTransceiverImpl>(errorOr.value());
 }
 
 scoped_refptr<RTCRtpTransceiver> RTCPeerConnectionImpl::AddTransceiver(
     scoped_refptr<RTCMediaTrack> track) {
-  webrtc::RTCErrorOr<webrtc::scoped_refptr<webrtc::RtpTransceiverInterface>>
-      errorOr;
-  std::string kind = to_std_string(track->kind());
-  if (0 == kind.compare(webrtc::MediaStreamTrackInterface::kVideoKind)) {
-    VideoTrackImpl* impl = static_cast<VideoTrackImpl*>(track.get());
-    errorOr = rtc_peerconnection_->AddTransceiver(impl->rtc_track());
-  } else if (0 == kind.compare(webrtc::MediaStreamTrackInterface::kAudioKind)) {
-    AudioTrackImpl* impl = static_cast<AudioTrackImpl*>(track.get());
-    errorOr = rtc_peerconnection_->AddTransceiver(impl->rtc_track());
+  if (!track || !rtc_peerconnection_) {
+    return scoped_refptr<RTCRtpTransceiver>();
   }
 
-  if (errorOr.ok()) {
-    return new RefCountedObject<RTCRtpTransceiverImpl>(errorOr.value());
+  auto native_track = ToNativeTrack(track);
+  if (!native_track) {
+    return scoped_refptr<RTCRtpTransceiver>();
   }
-  // onAdd(scoped_refptr<RTCRtpTransceiver>(), errorOr.error().message());
-  return scoped_refptr<RTCRtpTransceiver>();
+
+  auto errorOr = rtc_peerconnection_->AddTransceiver(native_track);
+  if (!errorOr.ok()) {
+    return scoped_refptr<RTCRtpTransceiver>();
+  }
+
+  return new RefCountedObject<RTCRtpTransceiverImpl>(errorOr.value());
 }
 
 scoped_refptr<RTCRtpTransceiver> RTCPeerConnectionImpl::AddTransceiver(
     RTCMediaType media_type) {
-  webrtc::RTCErrorOr<webrtc::scoped_refptr<webrtc::RtpTransceiverInterface>>
-      errorOr;
-  if (media_type == RTCMediaType::AUDIO) {
-    errorOr = rtc_peerconnection_->AddTransceiver(webrtc::MediaType::AUDIO);
-  } else if (media_type == RTCMediaType::VIDEO) {
-    errorOr = rtc_peerconnection_->AddTransceiver(webrtc::MediaType::VIDEO);
+  if (!rtc_peerconnection_) {
+    return scoped_refptr<RTCRtpTransceiver>();
   }
-  if (errorOr.ok()) {
-    return new RefCountedObject<RTCRtpTransceiverImpl>(errorOr.value());
+
+  const auto native_type = ToNativeMediaType(media_type);
+  if (native_type == webrtc::MediaType::UNSUPPORTED) {
+    return scoped_refptr<RTCRtpTransceiver>();
   }
-  // onAdd(scoped_refptr<RTCRtpTransceiver>(), errorOr.error().message());
-  return scoped_refptr<RTCRtpTransceiver>();
+
+  auto errorOr = rtc_peerconnection_->AddTransceiver(native_type);
+  if (!errorOr.ok()) {
+    return scoped_refptr<RTCRtpTransceiver>();
+  }
+
+  return new RefCountedObject<RTCRtpTransceiverImpl>(errorOr.value());
 }
 
 scoped_refptr<RTCRtpTransceiver> RTCPeerConnectionImpl::AddTransceiver(
     RTCMediaType media_type, scoped_refptr<RTCRtpTransceiverInit> init) {
-  RTCRtpTransceiverInitImpl* initImpl =
-      static_cast<RTCRtpTransceiverInitImpl*>(init.get());
-  webrtc::RTCErrorOr<webrtc::scoped_refptr<webrtc::RtpTransceiverInterface>>
-      errorOr;
-  if (media_type == RTCMediaType::AUDIO) {
-    errorOr = rtc_peerconnection_->AddTransceiver(
-        webrtc::MediaType::AUDIO, initImpl->rtp_transceiver_init());
-  } else if (media_type == RTCMediaType::VIDEO) {
-    errorOr = rtc_peerconnection_->AddTransceiver(
-        webrtc::MediaType::VIDEO, initImpl->rtp_transceiver_init());
+  if (!init || !rtc_peerconnection_) {
+    return scoped_refptr<RTCRtpTransceiver>();
   }
-  if (errorOr.ok()) {
-    return new RefCountedObject<RTCRtpTransceiverImpl>(errorOr.value());
+
+  const auto native_type = ToNativeMediaType(media_type);
+  if (native_type == webrtc::MediaType::UNSUPPORTED) {
+    return scoped_refptr<RTCRtpTransceiver>();
   }
-  // onAdd(scoped_refptr<RTCRtpTransceiver>(), errorOr.error().message());
-  return scoped_refptr<RTCRtpTransceiver>();
+
+  auto* initImpl = static_cast<RTCRtpTransceiverInitImpl*>(init.get());
+  auto errorOr = rtc_peerconnection_->AddTransceiver(
+      native_type, initImpl->rtp_transceiver_init());
+  if (!errorOr.ok()) {
+    return scoped_refptr<RTCRtpTransceiver>();
+  }
+
+  return new RefCountedObject<RTCRtpTransceiverImpl>(errorOr.value());
 }
 
 scoped_refptr<RTCRtpSender> RTCPeerConnectionImpl::AddTrack(
     scoped_refptr<RTCMediaTrack> track, vector<string> streamIds) {
-  webrtc::RTCErrorOr<webrtc::scoped_refptr<webrtc::RtpSenderInterface>> errorOr;
+  if (!track || !rtc_peerconnection_) {
+    return scoped_refptr<RTCRtpSender>();
+  }
+
+  auto native_track = ToNativeTrack(track);
+  if (!native_track) {
+    return scoped_refptr<RTCRtpSender>();
+  }
 
   std::vector<std::string> stream_ids;
-  for (auto id : streamIds.std_vector()) {
+  for (const auto& id : streamIds.std_vector()) {
     stream_ids.push_back(to_std_string(id));
   }
-  std::string kind = to_std_string(track->kind());
-  if (0 == kind.compare(webrtc::MediaStreamTrackInterface::kVideoKind)) {
-    VideoTrackImpl* impl = static_cast<VideoTrackImpl*>(track.get());
-    errorOr = rtc_peerconnection_->AddTrack(impl->rtc_track(), stream_ids);
-  } else if (0 == kind.compare(webrtc::MediaStreamTrackInterface::kAudioKind)) {
-    AudioTrackImpl* impl = static_cast<AudioTrackImpl*>(track.get());
-    errorOr = rtc_peerconnection_->AddTrack(impl->rtc_track(), stream_ids);
+
+  auto errorOr = rtc_peerconnection_->AddTrack(native_track, stream_ids);
+  if (!errorOr.ok()) {
+    return scoped_refptr<RTCRtpSender>();
   }
 
-  if (errorOr.ok()) {
-    return new RefCountedObject<RTCRtpSenderImpl>(errorOr.value());
-  }
-
-  // onAdd(scoped_refptr<RTCRtpSender>(), errorOr.error().message());
-  return scoped_refptr<RTCRtpSender>();
+  return new RefCountedObject<RTCRtpSenderImpl>(errorOr.value());
 }
 
 bool RTCPeerConnectionImpl::RemoveTrack(scoped_refptr<RTCRtpSender> render) {

@@ -1,37 +1,35 @@
 #include "rtc_rtp_sender_impl.h"
 
-#include <src/rtc_audio_track_impl.h>
-#include <src/rtc_dtls_transport_impl.h>
-#include <src/rtc_dtmf_sender_impl.h>
-#include <src/rtc_rtp_parameters_impl.h>
-#include <src/rtc_video_track_impl.h>
+#include "base/refcountedobject.h"
+#include "rtc_audio_track_impl.h"
+#include "rtc_dtls_transport_impl.h"
+#include "rtc_dtmf_sender_impl.h"
+#include "rtc_rtp_parameters_impl.h"
+#include "rtc_video_track_impl.h"
 
 namespace lumenrtc_bridge {
-RTCRtpSenderImpl::RTCRtpSenderImpl(
-    webrtc::scoped_refptr<webrtc::RtpSenderInterface> rtp_sender)
-    : rtp_sender_(rtp_sender) {}
+namespace {
 
-bool RTCRtpSenderImpl::set_track(scoped_refptr<RTCMediaTrack> track) {
-  if (track == nullptr) {
-    return rtp_sender_->SetTrack(nullptr);
+webrtc::scoped_refptr<webrtc::MediaStreamTrackInterface> ToNativeTrack(
+    const scoped_refptr<RTCMediaTrack>& track) {
+  if (!track) {
+    return nullptr;
   }
-  if (std::string(webrtc::MediaStreamTrackInterface::kVideoKind) ==
-      track->kind().std_string()) {
-    VideoTrackImpl* impl = static_cast<VideoTrackImpl*>(track.get());
-    return rtp_sender_->SetTrack(impl->rtc_track().get());
-  } else if (std::string(webrtc::MediaStreamTrackInterface::kAudioKind) ==
-             track->kind().std_string()) {
-    AudioTrackImpl* impl = static_cast<AudioTrackImpl*>(track.get());
-    return rtp_sender_->SetTrack(impl->rtc_track().get());
+
+  const auto kind = track->kind().std_string();
+  if (kind == webrtc::MediaStreamTrackInterface::kVideoKind) {
+    return static_cast<VideoTrackImpl*>(track.get())->rtc_track();
   }
-  return false;
+  if (kind == webrtc::MediaStreamTrackInterface::kAudioKind) {
+    return static_cast<AudioTrackImpl*>(track.get())->rtc_track();
+  }
+
+  return nullptr;
 }
 
-scoped_refptr<RTCMediaTrack> RTCRtpSenderImpl::track() const {
-  webrtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track =
-      rtp_sender_->track();
-
-  if (nullptr == track.get()) {
+scoped_refptr<RTCMediaTrack> ToBridgeTrack(
+    const webrtc::scoped_refptr<webrtc::MediaStreamTrackInterface>& track) {
+  if (!track) {
     return scoped_refptr<RTCMediaTrack>();
   }
 
@@ -39,13 +37,28 @@ scoped_refptr<RTCMediaTrack> RTCRtpSenderImpl::track() const {
     return scoped_refptr<RTCMediaTrack>(new RefCountedObject<VideoTrackImpl>(
         webrtc::scoped_refptr<webrtc::VideoTrackInterface>(
             static_cast<webrtc::VideoTrackInterface*>(track.get()))));
-  } else if (track->kind() == webrtc::MediaStreamTrackInterface::kAudioKind) {
+  }
+  if (track->kind() == webrtc::MediaStreamTrackInterface::kAudioKind) {
     return scoped_refptr<RTCMediaTrack>(new RefCountedObject<AudioTrackImpl>(
         webrtc::scoped_refptr<webrtc::AudioTrackInterface>(
-            webrtc::scoped_refptr<webrtc::AudioTrackInterface>(
-                static_cast<webrtc::AudioTrackInterface*>(track.get())))));
+            static_cast<webrtc::AudioTrackInterface*>(track.get()))));
   }
+
   return scoped_refptr<RTCMediaTrack>();
+}
+
+}  // namespace
+
+RTCRtpSenderImpl::RTCRtpSenderImpl(
+    webrtc::scoped_refptr<webrtc::RtpSenderInterface> rtp_sender)
+    : rtp_sender_(rtp_sender) {}
+
+bool RTCRtpSenderImpl::set_track(scoped_refptr<RTCMediaTrack> track) {
+  return rtp_sender_->SetTrack(ToNativeTrack(track));
+}
+
+scoped_refptr<RTCMediaTrack> RTCRtpSenderImpl::track() const {
+  return ToBridgeTrack(rtp_sender_->track());
 }
 
 scoped_refptr<RTCDtlsTransport> RTCRtpSenderImpl::dtls_transport() const {
@@ -65,11 +78,12 @@ RTCMediaType RTCRtpSenderImpl::media_type() const {
 const string RTCRtpSenderImpl::id() const { return rtp_sender_->id(); }
 
 const vector<string> RTCRtpSenderImpl::stream_ids() const {
-  std::vector<string> vec;
-  for (std::string item : rtp_sender_->stream_ids()) {
-    vec.push_back(item.c_str());
+  std::vector<string> values;
+  values.reserve(rtp_sender_->stream_ids().size());
+  for (const auto& item : rtp_sender_->stream_ids()) {
+    values.push_back(item.c_str());
   }
-  return vec;
+  return values;
 }
 
 void RTCRtpSenderImpl::set_stream_ids(const vector<string> stream_ids) const {

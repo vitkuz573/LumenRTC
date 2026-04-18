@@ -24,12 +24,11 @@ int32_t RTCVideoDeviceImpl::GetDeviceName(
     return -1;
   }
 
-  if (device_info_->GetDeviceName(deviceNumber, deviceNameUTF8,
-                                  deviceNameLength, deviceUniqueIdUTF8,
-                                  deviceUniqueIdUTF8Length) != -1) {
-    return 0;
-  }
-  return 0;
+  return device_info_->GetDeviceName(deviceNumber, deviceNameUTF8,
+                                     deviceNameLength, deviceUniqueIdUTF8,
+                                     deviceUniqueIdUTF8Length,
+                                     productUniqueIdUTF8,
+                                     productUniqueIdUTF8Length);
 }
 
 scoped_refptr<RTCVideoCapturer> RTCVideoDeviceImpl::Create(const char* name,

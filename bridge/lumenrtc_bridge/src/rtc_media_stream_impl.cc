@@ -8,22 +8,38 @@
 
 namespace lumenrtc_bridge {
 
+namespace {
+
+std::vector<scoped_refptr<RTCAudioTrack>> BuildAudioTracks(
+    const webrtc::scoped_refptr<webrtc::MediaStreamInterface>& stream) {
+  std::vector<scoped_refptr<RTCAudioTrack>> tracks;
+  tracks.reserve(stream->GetAudioTracks().size());
+  for (const auto& track : stream->GetAudioTracks()) {
+    tracks.push_back(scoped_refptr<RTCAudioTrack>(
+        new RefCountedObject<AudioTrackImpl>(track)));
+  }
+  return tracks;
+}
+
+std::vector<scoped_refptr<RTCVideoTrack>> BuildVideoTracks(
+    const webrtc::scoped_refptr<webrtc::MediaStreamInterface>& stream) {
+  std::vector<scoped_refptr<RTCVideoTrack>> tracks;
+  tracks.reserve(stream->GetVideoTracks().size());
+  for (const auto& track : stream->GetVideoTracks()) {
+    tracks.push_back(scoped_refptr<RTCVideoTrack>(
+        new RefCountedObject<VideoTrackImpl>(track)));
+  }
+  return tracks;
+}
+
+}  // namespace
+
 MediaStreamImpl::MediaStreamImpl(
     webrtc::scoped_refptr<webrtc::MediaStreamInterface> rtc_media_stream)
     : rtc_media_stream_(rtc_media_stream) {
   rtc_media_stream_->RegisterObserver(this);
-
-  for (auto track : rtc_media_stream->GetAudioTracks()) {
-    scoped_refptr<AudioTrackImpl> audio_track = scoped_refptr<AudioTrackImpl>(
-        new RefCountedObject<AudioTrackImpl>(track));
-    audio_tracks_.push_back(audio_track);
-  }
-
-  for (auto track : rtc_media_stream->GetVideoTracks()) {
-    scoped_refptr<VideoTrackImpl> video_track = scoped_refptr<VideoTrackImpl>(
-        new RefCountedObject<VideoTrackImpl>(track));
-    video_tracks_.push_back(video_track);
-  }
+  audio_tracks_ = BuildAudioTracks(rtc_media_stream_);
+  video_tracks_ = BuildVideoTracks(rtc_media_stream_);
   id_ = rtc_media_stream_->id();
   label_ = rtc_media_stream_->id();
 }
@@ -112,51 +128,8 @@ scoped_refptr<RTCVideoTrack> MediaStreamImpl::FindVideoTrack(
 }
 
 void MediaStreamImpl::OnChanged() {
-  std::vector<scoped_refptr<RTCAudioTrack>> audio_tracks;
-  for (auto track : rtc_media_stream_->GetAudioTracks()) {
-    scoped_refptr<AudioTrackImpl> audio_track = scoped_refptr<AudioTrackImpl>(
-        new RefCountedObject<AudioTrackImpl>(track));
-    audio_tracks.push_back(audio_track);
-  }
-
-  audio_tracks_ = audio_tracks;
-
-  std::vector<scoped_refptr<RTCVideoTrack>> video_tracks;
-  for (auto track : rtc_media_stream_->GetVideoTracks()) {
-    scoped_refptr<VideoTrackImpl> video_track = scoped_refptr<VideoTrackImpl>(
-        new RefCountedObject<VideoTrackImpl>(track));
-    video_tracks.push_back(video_track);
-  }
-
-  std::vector<scoped_refptr<RTCVideoTrack>> removed_video_tracks;
-
-  for (auto track : video_tracks_) {
-    if (std::find(video_tracks.begin(), video_tracks.end(), track) ==
-        video_tracks.end()) {
-      removed_video_tracks.push_back(track);
-    }
-  }
-
-  for (auto track : removed_video_tracks) {
-    /*  if (observer_) {
-        observer_->OnRemoveTrack([&](OnRTCMediaStream on) { on(this); }, track);
-      }*/
-  }
-
-  std::vector<scoped_refptr<RTCVideoTrack>> new_video_tracks;
-  for (auto track : video_tracks) {
-    if (std::find(video_tracks_.begin(), video_tracks_.end(), track) ==
-        video_tracks_.end()) {
-      new_video_tracks.push_back(track);
-    }
-  }
-
-  // for (auto track : new_video_tracks) {
-  //  if (observer_)
-  //    observer_->OnAddTrack([&](OnRTCMediaStream on) { on(this); }, track);
-  //}
-
-  video_tracks_ = video_tracks;
+  audio_tracks_ = BuildAudioTracks(rtc_media_stream_);
+  video_tracks_ = BuildVideoTracks(rtc_media_stream_);
 }
 
 }  // namespace lumenrtc_bridge
