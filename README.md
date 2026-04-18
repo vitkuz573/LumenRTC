@@ -2,7 +2,7 @@
 
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/vitkuz573/LumenRTC)
 
-LumenRTC is a native C ABI + .NET (`net10.0`) wrapper over `libwebrtc`.
+LumenRTC is a native C ABI + .NET (`net10.0`) wrapper over `lumenrtc_bridge`.
 Canonical upstream for WebRTC is `https://webrtc.googlesource.com/src.git`.
 
 The repository uses [abi-forge](https://github.com/vitkuz573/abi-forge) (installed
@@ -47,13 +47,13 @@ macOS is not currently wired as a first-class build target in this repository.
 - Git
 - `depot_tools` (`gclient`, `gn`, `ninja`) for setup/sync scripts
 
-`vendor/libwebrtc` is the local bridge wrapper source used when
-`LIBWEBRTC_ROOT` is not explicitly set.
+`bridge/lumenrtc_bridge` is the in-repo first-party bridge source used when
+`LUMENRTC_BRIDGE_ROOT` is not explicitly set.
 
 ## First Clone Setup (Recommended)
 
-This pulls official WebRTC, syncs `vendor/libwebrtc` into the checkout,
-builds `libwebrtc`, then builds LumenRTC native + managed layers.
+This pulls official WebRTC, syncs `bridge/lumenrtc_bridge` into the checkout,
+builds `lumenrtc_bridge`, then builds LumenRTC native + managed layers.
 
 Windows:
 
@@ -79,8 +79,8 @@ Native build:
 
 ```bash
 cmake -S native -B native/build \
-  -DLIBWEBRTC_ROOT=/path/to/libwebrtc \
-  -DLIBWEBRTC_BUILD_DIR=/path/to/webrtc/out/Release
+  -DLUMENRTC_BRIDGE_ROOT=/path/to/lumenrtc_bridge \
+  -DLUMENRTC_BRIDGE_BUILD_DIR=/path/to/webrtc/out/Release
 cmake --build native/build -j
 ```
 
@@ -97,17 +97,17 @@ Desktop capture support is always compiled in for `lumenrtc`.
 Linux:
 
 ```bash
-scripts/bootstrap.sh --libwebrtc-build-dir /path/to/webrtc/out/Release
+scripts/bootstrap.sh --lumenrtc_bridge-build-dir /path/to/webrtc/out/Release
 ```
 
 Windows:
 
 ```powershell
-scripts\bootstrap.ps1 -LibWebRtcBuildDir C:\path\to\webrtc\out\Release
+scripts\bootstrap.ps1 -LumenRtcBridgeBuildDir C:\path\to\webrtc\out\Release
 ```
 
 If build dir is omitted (or set to `auto`), bootstrap tries common output paths
-and env vars (`LIBWEBRTC_BUILD_DIR`, `WEBRTC_BUILD_DIR`, etc.).
+and env vars (`LUMENRTC_BRIDGE_BUILD_DIR`).
 
 ## ABI Governance
 
@@ -161,12 +161,12 @@ Current ABI facts:
 
 ## Runtime
 
-Ensure `lumenrtc` and `libwebrtc` are discoverable by the loader:
+Ensure `lumenrtc` and `lumenrtc_bridge` are discoverable by the loader:
 - Windows: on `PATH` or next to app binaries.
 - Linux: on `LD_LIBRARY_PATH` (or via rpath).
 
 Sample builds can copy native libs into output automatically. Override via
-`LumenRtcNativeDir` and `LibWebRtcBuildDir` (or `LIBWEBRTC_BUILD_DIR`).
+`LumenRtcNativeDir` and `LumenRtcBridgeBuildDir` (or `LUMENRTC_BRIDGE_BUILD_DIR`).
 
 ## Quickstart (Convenience API)
 
@@ -308,13 +308,13 @@ pack scripts to produce local `.nupkg` files.
 Windows (PowerShell):
 
 ```powershell
-scripts\pack.ps1 -Configuration Release -Rid win-x64 -LibWebRtcBuildDir C:\path\to\webrtc\out\Release
+scripts\pack.ps1 -Configuration Release -Rid win-x64 -LumenRtcBridgeBuildDir C:\path\to\webrtc\out\Release
 ```
 
 Linux:
 
 ```bash
-RID=linux-x64 LIBWEBRTC_BUILD_DIR=/path/to/webrtc/out/Release scripts/pack.sh
+RID=linux-x64 LUMENRTC_BRIDGE_BUILD_DIR=/path/to/webrtc/out/Release scripts/pack.sh
 ```
 
 To pack without native libraries, use `-NoNative` (PowerShell) or `NO_NATIVE=true`.
@@ -325,18 +325,18 @@ To build a single package containing multiple runtime folders:
 scripts\pack-all.ps1 `
   -Rids win-x64,linux-x64 `
   -WinLumenRtcNativeDir C:\path\to\native\build `
-  -WinLibWebRtcBuildDir C:\path\to\webrtc\out\Release `
+  -WinLumenRtcBridgeBuildDir C:\path\to\webrtc\out\Release `
   -LinuxLumenRtcNativeDir /path/to/native/build `
-  -LinuxLibWebRtcBuildDir /path/to/webrtc/out/Release `
+  -LinuxLumenRtcBridgeBuildDir /path/to/webrtc/out/Release `
   -PackageVersion 1.0.1
 ```
 
 ```bash
 RIDS=win-x64,linux-x64 \
 WIN_LUMENRTC_NATIVE_DIR=/path/to/win/native/build \
-WIN_LIBWEBRTC_BUILD_DIR=/path/to/win/webrtc/out/Release \
+WIN_LUMENRTC_BRIDGE_BUILD_DIR=/path/to/win/webrtc/out/Release \
 LINUX_LUMENRTC_NATIVE_DIR=/path/to/linux/native/build \
-LINUX_LIBWEBRTC_BUILD_DIR=/path/to/linux/webrtc/out/Release \
+LINUX_LUMENRTC_BRIDGE_BUILD_DIR=/path/to/linux/webrtc/out/Release \
 PACKAGE_VERSION=1.0.1 \
 scripts/pack-all.sh
 ```
@@ -356,7 +356,7 @@ Useful options:
 
 - `-SkipNuGetPush` to only create `.nupkg` locally
 - `-WslDistro <name>` if you need a specific distro
-- `-WinLibWebRtcBuildDir`, `-LinuxLibWebRtcBuildDir` for explicit libwebrtc paths
+- `-WinLumenRtcBridgeBuildDir`, `-LinuxLumenRtcBridgeBuildDir` for explicit lumenrtc_bridge paths
 - `-WinLumenRtcNativeDir`, `-LinuxLumenRtcNativeDir` to reuse prebuilt native outputs
 
 SDL renderer runtime (optional):
@@ -366,7 +366,7 @@ SDL renderer runtime (optional):
 
 ## AppVeyor (Hosted, Quota-Friendly)
 
-Building `libwebrtc` from source on free hosted CI usually exceeds quotas.
+Building `lumenrtc_bridge` from source on free hosted CI usually exceeds quotas.
 Use AppVeyor only for ABI checks in this repository.
 
 AppVeyor runs:

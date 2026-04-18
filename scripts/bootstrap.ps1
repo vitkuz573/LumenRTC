@@ -1,6 +1,6 @@
 Param(
   [Parameter(Mandatory = $false)]
-  [string]$LibWebRtcBuildDir = $env:LIBWEBRTC_BUILD_DIR,
+  [string]$LumenRtcBridgeBuildDir = $env:LUMENRTC_BRIDGE_BUILD_DIR,
 
   [Parameter(Mandatory = $false)]
   [string]$CMakeBuildDir = "native/build",
@@ -64,15 +64,15 @@ function Invoke-VsDevCmd {
   }
 }
 
-function Test-LibWebRtcBuildDir {
+function Test-LumenRtcBridgeBuildDir {
   param([string]$Path)
   if ([string]::IsNullOrWhiteSpace($Path)) { return $false }
   $candidates = @(
-    (Join-Path $Path "libwebrtc.dll"),
-    (Join-Path $Path "libwebrtc.dll.lib"),
-    (Join-Path $Path "libwebrtc.lib"),
-    (Join-Path $Path "libwebrtc.so"),
-    (Join-Path $Path "libwebrtc.dylib")
+    (Join-Path $Path "lumenrtc_bridge.dll"),
+    (Join-Path $Path "lumenrtc_bridge.dll.lib"),
+    (Join-Path $Path "lumenrtc_bridge.lib"),
+    (Join-Path $Path "lumenrtc_bridge.so"),
+    (Join-Path $Path "lumenrtc_bridge.dylib")
   )
   foreach ($candidate in $candidates) {
     if (Test-Path $candidate) { return $true }
@@ -117,14 +117,11 @@ function Resolve-WindowsNinjaForCMake {
   return "ninja"
 }
 
-function Find-LibWebRtcBuildDir {
+function Find-LumenRtcBridgeBuildDir {
   $repoRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
   $candidates = @()
 
-  if (-not [string]::IsNullOrWhiteSpace($env:LIBWEBRTC_BUILD_DIR)) { $candidates += $env:LIBWEBRTC_BUILD_DIR }
-  if (-not [string]::IsNullOrWhiteSpace($env:WEBRTC_BUILD_DIR)) { $candidates += $env:WEBRTC_BUILD_DIR }
-  if (-not [string]::IsNullOrWhiteSpace($env:WEBRTC_OUT_DIR)) { $candidates += $env:WEBRTC_OUT_DIR }
-  if (-not [string]::IsNullOrWhiteSpace($env:WEBRTC_OUT)) { $candidates += $env:WEBRTC_OUT }
+  if (-not [string]::IsNullOrWhiteSpace($env:LUMENRTC_BRIDGE_BUILD_DIR)) { $candidates += $env:LUMENRTC_BRIDGE_BUILD_DIR }
 
   $candidates += @(
     (Join-Path $repoRoot "..\\webrtc_build\\src\\out-debug\\Linux-x64"),
@@ -137,28 +134,28 @@ function Find-LibWebRtcBuildDir {
   )
 
   foreach ($dir in $candidates) {
-    if (Test-LibWebRtcBuildDir $dir) { return $dir }
+    if (Test-LumenRtcBridgeBuildDir $dir) { return $dir }
   }
 
   return $null
 }
 
-if ([string]::IsNullOrWhiteSpace($LibWebRtcBuildDir) -or $LibWebRtcBuildDir -eq "auto") {
-  $LibWebRtcBuildDir = Find-LibWebRtcBuildDir
+if ([string]::IsNullOrWhiteSpace($LumenRtcBridgeBuildDir) -or $LumenRtcBridgeBuildDir -eq "auto") {
+  $LumenRtcBridgeBuildDir = Find-LumenRtcBridgeBuildDir
 }
 
-if ([string]::IsNullOrWhiteSpace($LibWebRtcBuildDir)) {
-  Write-Error "LIBWEBRTC_BUILD_DIR is not set. Pass -LibWebRtcBuildDir or set the LIBWEBRTC_BUILD_DIR environment variable."
-  Write-Error "Tip: you can pass -LibWebRtcBuildDir auto for auto-detection."
-  Write-Error "If you have not built libwebrtc yet, run scripts\\setup.ps1 to fetch and build it."
+if ([string]::IsNullOrWhiteSpace($LumenRtcBridgeBuildDir)) {
+  Write-Error "LUMENRTC_BRIDGE_BUILD_DIR is not set. Pass -LumenRtcBridgeBuildDir or set the LUMENRTC_BRIDGE_BUILD_DIR environment variable."
+  Write-Error "Tip: you can pass -LumenRtcBridgeBuildDir auto for auto-detection."
+  Write-Error "If you have not built lumenrtc_bridge yet, run scripts\\setup.ps1 to fetch and build it."
 }
 
 $cmakeArgs = @(
-  "-DLIBWEBRTC_BUILD_DIR=$LibWebRtcBuildDir"
+  "-DLUMENRTC_BRIDGE_BUILD_DIR=$LumenRtcBridgeBuildDir"
 )
 
-if (-not [string]::IsNullOrWhiteSpace($env:LIBWEBRTC_ROOT)) {
-  $cmakeArgs += "-DLIBWEBRTC_ROOT=$env:LIBWEBRTC_ROOT"
+if (-not [string]::IsNullOrWhiteSpace($env:LUMENRTC_BRIDGE_ROOT)) {
+  $cmakeArgs += "-DLUMENRTC_BRIDGE_ROOT=$env:LUMENRTC_BRIDGE_ROOT"
 }
 
 if ($env:OS -eq "Windows_NT") {

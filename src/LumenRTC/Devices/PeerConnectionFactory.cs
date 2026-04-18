@@ -5,7 +5,7 @@ namespace LumenRTC;
 /// </summary>
 public sealed partial class PeerConnectionFactory : SafeHandle
 {
-    // Codec capabilities are determined by the libwebrtc binary and never change at runtime.
+    // Codec capabilities are determined by the lumenrtc_bridge binary and never change at runtime.
     // Cache per media type to avoid repeated native calls and JSON parsing on every peer setup.
     private readonly System.Collections.Concurrent.ConcurrentDictionary<LrtcMediaType, IReadOnlyList<string>>
         _codecMimeTypeCache = new();

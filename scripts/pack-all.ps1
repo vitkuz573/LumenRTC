@@ -3,11 +3,11 @@ param(
   [string[]]$Rids = @("win-x64", "linux-x64"),
   [string]$Output = "artifacts\\nuget",
   [string]$PackageVersion,
-  [string]$LibWebRtcBuildDir,
+  [string]$LumenRtcBridgeBuildDir,
   [string]$LumenRtcNativeDir,
-  [string]$WinLibWebRtcBuildDir,
+  [string]$WinLumenRtcBridgeBuildDir,
   [string]$WinLumenRtcNativeDir,
-  [string]$LinuxLibWebRtcBuildDir,
+  [string]$LinuxLumenRtcBridgeBuildDir,
   [string]$LinuxLumenRtcNativeDir,
   [switch]$NoNative,
   [switch]$PackSdl
@@ -31,8 +31,8 @@ if ($NoNative) {
 }
 
 # Backward-compatible fallback for callers that pass only generic directories.
-if (-not $WinLibWebRtcBuildDir -and $LibWebRtcBuildDir) { $WinLibWebRtcBuildDir = $LibWebRtcBuildDir }
-if (-not $LinuxLibWebRtcBuildDir -and $LibWebRtcBuildDir) { $LinuxLibWebRtcBuildDir = $LibWebRtcBuildDir }
+if (-not $WinLumenRtcBridgeBuildDir -and $LumenRtcBridgeBuildDir) { $WinLumenRtcBridgeBuildDir = $LumenRtcBridgeBuildDir }
+if (-not $LinuxLumenRtcBridgeBuildDir -and $LumenRtcBridgeBuildDir) { $LinuxLumenRtcBridgeBuildDir = $LumenRtcBridgeBuildDir }
 if (-not $WinLumenRtcNativeDir -and $LumenRtcNativeDir) { $WinLumenRtcNativeDir = $LumenRtcNativeDir }
 if (-not $LinuxLumenRtcNativeDir -and $LumenRtcNativeDir) { $LinuxLumenRtcNativeDir = $LumenRtcNativeDir }
 
@@ -51,9 +51,9 @@ $packArgs = @(
 
 if ($PackageVersion) { $packArgs += "-p:PackageVersion=$PackageVersion" }
 if ($WinLumenRtcNativeDir) { $packArgs += "-p:LumenRtcWinNativeDir=$WinLumenRtcNativeDir" }
-if ($WinLibWebRtcBuildDir) { $packArgs += "-p:LibWebRtcWinBuildDir=$WinLibWebRtcBuildDir" }
+if ($WinLumenRtcBridgeBuildDir) { $packArgs += "-p:LumenRtcBridgeWinBuildDir=$WinLumenRtcBridgeBuildDir" }
 if ($LinuxLumenRtcNativeDir) { $packArgs += "-p:LumenRtcLinuxNativeDir=$LinuxLumenRtcNativeDir" }
-if ($LinuxLibWebRtcBuildDir) { $packArgs += "-p:LibWebRtcLinuxBuildDir=$LinuxLibWebRtcBuildDir" }
+if ($LinuxLumenRtcBridgeBuildDir) { $packArgs += "-p:LumenRtcBridgeLinuxBuildDir=$LinuxLumenRtcBridgeBuildDir" }
 
 & dotnet @packArgs
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

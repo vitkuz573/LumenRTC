@@ -31,7 +31,7 @@ Param(
   [string]$Configuration = "Debug",
 
   [Parameter(Mandatory = $false)]
-  [string]$LibWebRtcBuildDir = "",
+  [string]$LumenRtcBridgeBuildDir = "",
 
   [Parameter(Mandatory = $false)]
   [string]$LumenRtcNativeDir = "",
@@ -48,8 +48,8 @@ $ErrorActionPreference = "Stop"
 $resolvedRepoRoot = (Resolve-Path $RepoRoot).Path
 Set-Location $resolvedRepoRoot
 
-if (-not [string]::IsNullOrWhiteSpace($LibWebRtcBuildDir)) {
-  $env:LIBWEBRTC_BUILD_DIR = $LibWebRtcBuildDir
+if (-not [string]::IsNullOrWhiteSpace($LumenRtcBridgeBuildDir)) {
+  $env:LUMENRTC_BRIDGE_BUILD_DIR = $LumenRtcBridgeBuildDir
 }
 if (-not [string]::IsNullOrWhiteSpace($LumenRtcNativeDir)) {
   $env:LumenRtcNativeDir = $LumenRtcNativeDir

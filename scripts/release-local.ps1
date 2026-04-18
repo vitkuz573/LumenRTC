@@ -7,10 +7,10 @@ Param(
   [string]$BuildType = "Release",
 
   [Parameter(Mandatory = $false)]
-  [string]$WinLibWebRtcBuildDir = "",
+  [string]$WinLumenRtcBridgeBuildDir = "",
 
   [Parameter(Mandatory = $false)]
-  [string]$LinuxLibWebRtcBuildDir = "",
+  [string]$LinuxLumenRtcBridgeBuildDir = "",
 
   [Parameter(Mandatory = $false)]
   [string]$WinLumenRtcNativeDir = "",
@@ -181,22 +181,20 @@ function Resolve-WindowsPath {
   return [System.IO.Path]::GetFullPath((Join-Path $BaseDirectory $Path))
 }
 
-function Resolve-WindowsLibWebRtcDir {
+function Resolve-WindowsLumenRtcBridgeDir {
   param([string]$ExplicitDir)
 
   if (-not [string]::IsNullOrWhiteSpace($ExplicitDir)) {
     $resolved = Resolve-WindowsPath -Path $ExplicitDir -BaseDirectory $repoRoot
-    if (Test-PathContainsFile -Directory $resolved -Files @("libwebrtc.dll", "libwebrtc.dll.lib", "libwebrtc.lib")) {
+    if (Test-PathContainsFile -Directory $resolved -Files @("lumenrtc_bridge.dll", "lumenrtc_bridge.dll.lib", "lumenrtc_bridge.lib")) {
       return $resolved
     }
-    throw "Windows libwebrtc directory does not contain expected files: $resolved"
+    throw "Windows lumenrtc_bridge directory does not contain expected files: $resolved"
   }
 
   $candidates = @(
-    $env:LIBWEBRTC_BUILD_DIR,
-    $env:WEBRTC_BUILD_DIR,
-    $env:WEBRTC_OUT_DIR,
-    $env:WEBRTC_OUT,
+    $env:LUMENRTC_BRIDGE_BUILD_DIR,
+    $env:LUMENRTC_BRIDGE_BUILD_DIR,
     (Join-Path $repoRoot "webrtc_build\src\out\Release"),
     (Join-Path $repoRoot "webrtc_build\src\out\Default"),
     (Join-Path $repoRoot "..\webrtc_build\src\out\Release"),
@@ -204,26 +202,26 @@ function Resolve-WindowsLibWebRtcDir {
   )
 
   foreach ($candidate in $candidates) {
-    if (Test-PathContainsFile -Directory $candidate -Files @("libwebrtc.dll", "libwebrtc.dll.lib", "libwebrtc.lib")) {
+    if (Test-PathContainsFile -Directory $candidate -Files @("lumenrtc_bridge.dll", "lumenrtc_bridge.dll.lib", "lumenrtc_bridge.lib")) {
       return (Resolve-Path $candidate).Path
     }
   }
 
-  throw "Windows libwebrtc build directory not found. Pass -WinLibWebRtcBuildDir."
+  throw "Windows lumenrtc_bridge build directory not found. Pass -WinLumenRtcBridgeBuildDir."
 }
 
-function Resolve-LinuxLibWebRtcDirWsl {
+function Resolve-LinuxLumenRtcBridgeDirWsl {
   param([string]$ExplicitDir)
 
   if (-not [string]::IsNullOrWhiteSpace($ExplicitDir)) {
     $explicitWsl = Convert-WindowsPathToWslPath $ExplicitDir
     $escaped = Escape-BashSingleQuoted $explicitWsl
-    $probe = "if [ -f '$escaped/libwebrtc.so' ]; then printf '%s' '$escaped'; else exit 1; fi"
+    $probe = "if [ -f '$escaped/lumenrtc_bridge.so' ]; then printf '%s' '$escaped'; else exit 1; fi"
     $result = Invoke-WslCapture -Command $probe
     if ($result) {
       return $result
     }
-    throw "Linux libwebrtc directory does not contain libwebrtc.so: $explicitWsl"
+    throw "Linux lumenrtc_bridge directory does not contain lumenrtc_bridge.so: $explicitWsl"
   }
 
   $repoWsl = Convert-WindowsPathToWslPath $repoRoot
@@ -240,7 +238,7 @@ for d in \
   "$HOME/webrtc_build/src/out/Release" \
   "$HOME/webrtc_build/src/out-debug/Linux-x64"
 do
-  if [ -f "$d/libwebrtc.so" ]; then
+  if [ -f "$d/lumenrtc_bridge.so" ]; then
     printf '%s' "$d"
     exit 0
   fi
@@ -250,7 +248,7 @@ exit 1
 
   $resolved = Invoke-WslCapture -Command $probe
   if (-not $resolved) {
-    throw "Linux libwebrtc build directory not found. Pass -LinuxLibWebRtcBuildDir."
+    throw "Linux lumenrtc_bridge build directory not found. Pass -LinuxLumenRtcBridgeBuildDir."
   }
 
   return $resolved
@@ -332,8 +330,8 @@ if (-not (Get-Command wsl -ErrorAction SilentlyContinue)) {
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $scriptsDir = Join-Path $repoRoot "scripts"
 
-$winLibWebRtcDir = Resolve-WindowsLibWebRtcDir -ExplicitDir $WinLibWebRtcBuildDir
-$linuxLibWebRtcDirWsl = Resolve-LinuxLibWebRtcDirWsl -ExplicitDir $LinuxLibWebRtcBuildDir
+$winLumenRtcBridgeDir = Resolve-WindowsLumenRtcBridgeDir -ExplicitDir $WinLumenRtcBridgeBuildDir
+$linuxLumenRtcBridgeDirWsl = Resolve-LinuxLumenRtcBridgeDirWsl -ExplicitDir $LinuxLumenRtcBridgeBuildDir
 
 $winCMakeBuildDirWindows = Resolve-WindowsPath -Path $WinCMakeBuildDir -BaseDirectory $repoRoot
 $linuxCMakeBuildDirWindows = Resolve-WindowsPath -Path $LinuxCMakeBuildDir -BaseDirectory $repoRoot
@@ -348,8 +346,8 @@ $linuxCMakeBuildDirWslArg = if ($LinuxCMakeBuildDir.StartsWith("/")) {
 
 Write-Host "[release] Repo root: $repoRoot"
 Write-Host "[release] Version: $Version"
-Write-Host "[release] Windows libwebrtc: $winLibWebRtcDir"
-Write-Host "[release] Linux libwebrtc (WSL): $linuxLibWebRtcDirWsl"
+Write-Host "[release] Windows lumenrtc_bridge: $winLumenRtcBridgeDir"
+Write-Host "[release] Linux lumenrtc_bridge (WSL): $linuxLumenRtcBridgeDirWsl"
 Write-Host "[release] Output directory: $Output"
 
 Push-Location $repoRoot
@@ -357,7 +355,7 @@ try {
   if (-not $SkipWindowsBuild) {
     Write-Host "[release] Building Windows native..."
     & (Join-Path $scriptsDir "bootstrap.ps1") `
-      -LibWebRtcBuildDir $winLibWebRtcDir `
+      -LumenRtcBridgeBuildDir $winLumenRtcBridgeDir `
       -CMakeBuildDir $WinCMakeBuildDir `
       -BuildType $BuildType
 
@@ -372,11 +370,11 @@ try {
     Write-Host "[release] Building Linux native via WSL..."
     $repoWsl = Convert-WindowsPathToWslPath $repoRoot
     $repoWslEscaped = Escape-BashSingleQuoted $repoWsl
-    $linuxLibWebRtcEscaped = Escape-BashSingleQuoted $linuxLibWebRtcDirWsl
+    $linuxLumenRtcBridgeEscaped = Escape-BashSingleQuoted $linuxLumenRtcBridgeDirWsl
     $linuxBuildDirEscaped = Escape-BashSingleQuoted $linuxCMakeBuildDirWslArg
     $buildTypeEscaped = Escape-BashSingleQuoted $BuildType
 
-    $linuxCommand = "set -euo pipefail; cd '$repoWslEscaped'; ./scripts/bootstrap.sh --libwebrtc-build-dir '$linuxLibWebRtcEscaped' --cmake-build-dir '$linuxBuildDirEscaped' --build-type '$buildTypeEscaped'"
+    $linuxCommand = "set -euo pipefail; cd '$repoWslEscaped'; ./scripts/bootstrap.sh --lumenrtc_bridge-build-dir '$linuxLumenRtcBridgeEscaped' --cmake-build-dir '$linuxBuildDirEscaped' --build-type '$buildTypeEscaped'"
     Invoke-Wsl -Command $linuxCommand
   } else {
     Write-Host "[release] Skipping Linux native build."
@@ -396,12 +394,12 @@ try {
     -BaseDirectory $repoRoot `
     -DisplayName "Linux native"
 
-  $linuxLibWebRtcDirWindows = Convert-WslPathToWindowsPath $linuxLibWebRtcDirWsl
+  $linuxLumenRtcBridgeDirWindows = Convert-WslPathToWindowsPath $linuxLumenRtcBridgeDirWsl
   $outputDirWindows = Resolve-WindowsPath -Path $Output -BaseDirectory $repoRoot
 
   Write-Host "[release] Windows native dir: $winNativeDir"
   Write-Host "[release] Linux native dir: $linuxNativeDir"
-  Write-Host "[release] Linux libwebrtc (Windows path): $linuxLibWebRtcDirWindows"
+  Write-Host "[release] Linux lumenrtc_bridge (Windows path): $linuxLumenRtcBridgeDirWindows"
 
   Write-Host "[release] Packing NuGet (multi-RID)..."
   & (Join-Path $scriptsDir "pack-all.ps1") `
@@ -409,9 +407,9 @@ try {
     -Rids @("win-x64", "linux-x64") `
     -Output $outputDirWindows `
     -PackageVersion $Version `
-    -WinLibWebRtcBuildDir $winLibWebRtcDir `
+    -WinLumenRtcBridgeBuildDir $winLumenRtcBridgeDir `
     -WinLumenRtcNativeDir $winNativeDir `
-    -LinuxLibWebRtcBuildDir $linuxLibWebRtcDirWindows `
+    -LinuxLumenRtcBridgeBuildDir $linuxLumenRtcBridgeDirWindows `
     -LinuxLumenRtcNativeDir $linuxNativeDir
 
   if ($LASTEXITCODE -ne 0) {
@@ -429,9 +427,9 @@ if (-not (Test-Path $nupkgPath)) {
 
 Assert-PackageContainsEntries -PackagePath $nupkgPath -ExpectedEntries @(
   "runtimes/win-x64/native/lumenrtc_native.dll"
-  "runtimes/win-x64/native/libwebrtc.dll"
+  "runtimes/win-x64/native/lumenrtc_bridge.dll"
   "runtimes/linux-x64/native/liblumenrtc.so"
-  "runtimes/linux-x64/native/libwebrtc.so"
+  "runtimes/linux-x64/native/lumenrtc_bridge.so"
 )
 
 Write-Host "[release] Package created: $nupkgPath"

@@ -5,31 +5,31 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-if(NOT LIBWEBRTC_ROOT)
-  if(DEFINED ENV{LIBWEBRTC_ROOT})
-    set(LIBWEBRTC_ROOT $ENV{LIBWEBRTC_ROOT})
-  elseif(EXISTS "${CMAKE_SOURCE_DIR}/../vendor/libwebrtc/include")
-    set(LIBWEBRTC_ROOT "${CMAKE_SOURCE_DIR}/../vendor/libwebrtc")
-  elseif(EXISTS "${CMAKE_SOURCE_DIR}/../../libwebrtc/include")
-    set(LIBWEBRTC_ROOT "${CMAKE_SOURCE_DIR}/../../libwebrtc")
+if(NOT LUMENRTC_BRIDGE_ROOT)
+  if(DEFINED ENV{LUMENRTC_BRIDGE_ROOT})
+    set(LUMENRTC_BRIDGE_ROOT $ENV{LUMENRTC_BRIDGE_ROOT})
+  elseif(EXISTS "${CMAKE_SOURCE_DIR}/../bridge/lumenrtc_bridge/include")
+    set(LUMENRTC_BRIDGE_ROOT "${CMAKE_SOURCE_DIR}/../bridge/lumenrtc_bridge")
+  elseif(EXISTS "${CMAKE_SOURCE_DIR}/../../bridge/lumenrtc_bridge/include")
+    set(LUMENRTC_BRIDGE_ROOT "${CMAKE_SOURCE_DIR}/../../bridge/lumenrtc_bridge")
   endif()
 endif()
 
-if(NOT LIBWEBRTC_ROOT)
-  message(FATAL_ERROR "Set LIBWEBRTC_ROOT to the libwebrtc repo path")
+if(NOT LUMENRTC_BRIDGE_ROOT)
+  message(FATAL_ERROR "Set LUMENRTC_BRIDGE_ROOT to the lumenrtc_bridge repo path")
 endif()
 
-if(NOT LIBWEBRTC_BUILD_DIR)
-  if(DEFINED ENV{LIBWEBRTC_BUILD_DIR})
-    set(LIBWEBRTC_BUILD_DIR $ENV{LIBWEBRTC_BUILD_DIR})
+if(NOT LUMENRTC_BRIDGE_BUILD_DIR)
+  if(DEFINED ENV{LUMENRTC_BRIDGE_BUILD_DIR})
+    set(LUMENRTC_BRIDGE_BUILD_DIR $ENV{LUMENRTC_BRIDGE_BUILD_DIR})
   endif()
 endif()
 
-if(NOT LIBWEBRTC_BUILD_DIR)
-  message(FATAL_ERROR "Set LIBWEBRTC_BUILD_DIR to the directory containing libwebrtc")
+if(NOT LUMENRTC_BRIDGE_BUILD_DIR)
+  message(FATAL_ERROR "Set LUMENRTC_BRIDGE_BUILD_DIR to the directory containing lumenrtc_bridge")
 endif()
 
-set(LIBWEBRTC_INCLUDE_DIR "${LIBWEBRTC_ROOT}/include")
+set(LUMENRTC_BRIDGE_INCLUDE_DIR "${LUMENRTC_BRIDGE_ROOT}/include")
 
 add_library(lumenrtc SHARED
   src/lumenrtc_impl.cpp
@@ -46,27 +46,27 @@ endif()
 
 target_include_directories(lumenrtc PUBLIC
   include
-  "${LIBWEBRTC_INCLUDE_DIR}"
+  "${LUMENRTC_BRIDGE_INCLUDE_DIR}"
 )
 
 target_compile_definitions(lumenrtc PRIVATE LUMENRTC_EXPORTS RTC_DESKTOP_DEVICE)
 
 if(WIN32)
-  target_compile_definitions(lumenrtc PRIVATE LIB_WEBRTC_API_DLL)
+  target_compile_definitions(lumenrtc PRIVATE LUMENRTC_BRIDGE_API_DLL)
 endif()
 
 if(WIN32)
-  set(_libwebrtc_import "${LIBWEBRTC_BUILD_DIR}/libwebrtc.dll.lib")
-  set(_libwebrtc_fallback "${LIBWEBRTC_BUILD_DIR}/libwebrtc.lib")
-  if(EXISTS "${_libwebrtc_import}")
-    target_link_libraries(lumenrtc PRIVATE "${_libwebrtc_import}")
-  elseif(EXISTS "${_libwebrtc_fallback}")
-    target_link_libraries(lumenrtc PRIVATE "${_libwebrtc_fallback}")
+  set(_lumenrtc_bridge_import "${LUMENRTC_BRIDGE_BUILD_DIR}/lumenrtc_bridge.dll.lib")
+  set(_lumenrtc_bridge_fallback "${LUMENRTC_BRIDGE_BUILD_DIR}/lumenrtc_bridge.lib")
+  if(EXISTS "${_lumenrtc_bridge_import}")
+    target_link_libraries(lumenrtc PRIVATE "${_lumenrtc_bridge_import}")
+  elseif(EXISTS "${_lumenrtc_bridge_fallback}")
+    target_link_libraries(lumenrtc PRIVATE "${_lumenrtc_bridge_fallback}")
   else()
-    message(FATAL_ERROR "libwebrtc import library not found in ${LIBWEBRTC_BUILD_DIR}. Expected libwebrtc.dll.lib or libwebrtc.lib.")
+    message(FATAL_ERROR "lumenrtc_bridge import library not found in ${LUMENRTC_BRIDGE_BUILD_DIR}. Expected lumenrtc_bridge.dll.lib or lumenrtc_bridge.lib.")
   endif()
 else()
-  target_link_libraries(lumenrtc PRIVATE "${LIBWEBRTC_BUILD_DIR}/libwebrtc.so")
+  target_link_libraries(lumenrtc PRIVATE "${LUMENRTC_BRIDGE_BUILD_DIR}/lumenrtc_bridge.so")
 endif()
 
 if(UNIX AND NOT APPLE)
@@ -74,8 +74,8 @@ if(UNIX AND NOT APPLE)
     "-Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/lumenrtc.map"
   )
   set_target_properties(lumenrtc PROPERTIES
-    BUILD_RPATH "${LIBWEBRTC_BUILD_DIR}"
-    INSTALL_RPATH "${LIBWEBRTC_BUILD_DIR}"
+    BUILD_RPATH "${LUMENRTC_BRIDGE_BUILD_DIR}"
+    INSTALL_RPATH "${LUMENRTC_BRIDGE_BUILD_DIR}"
   )
 endif()
 
@@ -93,7 +93,7 @@ set_target_properties(lumenrtc_layout_probe PROPERTIES
 )
 target_include_directories(lumenrtc_layout_probe PRIVATE
   include
-  "${LIBWEBRTC_INCLUDE_DIR}"
+  "${LUMENRTC_BRIDGE_INCLUDE_DIR}"
 )
 # Make the main library depend on the probe so it always compiles together
 add_dependencies(lumenrtc lumenrtc_layout_probe)

@@ -266,7 +266,7 @@ target_os = ['win']
   Set-Content -Path $gclientPath -Value $content -Encoding ASCII
 }
 
-function Sync-LibWebRtcWrapper {
+function Sync-LumenRtcBridgeWrapper {
   param(
     [string]$SrcDir,
     [string]$WrapperSourceDir
@@ -279,7 +279,7 @@ function Sync-LibWebRtcWrapper {
     throw "Wrapper source is invalid (missing include/): $WrapperSourceDir"
   }
 
-  $libWebRtcDir = Join-PathSafe $SrcDir "libwebrtc"
+  $libWebRtcDir = Join-PathSafe $SrcDir "lumenrtc_bridge"
   if (Test-Path $libWebRtcDir) {
     Remove-Item -LiteralPath $libWebRtcDir -Recurse -Force
   }
@@ -296,7 +296,7 @@ function Sync-LibWebRtcWrapper {
   return $libWebRtcDir
 }
 
-function Ensure-BuildGnIncludesLibWebRtc {
+function Ensure-BuildGnIncludesLumenRtcBridge {
   param([string]$BuildGnPath)
 
   if (-not (Test-Path $BuildGnPath)) {
@@ -305,17 +305,17 @@ function Ensure-BuildGnIncludesLibWebRtc {
   }
 
   $content = Get-Content $BuildGnPath -Raw
-  if ($content -match "//libwebrtc") {
+  if ($content -match "//lumenrtc_bridge") {
     return
   }
 
   $pattern = 'deps\s*=\s*\[\s*":webrtc"\s*\]'
   if ($content -match $pattern) {
-    $updated = [regex]::Replace($content, $pattern, 'deps = [ ":webrtc", "//libwebrtc", ]', 1)
+    $updated = [regex]::Replace($content, $pattern, 'deps = [ ":webrtc", "//lumenrtc_bridge", ]', 1)
     Set-Content -Path $BuildGnPath -Value $updated
-    Write-Host "Updated BUILD.gn to include //libwebrtc in default group."
+    Write-Host "Updated BUILD.gn to include //lumenrtc_bridge in default group."
   } else {
-    Write-Warning "Could not auto-update BUILD.gn. Please add //libwebrtc to group(\"default\")."
+    Write-Warning "Could not auto-update BUILD.gn. Please add //lumenrtc_bridge to group(\"default\")."
   }
 }
 
@@ -467,13 +467,13 @@ if (-not (Test-Path $srcDirRoot)) {
   throw "Expected src directory at $srcDirRoot. gclient sync may have failed."
 }
 
-$wrapperSourceDir = Join-PathSafe $lumenRoot "vendor\\libwebrtc"
-$libWebRtcDir = Sync-LibWebRtcWrapper -SrcDir $srcDirRoot -WrapperSourceDir $wrapperSourceDir
+$wrapperSourceDir = Join-PathSafe $lumenRoot "bridge\\lumenrtc_bridge"
+$libWebRtcDir = Sync-LumenRtcBridgeWrapper -SrcDir $srcDirRoot -WrapperSourceDir $wrapperSourceDir
 
 Push-Location $srcDirRoot
 try {
   $buildGnPath = Join-PathSafe $srcDirRoot "BUILD.gn"
-  Ensure-BuildGnIncludesLibWebRtc -BuildGnPath $buildGnPath
+  Ensure-BuildGnIncludesLumenRtcBridge -BuildGnPath $buildGnPath
 
   $outDir = Join-PathSafe $srcDirRoot "out\\$BuildType"
   $isDebug = if ($BuildType -eq "Debug") { "true" } else { "false" }
@@ -490,7 +490,7 @@ try {
     'ffmpeg_branding = "Chrome"',
     "rtc_include_tests = false",
     "rtc_build_examples = false",
-    "libwebrtc_desktop_capture = true"
+    "lumenrtc_bridge_desktop_capture = true"
   ) -join "`n"
 
   Set-Content -Path $argsGnPath -Value $argsContent -Encoding ASCII
@@ -498,19 +498,19 @@ try {
   if ($LASTEXITCODE -ne 0) {
     throw "gn gen failed. Ensure Visual Studio with C++ build tools is installed and GYP_MSVS_OVERRIDE_PATH is set."
   }
-  ninja -C $outDir libwebrtc
+  ninja -C $outDir lumenrtc_bridge
   if ($LASTEXITCODE -ne 0) {
     throw "ninja build failed. See the errors above for details."
   }
 
   if (-not $SkipBootstrap) {
-    $env:LIBWEBRTC_ROOT = $libWebRtcDir
-    $env:LIBWEBRTC_BUILD_DIR = $outDir
+    $env:LUMENRTC_BRIDGE_ROOT = $libWebRtcDir
+    $env:LUMENRTC_BRIDGE_BUILD_DIR = $outDir
 
     $bootstrapScript = Join-PathSafe $scriptRoot "bootstrap.ps1"
     Push-Location $lumenRoot
     try {
-      & $bootstrapScript -LibWebRtcBuildDir $outDir -BuildType $BuildType
+      & $bootstrapScript -LumenRtcBridgeBuildDir $outDir -BuildType $BuildType
     }
     finally {
       Pop-Location
@@ -542,6 +542,6 @@ if (Test-Path $libWebRtcOutDir) {
 if (Test-Path $nativeDefault) {
   $nativeDefault = (Resolve-Path -LiteralPath $nativeDefault).Path
 }
-Write-Host ('  $env:LIBWEBRTC_BUILD_DIR="{0}"' -f $libWebRtcOutDir)
+Write-Host ('  $env:LUMENRTC_BRIDGE_BUILD_DIR="{0}"' -f $libWebRtcOutDir)
 Write-Host ('  $env:LumenRtcNativeDir="{0}"' -f $nativeDefault)
 Write-Host "  dotnet run --project .\\samples\\LumenRTC.Sample.LocalCamera.Convenience\\LumenRTC.Sample.LocalCamera.Convenience.csproj"

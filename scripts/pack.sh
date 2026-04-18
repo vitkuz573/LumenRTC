@@ -4,7 +4,7 @@ set -euo pipefail
 configuration="${CONFIGURATION:-Release}"
 rid="${RID:-linux-x64}"
 output="${OUTPUT:-artifacts/nuget}"
-libwebrtc_build_dir="${LIBWEBRTC_BUILD_DIR:-${WEBRTC_BUILD_DIR:-${WEBRTC_OUT_DIR:-${WEBRTC_OUT:-}}}}"
+lumenrtc_bridge_build_dir="${LUMENRTC_BRIDGE_BUILD_DIR:-}"
 lumenrtc_native_dir="${LUMENRTC_NATIVE_DIR:-}"
 no_native="${NO_NATIVE:-false}"
 pack_sdl="${PACK_SDL:-false}"
@@ -32,8 +32,8 @@ if [[ "$no_native" != "true" ]]; then
   if [[ -n "$lumenrtc_native_dir" ]]; then
     pack_args+=("-p:LumenRtcNativeDir=${lumenrtc_native_dir}")
   fi
-  if [[ -n "$libwebrtc_build_dir" ]]; then
-    pack_args+=("-p:LibWebRtcBuildDir=${libwebrtc_build_dir}")
+  if [[ -n "$lumenrtc_bridge_build_dir" ]]; then
+    pack_args+=("-p:LumenRtcBridgeBuildDir=${lumenrtc_bridge_build_dir}")
   fi
 fi
 

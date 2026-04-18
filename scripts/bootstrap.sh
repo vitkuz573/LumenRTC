@@ -3,40 +3,31 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
-Usage: scripts/bootstrap.sh --libwebrtc-build-dir <path> [options]
+Usage: scripts/bootstrap.sh --lumenrtc_bridge-build-dir <path> [options]
 
 Options:
-  --libwebrtc-build-dir <path>   Required. Path to libwebrtc build output (out/...)
+  --lumenrtc_bridge-build-dir <path>   Required. Path to lumenrtc_bridge build output (out/...)
   --cmake-build-dir <path>       CMake build output directory (default: native/build)
   --build-type <Release|Debug>   Build type (default: Release)
   -h, --help                     Show help
 
 Environment:
-  LIBWEBRTC_BUILD_DIR            Used if --libwebrtc-build-dir is not set
-  LIBWEBRTC_ROOT                 Optional. Overrides auto-detect of libwebrtc repo
+  LUMENRTC_BRIDGE_BUILD_DIR            Used if --lumenrtc_bridge-build-dir is not set
+  LUMENRTC_BRIDGE_ROOT                 Optional. Overrides auto-detect of lumenrtc_bridge repo
 EOF
 }
 
-libwebrtc_build_dir=""
+lumenrtc_bridge_build_dir=""
 cmake_build_dir="native/build"
 build_type="Release"
 
-detect_libwebrtc_build_dir() {
+detect_lumenrtc_bridge_build_dir() {
   local repo_root
   repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
   local candidates=()
-  if [[ -n "${LIBWEBRTC_BUILD_DIR:-}" ]]; then
-    candidates+=("${LIBWEBRTC_BUILD_DIR}")
-  fi
-  if [[ -n "${WEBRTC_BUILD_DIR:-}" ]]; then
-    candidates+=("${WEBRTC_BUILD_DIR}")
-  fi
-  if [[ -n "${WEBRTC_OUT_DIR:-}" ]]; then
-    candidates+=("${WEBRTC_OUT_DIR}")
-  fi
-  if [[ -n "${WEBRTC_OUT:-}" ]]; then
-    candidates+=("${WEBRTC_OUT}")
+  if [[ -n "${LUMENRTC_BRIDGE_BUILD_DIR:-}" ]]; then
+    candidates+=("${LUMENRTC_BRIDGE_BUILD_DIR}")
   fi
 
   candidates+=(
@@ -51,10 +42,10 @@ detect_libwebrtc_build_dir() {
 
   for dir in "${candidates[@]}"; do
     [[ -z "$dir" ]] && continue
-    if [[ -f "${dir}/libwebrtc.so" ]] || \
-       [[ -f "${dir}/libwebrtc.dylib" ]] || \
-       [[ -f "${dir}/libwebrtc.dll" ]] || \
-       [[ -f "${dir}/libwebrtc.lib" ]]; then
+    if [[ -f "${dir}/lumenrtc_bridge.so" ]] || \
+       [[ -f "${dir}/lumenrtc_bridge.dylib" ]] || \
+       [[ -f "${dir}/lumenrtc_bridge.dll" ]] || \
+       [[ -f "${dir}/lumenrtc_bridge.lib" ]]; then
       echo "$dir"
       return 0
     fi
@@ -65,8 +56,8 @@ detect_libwebrtc_build_dir() {
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --libwebrtc-build-dir)
-      libwebrtc_build_dir="$2"
+    --lumenrtc_bridge-build-dir)
+      lumenrtc_bridge_build_dir="$2"
       shift 2
       ;;
     --cmake-build-dir)
@@ -89,30 +80,30 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-if [[ -z "$libwebrtc_build_dir" ]]; then
-  libwebrtc_build_dir="${LIBWEBRTC_BUILD_DIR:-}"
+if [[ -z "$lumenrtc_bridge_build_dir" ]]; then
+  lumenrtc_bridge_build_dir="${LUMENRTC_BRIDGE_BUILD_DIR:-}"
 fi
 
-if [[ -z "$libwebrtc_build_dir" || "$libwebrtc_build_dir" == "auto" ]]; then
-  if detected="$(detect_libwebrtc_build_dir)"; then
-    libwebrtc_build_dir="$detected"
+if [[ -z "$lumenrtc_bridge_build_dir" || "$lumenrtc_bridge_build_dir" == "auto" ]]; then
+  if detected="$(detect_lumenrtc_bridge_build_dir)"; then
+    lumenrtc_bridge_build_dir="$detected"
   fi
 fi
 
-if [[ -z "$libwebrtc_build_dir" ]]; then
-  echo "LIBWEBRTC_BUILD_DIR is not set. Pass --libwebrtc-build-dir or set the LIBWEBRTC_BUILD_DIR environment variable." >&2
-  echo "Tip: you can pass --libwebrtc-build-dir auto for auto-detection." >&2
-  echo "If you have not built libwebrtc yet, run scripts/setup.sh to fetch and build it." >&2
+if [[ -z "$lumenrtc_bridge_build_dir" ]]; then
+  echo "LUMENRTC_BRIDGE_BUILD_DIR is not set. Pass --lumenrtc_bridge-build-dir or set the LUMENRTC_BRIDGE_BUILD_DIR environment variable." >&2
+  echo "Tip: you can pass --lumenrtc_bridge-build-dir auto for auto-detection." >&2
+  echo "If you have not built lumenrtc_bridge yet, run scripts/setup.sh to fetch and build it." >&2
   exit 1
 fi
 
 cmake_args=(
-  -DLIBWEBRTC_BUILD_DIR="$libwebrtc_build_dir"
+  -DLUMENRTC_BRIDGE_BUILD_DIR="$lumenrtc_bridge_build_dir"
   -DCMAKE_BUILD_TYPE="$build_type"
 )
 
-if [[ -n "${LIBWEBRTC_ROOT:-}" ]]; then
-  cmake_args+=( -DLIBWEBRTC_ROOT="$LIBWEBRTC_ROOT" )
+if [[ -n "${LUMENRTC_BRIDGE_ROOT:-}" ]]; then
+  cmake_args+=( -DLUMENRTC_BRIDGE_ROOT="$LUMENRTC_BRIDGE_ROOT" )
 fi
 
 cmake -S native -B "$cmake_build_dir" "${cmake_args[@]}"

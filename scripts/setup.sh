@@ -15,7 +15,7 @@ Options:
   --sync-delay <seconds>       Delay between sync retries (default: 8)
   --sync-full-history          Disable --no-history for gclient sync
   --skip-sync                  Skip gclient sync
-  --skip-bootstrap             Skip building LumenRTC after libwebrtc
+  --skip-bootstrap             Skip building LumenRTC after lumenrtc_bridge
   -h, --help                   Show help
 USAGE
 }
@@ -104,8 +104,8 @@ run_gclient_sync_with_retry() {
   return "$status"
 }
 
-sync_libwebrtc_wrapper() {
-  local src_wrapper="${repo_root}/vendor/libwebrtc"
+sync_lumenrtc_bridge_wrapper() {
+  local src_wrapper="${repo_root}/bridge/lumenrtc_bridge"
   local dst_wrapper="$1"
 
   if [[ ! -d "${src_wrapper}/include" ]]; then
@@ -247,7 +247,7 @@ if [[ ! -d "$src_dir" ]]; then
   exit 1
 fi
 
-sync_libwebrtc_wrapper "${src_dir}/libwebrtc"
+sync_lumenrtc_bridge_wrapper "${src_dir}/lumenrtc_bridge"
 
 build_gn_path="${src_dir}/BUILD.gn"
 python3 - <<PY
@@ -258,16 +258,16 @@ if not path.exists():
     print("WARN: BUILD.gn not found.")
     raise SystemExit(0)
 text = path.read_text()
-if "//libwebrtc" in text:
+if "//lumenrtc_bridge" in text:
     raise SystemExit(0)
 pattern = r'deps\\s*=\\s*\\[\\s*":webrtc"\\s*\\]'
 m = re.search(pattern, text)
 if not m:
-    print("WARN: Could not auto-update BUILD.gn. Please add //libwebrtc to group(\"default\").")
+    print("WARN: Could not auto-update BUILD.gn. Please add //lumenrtc_bridge to group(\"default\").")
     raise SystemExit(0)
-text = re.sub(pattern, 'deps = [ ":webrtc", "//libwebrtc", ]', text, count=1)
+text = re.sub(pattern, 'deps = [ ":webrtc", "//lumenrtc_bridge", ]', text, count=1)
 path.write_text(text)
-print("Updated BUILD.gn to include //libwebrtc in default group.")
+print("Updated BUILD.gn to include //lumenrtc_bridge in default group.")
 PY
 
 out_dir="${src_dir}/out/${build_type}"
@@ -278,15 +278,15 @@ else
 fi
 
 pushd "$src_dir" >/dev/null
-gn gen "$out_dir" --args="target_os=\"linux\" target_cpu=\"$target_cpu\" is_debug=$is_debug rtc_include_tests=false rtc_use_h264=true ffmpeg_branding=\"Chrome\" is_component_build=false rtc_build_examples=false use_rtti=true use_custom_libcxx=false rtc_enable_protobuf=false libwebrtc_desktop_capture=true"
-ninja -C "$out_dir" libwebrtc
+gn gen "$out_dir" --args="target_os=\"linux\" target_cpu=\"$target_cpu\" is_debug=$is_debug rtc_include_tests=false rtc_use_h264=true ffmpeg_branding=\"Chrome\" is_component_build=false rtc_build_examples=false use_rtti=true use_custom_libcxx=false rtc_enable_protobuf=false lumenrtc_bridge_desktop_capture=true"
+ninja -C "$out_dir" lumenrtc_bridge
 popd >/dev/null
 
 if [[ "$skip_bootstrap" == false ]]; then
-  export LIBWEBRTC_ROOT="${src_dir}/libwebrtc"
-  export LIBWEBRTC_BUILD_DIR="$out_dir"
+  export LUMENRTC_BRIDGE_ROOT="${src_dir}/lumenrtc_bridge"
+  export LUMENRTC_BRIDGE_BUILD_DIR="$out_dir"
   pushd "$repo_root" >/dev/null
-  "${repo_root}/scripts/bootstrap.sh" --libwebrtc-build-dir "$out_dir" --build-type "$build_type"
+  "${repo_root}/scripts/bootstrap.sh" --lumenrtc_bridge-build-dir "$out_dir" --build-type "$build_type"
   popd >/dev/null
 fi
 
@@ -295,7 +295,7 @@ popd >/dev/null
 cat <<NEXT_EOF
 
 Next steps:
-  export LIBWEBRTC_BUILD_DIR="$out_dir"
+  export LUMENRTC_BRIDGE_BUILD_DIR="$out_dir"
   export LumenRtcNativeDir="${repo_root}/native/build"
   dotnet run --project ./samples/LumenRTC.Sample.LocalCamera.Convenience/LumenRTC.Sample.LocalCamera.Convenience.csproj
 NEXT_EOF

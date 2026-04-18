@@ -72,14 +72,11 @@ function Resolve-RepoRoot {
   return (Resolve-Path $root).Path
 }
 
-function Resolve-LibWebRtcBuildDir {
+function Resolve-LumenRtcBridgeBuildDir {
   param([string]$RepoRoot)
 
   $candidates = @()
-  if (-not [string]::IsNullOrWhiteSpace($env:LIBWEBRTC_BUILD_DIR)) { $candidates += $env:LIBWEBRTC_BUILD_DIR }
-  if (-not [string]::IsNullOrWhiteSpace($env:WEBRTC_BUILD_DIR)) { $candidates += $env:WEBRTC_BUILD_DIR }
-  if (-not [string]::IsNullOrWhiteSpace($env:WEBRTC_OUT_DIR)) { $candidates += $env:WEBRTC_OUT_DIR }
-  if (-not [string]::IsNullOrWhiteSpace($env:WEBRTC_OUT)) { $candidates += $env:WEBRTC_OUT }
+  if (-not [string]::IsNullOrWhiteSpace($env:LUMENRTC_BRIDGE_BUILD_DIR)) { $candidates += $env:LUMENRTC_BRIDGE_BUILD_DIR }
 
   $candidates += @(
     (Join-Path $RepoRoot "webrtc_build\src\out\Release"),
@@ -94,7 +91,7 @@ function Resolve-LibWebRtcBuildDir {
     if (-not $full) {
       continue
     }
-    $dllPath = Join-Path $full.Path "libwebrtc.dll"
+    $dllPath = Join-Path $full.Path "lumenrtc_bridge.dll"
     if (Test-Path $dllPath) {
       return $full.Path
     }
@@ -210,9 +207,9 @@ if ($KillExisting) {
   Stop-RunningSampleProcesses -Pattern "LumenRTC.Sample.Streaming"
 }
 
-$libWebRtcBuildDir = Resolve-LibWebRtcBuildDir -RepoRoot $repoRoot
+$libWebRtcBuildDir = Resolve-LumenRtcBridgeBuildDir -RepoRoot $repoRoot
 if ([string]::IsNullOrWhiteSpace($libWebRtcBuildDir)) {
-  throw "libwebrtc.dll not found. Run scripts\setup.ps1 first or set LIBWEBRTC_BUILD_DIR."
+  throw "lumenrtc_bridge.dll not found. Run scripts\setup.ps1 first or set LUMENRTC_BRIDGE_BUILD_DIR."
 }
 
 $lumenRtcNativeDir = Resolve-LumenRtcNativeDir -RepoRoot $repoRoot
@@ -233,7 +230,7 @@ $psExe = Resolve-PowerShellExe
 $commonChildArgs = @(
   "-RepoRoot", $repoRoot,
   "-Configuration", $Configuration,
-  "-LibWebRtcBuildDir", $libWebRtcBuildDir,
+  "-LumenRtcBridgeBuildDir", $libWebRtcBuildDir,
   "-LumenRtcNativeDir", $lumenRtcNativeDir,
   "-NoBuild"
 )

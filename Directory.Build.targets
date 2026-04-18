@@ -33,53 +33,42 @@
     <LumenRtcNativeDir>$(LumenRtcRoot)native\build</LumenRtcNativeDir>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(LibWebRtcBuildDir)'=='' and '$(LIBWEBRTC_BUILD_DIR)'!=''">
-    <LibWebRtcBuildDir>$(LIBWEBRTC_BUILD_DIR)</LibWebRtcBuildDir>
+  <PropertyGroup Condition="'$(LumenRtcBridgeBuildDir)'=='' and '$(LUMENRTC_BRIDGE_BUILD_DIR)'!=''">
+    <LumenRtcBridgeBuildDir>$(LUMENRTC_BRIDGE_BUILD_DIR)</LumenRtcBridgeBuildDir>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(LibWebRtcBuildDir)'=='' and '$(WEBRTC_BUILD_DIR)'!=''">
-    <LibWebRtcBuildDir>$(WEBRTC_BUILD_DIR)</LibWebRtcBuildDir>
+
+  <PropertyGroup Condition="'$(LumenRtcBridgeBuildDir)'=='' and Exists('$(LumenRtcRoot)webrtc_build\\src\\out\\Release\\lumenrtc_bridge.dll')">
+    <LumenRtcBridgeBuildDir>$(LumenRtcRoot)webrtc_build\src\out\Release</LumenRtcBridgeBuildDir>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(LibWebRtcBuildDir)'=='' and '$(WEBRTC_OUT_DIR)'!=''">
-    <LibWebRtcBuildDir>$(WEBRTC_OUT_DIR)</LibWebRtcBuildDir>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(LibWebRtcBuildDir)'=='' and '$(WEBRTC_OUT)'!=''">
-    <LibWebRtcBuildDir>$(WEBRTC_OUT)</LibWebRtcBuildDir>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(LibWebRtcBuildDir)'=='' and Exists('$(LumenRtcRoot)webrtc_build\\src\\out\\Release\\libwebrtc.dll')">
-    <LibWebRtcBuildDir>$(LumenRtcRoot)webrtc_build\src\out\Release</LibWebRtcBuildDir>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(LibWebRtcBuildDir)'=='' and Exists('$(LumenRtcRoot)webrtc_build\\src\\out\\Default\\libwebrtc.dll')">
-    <LibWebRtcBuildDir>$(LumenRtcRoot)webrtc_build\src\out\Default</LibWebRtcBuildDir>
+  <PropertyGroup Condition="'$(LumenRtcBridgeBuildDir)'=='' and Exists('$(LumenRtcRoot)webrtc_build\\src\\out\\Default\\lumenrtc_bridge.dll')">
+    <LumenRtcBridgeBuildDir>$(LumenRtcRoot)webrtc_build\src\out\Default</LumenRtcBridgeBuildDir>
   </PropertyGroup>
 
   <!-- Support building from parent repo root (e.g. RemoteMaster/webrtc_build) when LumenRTC is a submodule. -->
-  <PropertyGroup Condition="'$(LibWebRtcBuildDir)'=='' and Exists('$(LumenRtcRoot)..\\..\\webrtc_build\\src\\out\\Release\\libwebrtc.dll')">
-    <LibWebRtcBuildDir>$(LumenRtcRoot)..\..\webrtc_build\src\out\Release</LibWebRtcBuildDir>
+  <PropertyGroup Condition="'$(LumenRtcBridgeBuildDir)'=='' and Exists('$(LumenRtcRoot)..\\..\\webrtc_build\\src\\out\\Release\\lumenrtc_bridge.dll')">
+    <LumenRtcBridgeBuildDir>$(LumenRtcRoot)..\..\webrtc_build\src\out\Release</LumenRtcBridgeBuildDir>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(LibWebRtcBuildDir)'=='' and Exists('$(LumenRtcRoot)..\\..\\webrtc_build\\src\\out\\Default\\libwebrtc.dll')">
-    <LibWebRtcBuildDir>$(LumenRtcRoot)..\..\webrtc_build\src\out\Default</LibWebRtcBuildDir>
+  <PropertyGroup Condition="'$(LumenRtcBridgeBuildDir)'=='' and Exists('$(LumenRtcRoot)..\\..\\webrtc_build\\src\\out\\Default\\lumenrtc_bridge.dll')">
+    <LumenRtcBridgeBuildDir>$(LumenRtcRoot)..\..\webrtc_build\src\out\Default</LumenRtcBridgeBuildDir>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(LibWebRtcBuildDir)'=='' and Exists('$(LumenRtcRoot)webrtc_build/src/out/Release/libwebrtc.so')">
-    <LibWebRtcBuildDir>$(LumenRtcRoot)webrtc_build/src/out/Release</LibWebRtcBuildDir>
+  <PropertyGroup Condition="'$(LumenRtcBridgeBuildDir)'=='' and Exists('$(LumenRtcRoot)webrtc_build/src/out/Release/lumenrtc_bridge.so')">
+    <LumenRtcBridgeBuildDir>$(LumenRtcRoot)webrtc_build/src/out/Release</LumenRtcBridgeBuildDir>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(LibWebRtcBuildDir)'=='' and Exists('$(LumenRtcRoot)webrtc_build/src/out/Default/libwebrtc.so')">
-    <LibWebRtcBuildDir>$(LumenRtcRoot)webrtc_build/src/out/Default</LibWebRtcBuildDir>
+  <PropertyGroup Condition="'$(LumenRtcBridgeBuildDir)'=='' and Exists('$(LumenRtcRoot)webrtc_build/src/out/Default/lumenrtc_bridge.so')">
+    <LumenRtcBridgeBuildDir>$(LumenRtcRoot)webrtc_build/src/out/Default</LumenRtcBridgeBuildDir>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(LibWebRtcBuildDir)'=='' and Exists('$(LumenRtcRoot)../../webrtc_build/src/out/Release/libwebrtc.so')">
-    <LibWebRtcBuildDir>$(LumenRtcRoot)../../webrtc_build/src/out/Release</LibWebRtcBuildDir>
+  <PropertyGroup Condition="'$(LumenRtcBridgeBuildDir)'=='' and Exists('$(LumenRtcRoot)../../webrtc_build/src/out/Release/lumenrtc_bridge.so')">
+    <LumenRtcBridgeBuildDir>$(LumenRtcRoot)../../webrtc_build/src/out/Release</LumenRtcBridgeBuildDir>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(LibWebRtcBuildDir)'=='' and Exists('$(LumenRtcRoot)../../webrtc_build/src/out/Default/libwebrtc.so')">
-    <LibWebRtcBuildDir>$(LumenRtcRoot)../../webrtc_build/src/out/Default</LibWebRtcBuildDir>
+  <PropertyGroup Condition="'$(LumenRtcBridgeBuildDir)'=='' and Exists('$(LumenRtcRoot)../../webrtc_build/src/out/Default/lumenrtc_bridge.so')">
+    <LumenRtcBridgeBuildDir>$(LumenRtcRoot)../../webrtc_build/src/out/Default</LumenRtcBridgeBuildDir>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(LumenRtcPackNative)'==''">
@@ -114,8 +103,8 @@
     <LumenRtcNativeFile Condition="'$(OS)'=='Windows_NT'">$(LumenRtcNativeDir)\lumenrtc.dll</LumenRtcNativeFile>
     <LumenRtcNativeFile Condition="'$(OS)'!='Windows_NT'">$(LumenRtcNativeDir)/liblumenrtc.so</LumenRtcNativeFile>
 
-    <LibWebRtcNativeFile Condition="'$(OS)'=='Windows_NT'">$(LibWebRtcBuildDir)\libwebrtc.dll</LibWebRtcNativeFile>
-    <LibWebRtcNativeFile Condition="'$(OS)'!='Windows_NT'">$(LibWebRtcBuildDir)/libwebrtc.so</LibWebRtcNativeFile>
+    <LumenRtcBridgeNativeFile Condition="'$(OS)'=='Windows_NT'">$(LumenRtcBridgeBuildDir)\lumenrtc_bridge.dll</LumenRtcBridgeNativeFile>
+    <LumenRtcBridgeNativeFile Condition="'$(OS)'!='Windows_NT'">$(LumenRtcBridgeBuildDir)/lumenrtc_bridge.so</LumenRtcBridgeNativeFile>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(LumenRtcCopyNative)'=='true'">
@@ -124,8 +113,8 @@
           CopyToOutputDirectory="PreserveNewest"
           CopyToPublishDirectory="PreserveNewest"
           TargetPath="native/%(Filename)%(Extension)" />
-    <None Include="$(LibWebRtcNativeFile)"
-          Condition="Exists('$(LibWebRtcNativeFile)')"
+    <None Include="$(LumenRtcBridgeNativeFile)"
+          Condition="Exists('$(LumenRtcBridgeNativeFile)')"
           CopyToOutputDirectory="PreserveNewest"
           CopyToPublishDirectory="PreserveNewest"
           TargetPath="native/%(Filename)%(Extension)" />
@@ -140,7 +129,7 @@
           Condition="Exists('$(LumenRtcNativeFile)') and '$(LumenRtcPackRidIsWindows)'!='True'"
           Pack="true"
           PackagePath="runtimes/$(LumenRtcPackRid)/native/" />
-    <None Include="$(LibWebRtcNativeFile)" Condition="Exists('$(LibWebRtcNativeFile)')" Pack="true" PackagePath="runtimes/$(LumenRtcPackRid)/native/" />
+    <None Include="$(LumenRtcBridgeNativeFile)" Condition="Exists('$(LumenRtcBridgeNativeFile)')" Pack="true" PackagePath="runtimes/$(LumenRtcPackRid)/native/" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(LumenRtcPackNativeMultiRid)'=='true' and '$(LumenRtcPackIncludeWinX64)'=='true' and '$(MSBuildProjectName)'=='LumenRTC'">
@@ -148,8 +137,8 @@
           Condition="Exists('$(LumenRtcWinNativeDir)\lumenrtc.dll')"
           Pack="true"
           PackagePath="runtimes/win-x64/native/$(LumenRtcWindowsPackageNativeFileName)" />
-    <None Include="$(LibWebRtcWinBuildDir)\libwebrtc.dll"
-          Condition="Exists('$(LibWebRtcWinBuildDir)\libwebrtc.dll')"
+    <None Include="$(LumenRtcBridgeWinBuildDir)\lumenrtc_bridge.dll"
+          Condition="Exists('$(LumenRtcBridgeWinBuildDir)\lumenrtc_bridge.dll')"
           Pack="true"
           PackagePath="runtimes/win-x64/native/" />
   </ItemGroup>
@@ -159,8 +148,8 @@
           Condition="Exists('$(LumenRtcLinuxNativeDir)/liblumenrtc.so')"
           Pack="true"
           PackagePath="runtimes/linux-x64/native/" />
-    <None Include="$(LibWebRtcLinuxBuildDir)/libwebrtc.so"
-          Condition="Exists('$(LibWebRtcLinuxBuildDir)/libwebrtc.so')"
+    <None Include="$(LumenRtcBridgeLinuxBuildDir)/lumenrtc_bridge.so"
+          Condition="Exists('$(LumenRtcBridgeLinuxBuildDir)/lumenrtc_bridge.so')"
           Pack="true"
           PackagePath="runtimes/linux-x64/native/" />
   </ItemGroup>
@@ -168,8 +157,8 @@
   <Target Name="LumenRtcNativeCopyWarnings" AfterTargets="Build" Condition="'$(LumenRtcCopyNative)'=='true'">
     <Warning Condition="'$(LumenRtcNativeDir)'=='' or !Exists('$(LumenRtcNativeFile)')"
              Text="LumenRTC native library was not copied. Set LumenRtcNativeDir or build native output. Expected: $(LumenRtcNativeFile)" />
-    <Warning Condition="'$(LibWebRtcBuildDir)'=='' or !Exists('$(LibWebRtcNativeFile)')"
-             Text="libwebrtc library was not copied. Set LIBWEBRTC_BUILD_DIR (or LibWebRtcBuildDir). Expected: $(LibWebRtcNativeFile)" />
+    <Warning Condition="'$(LumenRtcBridgeBuildDir)'=='' or !Exists('$(LumenRtcBridgeNativeFile)')"
+             Text="lumenrtc_bridge library was not copied. Set LUMENRTC_BRIDGE_BUILD_DIR (or LumenRtcBridgeBuildDir). Expected: $(LumenRtcBridgeNativeFile)" />
   </Target>
 
   <Target Name="LumenRtcNativePackChecks" BeforeTargets="Pack" Condition="'$(LumenRtcPackNative)'=='true' and '$(MSBuildProjectName)'=='LumenRTC'">
@@ -177,8 +166,8 @@
            Text="Set LumenRtcPackRid (e.g. win-x64, linux-x64) when packing native assets." />
     <Error Condition="'$(LumenRtcNativeDir)'=='' or !Exists('$(LumenRtcNativeFile)')"
            Text="LumenRTC native library missing. Set LumenRtcNativeDir or build native output. Expected: $(LumenRtcNativeFile)" />
-    <Error Condition="'$(LibWebRtcBuildDir)'=='' or !Exists('$(LibWebRtcNativeFile)')"
-           Text="libwebrtc library missing. Set LIBWEBRTC_BUILD_DIR (or LibWebRtcBuildDir). Expected: $(LibWebRtcNativeFile)" />
+    <Error Condition="'$(LumenRtcBridgeBuildDir)'=='' or !Exists('$(LumenRtcBridgeNativeFile)')"
+           Text="lumenrtc_bridge library missing. Set LUMENRTC_BRIDGE_BUILD_DIR (or LumenRtcBridgeBuildDir). Expected: $(LumenRtcBridgeNativeFile)" />
   </Target>
 
   <Target Name="LumenRtcNativeMultiRidPackChecks"
@@ -189,12 +178,12 @@
 
     <Error Condition="'$(LumenRtcPackIncludeWinX64)'=='true' and ('$(LumenRtcWinNativeDir)'=='' or !Exists('$(LumenRtcWinNativeDir)\lumenrtc.dll'))"
            Text="Windows lumenrtc.dll missing. Set LumenRtcWinNativeDir to folder containing lumenrtc.dll." />
-    <Error Condition="'$(LumenRtcPackIncludeWinX64)'=='true' and ('$(LibWebRtcWinBuildDir)'=='' or !Exists('$(LibWebRtcWinBuildDir)\libwebrtc.dll'))"
-           Text="Windows libwebrtc.dll missing. Set LibWebRtcWinBuildDir to folder containing libwebrtc.dll." />
+    <Error Condition="'$(LumenRtcPackIncludeWinX64)'=='true' and ('$(LumenRtcBridgeWinBuildDir)'=='' or !Exists('$(LumenRtcBridgeWinBuildDir)\lumenrtc_bridge.dll'))"
+           Text="Windows lumenrtc_bridge.dll missing. Set LumenRtcBridgeWinBuildDir to folder containing lumenrtc_bridge.dll." />
 
     <Error Condition="'$(LumenRtcPackIncludeLinuxX64)'=='true' and ('$(LumenRtcLinuxNativeDir)'=='' or !Exists('$(LumenRtcLinuxNativeDir)/liblumenrtc.so'))"
            Text="Linux liblumenrtc.so missing. Set LumenRtcLinuxNativeDir to folder containing liblumenrtc.so." />
-    <Error Condition="'$(LumenRtcPackIncludeLinuxX64)'=='true' and ('$(LibWebRtcLinuxBuildDir)'=='' or !Exists('$(LibWebRtcLinuxBuildDir)/libwebrtc.so'))"
-           Text="Linux libwebrtc.so missing. Set LibWebRtcLinuxBuildDir to folder containing libwebrtc.so." />
+    <Error Condition="'$(LumenRtcPackIncludeLinuxX64)'=='true' and ('$(LumenRtcBridgeLinuxBuildDir)'=='' or !Exists('$(LumenRtcBridgeLinuxBuildDir)/lumenrtc_bridge.so'))"
+           Text="Linux lumenrtc_bridge.so missing. Set LumenRtcBridgeLinuxBuildDir to folder containing lumenrtc_bridge.so." />
   </Target>
 </Project>

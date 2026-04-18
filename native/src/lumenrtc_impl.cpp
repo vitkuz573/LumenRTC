@@ -1,6 +1,6 @@
 #include "lumenrtc_impl.h"
 
-#include "libwebrtc.h"
+#include "lumenrtc_bridge.h"
 #include "rtc_audio_device.h"
 #include "rtc_audio_source.h"
 #include "rtc_audio_track.h"
@@ -39,46 +39,46 @@
 #include <utility>
 #include <vector>
 
-using libwebrtc::RTCAudioTrack;
-using libwebrtc::RTCAudioDevice;
-using libwebrtc::RTCAudioOptions;
-using libwebrtc::RTCAudioSource;
-using libwebrtc::RTCConfiguration;
-using libwebrtc::RTCDataChannel;
-using libwebrtc::RTCDataChannelInit;
-using libwebrtc::RTCDataChannelObserver;
-using libwebrtc::RTCDtmfSender;
-using libwebrtc::RTCDtmfSenderObserver;
-using libwebrtc::RTCDesktopCapturer;
-using libwebrtc::RTCDesktopDevice;
-using libwebrtc::RTCDesktopMediaList;
-using libwebrtc::RTCIceCandidate;
-using libwebrtc::LibWebRTCLogging;
-using libwebrtc::RTCLoggingSeverity;
-using libwebrtc::RTCMediaConstraints;
-using libwebrtc::RTCMediaStream;
-using libwebrtc::RTCMediaTrack;
-using libwebrtc::MediaRTCStats;
-using libwebrtc::RTCPeerConnection;
-using libwebrtc::RTCPeerConnectionFactory;
-using libwebrtc::RTCPeerConnectionObserver;
-using libwebrtc::RTCRtpCapabilities;
-using libwebrtc::RTCRtpCodecCapability;
-using libwebrtc::RTCRtpHeaderExtensionCapability;
-using libwebrtc::RTCRtpReceiver;
-using libwebrtc::RTCRtpTransceiver;
-using libwebrtc::RTCDtlsTransport;
-using libwebrtc::RTCDtlsTransportInformation;
-using libwebrtc::RTCVideoFrame;
-using libwebrtc::RTCVideoRenderer;
-using libwebrtc::RTCVideoSource;
-using libwebrtc::RTCVideoTrack;
-using libwebrtc::RTCVideoDevice;
-using libwebrtc::RTCVideoCapturer;
-using libwebrtc::MediaSource;
-using libwebrtc::scoped_refptr;
-using libwebrtc::string;
-using libwebrtc::vector;
+using lumenrtc_bridge::RTCAudioTrack;
+using lumenrtc_bridge::RTCAudioDevice;
+using lumenrtc_bridge::RTCAudioOptions;
+using lumenrtc_bridge::RTCAudioSource;
+using lumenrtc_bridge::RTCConfiguration;
+using lumenrtc_bridge::RTCDataChannel;
+using lumenrtc_bridge::RTCDataChannelInit;
+using lumenrtc_bridge::RTCDataChannelObserver;
+using lumenrtc_bridge::RTCDtmfSender;
+using lumenrtc_bridge::RTCDtmfSenderObserver;
+using lumenrtc_bridge::RTCDesktopCapturer;
+using lumenrtc_bridge::RTCDesktopDevice;
+using lumenrtc_bridge::RTCDesktopMediaList;
+using lumenrtc_bridge::RTCIceCandidate;
+using lumenrtc_bridge::LumenRtcBridgeRuntimeLogging;
+using lumenrtc_bridge::RTCLoggingSeverity;
+using lumenrtc_bridge::RTCMediaConstraints;
+using lumenrtc_bridge::RTCMediaStream;
+using lumenrtc_bridge::RTCMediaTrack;
+using lumenrtc_bridge::MediaRTCStats;
+using lumenrtc_bridge::RTCPeerConnection;
+using lumenrtc_bridge::RTCPeerConnectionFactory;
+using lumenrtc_bridge::RTCPeerConnectionObserver;
+using lumenrtc_bridge::RTCRtpCapabilities;
+using lumenrtc_bridge::RTCRtpCodecCapability;
+using lumenrtc_bridge::RTCRtpHeaderExtensionCapability;
+using lumenrtc_bridge::RTCRtpReceiver;
+using lumenrtc_bridge::RTCRtpTransceiver;
+using lumenrtc_bridge::RTCDtlsTransport;
+using lumenrtc_bridge::RTCDtlsTransportInformation;
+using lumenrtc_bridge::RTCVideoFrame;
+using lumenrtc_bridge::RTCVideoRenderer;
+using lumenrtc_bridge::RTCVideoSource;
+using lumenrtc_bridge::RTCVideoTrack;
+using lumenrtc_bridge::RTCVideoDevice;
+using lumenrtc_bridge::RTCVideoCapturer;
+using lumenrtc_bridge::MediaSource;
+using lumenrtc_bridge::scoped_refptr;
+using lumenrtc_bridge::string;
+using lumenrtc_bridge::vector;
 
 #include "lumenrtc_impl_handles.generated.h"
 
@@ -139,10 +139,10 @@ static vector<string> BuildStringVector(const char** items,
   return vector<string>(tmp);
 }
 
-static scoped_refptr<libwebrtc::RTCRtpEncodingParameters>
+static scoped_refptr<lumenrtc_bridge::RTCRtpEncodingParameters>
 BuildEncodingParameters(const lrtc_rtp_encoding_settings_t* settings) {
-  scoped_refptr<libwebrtc::RTCRtpEncodingParameters> encoding =
-      libwebrtc::RTCRtpEncodingParameters::Create();
+  scoped_refptr<lumenrtc_bridge::RTCRtpEncodingParameters> encoding =
+      lumenrtc_bridge::RTCRtpEncodingParameters::Create();
   if (!encoding.get()) {
     return nullptr;
   }
@@ -171,7 +171,7 @@ BuildEncodingParameters(const lrtc_rtp_encoding_settings_t* settings) {
   if (settings->network_priority >= 0 &&
       settings->network_priority <= 3) {
     encoding->set_network_priority(
-        static_cast<libwebrtc::RTCPriority>(settings->network_priority));
+        static_cast<lumenrtc_bridge::RTCPriority>(settings->network_priority));
   }
   if (settings->num_temporal_layers >= 0) {
     encoding->set_num_temporal_layers(settings->num_temporal_layers);
@@ -188,35 +188,35 @@ BuildEncodingParameters(const lrtc_rtp_encoding_settings_t* settings) {
   return encoding;
 }
 
-static libwebrtc::RTCRtpTransceiverDirection NormalizeTransceiverDirection(
+static lumenrtc_bridge::RTCRtpTransceiverDirection NormalizeTransceiverDirection(
     int direction) {
   if (direction < static_cast<int>(LRTC_RTP_TRANSCEIVER_SEND_RECV) ||
       direction > static_cast<int>(LRTC_RTP_TRANSCEIVER_STOPPED)) {
-    return libwebrtc::RTCRtpTransceiverDirection::kSendRecv;
+    return lumenrtc_bridge::RTCRtpTransceiverDirection::kSendRecv;
   }
-  return static_cast<libwebrtc::RTCRtpTransceiverDirection>(direction);
+  return static_cast<lumenrtc_bridge::RTCRtpTransceiverDirection>(direction);
 }
 
-static scoped_refptr<libwebrtc::RTCRtpTransceiverInit> BuildTransceiverInit(
+static scoped_refptr<lumenrtc_bridge::RTCRtpTransceiverInit> BuildTransceiverInit(
     const lrtc_rtp_transceiver_init_t* init) {
   if (!init) {
     return nullptr;
   }
   vector<string> stream_ids =
       BuildStringVector(init->stream_ids, init->stream_id_count);
-  std::vector<scoped_refptr<libwebrtc::RTCRtpEncodingParameters>> list;
+  std::vector<scoped_refptr<lumenrtc_bridge::RTCRtpEncodingParameters>> list;
   if (init->send_encodings && init->send_encoding_count > 0) {
     list.reserve(init->send_encoding_count);
     for (uint32_t i = 0; i < init->send_encoding_count; ++i) {
-      scoped_refptr<libwebrtc::RTCRtpEncodingParameters> encoding =
+      scoped_refptr<lumenrtc_bridge::RTCRtpEncodingParameters> encoding =
           BuildEncodingParameters(&init->send_encodings[i]);
       if (encoding.get()) {
         list.push_back(encoding);
       }
     }
   }
-  vector<scoped_refptr<libwebrtc::RTCRtpEncodingParameters>> encodings(list);
-  return libwebrtc::RTCRtpTransceiverInit::Create(
+  vector<scoped_refptr<lumenrtc_bridge::RTCRtpEncodingParameters>> encodings(list);
+  return lumenrtc_bridge::RTCRtpTransceiverInit::Create(
       NormalizeTransceiverDirection(init->direction),
       stream_ids,
       encodings);
@@ -485,19 +485,19 @@ static void CopyConfig(const lrtc_rtc_config_t* src, RTCConfiguration* dst) {
     dst->ice_servers[i].password = string(
         src->ice_servers[i].password ? src->ice_servers[i].password : "");
   }
-  dst->type = static_cast<libwebrtc::IceTransportsType>(
+  dst->type = static_cast<lumenrtc_bridge::IceTransportsType>(
       src->ice_transports_type);
-  dst->bundle_policy = static_cast<libwebrtc::BundlePolicy>(
+  dst->bundle_policy = static_cast<lumenrtc_bridge::BundlePolicy>(
       src->bundle_policy);
-  dst->rtcp_mux_policy = static_cast<libwebrtc::RtcpMuxPolicy>(
+  dst->rtcp_mux_policy = static_cast<lumenrtc_bridge::RtcpMuxPolicy>(
       src->rtcp_mux_policy);
-  dst->candidate_network_policy = static_cast<libwebrtc::CandidateNetworkPolicy>(
+  dst->candidate_network_policy = static_cast<lumenrtc_bridge::CandidateNetworkPolicy>(
       src->candidate_network_policy);
-  dst->tcp_candidate_policy = static_cast<libwebrtc::TcpCandidatePolicy>(
+  dst->tcp_candidate_policy = static_cast<lumenrtc_bridge::TcpCandidatePolicy>(
       src->tcp_candidate_policy);
   dst->ice_candidate_pool_size = src->ice_candidate_pool_size;
-  dst->srtp_type = static_cast<libwebrtc::MediaSecurityType>(src->srtp_type);
-  dst->sdp_semantics = static_cast<libwebrtc::SdpSemantics>(src->sdp_semantics);
+  dst->srtp_type = static_cast<lumenrtc_bridge::MediaSecurityType>(src->srtp_type);
+  dst->sdp_semantics = static_cast<lumenrtc_bridge::SdpSemantics>(src->sdp_semantics);
   dst->offer_to_receive_audio = src->offer_to_receive_audio;
   dst->offer_to_receive_video = src->offer_to_receive_video;
   dst->disable_ipv6 = src->disable_ipv6;
@@ -526,7 +526,7 @@ class PeerConnectionObserverImpl : public RTCPeerConnectionObserver {
     user_data_ = user_data;
   }
 
-  void OnSignalingState(libwebrtc::RTCSignalingState state) override {
+  void OnSignalingState(lumenrtc_bridge::RTCSignalingState state) override {
     auto cb = GetCallbacks();
     if (cb.callbacks.on_signaling_state) {
       cb.callbacks.on_signaling_state(cb.user_data,
@@ -534,7 +534,7 @@ class PeerConnectionObserverImpl : public RTCPeerConnectionObserver {
     }
   }
 
-  void OnPeerConnectionState(libwebrtc::RTCPeerConnectionState state) override {
+  void OnPeerConnectionState(lumenrtc_bridge::RTCPeerConnectionState state) override {
     auto cb = GetCallbacks();
     if (cb.callbacks.on_peer_connection_state) {
       cb.callbacks.on_peer_connection_state(cb.user_data,
@@ -542,7 +542,7 @@ class PeerConnectionObserverImpl : public RTCPeerConnectionObserver {
     }
   }
 
-  void OnIceGatheringState(libwebrtc::RTCIceGatheringState state) override {
+  void OnIceGatheringState(lumenrtc_bridge::RTCIceGatheringState state) override {
     auto cb = GetCallbacks();
     if (cb.callbacks.on_ice_gathering_state) {
       cb.callbacks.on_ice_gathering_state(cb.user_data,
@@ -550,7 +550,7 @@ class PeerConnectionObserverImpl : public RTCPeerConnectionObserver {
     }
   }
 
-  void OnIceConnectionState(libwebrtc::RTCIceConnectionState state) override {
+  void OnIceConnectionState(lumenrtc_bridge::RTCIceConnectionState state) override {
     auto cb = GetCallbacks();
     if (cb.callbacks.on_ice_connection_state) {
       cb.callbacks.on_ice_connection_state(cb.user_data,
@@ -570,11 +570,11 @@ class PeerConnectionObserverImpl : public RTCPeerConnectionObserver {
                                   cand.c_string());
   }
 
-  void OnAddStream(scoped_refptr<libwebrtc::RTCMediaStream> stream) override {
+  void OnAddStream(scoped_refptr<lumenrtc_bridge::RTCMediaStream> stream) override {
     (void)stream;
   }
 
-  void OnRemoveStream(scoped_refptr<libwebrtc::RTCMediaStream> stream) override {
+  void OnRemoveStream(scoped_refptr<lumenrtc_bridge::RTCMediaStream> stream) override {
     (void)stream;
   }
 
@@ -634,13 +634,13 @@ class PeerConnectionObserverImpl : public RTCPeerConnectionObserver {
     }
   }
 
-  void OnAddTrack(vector<scoped_refptr<libwebrtc::RTCMediaStream>> streams,
-                  scoped_refptr<libwebrtc::RTCRtpReceiver> receiver) override {
+  void OnAddTrack(vector<scoped_refptr<lumenrtc_bridge::RTCMediaStream>> streams,
+                  scoped_refptr<lumenrtc_bridge::RTCRtpReceiver> receiver) override {
     (void)streams;
     (void)receiver;
   }
 
-  void OnRemoveTrack(scoped_refptr<libwebrtc::RTCRtpReceiver> receiver) override {
+  void OnRemoveTrack(scoped_refptr<lumenrtc_bridge::RTCRtpReceiver> receiver) override {
     auto cb = GetCallbacks();
     if (!cb.callbacks.on_remove_track || !receiver.get()) {
       return;
@@ -681,7 +681,7 @@ class DataChannelObserverImpl : public RTCDataChannelObserver {
     user_data_ = user_data;
   }
 
-  void OnStateChange(libwebrtc::RTCDataChannelState state) override {
+  void OnStateChange(lumenrtc_bridge::RTCDataChannelState state) override {
     auto cb = GetCallbacks();
     if (cb.callbacks.on_state_change) {
       cb.callbacks.on_state_change(cb.user_data, static_cast<int>(state));
@@ -759,7 +759,7 @@ class DtmfSenderObserverImpl : public RTCDtmfSenderObserver {
   void* user_data_ = nullptr;
 };
 
-class AudioSinkImpl : public libwebrtc::AudioTrackSink {
+class AudioSinkImpl : public lumenrtc_bridge::AudioTrackSink {
  public:
   AudioSinkImpl() = default;
 
@@ -836,11 +836,11 @@ class VideoSinkImpl : public RTCVideoRenderer<scoped_refptr<RTCVideoFrame>> {
 extern "C" {
 
 lrtc_result_t LUMENRTC_CALL lrtc_impl_initialize(void) {
-  return libwebrtc::LibWebRTC::Initialize() ? LRTC_OK : LRTC_ERROR;
+  return lumenrtc_bridge::LumenRtcBridgeRuntime::Initialize() ? LRTC_OK : LRTC_ERROR;
 }
 
 void LUMENRTC_CALL lrtc_impl_terminate(void) {
-  libwebrtc::LibWebRTC::Terminate();
+  lumenrtc_bridge::LumenRtcBridgeRuntime::Terminate();
 }
 
 uint32_t LUMENRTC_CALL lrtc_impl_abi_version_major(void) {
@@ -861,7 +861,7 @@ int32_t LUMENRTC_CALL lrtc_impl_abi_version_string(char* buffer,
 }
 
 void LUMENRTC_CALL lrtc_impl_logging_set_min_level(int severity) {
-  LibWebRTCLogging::setMinDebugLogLevel(
+  LumenRtcBridgeRuntimeLogging::setMinDebugLogLevel(
       static_cast<RTCLoggingSeverity>(severity));
 }
 
@@ -874,10 +874,10 @@ void LUMENRTC_CALL lrtc_impl_logging_set_callback(int severity,
     g_log_callback.user_data = user_data;
   }
   if (callback) {
-    LibWebRTCLogging::setLogSink(static_cast<RTCLoggingSeverity>(severity),
+    LumenRtcBridgeRuntimeLogging::setLogSink(static_cast<RTCLoggingSeverity>(severity),
                                  LrtcLogMessageHandler);
   } else {
-    LibWebRTCLogging::removeLogSink();
+    LumenRtcBridgeRuntimeLogging::removeLogSink();
   }
 }
 
@@ -887,12 +887,12 @@ void LUMENRTC_CALL lrtc_impl_logging_remove_callback(void) {
     g_log_callback.callback = nullptr;
     g_log_callback.user_data = nullptr;
   }
-  LibWebRTCLogging::removeLogSink();
+  LumenRtcBridgeRuntimeLogging::removeLogSink();
 }
 
 lrtc_factory_t* LUMENRTC_CALL lrtc_impl_factory_create(void) {
   auto handle = new lrtc_factory_t();
-  handle->ref = libwebrtc::LibWebRTC::CreateRTCPeerConnectionFactory();
+  handle->ref = lumenrtc_bridge::LumenRtcBridgeRuntime::CreateRTCPeerConnectionFactory();
   if (!handle->ref.get()) {
     delete handle;
     return nullptr;
@@ -1237,7 +1237,7 @@ lrtc_desktop_media_list_t* LUMENRTC_CALL lrtc_impl_desktop_device_get_media_list
   }
   scoped_refptr<RTCDesktopMediaList> list =
       device->ref->GetDesktopMediaList(
-          static_cast<libwebrtc::DesktopType>(type));
+          static_cast<lumenrtc_bridge::DesktopType>(type));
   if (!list.get()) {
     return nullptr;
   }
@@ -1673,7 +1673,7 @@ lrtc_peer_connection_t* LUMENRTC_CALL lrtc_impl_peer_connection_create(
     mc = constraints->ref;
   }
   if (!mc.get()) {
-    // Some libwebrtc wrappers assume non-null constraints.
+    // Some lumenrtc_bridge wrappers assume non-null constraints.
     mc = RTCMediaConstraints::Create();
   }
   scoped_refptr<RTCPeerConnection> pc = factory->ref->Create(cfg, mc);
@@ -1733,7 +1733,7 @@ void LUMENRTC_CALL lrtc_impl_peer_connection_create_offer(
     mc = constraints->ref;
   }
   if (!mc.get()) {
-    // Some libwebrtc wrappers assume non-null constraints.
+    // Some lumenrtc_bridge wrappers assume non-null constraints.
     mc = RTCMediaConstraints::Create();
   }
   pc->ref->CreateOffer(
@@ -1765,7 +1765,7 @@ void LUMENRTC_CALL lrtc_impl_peer_connection_create_answer(
     mc = constraints->ref;
   }
   if (!mc.get()) {
-    // Some libwebrtc wrappers assume non-null constraints.
+    // Some lumenrtc_bridge wrappers assume non-null constraints.
     mc = RTCMediaConstraints::Create();
   }
   pc->ref->CreateAnswer(
@@ -1964,7 +1964,7 @@ int LUMENRTC_CALL lrtc_impl_peer_connection_set_codec_preferences(
   }
   scoped_refptr<RTCRtpCapabilities> caps =
       pc->factory->GetRtpSenderCapabilities(
-          static_cast<libwebrtc::RTCMediaType>(media_type));
+          static_cast<lumenrtc_bridge::RTCMediaType>(media_type));
   if (!caps.get()) {
     return 0;
   }
@@ -1982,7 +1982,7 @@ int LUMENRTC_CALL lrtc_impl_peer_connection_set_codec_preferences(
       continue;
     }
     if (transceiver->media_type() ==
-        static_cast<libwebrtc::RTCMediaType>(media_type)) {
+        static_cast<lumenrtc_bridge::RTCMediaType>(media_type)) {
       transceiver->SetCodecPreferences(selected);
       applied = true;
     }
@@ -2027,7 +2027,7 @@ int LUMENRTC_CALL lrtc_impl_peer_connection_add_ice_candidate_ex(
     return 0;
   }
   if (trace_ice_native) {
-    libwebrtc::SdpParseError parse_error;
+    lumenrtc_bridge::SdpParseError parse_error;
     scoped_refptr<RTCIceCandidate> parsed = RTCIceCandidate::Create(
         string(candidate), string(sdp_mid), sdp_mline_index, &parse_error);
     if (!parsed.get()) {
@@ -2091,7 +2091,7 @@ int LUMENRTC_CALL lrtc_impl_peer_connection_add_audio_track(
     return 0;
   }
   vector<string> streams = BuildStringVector(stream_ids, stream_id_count);
-  scoped_refptr<libwebrtc::RTCRtpSender> sender =
+  scoped_refptr<lumenrtc_bridge::RTCRtpSender> sender =
       pc->ref->AddTrack(track->ref, streams);
   return sender.get() ? 1 : 0;
 }
@@ -2103,7 +2103,7 @@ int LUMENRTC_CALL lrtc_impl_peer_connection_add_video_track(
     return 0;
   }
   vector<string> streams = BuildStringVector(stream_ids, stream_id_count);
-  scoped_refptr<libwebrtc::RTCRtpSender> sender =
+  scoped_refptr<lumenrtc_bridge::RTCRtpSender> sender =
       pc->ref->AddTrack(track->ref, streams);
   return sender.get() ? 1 : 0;
 }
@@ -2115,7 +2115,7 @@ lrtc_rtp_sender_t* LUMENRTC_CALL lrtc_impl_peer_connection_add_audio_track_sende
     return nullptr;
   }
   vector<string> streams = BuildStringVector(stream_ids, stream_id_count);
-  scoped_refptr<libwebrtc::RTCRtpSender> sender =
+  scoped_refptr<lumenrtc_bridge::RTCRtpSender> sender =
       pc->ref->AddTrack(track->ref, streams);
   if (!sender.get()) {
     return nullptr;
@@ -2132,7 +2132,7 @@ lrtc_rtp_sender_t* LUMENRTC_CALL lrtc_impl_peer_connection_add_video_track_sende
     return nullptr;
   }
   vector<string> streams = BuildStringVector(stream_ids, stream_id_count);
-  scoped_refptr<libwebrtc::RTCRtpSender> sender =
+  scoped_refptr<lumenrtc_bridge::RTCRtpSender> sender =
       pc->ref->AddTrack(track->ref, streams);
   if (!sender.get()) {
     return nullptr;
@@ -2147,9 +2147,9 @@ lrtc_rtp_transceiver_t* LUMENRTC_CALL lrtc_impl_peer_connection_add_transceiver(
   if (!pc || !pc->ref.get()) {
     return nullptr;
   }
-  scoped_refptr<libwebrtc::RTCRtpTransceiver> transceiver =
+  scoped_refptr<lumenrtc_bridge::RTCRtpTransceiver> transceiver =
       pc->ref->AddTransceiver(
-          static_cast<libwebrtc::RTCMediaType>(media_type));
+          static_cast<lumenrtc_bridge::RTCMediaType>(media_type));
   if (!transceiver.get()) {
     return nullptr;
   }
@@ -2163,7 +2163,7 @@ lrtc_rtp_transceiver_t* LUMENRTC_CALL lrtc_impl_peer_connection_add_audio_track_
   if (!pc || !pc->ref.get() || !track || !track->ref.get()) {
     return nullptr;
   }
-  scoped_refptr<libwebrtc::RTCRtpTransceiver> transceiver =
+  scoped_refptr<lumenrtc_bridge::RTCRtpTransceiver> transceiver =
       pc->ref->AddTransceiver(track->ref);
   if (!transceiver.get()) {
     return nullptr;
@@ -2178,7 +2178,7 @@ lrtc_rtp_transceiver_t* LUMENRTC_CALL lrtc_impl_peer_connection_add_video_track_
   if (!pc || !pc->ref.get() || !track || !track->ref.get()) {
     return nullptr;
   }
-  scoped_refptr<libwebrtc::RTCRtpTransceiver> transceiver =
+  scoped_refptr<lumenrtc_bridge::RTCRtpTransceiver> transceiver =
       pc->ref->AddTransceiver(track->ref);
   if (!transceiver.get()) {
     return nullptr;
@@ -2194,14 +2194,14 @@ lrtc_rtp_transceiver_t* LUMENRTC_CALL lrtc_impl_peer_connection_add_transceiver_
   if (!pc || !pc->ref.get() || !init) {
     return nullptr;
   }
-  scoped_refptr<libwebrtc::RTCRtpTransceiverInit> transceiver_init =
+  scoped_refptr<lumenrtc_bridge::RTCRtpTransceiverInit> transceiver_init =
       BuildTransceiverInit(init);
   if (!transceiver_init.get()) {
     return nullptr;
   }
-  scoped_refptr<libwebrtc::RTCRtpTransceiver> transceiver =
+  scoped_refptr<lumenrtc_bridge::RTCRtpTransceiver> transceiver =
       pc->ref->AddTransceiver(
-          static_cast<libwebrtc::RTCMediaType>(media_type), transceiver_init);
+          static_cast<lumenrtc_bridge::RTCMediaType>(media_type), transceiver_init);
   if (!transceiver.get()) {
     return nullptr;
   }
@@ -2216,12 +2216,12 @@ lrtc_rtp_transceiver_t* LUMENRTC_CALL lrtc_impl_peer_connection_add_audio_track_
   if (!pc || !pc->ref.get() || !track || !track->ref.get() || !init) {
     return nullptr;
   }
-  scoped_refptr<libwebrtc::RTCRtpTransceiverInit> transceiver_init =
+  scoped_refptr<lumenrtc_bridge::RTCRtpTransceiverInit> transceiver_init =
       BuildTransceiverInit(init);
   if (!transceiver_init.get()) {
     return nullptr;
   }
-  scoped_refptr<libwebrtc::RTCRtpTransceiver> transceiver =
+  scoped_refptr<lumenrtc_bridge::RTCRtpTransceiver> transceiver =
       pc->ref->AddTransceiver(track->ref, transceiver_init);
   if (!transceiver.get()) {
     return nullptr;
@@ -2237,12 +2237,12 @@ lrtc_rtp_transceiver_t* LUMENRTC_CALL lrtc_impl_peer_connection_add_video_track_
   if (!pc || !pc->ref.get() || !track || !track->ref.get() || !init) {
     return nullptr;
   }
-  scoped_refptr<libwebrtc::RTCRtpTransceiverInit> transceiver_init =
+  scoped_refptr<lumenrtc_bridge::RTCRtpTransceiverInit> transceiver_init =
       BuildTransceiverInit(init);
   if (!transceiver_init.get()) {
     return nullptr;
   }
-  scoped_refptr<libwebrtc::RTCRtpTransceiver> transceiver =
+  scoped_refptr<lumenrtc_bridge::RTCRtpTransceiver> transceiver =
       pc->ref->AddTransceiver(track->ref, transceiver_init);
   if (!transceiver.get()) {
     return nullptr;
@@ -2273,11 +2273,11 @@ lrtc_rtp_sender_t* LUMENRTC_CALL lrtc_impl_peer_connection_get_sender(
   if (!pc || !pc->ref.get()) {
     return nullptr;
   }
-  vector<scoped_refptr<libwebrtc::RTCRtpSender>> senders = pc->ref->senders();
+  vector<scoped_refptr<lumenrtc_bridge::RTCRtpSender>> senders = pc->ref->senders();
   if (index >= senders.size()) {
     return nullptr;
   }
-  scoped_refptr<libwebrtc::RTCRtpSender> sender = senders[index];
+  scoped_refptr<lumenrtc_bridge::RTCRtpSender> sender = senders[index];
   if (!sender.get()) {
     return nullptr;
   }
@@ -2299,12 +2299,12 @@ lrtc_rtp_receiver_t* LUMENRTC_CALL lrtc_impl_peer_connection_get_receiver(
   if (!pc || !pc->ref.get()) {
     return nullptr;
   }
-  vector<scoped_refptr<libwebrtc::RTCRtpReceiver>> receivers =
+  vector<scoped_refptr<lumenrtc_bridge::RTCRtpReceiver>> receivers =
       pc->ref->receivers();
   if (index >= receivers.size()) {
     return nullptr;
   }
-  scoped_refptr<libwebrtc::RTCRtpReceiver> receiver = receivers[index];
+  scoped_refptr<lumenrtc_bridge::RTCRtpReceiver> receiver = receivers[index];
   if (!receiver.get()) {
     return nullptr;
   }
@@ -2326,12 +2326,12 @@ lrtc_rtp_transceiver_t* LUMENRTC_CALL lrtc_impl_peer_connection_get_transceiver(
   if (!pc || !pc->ref.get()) {
     return nullptr;
   }
-  vector<scoped_refptr<libwebrtc::RTCRtpTransceiver>> transceivers =
+  vector<scoped_refptr<lumenrtc_bridge::RTCRtpTransceiver>> transceivers =
       pc->ref->transceivers();
   if (index >= transceivers.size()) {
     return nullptr;
   }
-  scoped_refptr<libwebrtc::RTCRtpTransceiver> transceiver =
+  scoped_refptr<lumenrtc_bridge::RTCRtpTransceiver> transceiver =
       transceivers[index];
   if (!transceiver.get()) {
     return nullptr;
@@ -2603,24 +2603,24 @@ int LUMENRTC_CALL lrtc_impl_rtp_sender_set_encoding_parameters(
   if (!sender || !sender->ref.get() || !settings) {
     return 0;
   }
-  scoped_refptr<libwebrtc::RTCRtpParameters> parameters =
+  scoped_refptr<lumenrtc_bridge::RTCRtpParameters> parameters =
       sender->ref->parameters();
   if (!parameters.get()) {
     return 0;
   }
 
-  vector<scoped_refptr<libwebrtc::RTCRtpEncodingParameters>> encodings =
+  vector<scoped_refptr<lumenrtc_bridge::RTCRtpEncodingParameters>> encodings =
       parameters->encodings();
 
-  std::vector<scoped_refptr<libwebrtc::RTCRtpEncodingParameters>> list;
+  std::vector<scoped_refptr<lumenrtc_bridge::RTCRtpEncodingParameters>> list;
   list.reserve(encodings.size());
   for (size_t i = 0; i < encodings.size(); ++i) {
     list.push_back(encodings[i]);
   }
 
   if (list.empty()) {
-    scoped_refptr<libwebrtc::RTCRtpEncodingParameters> created =
-        libwebrtc::RTCRtpEncodingParameters::Create();
+    scoped_refptr<lumenrtc_bridge::RTCRtpEncodingParameters> created =
+        lumenrtc_bridge::RTCRtpEncodingParameters::Create();
     if (created.get()) {
       list.push_back(created);
     }
@@ -2631,7 +2631,7 @@ int LUMENRTC_CALL lrtc_impl_rtp_sender_set_encoding_parameters(
   }
 
   for (size_t i = 0; i < list.size(); ++i) {
-    scoped_refptr<libwebrtc::RTCRtpEncodingParameters> encoding = list[i];
+    scoped_refptr<lumenrtc_bridge::RTCRtpEncodingParameters> encoding = list[i];
     if (!encoding.get()) {
       continue;
     }
@@ -2658,7 +2658,7 @@ int LUMENRTC_CALL lrtc_impl_rtp_sender_set_encoding_parameters(
     if (settings->network_priority >= 0 &&
         settings->network_priority <= 3) {
       encoding->set_network_priority(
-          static_cast<libwebrtc::RTCPriority>(settings->network_priority));
+          static_cast<lumenrtc_bridge::RTCPriority>(settings->network_priority));
     }
     if (settings->num_temporal_layers >= 0) {
       encoding->set_num_temporal_layers(settings->num_temporal_layers);
@@ -2675,11 +2675,11 @@ int LUMENRTC_CALL lrtc_impl_rtp_sender_set_encoding_parameters(
   }
 
   parameters->set_encodings(
-      vector<scoped_refptr<libwebrtc::RTCRtpEncodingParameters>>(list));
+      vector<scoped_refptr<lumenrtc_bridge::RTCRtpEncodingParameters>>(list));
 
   if (settings->degradation_preference >= 0) {
     parameters->SetDegradationPreference(
-        static_cast<libwebrtc::RTCDegradationPreference>(
+        static_cast<lumenrtc_bridge::RTCDegradationPreference>(
             settings->degradation_preference));
   }
 
@@ -2692,16 +2692,16 @@ int LUMENRTC_CALL lrtc_impl_rtp_sender_set_encoding_parameters_at(
   if (!sender || !sender->ref.get() || !settings) {
     return 0;
   }
-  scoped_refptr<libwebrtc::RTCRtpParameters> parameters =
+  scoped_refptr<lumenrtc_bridge::RTCRtpParameters> parameters =
       sender->ref->parameters();
   if (!parameters.get()) {
     return 0;
   }
 
-  vector<scoped_refptr<libwebrtc::RTCRtpEncodingParameters>> encodings =
+  vector<scoped_refptr<lumenrtc_bridge::RTCRtpEncodingParameters>> encodings =
       parameters->encodings();
 
-  std::vector<scoped_refptr<libwebrtc::RTCRtpEncodingParameters>> list;
+  std::vector<scoped_refptr<lumenrtc_bridge::RTCRtpEncodingParameters>> list;
   list.reserve(encodings.size());
   for (size_t i = 0; i < encodings.size(); ++i) {
     list.push_back(encodings[i]);
@@ -2711,8 +2711,8 @@ int LUMENRTC_CALL lrtc_impl_rtp_sender_set_encoding_parameters_at(
     if (index != 0) {
       return 0;
     }
-    scoped_refptr<libwebrtc::RTCRtpEncodingParameters> created =
-        libwebrtc::RTCRtpEncodingParameters::Create();
+    scoped_refptr<lumenrtc_bridge::RTCRtpEncodingParameters> created =
+        lumenrtc_bridge::RTCRtpEncodingParameters::Create();
     if (created.get()) {
       list.push_back(created);
     }
@@ -2722,7 +2722,7 @@ int LUMENRTC_CALL lrtc_impl_rtp_sender_set_encoding_parameters_at(
     return 0;
   }
 
-  scoped_refptr<libwebrtc::RTCRtpEncodingParameters> encoding = list[index];
+  scoped_refptr<lumenrtc_bridge::RTCRtpEncodingParameters> encoding = list[index];
   if (encoding.get()) {
     if (settings->max_bitrate_bps >= 0) {
       encoding->set_max_bitrate_bps(settings->max_bitrate_bps);
@@ -2746,7 +2746,7 @@ int LUMENRTC_CALL lrtc_impl_rtp_sender_set_encoding_parameters_at(
     if (settings->network_priority >= 0 &&
         settings->network_priority <= 3) {
       encoding->set_network_priority(
-          static_cast<libwebrtc::RTCPriority>(settings->network_priority));
+          static_cast<lumenrtc_bridge::RTCPriority>(settings->network_priority));
     }
     if (settings->num_temporal_layers >= 0) {
       encoding->set_num_temporal_layers(settings->num_temporal_layers);
@@ -2763,11 +2763,11 @@ int LUMENRTC_CALL lrtc_impl_rtp_sender_set_encoding_parameters_at(
   }
 
   parameters->set_encodings(
-      vector<scoped_refptr<libwebrtc::RTCRtpEncodingParameters>>(list));
+      vector<scoped_refptr<lumenrtc_bridge::RTCRtpEncodingParameters>>(list));
 
   if (settings->degradation_preference >= 0) {
     parameters->SetDegradationPreference(
-        static_cast<libwebrtc::RTCDegradationPreference>(
+        static_cast<lumenrtc_bridge::RTCDegradationPreference>(
             settings->degradation_preference));
   }
 
@@ -2779,7 +2779,7 @@ uint32_t LUMENRTC_CALL lrtc_impl_rtp_sender_encoding_count(
   if (!sender || !sender->ref.get()) {
     return 0;
   }
-  scoped_refptr<libwebrtc::RTCRtpParameters> parameters =
+  scoped_refptr<lumenrtc_bridge::RTCRtpParameters> parameters =
       sender->ref->parameters();
   if (!parameters.get()) {
     return 0;
@@ -2793,17 +2793,17 @@ int LUMENRTC_CALL lrtc_impl_rtp_sender_get_encoding_info(
   if (!sender || !sender->ref.get() || !info) {
     return 0;
   }
-  scoped_refptr<libwebrtc::RTCRtpParameters> parameters =
+  scoped_refptr<lumenrtc_bridge::RTCRtpParameters> parameters =
       sender->ref->parameters();
   if (!parameters.get()) {
     return 0;
   }
-  vector<scoped_refptr<libwebrtc::RTCRtpEncodingParameters>> encodings =
+  vector<scoped_refptr<lumenrtc_bridge::RTCRtpEncodingParameters>> encodings =
       parameters->encodings();
   if (index >= encodings.size()) {
     return 0;
   }
-  scoped_refptr<libwebrtc::RTCRtpEncodingParameters> encoding =
+  scoped_refptr<lumenrtc_bridge::RTCRtpEncodingParameters> encoding =
       encodings[index];
   if (!encoding.get()) {
     return 0;
@@ -2827,17 +2827,17 @@ int32_t LUMENRTC_CALL lrtc_impl_rtp_sender_get_encoding_rid(
   if (!sender || !sender->ref.get()) {
     return -1;
   }
-  scoped_refptr<libwebrtc::RTCRtpParameters> parameters =
+  scoped_refptr<lumenrtc_bridge::RTCRtpParameters> parameters =
       sender->ref->parameters();
   if (!parameters.get()) {
     return -1;
   }
-  vector<scoped_refptr<libwebrtc::RTCRtpEncodingParameters>> encodings =
+  vector<scoped_refptr<lumenrtc_bridge::RTCRtpEncodingParameters>> encodings =
       parameters->encodings();
   if (index >= encodings.size()) {
     return -1;
   }
-  scoped_refptr<libwebrtc::RTCRtpEncodingParameters> encoding =
+  scoped_refptr<lumenrtc_bridge::RTCRtpEncodingParameters> encoding =
       encodings[index];
   if (!encoding.get()) {
     return -1;
@@ -2851,17 +2851,17 @@ int32_t LUMENRTC_CALL lrtc_impl_rtp_sender_get_encoding_scalability_mode(
   if (!sender || !sender->ref.get()) {
     return -1;
   }
-  scoped_refptr<libwebrtc::RTCRtpParameters> parameters =
+  scoped_refptr<lumenrtc_bridge::RTCRtpParameters> parameters =
       sender->ref->parameters();
   if (!parameters.get()) {
     return -1;
   }
-  vector<scoped_refptr<libwebrtc::RTCRtpEncodingParameters>> encodings =
+  vector<scoped_refptr<lumenrtc_bridge::RTCRtpEncodingParameters>> encodings =
       parameters->encodings();
   if (index >= encodings.size()) {
     return -1;
   }
-  scoped_refptr<libwebrtc::RTCRtpEncodingParameters> encoding =
+  scoped_refptr<lumenrtc_bridge::RTCRtpEncodingParameters> encoding =
       encodings[index];
   if (!encoding.get()) {
     return -1;
@@ -2875,7 +2875,7 @@ int LUMENRTC_CALL lrtc_impl_rtp_sender_get_degradation_preference(
   if (!sender || !sender->ref.get()) {
     return -1;
   }
-  scoped_refptr<libwebrtc::RTCRtpParameters> parameters =
+  scoped_refptr<lumenrtc_bridge::RTCRtpParameters> parameters =
       sender->ref->parameters();
   if (!parameters.get()) {
     return -1;
@@ -2888,7 +2888,7 @@ int32_t LUMENRTC_CALL lrtc_impl_rtp_sender_get_parameters_mid(
   if (!sender || !sender->ref.get()) {
     return -1;
   }
-  scoped_refptr<libwebrtc::RTCRtpParameters> parameters =
+  scoped_refptr<lumenrtc_bridge::RTCRtpParameters> parameters =
       sender->ref->parameters();
   if (!parameters.get()) {
     return -1;
@@ -2916,7 +2916,7 @@ int LUMENRTC_CALL lrtc_impl_rtp_sender_replace_audio_track(
   if (!sender || !sender->ref.get()) {
     return 0;
   }
-  if (sender->ref->media_type() != libwebrtc::RTCMediaType::AUDIO) {
+  if (sender->ref->media_type() != lumenrtc_bridge::RTCMediaType::AUDIO) {
     return 0;
   }
   scoped_refptr<RTCMediaTrack> media_track;
@@ -2934,7 +2934,7 @@ int LUMENRTC_CALL lrtc_impl_rtp_sender_replace_video_track(
   if (!sender || !sender->ref.get()) {
     return 0;
   }
-  if (sender->ref->media_type() != libwebrtc::RTCMediaType::VIDEO) {
+  if (sender->ref->media_type() != lumenrtc_bridge::RTCMediaType::VIDEO) {
     return 0;
   }
   scoped_refptr<RTCMediaTrack> media_track;
@@ -3152,7 +3152,7 @@ uint32_t LUMENRTC_CALL lrtc_impl_rtp_receiver_encoding_count(
   if (!receiver || !receiver->ref.get()) {
     return 0;
   }
-  scoped_refptr<libwebrtc::RTCRtpParameters> parameters =
+  scoped_refptr<lumenrtc_bridge::RTCRtpParameters> parameters =
       receiver->ref->parameters();
   if (!parameters.get()) {
     return 0;
@@ -3166,17 +3166,17 @@ int LUMENRTC_CALL lrtc_impl_rtp_receiver_get_encoding_info(
   if (!receiver || !receiver->ref.get() || !info) {
     return 0;
   }
-  scoped_refptr<libwebrtc::RTCRtpParameters> parameters =
+  scoped_refptr<lumenrtc_bridge::RTCRtpParameters> parameters =
       receiver->ref->parameters();
   if (!parameters.get()) {
     return 0;
   }
-  vector<scoped_refptr<libwebrtc::RTCRtpEncodingParameters>> encodings =
+  vector<scoped_refptr<lumenrtc_bridge::RTCRtpEncodingParameters>> encodings =
       parameters->encodings();
   if (index >= encodings.size()) {
     return 0;
   }
-  scoped_refptr<libwebrtc::RTCRtpEncodingParameters> encoding =
+  scoped_refptr<lumenrtc_bridge::RTCRtpEncodingParameters> encoding =
       encodings[index];
   if (!encoding.get()) {
     return 0;
@@ -3200,17 +3200,17 @@ int32_t LUMENRTC_CALL lrtc_impl_rtp_receiver_get_encoding_rid(
   if (!receiver || !receiver->ref.get()) {
     return -1;
   }
-  scoped_refptr<libwebrtc::RTCRtpParameters> parameters =
+  scoped_refptr<lumenrtc_bridge::RTCRtpParameters> parameters =
       receiver->ref->parameters();
   if (!parameters.get()) {
     return -1;
   }
-  vector<scoped_refptr<libwebrtc::RTCRtpEncodingParameters>> encodings =
+  vector<scoped_refptr<lumenrtc_bridge::RTCRtpEncodingParameters>> encodings =
       parameters->encodings();
   if (index >= encodings.size()) {
     return -1;
   }
-  scoped_refptr<libwebrtc::RTCRtpEncodingParameters> encoding =
+  scoped_refptr<lumenrtc_bridge::RTCRtpEncodingParameters> encoding =
       encodings[index];
   if (!encoding.get()) {
     return -1;
@@ -3224,17 +3224,17 @@ int32_t LUMENRTC_CALL lrtc_impl_rtp_receiver_get_encoding_scalability_mode(
   if (!receiver || !receiver->ref.get()) {
     return -1;
   }
-  scoped_refptr<libwebrtc::RTCRtpParameters> parameters =
+  scoped_refptr<lumenrtc_bridge::RTCRtpParameters> parameters =
       receiver->ref->parameters();
   if (!parameters.get()) {
     return -1;
   }
-  vector<scoped_refptr<libwebrtc::RTCRtpEncodingParameters>> encodings =
+  vector<scoped_refptr<lumenrtc_bridge::RTCRtpEncodingParameters>> encodings =
       parameters->encodings();
   if (index >= encodings.size()) {
     return -1;
   }
-  scoped_refptr<libwebrtc::RTCRtpEncodingParameters> encoding =
+  scoped_refptr<lumenrtc_bridge::RTCRtpEncodingParameters> encoding =
       encodings[index];
   if (!encoding.get()) {
     return -1;
@@ -3248,7 +3248,7 @@ int LUMENRTC_CALL lrtc_impl_rtp_receiver_get_degradation_preference(
   if (!receiver || !receiver->ref.get()) {
     return -1;
   }
-  scoped_refptr<libwebrtc::RTCRtpParameters> parameters =
+  scoped_refptr<lumenrtc_bridge::RTCRtpParameters> parameters =
       receiver->ref->parameters();
   if (!parameters.get()) {
     return -1;
@@ -3261,7 +3261,7 @@ int32_t LUMENRTC_CALL lrtc_impl_rtp_receiver_get_parameters_mid(
   if (!receiver || !receiver->ref.get()) {
     return -1;
   }
-  scoped_refptr<libwebrtc::RTCRtpParameters> parameters =
+  scoped_refptr<lumenrtc_bridge::RTCRtpParameters> parameters =
       receiver->ref->parameters();
   if (!parameters.get()) {
     return -1;
@@ -3445,7 +3445,7 @@ int LUMENRTC_CALL lrtc_impl_rtp_transceiver_set_direction(
     return 0;
   }
   string err = transceiver->ref->SetDirectionWithError(
-      static_cast<libwebrtc::RTCRtpTransceiverDirection>(direction));
+      static_cast<lumenrtc_bridge::RTCRtpTransceiverDirection>(direction));
   string tmp = err;
   if (tmp.size() > 0) {
     if (error_len > 0 && error) {
@@ -3477,7 +3477,7 @@ lrtc_rtp_sender_t* LUMENRTC_CALL lrtc_impl_rtp_transceiver_get_sender(
   if (!transceiver || !transceiver->ref.get()) {
     return nullptr;
   }
-  scoped_refptr<libwebrtc::RTCRtpSender> sender = transceiver->ref->sender();
+  scoped_refptr<lumenrtc_bridge::RTCRtpSender> sender = transceiver->ref->sender();
   if (!sender.get()) {
     return nullptr;
   }
@@ -3491,7 +3491,7 @@ lrtc_rtp_receiver_t* LUMENRTC_CALL lrtc_impl_rtp_transceiver_get_receiver(
   if (!transceiver || !transceiver->ref.get()) {
     return nullptr;
   }
-  scoped_refptr<libwebrtc::RTCRtpReceiver> receiver =
+  scoped_refptr<lumenrtc_bridge::RTCRtpReceiver> receiver =
       transceiver->ref->receiver();
   if (!receiver.get()) {
     return nullptr;
@@ -3518,7 +3518,7 @@ void LUMENRTC_CALL lrtc_impl_factory_get_rtp_sender_codec_mime_types(
   }
   scoped_refptr<RTCRtpCapabilities> caps =
       factory->ref->GetRtpSenderCapabilities(
-          static_cast<libwebrtc::RTCMediaType>(media_type));
+          static_cast<lumenrtc_bridge::RTCMediaType>(media_type));
   if (!caps.get()) {
     if (failure) {
       failure(user_data, "capabilities not available");
@@ -3543,7 +3543,7 @@ void LUMENRTC_CALL lrtc_impl_factory_get_rtp_sender_capabilities(
   }
   scoped_refptr<RTCRtpCapabilities> caps =
       factory->ref->GetRtpSenderCapabilities(
-          static_cast<libwebrtc::RTCMediaType>(media_type));
+          static_cast<lumenrtc_bridge::RTCMediaType>(media_type));
   if (!caps.get()) {
     if (failure) {
       failure(user_data, "capabilities not available");
@@ -3568,7 +3568,7 @@ void LUMENRTC_CALL lrtc_impl_factory_get_rtp_receiver_capabilities(
   }
   scoped_refptr<RTCRtpCapabilities> caps =
       factory->ref->GetRtpReceiverCapabilities(
-          static_cast<libwebrtc::RTCMediaType>(media_type));
+          static_cast<lumenrtc_bridge::RTCMediaType>(media_type));
   if (!caps.get()) {
     if (failure) {
       failure(user_data, "capabilities not available");

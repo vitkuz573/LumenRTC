@@ -989,7 +989,7 @@
     {
       "name": "lrtc_rtp_sender_t",
       "fields": [
-        "scoped_refptr<libwebrtc::RTCRtpSender> ref;"
+        "scoped_refptr<lumenrtc_bridge::RTCRtpSender> ref;"
       ]
     },
     {
@@ -1002,13 +1002,13 @@
     {
       "name": "lrtc_rtp_receiver_t",
       "fields": [
-        "scoped_refptr<libwebrtc::RTCRtpReceiver> ref;"
+        "scoped_refptr<lumenrtc_bridge::RTCRtpReceiver> ref;"
       ]
     },
     {
       "name": "lrtc_rtp_transceiver_t",
       "fields": [
-        "scoped_refptr<libwebrtc::RTCRtpTransceiver> ref;"
+        "scoped_refptr<lumenrtc_bridge::RTCRtpTransceiver> ref;"
       ]
     }
   ]

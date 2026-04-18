@@ -2,7 +2,7 @@ param(
   [string]$Configuration = "Release",
   [string]$Rid = "win-x64",
   [string]$Output = "artifacts\\nuget",
-  [string]$LibWebRtcBuildDir,
+  [string]$LumenRtcBridgeBuildDir,
   [string]$LumenRtcNativeDir,
   [switch]$NoNative,
   [switch]$PackSdl
@@ -24,11 +24,8 @@ if (-not $LumenRtcNativeDir) {
   }
 }
 
-if (-not $LibWebRtcBuildDir) {
-  if ($env:LIBWEBRTC_BUILD_DIR) { $LibWebRtcBuildDir = $env:LIBWEBRTC_BUILD_DIR }
-  elseif ($env:WEBRTC_BUILD_DIR) { $LibWebRtcBuildDir = $env:WEBRTC_BUILD_DIR }
-  elseif ($env:WEBRTC_OUT_DIR) { $LibWebRtcBuildDir = $env:WEBRTC_OUT_DIR }
-  elseif ($env:WEBRTC_OUT) { $LibWebRtcBuildDir = $env:WEBRTC_OUT }
+if (-not $LumenRtcBridgeBuildDir) {
+  if ($env:LUMENRTC_BRIDGE_BUILD_DIR) { $LumenRtcBridgeBuildDir = $env:LUMENRTC_BRIDGE_BUILD_DIR }
 }
 
 $packArgs = @(
@@ -42,7 +39,7 @@ if (-not $NoNative) {
   $packArgs += "-p:LumenRtcPackNative=true"
   $packArgs += "-p:LumenRtcPackRid=$Rid"
   if ($LumenRtcNativeDir) { $packArgs += "-p:LumenRtcNativeDir=$LumenRtcNativeDir" }
-  if ($LibWebRtcBuildDir) { $packArgs += "-p:LibWebRtcBuildDir=$LibWebRtcBuildDir" }
+  if ($LumenRtcBridgeBuildDir) { $packArgs += "-p:LumenRtcBridgeBuildDir=$LumenRtcBridgeBuildDir" }
 }
 
 & dotnet @packArgs

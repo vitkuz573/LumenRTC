@@ -82,7 +82,7 @@ struct lrtc_video_frame_t {
 };
 
 struct lrtc_rtp_sender_t {
-  scoped_refptr<libwebrtc::RTCRtpSender> ref;
+  scoped_refptr<lumenrtc_bridge::RTCRtpSender> ref;
 };
 
 struct lrtc_dtmf_sender_t {
@@ -91,9 +91,9 @@ struct lrtc_dtmf_sender_t {
 };
 
 struct lrtc_rtp_receiver_t {
-  scoped_refptr<libwebrtc::RTCRtpReceiver> ref;
+  scoped_refptr<lumenrtc_bridge::RTCRtpReceiver> ref;
 };
 
 struct lrtc_rtp_transceiver_t {
-  scoped_refptr<libwebrtc::RTCRtpTransceiver> ref;
+  scoped_refptr<lumenrtc_bridge::RTCRtpTransceiver> ref;
 };

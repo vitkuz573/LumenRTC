@@ -12,7 +12,7 @@ Generated files are part of the ABI pipeline. Do not hand-edit `native/include/l
 
 ## Build, Test, and Development Commands
 - `scripts/setup.sh --build-type Release` (or `scripts/setup.ps1` / `scripts/setup.cmd`): full bootstrap for WebRTC + native + managed build.
-- `cmake -S native -B native/build -DLIBWEBRTC_BUILD_DIR=/path/to/out` then `cmake --build native/build -j`: build native `lumenrtc`.
+- `cmake -S native -B native/build -DLUMENRTC_BRIDGE_BUILD_DIR=/path/to/out` then `cmake --build native/build -j`: build native `lumenrtc`.
 - `dotnet build src/LumenRTC/LumenRTC.csproj`: build managed library and validate source-generator integration.
 - `dotnet run --project samples/LumenRTC.Sample.LocalCamera.Core/LumenRTC.Sample.LocalCamera.Core.csproj`: run a sample locally.
 - `abi_framework verify-all --skip-binary`: fast ABI drift check.

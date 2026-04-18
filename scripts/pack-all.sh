@@ -12,9 +12,9 @@ IFS=',' read -r -a rids <<< "$rids_input"
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 win_lumenrtc_native_dir="${WIN_LUMENRTC_NATIVE_DIR:-${LUMENRTC_NATIVE_DIR:-}}"
-win_libwebrtc_build_dir="${WIN_LIBWEBRTC_BUILD_DIR:-${LIBWEBRTC_BUILD_DIR:-${WEBRTC_BUILD_DIR:-${WEBRTC_OUT_DIR:-${WEBRTC_OUT:-}}}}}"
+win_lumenrtc_bridge_build_dir="${WIN_LUMENRTC_BRIDGE_BUILD_DIR:-${LUMENRTC_BRIDGE_BUILD_DIR:-}}"
 linux_lumenrtc_native_dir="${LINUX_LUMENRTC_NATIVE_DIR:-${LUMENRTC_NATIVE_DIR:-}}"
-linux_libwebrtc_build_dir="${LINUX_LIBWEBRTC_BUILD_DIR:-${LIBWEBRTC_BUILD_DIR:-${WEBRTC_BUILD_DIR:-${WEBRTC_OUT_DIR:-${WEBRTC_OUT:-}}}}}"
+linux_lumenrtc_bridge_build_dir="${LINUX_LUMENRTC_BRIDGE_BUILD_DIR:-${LUMENRTC_BRIDGE_BUILD_DIR:-}}"
 
 include_win_x64=false
 include_linux_x64=false
@@ -44,14 +44,14 @@ if [[ "$no_native" != "true" ]]; then
   if [[ -n "$win_lumenrtc_native_dir" ]]; then
     pack_args+=("-p:LumenRtcWinNativeDir=${win_lumenrtc_native_dir}")
   fi
-  if [[ -n "$win_libwebrtc_build_dir" ]]; then
-    pack_args+=("-p:LibWebRtcWinBuildDir=${win_libwebrtc_build_dir}")
+  if [[ -n "$win_lumenrtc_bridge_build_dir" ]]; then
+    pack_args+=("-p:LumenRtcBridgeWinBuildDir=${win_lumenrtc_bridge_build_dir}")
   fi
   if [[ -n "$linux_lumenrtc_native_dir" ]]; then
     pack_args+=("-p:LumenRtcLinuxNativeDir=${linux_lumenrtc_native_dir}")
   fi
-  if [[ -n "$linux_libwebrtc_build_dir" ]]; then
-    pack_args+=("-p:LibWebRtcLinuxBuildDir=${linux_libwebrtc_build_dir}")
+  if [[ -n "$linux_lumenrtc_bridge_build_dir" ]]; then
+    pack_args+=("-p:LumenRtcBridgeLinuxBuildDir=${linux_lumenrtc_bridge_build_dir}")
   fi
 fi
 
