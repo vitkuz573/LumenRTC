@@ -44,6 +44,14 @@ if(NOT WIN32)
   )
 endif()
 
+include(CheckIPOSupported)
+check_ipo_supported(RESULT _ipo_supported OUTPUT _ipo_error)
+if(_ipo_supported)
+  set_target_properties(lumenrtc PROPERTIES INTERPROCEDURAL_OPTIMIZATION_RELEASE YES)
+else()
+  message(STATUS "IPO/LTO not enabled for lumenrtc: ${_ipo_error}")
+endif()
+
 target_include_directories(lumenrtc PUBLIC
   include
   "${LUMENRTC_BRIDGE_INCLUDE_DIR}"
@@ -66,7 +74,11 @@ if(WIN32)
     message(FATAL_ERROR "lumenrtc_bridge import library not found in ${LUMENRTC_BRIDGE_BUILD_DIR}. Expected lumenrtc_bridge.dll.lib or lumenrtc_bridge.lib.")
   endif()
 else()
-  target_link_libraries(lumenrtc PRIVATE "${LUMENRTC_BRIDGE_BUILD_DIR}/lumenrtc_bridge.so")
+  add_library(lumenrtc_bridge SHARED IMPORTED)
+  set_target_properties(lumenrtc_bridge PROPERTIES
+    IMPORTED_LOCATION "${LUMENRTC_BRIDGE_BUILD_DIR}/lumenrtc_bridge.so"
+  )
+  target_link_libraries(lumenrtc PRIVATE lumenrtc_bridge)
 endif()
 
 if(UNIX AND NOT APPLE)

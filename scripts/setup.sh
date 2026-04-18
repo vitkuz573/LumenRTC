@@ -278,7 +278,11 @@ else
 fi
 
 pushd "$src_dir" >/dev/null
-gn gen "$out_dir" --args="target_os=\"linux\" target_cpu=\"$target_cpu\" is_debug=$is_debug rtc_include_tests=false rtc_use_h264=true ffmpeg_branding=\"Chrome\" is_component_build=false rtc_build_examples=false use_rtti=true use_custom_libcxx=false rtc_enable_protobuf=false lumenrtc_bridge_desktop_capture=true"
+gn_args="target_os=\"linux\" target_cpu=\"$target_cpu\" is_debug=$is_debug rtc_include_tests=false rtc_use_h264=true ffmpeg_branding=\"Chrome\" is_component_build=false rtc_build_examples=false use_rtti=true use_custom_libcxx=false rtc_enable_protobuf=false lumenrtc_bridge_desktop_capture=true"
+if [[ "$build_type" == "Release" ]]; then
+  gn_args+=" use_thin_lto=true"
+fi
+gn gen "$out_dir" --args="$gn_args"
 ninja -C "$out_dir" lumenrtc_bridge
 popd >/dev/null
 

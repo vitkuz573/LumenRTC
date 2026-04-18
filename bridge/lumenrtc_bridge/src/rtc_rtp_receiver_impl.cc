@@ -1,5 +1,7 @@
 #include "rtc_rtp_receiver_impl.h"
 
+#include <cstring>
+
 #include "base/refcountedobject.h"
 #include "rtc_audio_track_impl.h"
 #include "rtc_dtls_transport_impl.h"
@@ -29,11 +31,16 @@ scoped_refptr<RTCMediaTrack> RTCRtpReceiverImpl::track() const {
   if (nullptr == track.get()) {
     return scoped_refptr<RTCMediaTrack>();
   }
-  if (track->kind() == webrtc::MediaStreamTrackInterface::kVideoKind) {
+
+  const auto kind = track->kind();
+  if (std::strcmp(kind.c_string(),
+                  webrtc::MediaStreamTrackInterface::kVideoKind) == 0) {
     return scoped_refptr<RTCMediaTrack>(new RefCountedObject<VideoTrackImpl>(
         webrtc::scoped_refptr<webrtc::VideoTrackInterface>(
             static_cast<webrtc::VideoTrackInterface*>(track.get()))));
-  } else if (track->kind() == webrtc::MediaStreamTrackInterface::kAudioKind) {
+  }
+  if (std::strcmp(kind.c_string(),
+                  webrtc::MediaStreamTrackInterface::kAudioKind) == 0) {
     return scoped_refptr<RTCMediaTrack>(new RefCountedObject<AudioTrackImpl>(
         webrtc::scoped_refptr<webrtc::AudioTrackInterface>(
             static_cast<webrtc::AudioTrackInterface*>(track.get()))));
@@ -41,25 +48,29 @@ scoped_refptr<RTCMediaTrack> RTCRtpReceiverImpl::track() const {
   return scoped_refptr<RTCMediaTrack>();
 }
 scoped_refptr<RTCDtlsTransport> RTCRtpReceiverImpl::dtls_transport() const {
-  if (nullptr == rtp_receiver_->dtls_transport().get()) {
+  auto transport = rtp_receiver_->dtls_transport();
+  if (nullptr == transport.get()) {
     return scoped_refptr<RTCDtlsTransport>();
   }
 
-  return new RefCountedObject<RTCDtlsTransportImpl>(
-      rtp_receiver_->dtls_transport());
+  return new RefCountedObject<RTCDtlsTransportImpl>(transport);
 }
 
 const vector<string> RTCRtpReceiverImpl::stream_ids() const {
+  const auto native_stream_ids = rtp_receiver_->stream_ids();
   std::vector<string> vec;
-  for (auto item : rtp_receiver_->stream_ids()) {
+  vec.reserve(native_stream_ids.size());
+  for (const auto& item : native_stream_ids) {
     vec.push_back(item);
   }
   return vec;
 }
 
 vector<scoped_refptr<RTCMediaStream>> RTCRtpReceiverImpl::streams() const {
+  const auto native_streams = rtp_receiver_->streams();
   std::vector<scoped_refptr<RTCMediaStream>> streams;
-  for (auto item : rtp_receiver_->streams()) {
+  streams.reserve(native_streams.size());
+  for (const auto& item : native_streams) {
     streams.push_back(new RefCountedObject<MediaStreamImpl>(item));
   }
   return streams;

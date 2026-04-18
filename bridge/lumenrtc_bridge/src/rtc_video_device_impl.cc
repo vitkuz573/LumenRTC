@@ -36,19 +36,16 @@ scoped_refptr<RTCVideoCapturer> RTCVideoDeviceImpl::Create(const char* name,
                                                            size_t width,
                                                            size_t height,
                                                            size_t target_fps) {
-  auto vcm = worker_thread_->BlockingCall([&, width, height, target_fps]{
+  auto vcm = worker_thread_->BlockingCall([&, width, height, target_fps] {
     return webrtc::internal::VcmCapturer::Create(worker_thread_, width, height,
                                                  target_fps, index);
-   });
+  });
 
   if (vcm == nullptr) {
     return nullptr;
   }
 
-  return worker_thread_->BlockingCall([vcm] {
-    return scoped_refptr<RTCVideoCapturerImpl>(
-        new RefCountedObject<RTCVideoCapturerImpl>(vcm));
-  });
+  return new RefCountedObject<RTCVideoCapturerImpl>(vcm);
 }
 
 }  // namespace lumenrtc_bridge

@@ -1,5 +1,7 @@
 #include "rtc_video_sink_adapter.h"
 
+#include <algorithm>
+
 #include "rtc_base/logging.h"
 #include "rtc_video_frame_impl.h"
 #include "rtc_video_track.h"
@@ -20,6 +22,16 @@ VideoSinkAdapter::~VideoSinkAdapter() {
 
 // VideoSinkInterface implementation
 void VideoSinkAdapter::OnFrame(const webrtc::VideoFrame& video_frame) {
+  std::vector<RTCVideoRenderer<scoped_refptr<RTCVideoFrame>>*> renderers;
+  {
+    webrtc::MutexLock cs(crt_sec_.get());
+    if (renderers_.empty()) {
+      return;
+    }
+    renderers.reserve(renderers_.size());
+    renderers.insert(renderers.end(), renderers_.begin(), renderers_.end());
+  }
+
   scoped_refptr<VideoFrameBufferImpl> frame_buffer =
       scoped_refptr<VideoFrameBufferImpl>(
           new RefCountedObject<VideoFrameBufferImpl>(
@@ -27,12 +39,6 @@ void VideoSinkAdapter::OnFrame(const webrtc::VideoFrame& video_frame) {
 
   frame_buffer->set_rotation(video_frame.rotation());
   frame_buffer->set_timestamp_us(video_frame.timestamp_us());
-
-  std::vector<RTCVideoRenderer<scoped_refptr<RTCVideoFrame>>*> renderers;
-  {
-    webrtc::MutexLock cs(crt_sec_.get());
-    renderers = renderers_;
-  }
 
   for (auto renderer : renderers) {
     renderer->OnFrame(frame_buffer);

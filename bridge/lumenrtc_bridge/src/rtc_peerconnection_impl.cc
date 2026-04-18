@@ -1,5 +1,7 @@
 #include "rtc_peerconnection_impl.h"
 
+#include <algorithm>
+#include <cstring>
 #include <functional>
 #include <optional>
 #include <utility>
@@ -203,12 +205,14 @@ webrtc::scoped_refptr<webrtc::MediaStreamTrackInterface> ToNativeTrack(
     return nullptr;
   }
 
-  const auto kind = to_std_string(track->kind());
-  if (kind == webrtc::MediaStreamTrackInterface::kVideoKind) {
+  const auto kind = track->kind();
+  if (std::strcmp(kind.c_string(),
+                  webrtc::MediaStreamTrackInterface::kVideoKind) == 0) {
     auto* impl = static_cast<VideoTrackImpl*>(track.get());
     return impl->rtc_track();
   }
-  if (kind == webrtc::MediaStreamTrackInterface::kAudioKind) {
+  if (std::strcmp(kind.c_string(),
+                  webrtc::MediaStreamTrackInterface::kAudioKind) == 0) {
     auto* impl = static_cast<AudioTrackImpl*>(track.get());
     return impl->rtc_track();
   }
@@ -319,7 +323,8 @@ void RTCPeerConnectionImpl::OnAddTrack(
         streams) {
   if (nullptr != observer_) {
     std::vector<scoped_refptr<RTCMediaStream>> out_streams;
-    for (auto item : streams) {
+    out_streams.reserve(streams.size());
+    for (const auto& item : streams) {
       out_streams.push_back(new RefCountedObject<MediaStreamImpl>(item));
     }
     scoped_refptr<RTCRtpReceiver> rtc_receiver =
@@ -365,23 +370,21 @@ void RTCPeerConnectionImpl::OnRemoveStream(
     webrtc::scoped_refptr<webrtc::MediaStreamInterface> stream) {
   RTC_LOG(LS_INFO) << __FUNCTION__ << " " << stream->id();
 
-  MediaStreamImpl* recv_stream = nullptr;
-
-  for (auto kv : remote_streams_) {
-    MediaStreamImpl* recv_st = static_cast<MediaStreamImpl*>(kv.get());
-    if (recv_st->rtc_media_stream() == stream) {
-      recv_stream = recv_st;
-    }
+  auto it = std::find_if(remote_streams_.begin(), remote_streams_.end(),
+                         [&stream](const scoped_refptr<RTCMediaStream>& item) {
+                           return static_cast<MediaStreamImpl*>(item.get())
+                                      ->rtc_media_stream() == stream;
+                         });
+  if (it == remote_streams_.end()) {
+    return;
   }
 
-  if (nullptr != recv_stream) {
-    if (observer_) {
-      observer_->OnRemoveStream(recv_stream);
-    }
-
-    remote_streams_.erase(
-        std::find(remote_streams_.begin(), remote_streams_.end(), recv_stream));
+  MediaStreamImpl* recv_stream = static_cast<MediaStreamImpl*>(it->get());
+  if (observer_) {
+    observer_->OnRemoveStream(recv_stream);
   }
+
+  remote_streams_.erase(it);
 }
 
 void RTCPeerConnectionImpl::OnDataChannel(
@@ -581,8 +584,9 @@ void RTCPeerConnectionImpl::SetLocalDescription(const string sdp,
                                                 OnSetSdpSuccess success,
                                                 OnSetSdpFailure failure) {
   webrtc::SdpParseError error;
+  const std::string type_string = to_std_string(type);
   std::optional<webrtc::SdpType> maybe_type =
-      webrtc::SdpTypeFromString(to_std_string(type));
+      webrtc::SdpTypeFromString(type_string);
   if (!maybe_type) {
     if (failure) {
       failure("Invalid session description type.");
@@ -610,12 +614,13 @@ void RTCPeerConnectionImpl::SetRemoteDescription(const string sdp,
                                                  const string type,
                                                  OnSetSdpSuccess success,
                                                  OnSetSdpFailure failure) {
-  RTC_LOG(LS_INFO) << "Received session description. Type="
-                   << to_std_string(type) << ", Length="
-                   << static_cast<int>(sdp.std_string().size());
+  const std::string type_string = to_std_string(type);
+  const std::string sdp_string = to_std_string(sdp);
+  RTC_LOG(LS_INFO) << "Received session description. Type=" << type_string
+                   << ", Length=" << static_cast<int>(sdp_string.size());
   webrtc::SdpParseError error;
   std::optional<webrtc::SdpType> maybe_type =
-      webrtc::SdpTypeFromString(type.std_string());
+      webrtc::SdpTypeFromString(type_string);
   if (!maybe_type) {
     if (failure) {
       failure("Invalid session description type.");
@@ -623,7 +628,7 @@ void RTCPeerConnectionImpl::SetRemoteDescription(const string sdp,
     return;
   }
   std::unique_ptr<webrtc::SessionDescriptionInterface> session_description(
-      webrtc::CreateSessionDescription(*maybe_type, sdp.std_string(), &error));
+      webrtc::CreateSessionDescription(*maybe_type, sdp_string, &error));
 
   if (!session_description) {
     std::string error = "Can't parse received session description message.";
@@ -805,8 +810,8 @@ scoped_refptr<RTCMediaStream> RTCPeerConnectionImpl::CreateLocalMediaStream(
   if (!rtc_peerconnection_factory_.get()) {
     return nullptr;
   }
-  auto stream =
-      rtc_peerconnection_factory_->CreateLocalMediaStream(stream_id.c_string());
+  auto stream = rtc_peerconnection_factory_->CreateLocalMediaStream(
+      stream_id.c_string());
   auto rtc_stream = new RefCountedObject<MediaStreamImpl>(stream);
   local_streams_.push_back(rtc_stream);
   return rtc_stream;
@@ -947,8 +952,9 @@ scoped_refptr<RTCRtpSender> RTCPeerConnectionImpl::AddTrack(
   }
 
   std::vector<std::string> stream_ids;
-  for (const auto& id : streamIds.std_vector()) {
-    stream_ids.push_back(to_std_string(id));
+  stream_ids.reserve(streamIds.size());
+  for (size_t i = 0; i < streamIds.size(); ++i) {
+    stream_ids.push_back(to_std_string(streamIds.data()[i]));
   }
 
   auto errorOr = rtc_peerconnection_->AddTrack(native_track, stream_ids);
@@ -970,24 +976,30 @@ bool RTCPeerConnectionImpl::RemoveTrack(scoped_refptr<RTCRtpSender> render) {
 }
 
 vector<scoped_refptr<RTCRtpSender>> RTCPeerConnectionImpl::senders() {
+  const auto native_senders = rtc_peerconnection_->GetSenders();
   std::vector<scoped_refptr<RTCRtpSender>> vec;
-  for (auto item : rtc_peerconnection_->GetSenders()) {
+  vec.reserve(native_senders.size());
+  for (const auto& item : native_senders) {
     vec.push_back(new RefCountedObject<RTCRtpSenderImpl>(item));
   }
   return vec;
 }
 
 vector<scoped_refptr<RTCRtpTransceiver>> RTCPeerConnectionImpl::transceivers() {
+  const auto native_transceivers = rtc_peerconnection_->GetTransceivers();
   std::vector<scoped_refptr<RTCRtpTransceiver>> vec;
-  for (auto item : rtc_peerconnection_->GetTransceivers()) {
+  vec.reserve(native_transceivers.size());
+  for (const auto& item : native_transceivers) {
     vec.push_back(new RefCountedObject<RTCRtpTransceiverImpl>(item));
   }
   return vec;
 }
 
 vector<scoped_refptr<RTCRtpReceiver>> RTCPeerConnectionImpl::receivers() {
+  const auto native_receivers = rtc_peerconnection_->GetReceivers();
   std::vector<scoped_refptr<RTCRtpReceiver>> vec;
-  for (auto item : rtc_peerconnection_->GetReceivers()) {
+  vec.reserve(native_receivers.size());
+  for (const auto& item : native_receivers) {
     vec.push_back(new RefCountedObject<RTCRtpReceiverImpl>(item));
   }
   return vec;

@@ -480,7 +480,7 @@ try {
 
   New-Item -ItemType Directory -Force -Path $outDir | Out-Null
   $argsGnPath = Join-PathSafe $outDir "args.gn"
-  $argsContent = @(
+  $argsList = @(
     'target_os = "win"',
     ('target_cpu = "{0}"' -f $TargetCpu),
     "is_component_build = false",
@@ -491,7 +491,11 @@ try {
     "rtc_include_tests = false",
     "rtc_build_examples = false",
     "lumenrtc_bridge_desktop_capture = true"
-  ) -join "`n"
+  )
+  if ($BuildType -eq "Release") {
+    $argsList += "use_thin_lto = true"
+  }
+  $argsContent = $argsList -join "`n"
 
   Set-Content -Path $argsGnPath -Value $argsContent -Encoding ASCII
   gn gen $outDir

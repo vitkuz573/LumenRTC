@@ -1,5 +1,7 @@
 #include "rtc_rtp_sender_impl.h"
 
+#include <cstring>
+
 #include "base/refcountedobject.h"
 #include "rtc_audio_track_impl.h"
 #include "rtc_dtls_transport_impl.h"
@@ -16,11 +18,13 @@ webrtc::scoped_refptr<webrtc::MediaStreamTrackInterface> ToNativeTrack(
     return nullptr;
   }
 
-  const auto kind = track->kind().std_string();
-  if (kind == webrtc::MediaStreamTrackInterface::kVideoKind) {
+  const auto kind = track->kind();
+  if (std::strcmp(kind.c_string(),
+                  webrtc::MediaStreamTrackInterface::kVideoKind) == 0) {
     return static_cast<VideoTrackImpl*>(track.get())->rtc_track();
   }
-  if (kind == webrtc::MediaStreamTrackInterface::kAudioKind) {
+  if (std::strcmp(kind.c_string(),
+                  webrtc::MediaStreamTrackInterface::kAudioKind) == 0) {
     return static_cast<AudioTrackImpl*>(track.get())->rtc_track();
   }
 
@@ -33,12 +37,15 @@ scoped_refptr<RTCMediaTrack> ToBridgeTrack(
     return scoped_refptr<RTCMediaTrack>();
   }
 
-  if (track->kind() == webrtc::MediaStreamTrackInterface::kVideoKind) {
+  const auto kind = track->kind();
+  if (std::strcmp(kind.c_string(),
+                  webrtc::MediaStreamTrackInterface::kVideoKind) == 0) {
     return scoped_refptr<RTCMediaTrack>(new RefCountedObject<VideoTrackImpl>(
         webrtc::scoped_refptr<webrtc::VideoTrackInterface>(
             static_cast<webrtc::VideoTrackInterface*>(track.get()))));
   }
-  if (track->kind() == webrtc::MediaStreamTrackInterface::kAudioKind) {
+  if (std::strcmp(kind.c_string(),
+                  webrtc::MediaStreamTrackInterface::kAudioKind) == 0) {
     return scoped_refptr<RTCMediaTrack>(new RefCountedObject<AudioTrackImpl>(
         webrtc::scoped_refptr<webrtc::AudioTrackInterface>(
             static_cast<webrtc::AudioTrackInterface*>(track.get()))));
@@ -62,11 +69,11 @@ scoped_refptr<RTCMediaTrack> RTCRtpSenderImpl::track() const {
 }
 
 scoped_refptr<RTCDtlsTransport> RTCRtpSenderImpl::dtls_transport() const {
-  if (nullptr == rtp_sender_->dtls_transport().get()) {
+  auto transport = rtp_sender_->dtls_transport();
+  if (nullptr == transport.get()) {
     return scoped_refptr<RTCDtlsTransport>();
   }
-  return new RefCountedObject<RTCDtlsTransportImpl>(
-      rtp_sender_->dtls_transport());
+  return new RefCountedObject<RTCDtlsTransportImpl>(transport);
 }
 
 uint32_t RTCRtpSenderImpl::ssrc() const { return rtp_sender_->ssrc(); }
@@ -78,9 +85,10 @@ RTCMediaType RTCRtpSenderImpl::media_type() const {
 const string RTCRtpSenderImpl::id() const { return rtp_sender_->id(); }
 
 const vector<string> RTCRtpSenderImpl::stream_ids() const {
+  const auto native_stream_ids = rtp_sender_->stream_ids();
   std::vector<string> values;
-  values.reserve(rtp_sender_->stream_ids().size());
-  for (const auto& item : rtp_sender_->stream_ids()) {
+  values.reserve(native_stream_ids.size());
+  for (const auto& item : native_stream_ids) {
     values.push_back(item.c_str());
   }
   return values;
@@ -88,17 +96,19 @@ const vector<string> RTCRtpSenderImpl::stream_ids() const {
 
 void RTCRtpSenderImpl::set_stream_ids(const vector<string> stream_ids) const {
   std::vector<std::string> list;
-  for (auto id : stream_ids.std_vector()) {
-    list.push_back(to_std_string(id));
+  list.reserve(stream_ids.size());
+  for (size_t i = 0; i < stream_ids.size(); ++i) {
+    list.push_back(to_std_string(stream_ids.data()[i]));
   }
   rtp_sender_->SetStreams(list);
 }
 
 const vector<scoped_refptr<RTCRtpEncodingParameters>>
 RTCRtpSenderImpl::init_send_encodings() const {
+  const auto native_encodings = rtp_sender_->init_send_encodings();
   std::vector<scoped_refptr<RTCRtpEncodingParameters>> vec;
-  for (webrtc::RtpEncodingParameters item :
-       rtp_sender_->init_send_encodings()) {
+  vec.reserve(native_encodings.size());
+  for (const auto& item : native_encodings) {
     vec.push_back(new RefCountedObject<RTCRtpEncodingParametersImpl>(item));
   }
   return vec;
@@ -117,10 +127,11 @@ bool RTCRtpSenderImpl::set_parameters(
 }
 
 scoped_refptr<RTCDtmfSender> RTCRtpSenderImpl::dtmf_sender() const {
-  if (nullptr == rtp_sender_->GetDtmfSender().get()) {
+  auto dtmf_sender = rtp_sender_->GetDtmfSender();
+  if (nullptr == dtmf_sender.get()) {
     return scoped_refptr<RTCDtmfSender>();
   }
-  return new RefCountedObject<RTCDtmfSenderImpl>(rtp_sender_->GetDtmfSender());
+  return new RefCountedObject<RTCDtmfSenderImpl>(dtmf_sender);
 }
 
 }  // namespace lumenrtc_bridge
