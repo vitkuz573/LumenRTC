@@ -158,7 +158,7 @@ const string RTCRtpHeaderExtensionCapabilityImpl::uri() {
 }
 
 void RTCRtpHeaderExtensionCapabilityImpl::set_uri(const string uri) {
-  rtp_header_extension_capability_.uri = uri.c_string();
+  rtp_header_extension_capability_.uri = uri.c_str();
 }
 
 webrtc::RtpHeaderExtensionCapability

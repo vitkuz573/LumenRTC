@@ -137,6 +137,9 @@ class RTCRtpEncodingParametersImpl : public RTCRtpEncodingParameters {
   RTCRtpEncodingParametersImpl(
       webrtc::RtpEncodingParameters& rtp_encoding_parameters);
 
+  RTCRtpEncodingParametersImpl(
+      const webrtc::RtpEncodingParameters& rtp_encoding_parameters);
+
   virtual uint32_t ssrc() override;
   virtual void set_ssrc(uint32_t value) override;
 

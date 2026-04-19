@@ -206,12 +206,12 @@ webrtc::scoped_refptr<webrtc::MediaStreamTrackInterface> ToNativeTrack(
   }
 
   const auto kind = track->kind();
-  if (std::strcmp(kind.c_string(),
+  if (std::strcmp(kind.c_str(),
                   webrtc::MediaStreamTrackInterface::kVideoKind) == 0) {
     auto* impl = static_cast<VideoTrackImpl*>(track.get());
     return impl->rtc_track();
   }
-  if (std::strcmp(kind.c_string(),
+  if (std::strcmp(kind.c_str(),
                   webrtc::MediaStreamTrackInterface::kAudioKind) == 0) {
     auto* impl = static_cast<AudioTrackImpl*>(track.get());
     return impl->rtc_track();
@@ -811,7 +811,7 @@ scoped_refptr<RTCMediaStream> RTCPeerConnectionImpl::CreateLocalMediaStream(
     return nullptr;
   }
   auto stream = rtc_peerconnection_factory_->CreateLocalMediaStream(
-      stream_id.c_string());
+      stream_id.c_str());
   auto rtc_stream = new RefCountedObject<MediaStreamImpl>(stream);
   local_streams_.push_back(rtc_stream);
   return rtc_stream;

@@ -72,6 +72,10 @@ RTCRtpEncodingParametersImpl::RTCRtpEncodingParametersImpl(
     webrtc::RtpEncodingParameters& rtp_encoding_parameters)
     : rtp_encoding_parameters_(rtp_encoding_parameters) {}
 
+RTCRtpEncodingParametersImpl::RTCRtpEncodingParametersImpl(
+    const webrtc::RtpEncodingParameters& rtp_encoding_parameters)
+    : rtp_encoding_parameters_(rtp_encoding_parameters) {}
+
 uint32_t RTCRtpEncodingParametersImpl::ssrc() {
   return rtp_encoding_parameters_.ssrc.value_or(0);
 }

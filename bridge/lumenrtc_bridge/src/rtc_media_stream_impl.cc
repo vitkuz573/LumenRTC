@@ -115,10 +115,10 @@ vector<scoped_refptr<RTCMediaTrack>> MediaStreamImpl::tracks() {
 
 scoped_refptr<RTCAudioTrack> MediaStreamImpl::FindAudioTrack(
     const string track_id) {
-  const char* native_track_id = track_id.c_string();
+  const char* native_track_id = track_id.c_str();
   for (auto track : audio_tracks_) {
     const auto candidate_id = track->id();
-    if (std::strcmp(candidate_id.c_string(), native_track_id) == 0) return track;
+    if (std::strcmp(candidate_id.c_str(), native_track_id) == 0) return track;
   }
 
   return scoped_refptr<RTCAudioTrack>();
@@ -126,10 +126,10 @@ scoped_refptr<RTCAudioTrack> MediaStreamImpl::FindAudioTrack(
 
 scoped_refptr<RTCVideoTrack> MediaStreamImpl::FindVideoTrack(
     const string track_id) {
-  const char* native_track_id = track_id.c_string();
+  const char* native_track_id = track_id.c_str();
   for (auto track : video_tracks_) {
     const auto candidate_id = track->id();
-    if (std::strcmp(candidate_id.c_string(), native_track_id) == 0) return track;
+    if (std::strcmp(candidate_id.c_str(), native_track_id) == 0) return track;
   }
 
   return scoped_refptr<RTCVideoTrack>();
